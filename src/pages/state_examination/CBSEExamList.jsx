@@ -1,0 +1,908 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import '../../utils/include_files';
+import { useSession } from '../../context/SessionContext';
+import { api } from '../../services/api';
+import AssignExamStudent from './AssignExamStudent';
+import AssignExamSubjects from './AssignExamSubjects';
+import TeacherRemark from './TeacherRemark';
+import ExamAttendance from './ExamAttendance';
+
+const CBSEExamList = () => {
+    const { currentSession } = useSession();
+    const navigate = useNavigate();
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isSectionOpen, setIsSectionOpen] = useState(false);
+    const [selectedSections, setSelectedSections] = useState([]);
+
+    // New Modal States
+    const [activeExam, setActiveExam] = useState(null);
+    const [modalConfig, setModalConfig] = useState({ show: false, title: '', type: '' });
+    const [subModalConfig, setSubModalConfig] = useState({ show: false, subject: null });
+
+    // Exam Form State
+    const [examName, setExamName] = useState('');
+    const [examDescription, setExamDescription] = useState('');
+    const [selectedTerm, setSelectedTerm] = useState('');
+    const [selectedClass, setSelectedClass] = useState('');
+    const [selectedAssessment, setSelectedAssessment] = useState('');
+    const [selectedGrade, setSelectedGrade] = useState('');
+    const [isPublish, setIsPublish] = useState(false);
+    const [isActive, setIsActive] = useState(false);
+
+    // Master Data State
+    const [termList, setTermList] = useState([]);
+    const [classList, setClassList] = useState([]);
+    const [assessmentList, setAssessmentList] = useState([]);
+    const [gradeList, setGradeList] = useState([]);
+    const [sectionsList, setSectionsList] = useState([]); // Converted to state
+
+    const [subjectsForMarks, setSubjectsForMarks] = useState([]);
+    const [marksLoading, setMarksLoading] = useState(false);
+    const [subjectStudentResults, setSubjectStudentResults] = useState([]);
+    const [assessmentTypesForEntry, setAssessmentTypesForEntry] = useState([]);
+    const [entryLoading, setEntryLoading] = useState(false);
+    const [schSetting, setSchSetting] = useState({});
+
+    const mockStudents = [
+        { id: 101, admission_no: '1001', firstname: 'John', lastname: 'Doe', class: 'Class 1', section: 'A', father_name: 'Robert Doe', gender: 'Male', category: 'General', roll_no: '1', dob: '2010-05-15', mobileno: '9876543210' },
+        { id: 102, admission_no: '1002', firstname: 'Sarah', lastname: 'Smith', class: 'Class 1', section: 'A', father_name: 'James Smith', gender: 'Female', category: 'OBC', roll_no: '2', dob: '2010-08-20', mobileno: '9876543211' },
+        { id: 103, admission_no: '1003', firstname: 'Michael', lastname: 'Brown', class: 'Class 1', section: 'B', father_name: 'David Brown', gender: 'Male', category: 'SC', roll_no: '3', dob: '2010-02-10', mobileno: '9876543212' },
+    ];
+
+    const assessmentTypes = [
+        { id: 1, name: 'Periodic Test', maximum_marks: 20 },
+        { id: 2, name: 'Notebook', maximum_marks: 5 },
+        { id: 3, name: 'Subject Enrichment', maximum_marks: 5 },
+        { id: 4, name: 'Half Yearly', maximum_marks: 70 },
+    ];
+
+    const openActionModal = (exam, title, type) => {
+        setActiveExam(exam);
+        setModalConfig({ show: true, title, type });
+        if (type === 'marks') {
+            fetchSubjectsForMarks(exam.id);
+        }
+    };
+
+    const fetchSubjectsForMarks = async (examId) => {
+        setMarksLoading(true);
+        try {
+            const response = await api.getSubjectByExam(examId);
+            if (response && response.exam_subjects) {
+                setSubjectsForMarks(response.exam_subjects);
+            } else {
+                setSubjectsForMarks([]);
+            }
+        } catch (error) {
+            console.error("Error fetching subjects for marks:", error);
+            setSubjectsForMarks([]);
+        } finally {
+            setMarksLoading(false);
+        }
+    };
+
+    const handleEnterMarks = async (subject) => {
+        setSubModalConfig({ show: true, subject });
+        setEntryLoading(true);
+        try {
+            const payload = {
+                exam_id: activeExam.id,
+                subject_id: subject.subject_id,
+                timetable_id: subject.id
+            };
+            const response = await api.getSubjectStudent(payload);
+            if (response) {
+                // Convert resultlist object to array
+                const results = Object.values(response.resultlist || {});
+                setSubjectStudentResults(results);
+                setAssessmentTypesForEntry(response.exam_assessment_types || []);
+                setSchSetting(response.sch_setting || {});
+            }
+        } catch (error) {
+            console.error("Error fetching subject students:", error);
+        } finally {
+            setEntryLoading(false);
+        }
+    };
+
+    const closeActionModal = () => {
+        setModalConfig({ show: false, title: '', type: '' });
+        setSubModalConfig({ show: false, subject: null });
+        setActiveExam(null);
+    };
+
+    const handleDelete = async (exam) => {
+        if (window.confirm("Are you sure you want to delete this item?")) {
+            try {
+                const response = await api.deleteCBSEExam(exam.id);
+                if (response && response.status) {
+                    alert(response.message || 'Record Delete Successfully');
+                    fetchExams(); // Refresh list
+                } else {
+                    alert('Failed to delete exam. Please try again.');
+                }
+            } catch (error) {
+                console.error("Error deleting exam:", error);
+                alert('Error occurred while deleting.');
+            }
+        }
+    };
+
+    const resetForm = () => {
+        setExamName('');
+        setExamDescription('');
+        setSelectedTerm('');
+        setSelectedClass('');
+        setSelectedAssessment('');
+        setSelectedGrade('');
+        setIsPublish(false);
+        setIsActive(false);
+        setSectionsList([]);
+        setSelectedSections([]);
+    };
+
+    const handleOpenAddModal = () => {
+        resetForm();
+        setActiveExam(null);
+        setShowAddModal(true);
+    };
+
+    const handleEdit = async (exam) => {
+        resetForm();
+        setActiveExam(exam);
+        setShowAddModal(true);
+        // Fetched details will be populated
+        try {
+            const response = await api.getExamDetails(exam.id);
+            if (response && response.status) {
+                const data = response.exam;
+                setExamName(data.name);
+                setExamDescription(data.description || '');
+                setSelectedTerm(data.cbse_term_id);
+                setSelectedClass(response.class_id || '');
+                setSelectedAssessment(data.cbse_exam_assessment_id);
+                setSelectedGrade(data.cbse_exam_grade_id);
+                setIsPublish(data.is_publish === "1");
+                setIsActive(data.is_active === "1");
+
+                // Populate Lists from response
+                setTermList(response.term_list || []);
+                setClassList(response.classlist || []);
+                setAssessmentList(response.assessment_result || []);
+                setGradeList(response.grade_result || []);
+                setSchSetting(response.sch_setting || {});
+
+                // Fetch Sections for the selected class using the API
+                if (response.class_id) {
+                    try {
+                        const sectionResponse = await api.getSectionsByClass(response.class_id);
+                        if (sectionResponse && sectionResponse.status) {
+                            const formattedSections = sectionResponse.data.map(s => ({
+                                id: parseInt(s.id),
+                                name: s.section
+                            }));
+                            setSectionsList(formattedSections);
+                        } else {
+                            setSectionsList([]);
+                        }
+                    } catch (secError) {
+                        console.error("Error fetching sections for class:", secError);
+                        setSectionsList([]);
+                    }
+                }
+
+                // Handle sections
+                const selectedSecIds = response.class_section_list?.map(s => parseInt(s.class_section_id)) || [];
+                setSelectedSections(selectedSecIds);
+            }
+        } catch (error) {
+            console.error("Error fetching exam details:", error);
+        }
+    };
+
+    const handleSaveExam = async (e) => {
+        e.preventDefault();
+
+        if (!examName || !selectedTerm || !selectedClass || !selectedAssessment || !selectedGrade || selectedSections.length === 0) {
+            alert("Please fill all required fields");
+            return;
+        }
+
+        const payload = {
+            exam_id: activeExam?.id,
+            exam_term_id: selectedTerm,
+            assessment_id: selectedAssessment,
+            grade_id: selectedGrade,
+            exam_name: examName,
+            exam_description: examDescription,
+            class_id: selectedClass,
+            section: selectedSections,
+            is_active: isActive ? 1 : 0,
+            is_publish: isPublish ? 1 : 0
+        };
+
+        try {
+            const apiCall = activeExam ? api.updateCBSEExam : api.addCBSEExam;
+            const response = await apiCall(payload);
+
+            if (response && response.status) {
+                alert(response.message || 'Record Saved Successfully');
+                setShowAddModal(false);
+                setActiveExam(null);
+                fetchExams(); // Refresh list
+            } else {
+                alert(response.message || 'Failed to save exam. Please try again.');
+            }
+        } catch (error) {
+            console.error("Error saving exam:", error);
+            alert('Error occurred while saving.');
+        }
+    };
+
+    const handleClassChange = async (e) => {
+        const classId = e.target.value;
+        setSelectedClass(classId);
+        setSelectedSections([]);
+        setSectionsList([]);
+
+        if (classId) {
+            try {
+                const response = await api.getSectionsByClass(classId);
+                if (response && response.status) {
+                    const formattedSections = response.data.map(s => ({
+                        id: parseInt(s.id),
+                        name: s.section
+                    }));
+                    setSectionsList(formattedSections);
+                }
+            } catch (err) {
+                console.error("Error fetching sections:", err);
+            }
+        }
+    };
+
+
+    /*
+    const sectionsList = [
+        { id: 1, name: 'A' },
+        { id: 2, name: 'B' },
+        { id: 3, name: 'C' },
+        { id: 4, name: 'D' }
+    ];
+    */
+
+    const toggleSection = (id) => {
+        if (selectedSections.includes(id)) {
+            setSelectedSections(selectedSections.filter(sid => sid !== id));
+        } else {
+            setSelectedSections([...selectedSections, id]);
+        }
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedSections.length === sectionsList.length) {
+            setSelectedSections([]);
+        } else {
+            setSelectedSections(sectionsList.map(s => s.id));
+        }
+    };
+
+    // Layout Mock Data
+    const appName = "Smart School";
+    const userData = {
+        name: "Joe",
+        pimage: "/public/images/userprofile.jpg",
+        role: "Super Admin"
+    };
+
+
+
+    // CBSE Submenu with correct routes
+    const cbseSubmenu = [
+        { label: 'Exam', url: '/cbseexam/exam', active: true, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/1.png' },
+        { label: 'Exam Schedule', url: '/cbseexam/examschedule', active: false, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/2.png' },
+        { label: 'Print Marksheet', url: '/cbseexam/result/marksheet', active: false, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/3.png' },
+        { label: 'Exam Grade', url: '/cbseexam/examgrade', active: false, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/4.png' },
+        // { label: 'Assign Observation', url: '#', active: false, icon: '5.png' },
+        // { label: 'Observation', url: '#', active: false, icon: '6.png' },
+        // { label: 'Observation Parameter', url: '#', active: false, icon: '7.png' },
+        { label: 'Assessment', url: '/cbseexam/assessment', active: false, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/8.png' },
+        { label: 'Term', url: '/cbseexam/term', active: false, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/9.png' },
+        { label: 'Template', url: '/cbseexam/template', active: false, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/4.png' },
+        { label: 'Reports', url: '/cbseexam/report', active: false, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/10.png' },
+        { label: 'Setting', url: '/cbseexam/settings', active: false, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/11.png' },
+    ];
+
+    // Exam Table Data
+    const [exams, setExams] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchExams();
+    }, []);
+
+    const fetchExams = async () => {
+        try {
+            const response = await api.getCBSEExamList();
+            if (response && response.data && response.data.result) {
+                setExams(response.data.result);
+            }
+            // Also check for master data in index response
+            if (response && response.data) {
+                const data = response.data;
+                if (data.term_list || data.termlist) setTermList(data.term_list || data.termlist);
+                if (data.assessment_result || data.assessmentlist) setAssessmentList(data.assessment_result || data.assessmentlist);
+                if (data.grade_result || data.gradelist) setGradeList(data.grade_result || data.gradelist);
+                if (data.classlist) setClassList(data.classlist);
+            }
+        } catch (error) {
+            console.error("Error fetching exams:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleLogout = () => console.log("Logout");
+    const handleSearch = (term) => console.log("Search:", term);
+
+    const filteredExams = exams.filter(exam =>
+        exam.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exam.term_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exam.class_sections.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <div className="wrapper theme-white-skin">
+            <Header appName={appName} userData={userData} handleLogout={handleLogout} />
+            <Sidebar
+                sessionYear={currentSession?.session}
+                handleSearch={handleSearch}
+            />
+
+            <div className="content-wrapper" style={{ marginTop: '17px' }}>
+                <section className="content">
+                    <div className="row">
+                        {/* Left Sidebar (CBSE Submenu) */}
+                        <div className="col-md-2">
+                            <div className="box border0">
+                                <div className="box-header with-border">
+                                    <h3 className="box-title">State Examination</h3>
+                                </div>
+                                <ul className="tablists">
+                                    {cbseSubmenu.map((item, idx) => (
+                                        <li key={idx}>
+                                            <Link to={item.url} className={item.active ? "active" : ""}>
+                                                <img
+                                                    src={item.icon}
+                                                    alt={item.label}
+                                                    className="img-fluid"
+                                                    style={{ width: '20px', marginRight: '5px' }}
+                                                />
+                                                {item.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Right Content (Exam List) */}
+                        <div className="col-md-10">
+                            <div className="box box-primary">
+                                <div className="box-header ptbnull">
+                                    <h3 className="box-title titlefix">Exam List</h3>
+                                    <div className="box-tools pull-right">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-primary"
+                                            onClick={handleOpenAddModal}
+                                        >
+                                            <i className="fa fa-plus"></i> Add
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="box-body">
+                                    <div className="row">
+                                        <div className="col-md-12">
+                                            <div className="pull-left mb10">
+                                                <div className="input-group">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control input-sm"
+                                                        placeholder="Search..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                        style={{ width: '200px' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="table-responsive mailbox-messages">
+                                        <table className="table table-striped table-bordered table-hover example">
+                                            <thead>
+                                                <tr>
+                                                    <th style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>Exam Name</th>
+                                                    <th style={{ paddingLeft: '5px' }}>Class (Sections)</th>
+                                                    <th>Term</th>
+                                                    <th>Subjects Included</th>
+                                                    <th>Exam Published</th>
+                                                    <th>Published Result</th>
+                                                    <th width="30%">Description</th>
+                                                    <th style={{ whiteSpace: 'nowrap' }}>Created At</th>
+                                                    <th className="text-right noExport">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredExams.map((exam) => (
+                                                    <tr key={exam.id}>
+                                                        <td style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>{exam.name}</td>
+                                                        <td style={{ paddingLeft: '5px' }}>{exam.class_sections}</td>
+                                                        <td>{exam.term_name}</td>
+                                                        <td>{exam.subjectsincluded}</td>
+                                                        <td>
+                                                            {Number(exam.is_active) === 1 ? (
+                                                                <i className="fa fa-check-square-o"></i>
+                                                            ) : (
+                                                                <i className="fa fa-exclamation-circle"></i>
+                                                            )}
+                                                        </td>
+                                                        <td>
+                                                            {Number(exam.is_publish) === 1 ? (
+                                                                <i className="fa fa-check-square-o"></i>
+                                                            ) : (
+                                                                <i className="fa fa-exclamation-circle"></i>
+                                                            )}
+                                                        </td>
+                                                        <td>{exam.description}</td>
+                                                        <td style={{ whiteSpace: 'nowrap' }}>{exam.created_at}</td>
+                                                        <td className="text-right white-space-nowrap">
+                                                            <button
+                                                                className="btn btn-default btn-xs"
+                                                                title="Assign/View Student"
+                                                                onClick={() => openActionModal(exam, "Assign/View Student", "assign")}
+                                                            ><i className="fa fa-tag"></i></button>
+                                                            <button
+                                                                className="btn btn-default btn-xs"
+                                                                title="Exam Subjects"
+                                                                onClick={() => openActionModal(exam, "Exam Subjects", "subjects")}
+                                                            ><i className="fa fa-book"></i></button>
+                                                            <button
+                                                                className="btn btn-default btn-xs"
+                                                                title="Exam Marks"
+                                                                onClick={() => openActionModal(exam, "Exam Marks", "marks")}
+                                                            ><i className="fa fa-newspaper-o"></i></button>
+                                                            <button
+                                                                className="btn btn-default btn-xs"
+                                                                title="Exam Attendance"
+                                                                onClick={() => openActionModal(exam, "Exam Attendance", "attendance")}
+                                                            ><i className="fa fa-calendar-check-o"></i></button>
+                                                            <button
+                                                                className="btn btn-default btn-xs"
+                                                                title="Teacher Remark"
+                                                                onClick={() => openActionModal(exam, "Teacher Remark", "remarks")}
+                                                            ><i className="fa fa-comment"></i></button>
+                                                            <button
+                                                                className="btn btn-default btn-xs"
+                                                                title="Edit"
+                                                                onClick={() => handleEdit(exam)}
+                                                            ><i className="fa fa-pencil"></i></button>
+                                                            <a
+                                                                href={`/cbseexam/exam/examwiserank/${exam.id}`}
+                                                                className="btn btn-default btn-xs"
+                                                                title="Generate Rank"
+                                                            ><i className="fa fa-list-alt"></i></a>
+                                                            <a
+                                                                href={`/cbseexam/exam/examwiseadmitcard/${exam.id}`}
+                                                                className="btn btn-default btn-xs"
+                                                                title="Print Hall Ticket"
+                                                            ><i className="fa fa-ticket"></i></a>
+                                                            <button
+                                                                className="btn btn-default btn-xs"
+                                                                title="Delete"
+                                                                onClick={() => handleDelete(exam)}
+                                                            ><i className="fa fa-remove"></i></button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            {/* Add Exam Modal */}
+            {showAddModal && (
+                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <button type="button" className="close" onClick={() => { setShowAddModal(false); setActiveExam(null); }}>&times;</button>
+                                <h4 className="modal-title">{activeExam ? "Edit Exam" : "Add Exam"}</h4>
+                            </div>
+                            <div className="scroll-area">
+                                <form id="add_exam_form" onSubmit={handleSaveExam}>
+                                    <div className="modal-body">
+                                        <div className="row">
+                                            <div className="col-md-12">
+                                                <div className="form-group">
+                                                    <label>Exam Name</label> <small className="req"> *</small>
+                                                    <input
+                                                        className="form-control"
+                                                        name="exam_name"
+                                                        required
+                                                        style={{ whiteSpace: 'nowrap' }}
+                                                        value={examName}
+                                                        onChange={(e) => setExamName(e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="row">
+                                            <div className="col-md-2">
+                                                <div className="checkbox-inline">
+                                                    <label>
+                                                        <input
+                                                            type="checkbox"
+                                                            name="is_publish"
+                                                            checked={isPublish}
+                                                            onChange={(e) => setIsPublish(e.target.checked)}
+                                                        /> Publish
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-2">
+                                                <div className="checkbox-inline">
+                                                    <label>
+                                                        <input
+                                                            type="checkbox"
+                                                            name="is_active"
+                                                            checked={isActive}
+                                                            onChange={(e) => setIsActive(e.target.checked)}
+                                                        /> Active
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="row">
+                                            <div className="col-md-12">
+                                                <div className="form-group">
+                                                    <label>Description</label>
+                                                    <textarea
+                                                        className="form-control"
+                                                        name="exam_description"
+                                                        rows="3"
+                                                        value={examDescription}
+                                                        onChange={(e) => setExamDescription(e.target.value)}
+                                                    ></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr />
+                                        <div className="row">
+                                            <div className="col-md-4">
+                                                <div className="form-group">
+                                                    <label>Term</label><small className="req"> *</small>
+                                                    <select
+                                                        name="exam_term_id"
+                                                        className="form-control"
+                                                        required
+                                                        value={selectedTerm}
+                                                        onChange={(e) => setSelectedTerm(e.target.value)}
+                                                    >
+                                                        <option value="">Select</option>
+                                                        {termList.map(term => (
+                                                            <option key={term.id} value={term.id}>{term.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-4">
+                                                <div className="form-group">
+                                                    <label>Class</label><small className="req"> *</small>
+                                                    <select
+                                                        name="class_id"
+                                                        className="form-control"
+                                                        required
+                                                        value={selectedClass}
+                                                        onChange={handleClassChange}
+                                                    >
+                                                        <option value="">Select</option>
+                                                        {classList.map(cls => (
+                                                            <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-4">
+                                                <div className="form-group relative">
+                                                    <label>Section</label><small className="req"> *</small>
+                                                    <div className="checkbox-dropdown-container">
+                                                        <div
+                                                            className="custom-select"
+                                                            onClick={() => setIsSectionOpen(!isSectionOpen)}
+                                                            style={{
+                                                                border: '1px solid #ccc',
+                                                                padding: '6px 12px',
+                                                                borderRadius: '0px',
+                                                                cursor: 'pointer',
+                                                                background: '#fff',
+                                                                display: 'flex',
+                                                                justifyContent: 'space-between',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            {selectedSections.length > 0
+                                                                ? `${selectedSections.length} selected`
+                                                                : "Select"}
+                                                            <i className={`fa fa-angle-${isSectionOpen ? 'up' : 'down'}`}></i>
+                                                        </div>
+                                                        {isSectionOpen && (
+                                                            <div className="custom-select-option-box" style={{
+                                                                position: 'absolute',
+                                                                zIndex: 100,
+                                                                background: '#fff',
+                                                                border: '1px solid #ccc',
+                                                                width: '100%',
+                                                                maxHeight: '200px',
+                                                                overflowY: 'auto',
+                                                                boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                                            }}>
+                                                                <div className="custom-select-option checkbox" style={{ padding: '5px 10px', borderBottom: '1px solid #eee' }}>
+                                                                    <label style={{ fontWeight: 'normal', cursor: 'pointer', display: 'block', margin: 0 }}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={selectedSections.length === sectionsList.length}
+                                                                            onChange={toggleSelectAll}
+                                                                            style={{ marginRight: '8px' }}
+                                                                        />
+                                                                        Select All
+                                                                    </label>
+                                                                </div>
+                                                                {sectionsList.map(section => (
+                                                                    <div key={section.id} className="custom-select-option checkbox" style={{ padding: '5px 10px' }}>
+                                                                        <label style={{ fontWeight: 'normal', cursor: 'pointer', display: 'block', margin: 0 }}>
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                checked={selectedSections.includes(section.id)}
+                                                                                onChange={() => toggleSection(section.id)}
+                                                                                style={{ marginRight: '8px' }}
+                                                                            />
+                                                                            {section.name}
+                                                                        </label>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="row">
+                                            <div className="col-md-4">
+                                                <div className="form-group">
+                                                    <label>Assessment</label><small className="req"> *</small>
+                                                    <select
+                                                        name="assessment_id"
+                                                        className="form-control"
+                                                        required
+                                                        value={selectedAssessment}
+                                                        onChange={(e) => setSelectedAssessment(e.target.value)}
+                                                    >
+                                                        <option value="">Select</option>
+                                                        {assessmentList.map(assess => (
+                                                            <option key={assess.id} value={assess.id}>{assess.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-4">
+                                                <div className="form-group">
+                                                    <label>Grade</label><small className="req"> *</small>
+                                                    <select
+                                                        name="grade_id"
+                                                        className="form-control"
+                                                        required
+                                                        value={selectedGrade}
+                                                        onChange={(e) => setSelectedGrade(e.target.value)}
+                                                    >
+                                                        <option value="">Select</option>
+                                                        {gradeList.map(grade => (
+                                                            <option key={grade.id} value={grade.id}>{grade.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button type="submit" className="btn btn-primary pull-right">{activeExam ? "Update" : "Save"}</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showAddModal && <div className="modal-backdrop fade in" onClick={() => setShowAddModal(false)}></div>}
+
+            {/* Action Modals */}
+            {modalConfig.show && modalConfig.type !== 'assign' && modalConfig.type !== 'subjects' && modalConfig.type !== 'remarks' && modalConfig.type !== 'attendance' && (
+                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
+                    <div className="modal-dialog modal-xl">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <button type="button" className="close" onClick={closeActionModal}>&times;</button>
+                                <h4 className="modal-title">{modalConfig.title} - {activeExam?.name}</h4>
+                            </div>
+                            <div className="modal-body">
+                                {modalConfig.type === 'subjects' && (
+                                    /* Logic moved to AssignExamSubjects component */
+                                    null
+                                )}
+                                {modalConfig.type === 'marks' && !subModalConfig.show && (
+                                    <div className="table-responsive">
+                                        {marksLoading ? (
+                                            <div className="text-center p-4">
+                                                <i className="fa fa-spinner fa-spin fa-2x"></i>
+                                                <p>Loading subjects...</p>
+                                            </div>
+                                        ) : (
+                                            <table className="table table-bordered">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Subject</th>
+                                                        <th>Date</th>
+                                                        <th>Start Time</th>
+                                                        <th>Room No</th>
+                                                        <th className="text-right">Enter Marks</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {subjectsForMarks.length > 0 ? (
+                                                        subjectsForMarks.map((sub, idx) => (
+                                                            <tr key={sub.id || idx}>
+                                                                <td>{`${sub.subject_name} ${sub.subject_code ? `(${sub.subject_code})` : ''}`}</td>
+                                                                <td>{sub.date}</td>
+                                                                <td>{sub.time_from}</td>
+                                                                <td>{sub.room_no}</td>
+                                                                <td className="text-right">
+                                                                    <button
+                                                                        className="btn btn-default btn-xs"
+                                                                        onClick={() => handleEnterMarks(sub)}
+                                                                    ><i className="fa fa-newspaper-o"></i></button>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="5" className="text-center text-danger">No subjects assigned to this exam.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        )}
+                                    </div>
+                                )}
+                                {modalConfig.type === 'marks' && subModalConfig.show && (
+                                    <div>
+                                        <button className="btn btn-default btn-sm mb10" onClick={() => setSubModalConfig({ show: false, subject: null })}><i className="fa fa-arrow-left"></i> Back to Subjects</button>
+                                        <h4>Enter {subModalConfig.subject.subject_name} Marks</h4>
+                                        <div className="table-responsive">
+                                            {entryLoading ? (
+                                                <div className="text-center p-4">
+                                                    <i className="fa fa-spinner fa-spin fa-2x"></i>
+                                                    <p>Loading students...</p>
+                                                </div>
+                                            ) : (
+                                                <table className="table table-striped table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Admission No</th>
+                                                            <th>Roll No</th>
+                                                            <th>Student Name</th>
+                                                            <th>Class</th>
+                                                            {assessmentTypesForEntry.map(type => (
+                                                                <th key={type.id}>{type.name} ({type.maximum_marks})</th>
+                                                            ))}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {subjectStudentResults.length > 0 ? (
+                                                            subjectStudentResults.map(student => (
+                                                                <tr key={student.id}>
+                                                                    <td>{student.admission_no}</td>
+                                                                    <td>{student.roll_no}</td>
+                                                                    <td>{`${student.firstname} ${student.lastname}`}</td>
+                                                                    <td>{`${student.class_name} (${student.section_name})`}</td>
+                                                                    {assessmentTypesForEntry.map(type => (
+                                                                        <td key={type.id} style={{ minWidth: '150px' }}>
+                                                                            <label style={{ display: 'block', fontWeight: 'normal', fontSize: '11px' }}>
+                                                                                <input type="checkbox" /> Mark as Absent
+                                                                            </label>
+                                                                            <input type="number" className="form-control input-sm" placeholder={`Max Marks: ${type.maximum_marks}`} />
+                                                                        </td>
+                                                                    ))}
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan={4 + assessmentTypesForEntry.length} className="text-center text-danger">No students found.</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                {/* Attendance moved to separate ExamAttendance modal */}
+                                {/* Remarks moved to separate TeacherRemark modal */}
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-default" onClick={closeActionModal}>Close</button>
+                                <button type="button" className="btn btn-primary" onClick={closeActionModal}>Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {modalConfig.show && modalConfig.type === 'assign' && activeExam && (
+                <AssignExamStudent examId={activeExam.id} handleClose={closeActionModal} />
+            )}
+
+            {modalConfig.show && modalConfig.type === 'subjects' && activeExam && (
+                <AssignExamSubjects examId={activeExam.id} handleClose={closeActionModal} />
+            )}
+
+            {modalConfig.show && modalConfig.type === 'remarks' && activeExam && (
+                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
+                    <div className="modal-dialog modal-xl">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <button type="button" className="close" onClick={closeActionModal}>&times;</button>
+                                <h4 className="modal-title">Teacher Remark - {activeExam?.name}</h4>
+                            </div>
+                            <div className="modal-body">
+                                <TeacherRemark examId={activeExam.id} handleClose={closeActionModal} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {modalConfig.show && modalConfig.type === 'attendance' && activeExam && (
+                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
+                    <div className="modal-dialog modal-xl">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <button type="button" className="close" onClick={closeActionModal}>&times;</button>
+                                <h4 className="modal-title">Exam Attendance - {activeExam?.name}</h4>
+                            </div>
+                            <div className="modal-body">
+                                <ExamAttendance examId={activeExam.id} handleClose={closeActionModal} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {modalConfig.show && modalConfig.type !== 'assign' && modalConfig.type !== 'subjects' && modalConfig.type !== 'remarks' && modalConfig.type !== 'attendance' && <div className="modal-backdrop fade in" onClick={closeActionModal}></div>}
+            {modalConfig.show && (modalConfig.type === 'remarks' || modalConfig.type === 'attendance') && <div className="modal-backdrop fade in" onClick={closeActionModal}></div>}
+
+            <Footer />
+        </div>
+    );
+};
+
+export default CBSEExamList;

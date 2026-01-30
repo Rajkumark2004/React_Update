@@ -1,0 +1,3376 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)https://newlayout.wisibles.com/schsettings/logo -->
+<html class=" " lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>wisibles</title>
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <meta http-equiv="Cache-control" content="no-cache">
+    <meta name="theme-color" content="#424242">
+    <link href="https://newlayout.wisibles.com/uploads/school_content/admin_small_logo/1724058293-111041834766c30ab579501!smalllogo.jpg" rel="shortcut icon" type="image/x-icon">
+
+    <link rel="stylesheet" href="./Admin_logo_files/bootstrap.min.css">
+    <link rel="stylesheet" href="./Admin_logo_files/jquery.mCustomScrollbar.min.css">
+        <link rel="stylesheet" href="./Admin_logo_files/_all-skins.min.css">
+    <link rel="stylesheet" href="./Admin_logo_files/ss-main.css">
+    <link rel="stylesheet" href="./Admin_logo_files/main.css">
+
+    
+    <link rel="stylesheet" href="./Admin_logo_files/ss-print.css">
+
+    <link rel="stylesheet" href="./Admin_logo_files/font-awesome.min.css">
+    <link rel="stylesheet" href="./Admin_logo_files/ionicons.min.css">
+    <link rel="stylesheet" href="./Admin_logo_files/blue.css">
+    <link rel="stylesheet" href="./Admin_logo_files/morris.css">
+    <link rel="stylesheet" href="./Admin_logo_files/jquery-jvectormap-1.2.2.css">
+    <link rel="stylesheet" href="./Admin_logo_files/datepicker3.css">
+    <link rel="stylesheet" href="./Admin_logo_files/bootstrap-colorpicker.css">
+
+    <link rel="stylesheet" href="./Admin_logo_files/daterangepicker-bs3.css">
+    <link rel="stylesheet" href="./Admin_logo_files/bootstrap3-wysihtml5.min.css">
+
+    <link rel="stylesheet" href="./Admin_logo_files/custom_style.css">
+
+    <!--file dropify-->
+    <link rel="stylesheet" href="./Admin_logo_files/dropify.min.css">
+    <!--file nprogress-->
+    <link href="./Admin_logo_files/nprogress.css" rel="stylesheet">
+
+    <!--print table-->
+    <link href="./Admin_logo_files/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="./Admin_logo_files/buttons.dataTables.min.css" rel="stylesheet">
+    <link href="./Admin_logo_files/dataTables.bootstrap.min.css" rel="stylesheet">
+    <!--print table mobile support-->
+    <link href="./Admin_logo_files/responsive.dataTables.min.css" rel="stylesheet">
+    <link href="./Admin_logo_files/rowReorder.dataTables.min.css" rel="stylesheet">
+    <!--language css-->
+    <link rel="stylesheet" type="text/css" href="./Admin_logo_files/flag-icon.min.css">
+    <link rel="stylesheet" type="text/css" href="./Admin_logo_files/bootstrap-select.min.css">
+    <script src="./Admin_logo_files/jquery.min.js"></script>
+    <script language="javascript" src="./Admin_logo_files/jquery-2.2.4.js"></script>
+    <script src="./Admin_logo_files/moment.min.js"></script>
+
+    <script src="./Admin_logo_files/bootstrap-datetimepicker.js"></script>
+    <link rel="stylesheet" href="./Admin_logo_files/bootstrap-datetimepicker.css">
+    <script src="./Admin_logo_files/bootstrap-colorpicker.js"></script>
+
+    <script src="./Admin_logo_files/jquery-ui.min.js"></script>
+    <script src="./Admin_logo_files/school-custom.js"></script>
+    <script src="./Admin_logo_files/school-admin-custom.js"></script>
+    <script src="./Admin_logo_files/sstoast.js"></script>
+
+    <!-- fullCalendar -->
+    <link rel="stylesheet" href="./Admin_logo_files/fullcalendar.min.css">
+    <link rel="stylesheet" href="./Admin_logo_files/fullcalendar.print.min.css" media="print">
+    <script type="text/javascript">
+        var baseurl = "https://newlayout.wisibles.com/";
+        var start_week = 1;
+        var chk_validate = "";
+    </script>
+
+    <style type="text/css">
+        span.flag-icon.flag-icon-us {
+            text-orientation: mixed;
+        }
+
+        #loading {
+            position: fixed;
+            width: 100%;
+            height: 100vh;
+            background: #fff url('https://newlayout.wisibles.com/backend/images/load2.gif') no-repeat center center;
+            z-index: 99999;
+        }
+    </style>
+<style type="text/css" id="mytempCss">._8mqQwQ { display: none; } ._1TWLMK.icF5zO { opacity: 0.01; }</style></head>
+
+<body class="skin-blue fixed sidebar-mini" onload="myFunction()">
+    <div id="loading" style="display: none;">
+
+
+    </div>
+
+
+    <script>
+        function collapseSidebar() {
+
+            if (Boolean(sessionStorage.getItem('sidebar-toggle-collapsed'))) {
+                sessionStorage.setItem('sidebar-toggle-collapsed', '');
+            } else {
+                sessionStorage.setItem('sidebar-toggle-collapsed', '1');
+            }
+
+        }
+
+        function checksidebar() {
+            if (Boolean(sessionStorage.getItem('sidebar-toggle-collapsed'))) {
+                var body = document.getElementsByTagName('body')[0];
+                body.className = body.className + ' sidebar-collapse';
+            }
+        }
+
+        checksidebar();
+    </script>
+    <div class="wrapper">
+
+        <header class="main-header hide-mobile affix-top" id="alert">
+            <a href="https://newlayout.wisibles.com/admin/admin/dashboard" class="logo-hide-on-mobile logo">
+                <span class="logo-mini"><img src="./Admin_logo_files/1724058293-111041834766c30ab579501!smalllogo.jpg" alt="wisibles"></span>
+                <span class="logo-lg"><img src="./Admin_logo_files/1724058282-59163168266c30aaa6154e!adminlogo.jpeg" alt="wisibles"></span>
+            </a>
+            <nav class="navbar navbar-static-top" role="navigation">
+                <!-- <a onclick="collapseSidebar()" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </a> -->
+                <div class="col-lg-5 col-md-3 col-sm-2 col-xs-4">
+                    <!-- <span href="#" class="sidebar-session">
+                        wisibles                    </span> -->
+                    
+                </div>
+                <div class="col-lg-7 col-md-9 col-sm-10 col-xs-8">
+                    <div class="pull-right">
+                        
+                            <form id="header_search_form" class="navbar-form navbar-left search-form" role="search" action="https://newlayout.wisibles.com/admin/admin/search" method="POST">
+                                <input type="hidden" name="ci_csrf_token" value="">                                <div class="input-group">
+                                    <input type="text" value="" name="search_text1" id="search_text1" class="form-control search-form search-form3" placeholder="Search By Student Name, Roll Number, Enroll Number, National Id, Local Id Etc.">
+                                    <span class="input-group-btn">
+                                        <button type="submit" name="search" id="search-btn" onclick="getstudentlist()" style="" class="btn btn-flat topsidesearchbtn"><i class="fa fa-search"></i></button>
+                                    </span>
+                                </div>
+
+                            </form>
+                                                <div class="navbar-custom-menu">
+
+                            
+                            
+                            <ul class="nav navbar-nav headertopmenu">
+
+                                
+                                                                        <li class="cal15 d-sm-none"><a data-placement="bottom" data-toggle="tooltip" title="Calendar" href="https://newlayout.wisibles.com/admin/calendar/events"><i class="fa fa-calendar"></i></a>
+
+                                        </li>
+                                                                                                        <li class="dropdown" data-placement="bottom" data-toggle="tooltip" title="Task">
+                                            <a href="https://newlayout.wisibles.com/schsettings/logo#" class="dropdown-toggle todoicon" data-toggle="dropdown">
+                                                <i class="fa fa-check-square-o"></i>
+                                                                                            </a>
+                                            <ul class="dropdown-menu menuboxshadow">
+
+                                                <li class="todoview plr10 ssnoti">Today You Have 0 Pending Task.<a href="https://newlayout.wisibles.com/admin/calendar/events" class="pull-right pt0">View All</a></li>
+                                                <li>
+                                                    <ul class="todolist">
+                                                        
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </li>
+
+                                        <li class="dropdown d-lg-none d-sm-block ellipsis-px-3">
+                                            <a class="dropdown-toggle" data-toggle="dropdown" href="https://newlayout.wisibles.com/schsettings/logo#"><i class="fa fa-ellipsis-v"></i>
+                                            </a>
+                                            <ul class="dropdown-menu min-w-full sm-drop-down">
+                                                <li><a href="https://newlayout.wisibles.com/admin/calendar/events"><i class="fa fa-calendar"></i></a></li>
+                                                <li><a href="https://newlayout.wisibles.com/admin/chat"><i class="fa fa-whatsapp"></i></a></li>
+                                            </ul>
+                                        </li>
+                                                                            <li class="cal15 d-sm-none"><a data-placement="bottom" data-toggle="tooltip" title="" href="https://newlayout.wisibles.com/admin/chat" data-original-title="Chat" class="todoicon"><i class="fa fa-whatsapp"></i></a></li>
+                                    
+
+                                
+                                <li class="dropdown user-menu">
+                                    <a class="dropdown-toggle" style="padding: 15px 12px;" data-toggle="dropdown" href="https://newlayout.wisibles.com/schsettings/logo#" aria-expanded="false">
+                                        <img src="./Admin_logo_files/default_male.jpg" class="topuser-image" alt="User Image">
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-user menuboxshadow">
+                                        <li>
+                                            <div class="sstopuser">
+                                                <div class="ssuserleft">
+                                                    <a href="https://newlayout.wisibles.com/admin/staff/profile/1"><img src="./Admin_logo_files/default_male.jpg" alt="User Image"></a>
+                                                </div>
+                                                <div class="sstopuser-test">
+                                                    <h4 class="text-capitalize">Super Admin</h4>
+                                                    <h5>Super Admin</h5>
+                                                </div>
+                                                <div class="divider"></div>
+                                                <div class="sspass">
+                                                    <a href="https://newlayout.wisibles.com/admin/staff/profile/1" data-toggle="tooltip" title="" data-original-title="My Profile"><i class="fa fa-user"></i>Profile </a>
+                                                    <a class="pl25" href="https://newlayout.wisibles.com/admin/admin/changepass" data-toggle="tooltip" title="" data-original-title="Change Password"><i class="fa fa-key"></i>Password</a> <a class="pull-right" href="https://newlayout.wisibles.com/site/logout"><i class="fa fa-sign-out fa-fw"></i>Logout</a>
+                                                </div>
+                                            </div><!--./sstopuser-->
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        
+        <header class="main-header hide-desktop" id="alert">
+            
+            <nav class="navbar navbar-static-top" role="navigation">
+                
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 d-flex justify-content-center">
+                    <!-- <span href="#" class="sidebar-session">
+                        wisibles                    </span> -->
+                    <a href="https://newlayout.wisibles.com/admin/admin/dashboard" class="logo">
+
+
+                        <span class="logo-lg"><img src="./Admin_logo_files/1724058282-59163168266c30aaa6154e!adminlogo(1).jpeg" alt="wisibles"></span>
+
+                    </a>
+                </div>
+                
+            </nav>
+        </header>
+
+        
+<aside class="main-sidebar affix-top" id="alert2">
+            <form class="navbar-form navbar-left search-form2" role="search" action="https://newlayout.wisibles.com/admin/admin/search" method="POST">
+            <input type="hidden" name="ci_csrf_token" value="">            <div class="input-group ">
+
+                <input type="text" name="search_text" class="form-control search-form" placeholder="Search By Student Name, Roll Number, Enroll Number, National Id, Local Id Etc.">
+                <span class="input-group-btn">
+                    <button type="submit" name="search" id="search-btn" style="padding: 3px 12px !important;border-radius: 0px 30px 30px 0px; background: #fff;" class="btn btn-flat"><i class="fa fa-search"></i></button>
+                </span>
+            </div>
+        </form>
+        <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 732px;"><section class="sidebar" id="sibe-box" style="height: 732px; overflow: hidden; width: auto;">
+        <ul class="sessionul fixedmenu">
+            <li class="removehover">
+            <a data-toggle="modal" data-target="#sessionModal"><span>Session: <br>2024-25</span><i class="fa fa-pencil pull-right"></i></a>
+
+        </li>
+    
+    <li class="dropdown mega-dropdown">
+       <!-- <a class="dropdown-toggle drop5" data-toggle="dropdown" href="#" aria-expanded="false">
+            <span>Quick Links</span> <i class="fa fa-th pull-right"></i>
+        </a> -->
+        <div class="dropdown-menu verticalmenu side-navbar-vertical ">
+            <div class="side-navbar-width scroll-area mCustomScrollbar _mCS_1 mCS-autoHide" style="position: relative; overflow: visible;"><div id="mCSB_1" class="mCustomScrollBox mCS-minimal mCSB_vertical mCSB_outside" style="max-height: 652px;" tabindex="0"><div id="mCSB_1_container" class="mCSB_container" style="position:relative; top:0; left:0;" dir="ltr">
+                <div class="card-columns-sidebar" style="color: black;">
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-ioxhost ftlayer"></i> Help Desk</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/enquiry"><i class="fa fa-angle-double-right"></i>Admission Enquiry</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/visitors"><i class="fa fa-angle-double-right"></i>Visitor Book</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/generalcall"><i class="fa fa-angle-double-right"></i>Phone Call Log</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/dispatch"><i class="fa fa-angle-double-right"></i>Postal Dispatch</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/receive"><i class="fa fa-angle-double-right"></i>Postal Receive</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/complaint"><i class="fa fa-angle-double-right"></i>Complain</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/visitorspurpose"><i class="fa fa-angle-double-right"></i>Setup Front Office</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-user-plus ftlayer"></i> SIS</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/student/search"><i class="fa fa-angle-double-right"></i>Student Details</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/student/create"><i class="fa fa-angle-double-right"></i>Student Admission</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/onlinestudent"><i class="fa fa-angle-double-right"></i>Online Admission</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/student/disablestudentslist"><i class="fa fa-angle-double-right"></i>Disabled Students</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/student/multiclass"><i class="fa fa-angle-double-right"></i>Multi Class Student</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/student/bulkdelete"><i class="fa fa-angle-double-right"></i>Bulk Delete</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/category"><i class="fa fa-angle-double-right"></i>Student Categories</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/schoolhouse"><i class="fa fa-angle-double-right"></i>Student House</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/disable_reason"><i class="fa fa-angle-double-right"></i>Disable Reason</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-money ftlayer"></i> Fees</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/studentfee"><i class="fa fa-angle-double-right"></i>Collect Fees</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/financereports/collectfee_report"><i class="fa fa-angle-double-right"></i>Collect Fees</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/offlinepayment"><i class="fa fa-angle-double-right"></i>Offline Bank Payments</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/studentfee/searchpayment"><i class="fa fa-angle-double-right"></i>Search Fees Payment</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/studentfee/feesearch"><i class="fa fa-angle-double-right"></i>Search Due Fees</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/feemaster"><i class="fa fa-angle-double-right"></i>Fees Master</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/feegroup"><i class="fa fa-angle-double-right"></i>Fees Group</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/feetype"><i class="fa fa-angle-double-right"></i>Fees Type</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/feediscount"><i class="fa fa-angle-double-right"></i>Fees Discount</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/feesforward"><i class="fa fa-angle-double-right"></i>Fees Carry Forward</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/feereminder/setting"><i class="fa fa-angle-double-right"></i>Fees Reminder</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/feesreceipt/feesreceipt_24"><i class="fa fa-angle-double-right"></i>Fees Receipt 24</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/feediscount_report"><i class="fa fa-angle-double-right"></i>Fees Discount Report</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-usd ftlayer"></i> Income</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/income"><i class="fa fa-angle-double-right"></i>Add Income</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/income/incomesearch"><i class="fa fa-angle-double-right"></i>Search Income</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/incomehead"><i class="fa fa-angle-double-right"></i>Income Head</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-credit-card ftlayer"></i> Expenses</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/expense"><i class="fa fa-angle-double-right"></i>Add Expense</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/expense/expensesearch"><i class="fa fa-angle-double-right"></i>Search Expense</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/expensehead"><i class="fa fa-angle-double-right"></i>Expense Head</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-calendar-check-o ftlayer"></i> Attendance</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/stuattendence"><i class="fa fa-angle-double-right"></i>Student Attendance</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/approve_leave"><i class="fa fa-angle-double-right"></i>Approve Leave</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/stuattendence/attendencereport"><i class="fa fa-angle-double-right"></i>Attendance By Date</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/subjectattendence/index"><i class="fa fa-angle-double-right"></i>Period Attendance</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/subjectattendence/reportbydate"><i class="fa fa-angle-double-right"></i>Period Attendance By Date</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/late_entries/index"><i class="fa fa-angle-double-right"></i>Late Entries</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-file-text-o"></i> State Examination</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/exam"><i class="fa fa-angle-double-right"></i>Exam</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/exam/examtimetable"><i class="fa fa-angle-double-right"></i>Exam Schedule</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/result/marksheet"><i class="fa fa-angle-double-right"></i>Print Marksheet</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/grade/gradelist"><i class="fa fa-angle-double-right"></i>Exam Grade</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/observation/assign"><i class="fa fa-angle-double-right"></i>Assign Observation</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/observation"><i class="fa fa-angle-double-right"></i>Observation</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/observationparameter"><i class="fa fa-angle-double-right"></i>Observation Parameter</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/assessment"><i class="fa fa-angle-double-right"></i>Assessment</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/term"><i class="fa fa-angle-double-right"></i>Term</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/template"><i class="fa fa-angle-double-right"></i>Template</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/report/index"><i class="fa fa-angle-double-right"></i>Reports</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/cbseexam/setting/index"><i class="fa fa-angle-double-right"></i>Setting</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                    
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-file-video-o ftlayer"></i> Courses</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/onlinecourse"><i class="fa fa-angle-double-right"></i>Courses</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                    
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-list-alt ftlayer"></i> Lesson Plan</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/lessonplan/copylesson"><i class="fa fa-angle-double-right"></i>Copy Old Lessons</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/syllabus"><i class="fa fa-angle-double-right"></i>Manage Lesson Plan</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/syllabus/status"><i class="fa fa-angle-double-right"></i>Manage Syllabus Status</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/lessonplan/lesson"><i class="fa fa-angle-double-right"></i>Lesson</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/lessonplan/topic"><i class="fa fa-angle-double-right"></i>Topic</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-mortar-board ftlayer"></i> Academics</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/timetable/classreport"><i class="fa fa-angle-double-right"></i>Class Timetable</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/timetable/mytimetable"><i class="fa fa-angle-double-right"></i>Teachers Timetable</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/teacher/assign_class_teacher"><i class="fa fa-angle-double-right"></i>Assign Class Teacher</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/stdtransfer"><i class="fa fa-angle-double-right"></i>Promote Students</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/subjectgroup"><i class="fa fa-angle-double-right"></i>Subject Group</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/subject"><i class="fa fa-angle-double-right"></i>Subjects</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/classes"><i class="fa fa-angle-double-right"></i>Class</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/sections"><i class="fa fa-angle-double-right"></i>Sections</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/teacher/assign_subject_teacher"><i class="fa fa-angle-double-right"></i>Assign Subject Teacher</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-sitemap ftlayer"></i> Human Resource</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/staff"><i class="fa fa-angle-double-right"></i>Staff Directory</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/staffattendance"><i class="fa fa-angle-double-right"></i>Staff Attendance</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/payroll"><i class="fa fa-angle-double-right"></i>Payroll</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/leaverequest/leaverequest"><i class="fa fa-angle-double-right"></i>Approve Leave Request</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/staff/leaverequest"><i class="fa fa-angle-double-right"></i>Apply Leave</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/leavetypes"><i class="fa fa-angle-double-right"></i>Leave Type</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/staff/rating"><i class="fa fa-angle-double-right"></i>Teachers Rating</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/department/department"><i class="fa fa-angle-double-right"></i>Department</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/designation/designation"><i class="fa fa-angle-double-right"></i>Designation</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/staff/disablestafflist"><i class="fa fa-angle-double-right"></i>Disabled Staff</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-bullhorn ftlayer"></i> Messages</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/notification"><i class="fa fa-angle-double-right"></i>Notice Board</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/mailsms/compose"><i class="fa fa-angle-double-right"></i>Send Email</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/mailsms/compose_sms"><i class="fa fa-angle-double-right"></i>Send SMS</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/mailsms/index"><i class="fa fa-angle-double-right"></i>Email / SMS Log</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/mailsms/schedule"><i class="fa fa-angle-double-right"></i>Schedule Email SMS Log</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/student/bulkmail"><i class="fa fa-angle-double-right"></i>Login Credentials Send</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/mailsms/email_template"><i class="fa fa-angle-double-right"></i>Email Template</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/mailsms/sms_template"><i class="fa fa-angle-double-right"></i>SMS Template</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-download ftlayer"></i> Download Center</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/contenttype"><i class="fa fa-angle-double-right"></i>Content Type</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/content/list"><i class="fa fa-angle-double-right"></i>Content Share List</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/content/upload"><i class="fa fa-angle-double-right"></i>Upload /Share Content</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/video_tutorial"><i class="fa fa-angle-double-right"></i>Video Tutorial</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-flask ftlayer"></i> Homework</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/homework"><i class="fa fa-angle-double-right"></i>Add Homework</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/homework/dailyassignment"><i class="fa fa-angle-double-right"></i>Daily Assignment</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                    
+                    
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-bus ftlayer"></i> Transport</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/transport/feemaster"><i class="fa fa-angle-double-right"></i>Fees Master</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/pickuppoint"><i class="fa fa-angle-double-right"></i>Pickup Point</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/route"><i class="fa fa-angle-double-right"></i>Routes</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/vehicle"><i class="fa fa-angle-double-right"></i>Vehicles</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/vehroute"><i class="fa fa-angle-double-right"></i>Assign Vehicle</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/pickuppoint/assign"><i class="fa fa-angle-double-right"></i>Route Pickup Point</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/pickuppoint/student_fees"><i class="fa fa-angle-double-right"></i>Student Transport Fees</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-building-o ftlayer"></i> Hostel</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/hostelroom"><i class="fa fa-angle-double-right"></i>Hostel Rooms</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/roomtype"><i class="fa fa-angle-double-right"></i>Room Type</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/hostel"><i class="fa fa-angle-double-right"></i>Hostel</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-newspaper-o ftlayer"></i> Certificate</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/studentcertificate"><i class="fa fa-angle-double-right"></i>Student Certificate</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/generatecertificate"><i class="fa fa-angle-double-right"></i>Generate Certificate</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/studentidcard"><i class="fa fa-angle-double-right"></i>Student ID Card</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/generateidcard/search"><i class="fa fa-angle-double-right"></i>Generate ID Card</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/staffidcard"><i class="fa fa-angle-double-right"></i>Staff ID Card</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/generatestaffidcard"><i class="fa fa-angle-double-right"></i>Generate Staff ID Card</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-empire ftlayer"></i> Front CMS</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/front/events"><i class="fa fa-angle-double-right"></i>Event</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/front/gallery"><i class="fa fa-angle-double-right"></i>Gallery</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/front/notice"><i class="fa fa-angle-double-right"></i>News</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/front/media"><i class="fa fa-angle-double-right"></i>Media Manager</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/front/page"><i class="fa fa-angle-double-right"></i>Pages</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/front/menus"><i class="fa fa-angle-double-right"></i>Menus</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/front/banner"><i class="fa fa-angle-double-right"></i>Banner Images</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-universal-access ftlayer"></i> Alumni</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/alumni/alumnilist"><i class="fa fa-angle-double-right"></i>Manage Alumni</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/alumni/events"><i class="fa fa-angle-double-right"></i>Events</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-line-chart ftlayer"></i> Reports</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/report/studentinformation"><i class="fa fa-angle-double-right"></i>SIS</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/financereports/finance"><i class="fa fa-angle-double-right"></i>Finance</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/attendencereports/attendance"><i class="fa fa-angle-double-right"></i>Attendance</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/examresult/examinations"><i class="fa fa-angle-double-right"></i>Examinations</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/onlineexam/report"><i class="fa fa-angle-double-right"></i>Online Examinations</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/report/lesson_plan"><i class="fa fa-angle-double-right"></i>Lesson Plan</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/report/human_resource"><i class="fa fa-angle-double-right"></i>Human Resource</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/homework/homeworkordailyassignmentreport"><i class="fa fa-angle-double-right"></i>Homework</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/report/library"><i class="fa fa-angle-double-right"></i>Library</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/report/inventory"><i class="fa fa-angle-double-right"></i>Inventory</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/route/studenttransportdetails"><i class="fa fa-angle-double-right"></i>Transport</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/hostelroom/studenthosteldetails"><i class="fa fa-angle-double-right"></i>Hostel</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/report/alumnireport"><i class="fa fa-angle-double-right"></i>Alumni</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/userlog"><i class="fa fa-angle-double-right"></i>User Log</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/audit"><i class="fa fa-angle-double-right"></i>Audit Trail Report</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                                                        <div class="card-sidebar">
+                                        <h4><i class="fa fa-gears ftlayer"></i> Settings</h4>
+
+                                                                                    <ul>
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/schsettings"><i class="fa fa-angle-double-right"></i>General Setting</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/sessions"><i class="fa fa-angle-double-right"></i>Session Setting</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/notification/setting"><i class="fa fa-angle-double-right"></i>Notification Setting</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/smsconfig"><i class="fa fa-angle-double-right"></i>SMS Setting</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/emailconfig"><i class="fa fa-angle-double-right"></i>Email Setting</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/paymentsettings"><i class="fa fa-angle-double-right"></i>Payment Methods</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/print_headerfooter"><i class="fa fa-angle-double-right"></i>Print Header Footer</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/frontcms"><i class="fa fa-angle-double-right"></i>Front CMS Setting</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/roles"><i class="fa fa-angle-double-right"></i>Roles Permissions</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/admin/backup"><i class="fa fa-angle-double-right"></i>Backup Restore</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/language"><i class="fa fa-angle-double-right"></i>Languages</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/currency"><i class="fa fa-angle-double-right"></i>Currency</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/users"><i class="fa fa-angle-double-right"></i>Users</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/module"><i class="fa fa-angle-double-right"></i>Modules</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/customfield"><i class="fa fa-angle-double-right"></i>Custom Fields</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/captcha"><i class="fa fa-angle-double-right"></i>Captcha Setting</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/systemfield"><i class="fa fa-angle-double-right"></i>System Fields</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/student/profilesetting"><i class="fa fa-angle-double-right"></i>Student Profile Update</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/onlineadmission/admissionsetting"><i class="fa fa-angle-double-right"></i>Online Admission</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/admin/filetype"><i class="fa fa-angle-double-right"></i>File Types</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/sidemenu"><i class="fa fa-angle-double-right"></i>Sidebar Menu</a>
+                                                        </li>
+
+                                                                                                        <li>
+                                                            <a href="https://newlayout.wisibles.com/admin/updater"><i class="fa fa-angle-double-right"></i>System Update</a>
+                                                        </li>
+
+                                                                                            </ul>
+
+                                        
+                                    </div>
+                            
+                    
+
+                </div>
+            </div></div><div id="mCSB_1_scrollbar_vertical" class="mCSB_scrollTools mCSB_1_scrollbar mCS-minimal mCSB_scrollTools_vertical" style="display: block;"><div class="mCSB_draggerContainer"><div id="mCSB_1_dragger_vertical" class="mCSB_dragger" style="position: absolute; min-height: 50px; display: block; height: 529px; max-height: 618px; top: 0px;"><div class="mCSB_dragger_bar" style="line-height: 50px;"></div></div><div class="mCSB_draggerRail"></div></div></div></div>
+
+        </div>
+    </li>
+</ul>
+<script>
+    $('.verticalmenu').click(function(event) {
+        event.stopPropagation();
+    });
+
+    $(".mCustomScrollbar").mCustomScrollbar({
+        scrollInertia: 1000,
+        mouseWheelPixels: 170,
+        autoDraggerLength: false,
+    });
+</script>
+                    <ul class="sidebar-menu verttop">
+
+                <!-- //==================sidebar dynamic======================= -->
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/enquiry">
+                                        <img width="25px" src="./Admin_logo_files/1.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Help Desk</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/enquiry"><i class="fa fa-angle-double-right"></i>Admission Enquiry</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/visitors"><i class="fa fa-angle-double-right"></i>Visitor Book</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/generalcall"><i class="fa fa-angle-double-right"></i>Phone Call Log</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/dispatch"><i class="fa fa-angle-double-right"></i>Postal Dispatch</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/receive"><i class="fa fa-angle-double-right"></i>Postal Receive</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/complaint"><i class="fa fa-angle-double-right"></i>Complain</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/visitorspurpose"><i class="fa fa-angle-double-right"></i>Setup Front Office</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/student/search">
+                                        <img width="25px" src="./Admin_logo_files/2.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">SIS</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/student/search"><i class="fa fa-angle-double-right"></i>Student Details</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/student/create"><i class="fa fa-angle-double-right"></i>Student Admission</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/onlinestudent"><i class="fa fa-angle-double-right"></i>Online Admission</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/student/disablestudentslist"><i class="fa fa-angle-double-right"></i>Disabled Students</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/student/multiclass"><i class="fa fa-angle-double-right"></i>Multi Class Student</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/student/bulkdelete"><i class="fa fa-angle-double-right"></i>Bulk Delete</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/category"><i class="fa fa-angle-double-right"></i>Student Categories</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/schoolhouse"><i class="fa fa-angle-double-right"></i>Student House</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/disable_reason"><i class="fa fa-angle-double-right"></i>Disable Reason</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/studentfee">
+                                        <img width="25px" src="./Admin_logo_files/3.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Fees</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/studentfee"><i class="fa fa-angle-double-right"></i>Collect Fees</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/offlinepayment"><i class="fa fa-angle-double-right"></i>Offline Bank Payments</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/studentfee/searchpayment"><i class="fa fa-angle-double-right"></i>Search Fees Payment</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/studentfee/feesearch"><i class="fa fa-angle-double-right"></i>Search Due Fees</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/feemaster"><i class="fa fa-angle-double-right"></i>Fees Master</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/feegroup"><i class="fa fa-angle-double-right"></i>Fees Group</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/feetype"><i class="fa fa-angle-double-right"></i>Fees Type</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/feediscount"><i class="fa fa-angle-double-right"></i>Fees Discount</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/feesforward"><i class="fa fa-angle-double-right"></i>Fees Carry Forward</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/feereminder/setting"><i class="fa fa-angle-double-right"></i>Fees Reminder</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/feesreceipt/feesreceipt_24"><i class="fa fa-angle-double-right"></i>Fees Receipt 24</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/feediscount_report"><i class="fa fa-angle-double-right"></i>Fees Discount Report</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/stuattendence">
+                                        <img width="25px" src="./Admin_logo_files/4.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Attendance</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/stuattendence"><i class="fa fa-angle-double-right"></i>Student Attendance</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/approve_leave"><i class="fa fa-angle-double-right"></i>Approve Leave</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/stuattendence/attendencereport"><i class="fa fa-angle-double-right"></i>Attendance By Date</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/late_entries/index"><i class="fa fa-angle-double-right"></i>Late Entries</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/timetable/classreport">
+                                        <img width="25px" src="./Admin_logo_files/6.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Academics</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/timetable/classreport"><i class="fa fa-angle-double-right"></i>Class Timetable</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/timetable/mytimetable"><i class="fa fa-angle-double-right"></i>Teachers Timetable</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/teacher/assign_class_teacher"><i class="fa fa-angle-double-right"></i>Assign Class Teacher</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/stdtransfer"><i class="fa fa-angle-double-right"></i>Promote Students</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/subjectgroup"><i class="fa fa-angle-double-right"></i>Subject Group</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/subject"><i class="fa fa-angle-double-right"></i>Subjects</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/classes"><i class="fa fa-angle-double-right"></i>Class</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/sections"><i class="fa fa-angle-double-right"></i>Sections</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/teacher/assign_subject_teacher"><i class="fa fa-angle-double-right"></i>Assign Subject Teacher</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/cbseexam/exam">
+                                        <img width="25px" src="./Admin_logo_files/5.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">State Examination</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/exam"><i class="fa fa-angle-double-right"></i>Exam</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/exam/examtimetable"><i class="fa fa-angle-double-right"></i>Exam Schedule</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/result/marksheet"><i class="fa fa-angle-double-right"></i>Print Marksheet</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/grade/gradelist"><i class="fa fa-angle-double-right"></i>Exam Grade</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/observation/assign"><i class="fa fa-angle-double-right"></i>Assign Observation</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/observation"><i class="fa fa-angle-double-right"></i>Observation</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/observationparameter"><i class="fa fa-angle-double-right"></i>Observation Parameter</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/assessment"><i class="fa fa-angle-double-right"></i>Assessment</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/term"><i class="fa fa-angle-double-right"></i>Term</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/template"><i class="fa fa-angle-double-right"></i>Template</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/report/index"><i class="fa fa-angle-double-right"></i>Reports</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/cbseexam/setting/index"><i class="fa fa-angle-double-right"></i>Setting</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/onlinecourse">
+                                        <img width="25px" src="./Admin_logo_files/8.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Courses</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/onlinecourse"><i class="fa fa-angle-double-right"></i>Courses</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/homework">
+                                        <img width="25px" src="./Admin_logo_files/5.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Homework</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/homework"><i class="fa fa-angle-double-right"></i>Add Homework</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/homework/dailyassignment"><i class="fa fa-angle-double-right"></i>Daily Assignment</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/route/">
+                                        <img width="25px" src="./Admin_logo_files/tr.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Transport</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/transport/feemaster"><i class="fa fa-angle-double-right"></i>Fees Master</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/pickuppoint"><i class="fa fa-angle-double-right"></i>Pickup Point</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/route"><i class="fa fa-angle-double-right"></i>Routes</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/vehicle"><i class="fa fa-angle-double-right"></i>Vehicles</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/vehroute"><i class="fa fa-angle-double-right"></i>Assign Vehicle</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/pickuppoint/assign"><i class="fa fa-angle-double-right"></i>Route Pickup Point</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/pickuppoint/student_fees"><i class="fa fa-angle-double-right"></i>Student Transport Fees</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/notification">
+                                        <img width="25px" src="./Admin_logo_files/9.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Messages</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/notification"><i class="fa fa-angle-double-right"></i>Notice Board</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/mailsms/compose"><i class="fa fa-angle-double-right"></i>Send Email</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/mailsms/compose_sms"><i class="fa fa-angle-double-right"></i>Send SMS</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/mailsms/index"><i class="fa fa-angle-double-right"></i>Email / SMS Log</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/mailsms/schedule"><i class="fa fa-angle-double-right"></i>Schedule Email SMS Log</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/student/bulkmail"><i class="fa fa-angle-double-right"></i>Login Credentials Send</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/mailsms/email_template"><i class="fa fa-angle-double-right"></i>Email Template</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/mailsms/sms_template"><i class="fa fa-angle-double-right"></i>SMS Template</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/staff">
+                                        <img width="25px" src="./Admin_logo_files/hr.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Human Resource</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/staff"><i class="fa fa-angle-double-right"></i>Staff Directory</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/staffattendance"><i class="fa fa-angle-double-right"></i>Staff Attendance</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/payroll"><i class="fa fa-angle-double-right"></i>Payroll</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/leaverequest/leaverequest"><i class="fa fa-angle-double-right"></i>Approve Leave Request</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/staff/leaverequest"><i class="fa fa-angle-double-right"></i>Apply Leave</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/leavetypes"><i class="fa fa-angle-double-right"></i>Leave Type</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/staff/rating"><i class="fa fa-angle-double-right"></i>Teachers Rating</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/department/department"><i class="fa fa-angle-double-right"></i>Department</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/designation/designation"><i class="fa fa-angle-double-right"></i>Designation</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/staff/disablestafflist"><i class="fa fa-angle-double-right"></i>Disabled Staff</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/contenttype">
+                                        <img width="25px" src="./Admin_logo_files/do.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Download Center</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/contenttype"><i class="fa fa-angle-double-right"></i>Content Type</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/content/list"><i class="fa fa-angle-double-right"></i>Content Share List</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/content/upload"><i class="fa fa-angle-double-right"></i>Upload /Share Content</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/video_tutorial"><i class="fa fa-angle-double-right"></i>Video Tutorial</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/studentidcard">
+                                        <img width="25px" src="./Admin_logo_files/ce.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Certificate</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/studentcertificate"><i class="fa fa-angle-double-right"></i>Student Certificate</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/generatecertificate"><i class="fa fa-angle-double-right"></i>Generate Certificate</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/studentidcard"><i class="fa fa-angle-double-right"></i>Student ID Card</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/generateidcard/search"><i class="fa fa-angle-double-right"></i>Generate ID Card</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/staffidcard"><i class="fa fa-angle-double-right"></i>Staff ID Card</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/generatestaffidcard"><i class="fa fa-angle-double-right"></i>Generate Staff ID Card</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/income">
+                                        <img width="25px" src="./Admin_logo_files/4.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Income</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/income"><i class="fa fa-angle-double-right"></i>Add Income</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/income/incomesearch"><i class="fa fa-angle-double-right"></i>Search Income</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/incomehead"><i class="fa fa-angle-double-right"></i>Income Head</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/expense">
+                                        <img width="25px" src="./Admin_logo_files/5.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Expenses</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/expense"><i class="fa fa-angle-double-right"></i>Add Expense</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/expense/expensesearch"><i class="fa fa-angle-double-right"></i>Search Expense</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/expensehead"><i class="fa fa-angle-double-right"></i>Expense Head</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/admin/hostelroom">
+                                        <img width="25px" src="./Admin_logo_files/ho.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Hostel</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/hostelroom"><i class="fa fa-angle-double-right"></i>Hostel Rooms</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/roomtype"><i class="fa fa-angle-double-right"></i>Room Type</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/hostel"><i class="fa fa-angle-double-right"></i>Hostel</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview ">
+
+                                    <a href="https://newlayout.wisibles.com/report/studentinformation">
+                                        <img width="25px" src="./Admin_logo_files/11.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Reports</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/report/studentinformation"><i class="fa fa-angle-double-right"></i>SIS</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/financereports/finance"><i class="fa fa-angle-double-right"></i>Finance</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/attendencereports/attendance"><i class="fa fa-angle-double-right"></i>Attendance</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/examresult/examinations"><i class="fa fa-angle-double-right"></i>Examinations</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/onlineexam/report"><i class="fa fa-angle-double-right"></i>Online Examinations</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/report/lesson_plan"><i class="fa fa-angle-double-right"></i>Lesson Plan</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/report/human_resource"><i class="fa fa-angle-double-right"></i>Human Resource</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/homework/homeworkordailyassignmentreport"><i class="fa fa-angle-double-right"></i>Homework</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/report/library"><i class="fa fa-angle-double-right"></i>Library</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/report/inventory"><i class="fa fa-angle-double-right"></i>Inventory</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/route/studenttransportdetails"><i class="fa fa-angle-double-right"></i>Transport</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/hostelroom/studenthosteldetails"><i class="fa fa-angle-double-right"></i>Hostel</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/report/alumnireport"><i class="fa fa-angle-double-right"></i>Alumni</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/userlog"><i class="fa fa-angle-double-right"></i>User Log</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/audit"><i class="fa fa-angle-double-right"></i>Audit Trail Report</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                
+                                <li class="treeview active">
+
+                                    <a href="https://newlayout.wisibles.com/schsettings">
+                                        <img width="25px" src="./Admin_logo_files/10.png" alt="icon2" class="img-fluid">
+                                       <span style="display: block; font-family: &#39;Roboto-Bold&#39;; font-size: 11px; white-space: normal; word-wrap: break-word; text-align: center; max-width: 90px; overflow: hidden; padding-top:5px; ">Settings</span> 
+                                    </a>
+
+                                    <!--                                         <ul class="treeview-menu">
+                                            
+                                                    <li  class="active"><a href="https://newlayout.wisibles.com/schsettings"><i class="fa fa-angle-double-right"></i>General Setting</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/sessions"><i class="fa fa-angle-double-right"></i>Session Setting</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/notification/setting"><i class="fa fa-angle-double-right"></i>Notification Setting</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/smsconfig"><i class="fa fa-angle-double-right"></i>SMS Setting</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/emailconfig"><i class="fa fa-angle-double-right"></i>Email Setting</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/paymentsettings"><i class="fa fa-angle-double-right"></i>Payment Methods</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/print_headerfooter"><i class="fa fa-angle-double-right"></i>Print Header Footer</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/frontcms"><i class="fa fa-angle-double-right"></i>Front CMS Setting</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/roles"><i class="fa fa-angle-double-right"></i>Roles Permissions</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/admin/backup"><i class="fa fa-angle-double-right"></i>Backup Restore</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/language"><i class="fa fa-angle-double-right"></i>Languages</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/currency"><i class="fa fa-angle-double-right"></i>Currency</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/users"><i class="fa fa-angle-double-right"></i>Users</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/module"><i class="fa fa-angle-double-right"></i>Modules</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/customfield"><i class="fa fa-angle-double-right"></i>Custom Fields</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/captcha"><i class="fa fa-angle-double-right"></i>Captcha Setting</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/systemfield"><i class="fa fa-angle-double-right"></i>System Fields</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/student/profilesetting"><i class="fa fa-angle-double-right"></i>Student Profile Update</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/onlineadmission/admissionsetting"><i class="fa fa-angle-double-right"></i>Online Admission</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/admin/filetype"><i class="fa fa-angle-double-right"></i>File Types</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/sidemenu"><i class="fa fa-angle-double-right"></i>Sidebar Menu</a></li>
+
+
+                                            
+                                                    <li  class=""><a href="https://newlayout.wisibles.com/admin/updater"><i class="fa fa-angle-double-right"></i>System Update</a></li>
+
+
+                                                                                    </ul>
+
+                                     -->
+                                </li>
+                                <!-- //==================sidebar dynamic======================= -->
+
+            </ul>
+        
+
+        <!---->
+        <!--<ul class="sidebar-menu verttop">-->
+
+        <!--<li class=""><a href="https://newlayout.wisibles.com/studentfee"><i class="fa fa-angle-double-right"></i> Fee Received</a></li>-->
+
+        <!--    <li class="treeview ">-->
+        <!--            <a href="#">-->
+        <!--                <i class="fa fa-user-plus ftlayer"></i> <span>Lead Management</span> <i class="fa fa-angle-left pull-right"></i>-->
+        <!--            </a>-->
+        <!--            <ul class="treeview-menu">-->
+
+        <!--                <li class=""><a href="https://newlayout.wisibles.com/admin/leadmanagement"><i class="fa fa-angle-double-right"></i> Assign Leads</a></li>-->
+
+        <!--                <li class=""><a href="https://newlayout.wisibles.com/financereports/leadreport"><i class="fa fa-angle-double-right"></i> Leads Status</a></li>-->
+
+        <!--            </ul>-->
+        <!--    </li>-->
+        <!--</ul>    -->
+        <!---->
+
+        
+
+    </section><div class="slimScrollBar" style="background: rgba(0, 0, 0, 0.2); width: 3px; position: absolute; top: 0px; opacity: 0.4; display: block; border-radius: 7px; z-index: 99; right: 1px; height: 428.317px;"></div><div class="slimScrollRail" style="width: 3px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; right: 1px;"></div></div>
+</aside>
+
+<!-- New Bottom Navigation for Mobile View -->
+
+<!-- New Bottom Navigation for Mobile View -->
+<nav class="mobile-bottom-nav" id="bottom-menu">
+    <ul class="bottom-menu-list" style="display: flex; justify-content: space-between;">
+
+        <li class="treeview ">
+            <a href="https://newlayout.wisibles.com/admin/admin/dashboard" data-toggle="tooltip" data-original-title="Dashboard">
+
+                <span class="info-box-iconn bg-none">
+                    <img src="./Admin_logo_files/1.png" alt="icon2" class="img-fluid">
+                    <span>Dashboard</span>
+                </span>
+            </a>
+        </li>
+
+        <li class="">
+            <a href="https://newlayout.wisibles.com/studentfee" data-toggle="tooltip" data-original-title="My Profile">
+
+                <span class="info-box-iconn bg-none">
+                    <img src="./Admin_logo_files/3.png" alt="icon2" class="img-fluid">
+                    <span>Fees</span>
+                </span>
+            </a>
+        </li>
+
+        <li class="treeview ">
+            <a href="https://newlayout.wisibles.com/admin/stuattendence" data-toggle="tooltip" data-original-title="Fees">
+
+                <span class="info-box-iconn bg-none">
+                    <img src="./Admin_logo_files/4.png" alt="icon2" class="img-fluid">
+                    <span>Attendance</span>
+                </span>
+            </a>
+        </li>
+
+        <li class="">
+            <a href="https://newlayout.wisibles.com/admin/admin/sidebar_menus" data-toggle="tooltip" data-original-title="My Profile">
+
+                <span class="info-box-iconn bg-none">
+                    <img src="./Admin_logo_files/dots.png" alt="icon2" class="img-fluid">
+                    <span>More</span>
+                </span>
+            </a>
+        </li>
+        
+        <li class="">
+            <a href="https://newlayout.wisibles.com/site/logout" onclick="return confirmLogout();" data-toggle="tooltip" data-original-title="Logout">
+
+                <span class="info-box-iconn bg-none">
+                    <img src="./Admin_logo_files/logout.png" alt="icon2" class="img-fluid">
+                    <span>Logout</span>
+                </span>
+            </a>
+        </li>
+
+    </ul>
+</nav>
+
+<script>
+    function confirmLogout() {
+        return confirm("Are you sure you want to log out?");
+    }
+</script>        <script>
+            function set_languages(lang_id) {
+                $.ajax({
+                    type: "POST",
+                    url: base_url + "admin/language/user_language/" + lang_id,
+                    data: {},
+                    success: function(data) {
+                        successMsg("Status Change Successfully");
+                        window.location.reload('true');
+                    }
+                });
+            }
+        </script>
+
+        <script>
+            // $(document).ready(function(){
+            // 	$('div#loading').removeAttr('id');
+            // });
+            var preloader = document.getElementById("loading");
+            // window.addEventListener('load', function(){
+            // 	preloader.style.display = 'none';
+            // 	})
+
+            function myFunction() {
+                preloader.style.display = 'none';
+            };
+        </script><div class="content-wrapper" style="min-height: 763px;">
+    <section class="content">
+        <div class="row">
+            <div class="col-md-2">
+    <div class="box border0">
+        <div class="box-header with-border">
+            <h3 class="box-title">Settings</h3>
+        </div>
+        <ul class="tablists">
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings"><img src="./Admin_logo_files/1(1).png" alt="icon7" class="img-fluid" style="width:20px"> General Setting</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/sessions"><img src="./Admin_logo_files/2(1).png" alt="icon7" class="img-fluid" style="width:20px"> Session Setting</a>
+            </li>
+
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/notification/setting"><img src="./Admin_logo_files/3(1).png" alt="icon7" class="img-fluid" style="width:20px"> Notification Setting</a>
+            </li> 
+            
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/smsconfig"><img src="./Admin_logo_files/4(1).png" alt="icon7" class="img-fluid" style="width:20px"> SMS Setting</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/emailconfig"><img src="./Admin_logo_files/5(1).png" alt="icon7" class="img-fluid" style="width:20px"> Email Setting</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/paymentsettings"><img src="./Admin_logo_files/6(1).png" alt="icon7" class="img-fluid" style="width:20px"> Payment Methods</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/print_headerfooter"><img src="./Admin_logo_files/7.png" alt="icon7" class="img-fluid" style="width:20px"> Print Header Footer</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/frontcms"><img src="./Admin_logo_files/8(1).png" alt="icon7" class="img-fluid" style="width:20px"> Front CMS Setting</a>
+            </li>
+                                        
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/roles"><img src="./Admin_logo_files/10(1).png" alt="icon7" class="img-fluid" style="width:20px"> Roles Permissions</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/admin/backup"><img src="./Admin_logo_files/11(1).png" alt="icon7" class="img-fluid" style="width:20px"> Backup Restore</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/language"><img src="./Admin_logo_files/12.png" alt="icon7" class="img-fluid" style="width:20px"> Languages</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/users"><img src="./Admin_logo_files/14.png" alt="icon7" class="img-fluid" style="width:20px"> Users</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/module"><img src="./Admin_logo_files/15.png" alt="icon7" class="img-fluid" style="width:20px"> Modules</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/customfield"><img src="./Admin_logo_files/16.png" alt="icon7" class="img-fluid" style="width:20px"> Custom Fields</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/captcha"><img src="./Admin_logo_files/17.png" alt="icon7" class="img-fluid" style="width:20px"> Captcha Setting</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/systemfield"><img src="./Admin_logo_files/18.png" alt="icon7" class="img-fluid" style="width:20px"> System </a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/student/profilesetting"><img src="./Admin_logo_files/19.png" alt="icon7" class="img-fluid" style="width:20px"> Student Profile Update</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/onlineadmission/admissionsetting"><img src="./Admin_logo_files/20.png" alt="icon7" class="img-fluid" style="width:20px"> Online Admission</a>
+            </li>
+                        <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/admin/filetype"><img src="./Admin_logo_files/22.png" alt="icon7" class="img-fluid" style="width:20px"> File Types</a>
+            </li>         
+                                    <li class="">
+                <a class="" href="https://newlayout.wisibles.com/admin/sidemenu"><img src="./Admin_logo_files/21.png" alt="icon7" class="img-fluid" style="width:20px"> Sidebar Menu</a>
+            </li>
+                        <!--<li class="">-->
+            <!--    <a class="" href="https://newlayout.wisibles.com/admin/updater"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/system_settings/23.png" alt="icon7" class="img-fluid" style="width:20px"> System Update</a>-->
+            <!--</li>-->
+                     </ul>
+    </div>
+</div><!--./col-md-3--> 
+
+<div class="col-md-2">
+    <div class="box border0">
+        <div class="box-header with-border">
+            <h3 class="box-title">Settings</h3>
+        </div>
+        <ul class="tablists">
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings">General Setting</a>
+            </li>            
+            <li class="active">
+                <a class="active" href="https://newlayout.wisibles.com/schsettings/logo">Logo</a>
+            </li>
+
+
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/login_page_background">Login Page Background</a>
+            </li> 
+            
+            
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/backendtheme">Backend Theme</a>
+            </li>
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/mobileapp">Mobile App</a>
+            </li>
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/studentguardianpanel">Student / Guardian Panel</a>
+            </li>
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/fees">Fees</a>
+            </li>
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/idautogeneration">ID Auto Generation</a>
+            </li>
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/attendancetype">Attendance Type</a>
+            </li>
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/maintenance">Maintenance</a>
+            </li>
+            <li class="">
+                <a class="" href="https://newlayout.wisibles.com/schsettings/miscellaneous">Miscellaneous</a>
+            </li>
+        </ul>
+    </div>
+</div><!--./col-md-3-->            
+            <!-- left column -->
+            <div class="col-md-8">
+                <div class="box box-primary">
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                
+                                <div class="card-body-logo">
+                                <h4> Print Logo</h4> 
+                                    <div class="text-center">     
+                                                                                    <div class="card-body-logo-img"><img src="./Admin_logo_files/1738660979-209963469367a1dc733e263!1724058271-65903655266c30a9f7eee8!printlogo.jpeg" class="" alt="" width="304" height="236"></div>
+                                                                                    <p class="bolds ptt10">(170px X 184px)</p>
+                                    </div>    
+                                    <a href="https://newlayout.wisibles.com/schsettings/logo#schsetting" role="button" class="btn btn-primary btn-sm upload_logo">Update</a>
+                                    <a href="https://newlayout.wisibles.com/schsettings/logo#schsetting" role="button" class="btn btn-primary btn-sm upload_logo" style="display: none"> data-toggle="tooltip" title="" data-loading-text="<i class="fa fa-circle-o-notch fa-spin"></i> Processing..."&gt;<i class="fa fa-picture-o"></i> </a>
+                                </div>    
+                            </div> 
+
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                <div class="card-body-logo">
+                                    <h4>Admin Logo </h4>
+                                    <div class="text-center"> 
+                                                                                    <div class="card-body-logo-img"><img src="./Admin_logo_files/1724058282-59163168266c30aaa6154e!adminlogo.jpeg" class="" alt="" width="204" height="60"></div>
+                                                                                    
+                                        <p class="bolds ptt10">(290px X 51px)</p>
+                                    </div> 
+                                    <a href="https://newlayout.wisibles.com/schsettings/logo#schsetting" role="button" class="btn btn-primary btn-sm upload_admin_logo">Update</a>   
+                                    <a href="https://newlayout.wisibles.com/schsettings/logo#admin_logo" role="button" class="btn btn-primary btn-sm upload_admin_logo" style="display:none"> data-toggle="tooltip" title="Edit Admin Logo" data-loading-text="<i class="fa fa-circle-o-notch fa-spin"></i> Processing..."&gt;<i class="fa fa-picture-o"></i> Edit Admin Logo</a>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                
+                                <div class="card-body-logo">
+                                <h4>Admin Small Logo</h4>   
+                                    <div class="text-center"> 
+                                                                                    <img src="./Admin_logo_files/1724058293-111041834766c30ab579501!smalllogo.jpg" width="32" height="32">
+                                                                                    
+                                        <p class="bolds ptt10">(32px X 32px)</p>
+                                    </div>    
+                                    <a href="https://newlayout.wisibles.com/schsettings/logo#schsetting" role="button" class="btn btn-primary btn-sm upload_admin_small_logo">Update</a>
+                                    <a href="https://newlayout.wisibles.com/schsettings/logo#admin_small_logo" role="button" class="btn btn-primary btn-sm upload_admin_small_logo" style="display: none" data-toggle="tooltip" title="Edit Admin Small Logo" data-loading-text="&lt;i class=&#39;fa fa-circle-o-notch fa-spin&#39;&gt;&lt;/i&gt; Processing..."><i class="fa fa-picture-o"></i> Edit Admin Small Logo</a>
+                                </div>
+                            </div>
+
+                             <div class="col-lg-3 col-md-6 col-sm-6">
+                                
+                                <div class="card-body-logo">
+                                <h4>App Logo </h4> 
+                                    <div class="text-center">    
+                                                                                    <div class="card-body-logo-img"><img src="./Admin_logo_files/1724058303-99916674666c30abfe3347!applogo.png" width="290" height="51"></div>
+                                                                                    
+                                        <p class="bolds ptt10">(290px X 51px)</p>
+                                    </div>
+                                    <a href="https://newlayout.wisibles.com/schsettings/logo#schsetting" role="button" class="btn btn-primary btn-sm upload_app_logo">Update</a>    
+                                    <a href="https://newlayout.wisibles.com/schsettings/logo#app_logo" role="button" class="btn btn-primary btn-sm upload_app_logo" style="display: none" data-toggle="tooltip" title="Edit App Logo" data-loading-text="&lt;i class=&#39;fa fa-circle-o-notch fa-spin&#39;&gt;&lt;/i&gt; Processing..."><i class="fa fa-picture-o"></i> Edit App Logo</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                </div>    
+            </div><!--/.col (left) -->
+        </div>
+    </section><!-- /.content -->
+</div><!-- /.content-wrapper -->
+
+<div class="modal fade" id="modal-upload_admin_logo" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title" id="myModalLabel">Edit Admin Logo</h4>
+            </div>
+            <div class="modal-body upload_logo_body">
+                <!-- ==== -->
+                <form class="box_upload boxupload has-advanced-upload" method="post" action="https://newlayout.wisibles.com/schsettings/ajax_editlogo" enctype="multipart/form-data">
+                    <input value="1" type="hidden" name="id" id="id_logo_admin">
+                    <input type="file" name="file" id="file_admin">
+                    <!-- Drag and Drop container-->
+                    <div class="box__input upload-admin_area" id="uploadfile_admin">
+                        <i class="fa fa-download box__icon"></i>
+                        <label><strong>Choose A File Or Drag It Here.</strong>
+                            <!-- <span class="box__dragndrop">  <span></span></span> --></label>
+
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-upload_app_logo" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title" id="myModalLabel">Edit App Logo</h4>
+            </div>
+            <div class="modal-body upload_logo_body">
+                <!-- ==== -->
+                <form class="box_upload boxupload has-advanced-upload" method="post" action="https://newlayout.wisibles.com/schsettings/ajax_editlogo" enctype="multipart/form-data">
+                    <input value="1" type="hidden" name="id" id="id_app_logo">
+                    <input type="file" name="file" id="file_applogo">
+                    <!-- Drag and Drop container-->
+                    <div class="box__input upload-app_logo_area" id="uploadapp_logo">
+                        <i class="fa fa-download box__icon"></i>
+                        <label><strong>Choose A File Or Drag It Here.</strong><!-- <span class="box__dragndrop">  <span></span></span>. --></label>
+
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-upload_admin_small_logo" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title" id="myModalLabel">Edit Admin Small Logo</h4>
+            </div>
+            <div class="modal-body upload_logo_body">
+                <!-- ==== -->
+                <form class="box_upload boxupload has-advanced-upload" method="post" action="https://newlayout.wisibles.com/schsettings/ajax_editlogo" enctype="multipart/form-data">
+                    <input value="1" type="hidden" name="id" id="id_logo_small">
+                    <input type="file" name="file" id="file_small">
+                    <!-- Drag and Drop container-->
+                    <div class="box__input upload-small_area" id="uploadfile_small">
+                        <i class="fa fa-download box__icon"></i>
+                        <label><strong>Choose A File Or Drag It Here.</strong><!-- <span class="box__dragndrop">  <span></span></span>. --></label>
+
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-uploadfile" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                <h4 class="modal-title" id="myModalLabel">Edit Logo</h4>
+            </div>
+            <div class="modal-body upload_logo_body">
+                <!-- ==== -->
+                <form class="box_upload boxupload has-advanced-upload" method="post" action="https://newlayout.wisibles.com/schsettings/ajax_editlogo" enctype="multipart/form-data">
+                    <input value="1" type="hidden" name="id" id="id_logo">
+                    <input type="file" name="file" id="file">
+                    <!-- Drag and Drop container-->
+                    <div class="box__input upload-area" id="uploadfile">
+                        <i class="fa fa-download box__icon"></i>
+                        <label><strong>Choose A File Or Drag It Here.</strong><!-- <span class="box__dragndrop">  <span></span></span>. --></label>
+
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="andappModal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title">Register your Android App purchase code</h4>
+            </div>
+            <form action="https://newlayout.wisibles.com/admin/admin/updateandappCode" method="POST" id="andapp_code">
+                <div class="modal-body andapp_modal-body">
+                    <div class="error_message">
+
+                    </div>
+                    <div class="form-group">
+                        <label class="ainline"><span>Envato Market Purchase Code For Smart School Android App ( <a target="_blank" href="https://help.market.envato.com/hc/en-us/articles/202822600-Where-Is-My-Purchase-Code-"> How To Find It?</a> )</span></label>
+                        <input type="text" class="form-control" id="input-app-envato_market_purchase_code" name="app-envato_market_purchase_code">
+                        <div id="error" class="input-error text text-danger"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exampleInputEmail1">Your Email Registered With Envato</label>
+                        <input type="text" class="form-control" id="input-app-email" name="app-email">
+                        <div id="error" class="input-error text text-danger"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-info" data-loading-text="&lt;i class=&#39;fa fa-spinner fa-spin &#39;&gt;&lt;/i&gt; Saving...">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    var base_url = 'https://newlayout.wisibles.com/';
+    var logo_type = "logo";
+    $('.upload_logo').on('click', function (e) {
+        e.preventDefault();
+        var $this = $(this);
+        logo_type = $this.data('logo_type');
+
+        $this.button('loading');
+        $('#modal-uploadfile').modal({
+            show: true,
+            backdrop: 'static',
+            keyboard: false
+        });
+    }); 
+// set focus when modal is opened
+    $('#modal-uploadfile').on('shown.bs.modal', function () {
+        $('.upload_logo').button('reset');
+    });
+
+    $('.upload_admin_logo').on('click', function (e) {
+        e.preventDefault();
+        var $this = $(this);
+        logo_type = $this.data('logo_type');
+        $this.button('loading');
+        $('#modal-upload_admin_logo').modal({
+            show: true,
+            backdrop: 'static',
+            keyboard: false
+        });
+    });
+// set focus when modal is opened
+    $('#modal-upload_admin_logo').on('shown.bs.modal', function () {
+        $('.upload_admin_logo').button('reset');
+    });
+
+    $('.upload_admin_small_logo').on('click', function (e) {
+        e.preventDefault();
+        var $this = $(this);
+        logo_type = $this.data('logo_type');
+
+        $this.button('loading');
+        $('#modal-upload_admin_small_logo').modal({
+            show: true,
+            backdrop: 'static',
+            keyboard: false
+        });
+    });
+// set focus when modal is opened
+    $('#modal-upload_admin_small_logo').on('shown.bs.modal', function () {
+        $('.upload_admin_small_logo').button('reset');
+    });
+
+    $(".edit_setting").on('click', function (e) {
+        var $this = $(this);
+        $this.button('loading');
+        $.ajax({
+            url: 'https://newlayout.wisibles.com/schsettings/ajax_schedit',
+            type: 'POST',
+            data: $('#schsetting_form').serialize(),
+            dataType: 'json',
+
+            success: function (data) {
+
+                if (data.status == "fail") {
+                    var message = "";
+                    $.each(data.error, function (index, value) {
+
+                        message += value;
+                    });
+                    errorMsg(message);
+                } else {
+                    successMsg(data.message);
+                    window.location.reload(true);
+                }
+
+                $this.button('reset');
+            }
+        });
+    });
+</script>
+<script type="text/javascript">
+    $(function () {
+
+        // Drag enter
+        $('.upload-area').on('dragenter', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $("h1").text("Drop");
+        });
+
+        // Drag over
+        $('.upload-area').on('dragover', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $("h1").text("Drop");
+        });
+
+        // Drop
+        $('.upload-area').on('drop', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            $("h1").text("Upload");
+
+            var file = e.originalEvent.dataTransfer.files;
+            var fd = new FormData();
+
+            fd.append('file', file[0]);
+            fd.append("id", $('#id_logo').val());
+            fd.append("logo_type", logo_type);
+
+            uploadData(fd);
+        });
+
+        // Open file selector on div click
+        $("#uploadfile").click(function () {
+            $("#file").click();
+        });
+
+        // file selected
+        $("#file").change(function () {
+            var fd = new FormData();
+
+            var files = $('#file')[0].files[0];
+
+            fd.append('file', files);
+            fd.append("id", $('#id_logo').val());
+            fd.append("logo_type", logo_type);
+            uploadData(fd);
+        });
+    });
+
+// Sending AJAX request and upload file
+    function uploadData(formdata) {
+
+        $.ajax({
+            url: 'https://newlayout.wisibles.com/schsettings/ajax_editlogo',
+            type: 'post',
+            data: formdata,
+            contentType: false,
+            processData: false,
+            dataType: 'json',
+            cache: false,
+
+            beforeSend: function () {
+                $('#modal-uploadfile').addClass('modal_loading');
+            },
+            success: function (response) {
+                if (response.success) {
+                    successMsg(response.message);
+                    window.location.reload(true);
+                } else {
+
+                    errorMsg(response.error.file);
+                }
+
+            },
+            error: function (xhr) { // if error occured
+
+            },
+            complete: function () {
+                $('#modal-uploadfile').removeClass('modal_loading');
+
+            }
+
+
+        });
+    }
+
+    $(function () {
+
+        // Drag enter
+        $('.upload-small_area').on('dragenter', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $("h1").text("Drop");
+        });
+
+        // Drag over
+        $('.upload-small_area').on('dragover', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $("h1").text("Drop");
+        });
+
+        // Drop
+        $('.upload-small_area').on('drop', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            $("h1").text("Upload");
+
+            var file = e.originalEvent.dataTransfer.files;
+            var fd = new FormData();
+
+            fd.append('file', file[0]);
+            fd.append("id", $('#id_logo_small').val());
+            fd.append("logo_type", logo_type);
+
+            uploadSmallData(fd);
+        });
+
+        // Open file selector on div click
+        $("#uploadfile_small").click(function () {
+            $("#file_small").click();
+        });
+
+        // file selected
+        $("#file_small").change(function () {
+            var fd = new FormData();
+
+            var files = $('#file_small')[0].files[0];
+
+            fd.append('file', files);
+            fd.append("id", $('#id_logo_small').val());
+            fd.append("logo_type", logo_type);
+            uploadSmallData(fd);
+        });
+    });
+
+// Sending AJAX request and upload file
+    function uploadSmallData(formdata) {
+
+        $.ajax({
+            url: 'https://newlayout.wisibles.com/schsettings/ajax_editadmin_smalllogo',
+            type: 'post',
+            data: formdata,
+            contentType: false,
+            processData: false,
+            dataType: 'json',
+            cache: false,
+
+            beforeSend: function () {
+                $('#modal-upload_admin_small_logo').addClass('modal_loading');
+            },
+            success: function (response) {
+
+                if (response.success) {
+                    successMsg(response.message);
+                    window.location.reload(true);
+                } else {
+
+                    errorMsg(response.error.file);
+                }
+
+            },
+            error: function (xhr) { // if error occured
+
+            },
+            complete: function () {
+                $('#modal-upload_admin_small_logo').removeClass('modal_loading');
+
+            }
+
+
+        });
+    }
+
+    $(function () {
+
+        // Drag enter
+        $('.upload-admin_area').on('dragenter', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $("h1").text("Drop");
+        });
+
+        // Drag over
+        $('.upload-admin_area').on('dragover', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $("h1").text("Drop");
+        });
+
+        // Drop
+        $('.upload-admin_area').on('drop', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            $("h1").text("Upload");
+
+            var file = e.originalEvent.dataTransfer.files;
+            var fd = new FormData();
+
+            fd.append('file', file[0]);
+            fd.append("id", $('#id_logo_small').val());
+            fd.append("logo_type", logo_type);
+
+            uploadadminlData(fd);
+        });
+
+        // Open file selector on div click
+        $("#uploadfile_admin").click(function () {
+            $("#file_admin").click();
+        });
+
+        // file selected
+        $("#file_admin").change(function () {
+            var fd = new FormData();
+
+            var files = $('#file_admin')[0].files[0];
+
+            fd.append('file', files);
+            fd.append("id", $('#id_logo_small').val());
+            fd.append("logo_type", logo_type);
+            uploadadminData(fd);
+        });
+    });
+
+// Sending AJAX request and upload file
+    function uploadadminData(formdata) {
+
+        $.ajax({
+            url: 'https://newlayout.wisibles.com/schsettings/ajax_editadmin_adminlogo',
+            type: 'post',
+            data: formdata,
+            contentType: false,
+            processData: false,
+            dataType: 'json',
+            cache: false,
+
+            beforeSend: function () {
+                $('#modal-upload_admin_logo').addClass('modal_loading');
+            },
+            success: function (response) {
+
+                if (response.success) {
+                    successMsg(response.message);
+                    window.location.reload(true);
+                } else {
+
+                    errorMsg(response.error.file);
+                }
+
+            },
+            error: function (xhr) { // if error occured
+
+            },
+            complete: function () {
+                $('#modal-upload_admin_logo').removeClass('modal_loading');
+
+            }
+
+
+        });
+    }
+
+</script>
+
+
+<script type="text/javascript">
+    $('.upload_app_logo').on('click', function (e) {
+        e.preventDefault();
+        var $this = $(this);
+        logo_type = $this.data('logo_type');
+
+        $this.button('loading');
+        $('#modal-upload_app_logo').modal({
+            show: true,
+            backdrop: 'static',
+            keyboard: false
+        });
+    });
+// set focus when modal is opened
+    $('#modal-upload_app_logo').on('shown.bs.modal', function () {
+        $('.upload_app_logo').button('reset');
+    });
+
+    $(function () {
+
+        // Drag enter
+        $('.upload-app_logo_area').on('dragenter', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $("h1").text("Drop");
+        });
+
+        // Drag over
+        $('.upload-app_logo_area').on('dragover', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $("h1").text("Drop");
+        });
+
+        // Drop
+        $('.upload-app_logo_area').on('drop', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            $("h1").text("Upload");
+
+            var file = e.originalEvent.dataTransfer.files;
+            var fd = new FormData();
+
+            fd.append('file', file[0]);
+            fd.append("id", $('#id_app_logo').val());
+            // fd.append("logo_type", logo_type);
+
+            uploadSmallData(fd);
+        });
+
+        // Open file selector on div click
+        $("#uploadapp_logo").click(function () {
+            $("#file_applogo").click();
+        });
+
+        // file selected
+        $("#file_applogo").change(function () {
+            var fd = new FormData();
+
+            var files = $('#file_applogo')[0].files[0];
+
+
+            fd.append('file', files);
+            fd.append("id", $('#id_app_logo').val());
+            // fd.append("logo_type", logo_type);
+            uploadAppData(fd);
+        });
+    });
+
+// Sending AJAX request and upload file
+    function uploadAppData(formdata) {
+
+        $.ajax({
+            url: 'https://newlayout.wisibles.com/schsettings/ajax_applogo',
+            type: 'post',
+            data: formdata,
+            contentType: false,
+            processData: false,
+            dataType: 'json',
+            cache: false,
+
+            beforeSend: function () {
+                $('#modal-upload_app_logo').addClass('modal_loading');
+            },
+            success: function (response) {
+
+                if (response.success) {
+                    successMsg(response.message);
+                    window.location.reload(true);
+                } else {
+
+                    errorMsg(response.error.file);
+                }
+
+            },
+            error: function (xhr) { // if error occured
+
+            },
+            complete: function () {
+                $('#modal-upload_app_logo').removeClass('modal_loading');
+
+            }
+
+
+        });
+    }
+</script><style>
+    .footer-menu  {
+        background-color: #fff;
+        position: fixed;
+        bottom: 0;
+    }
+    .profile-text    {
+        font-size: 18px;
+        color: #444;
+    }
+</style>
+<footer class="main-footer hide-mobile">
+    
+                
+                
+            
+    ©  2026    wisibles</footer>
+
+<div class="control-sidebar-bg" style="position: fixed; height: auto;"></div>
+</div>
+<script>
+    $.widget.bridge('uibutton', $.ui.button);
+</script>
+
+<link href="./Admin_logo_files/toastr.css" rel="stylesheet">
+<script src="./Admin_logo_files/toastr.js"></script>
+<script src="./Admin_logo_files/bootstrap.min.js"></script>
+<link rel="stylesheet" href="./Admin_logo_files/select2.min.css">
+<script src="./Admin_logo_files/select2.full.min.js"></script>
+<script src="./Admin_logo_files/jquery.inputmask.js"></script>
+<script src="./Admin_logo_files/jquery.inputmask.date.extensions.js"></script>
+<script src="./Admin_logo_files/jquery.inputmask.extensions.js"></script>
+<script src="./Admin_logo_files/moment.min.js"></script>
+<script src="./Admin_logo_files/daterangepicker.js"></script>
+<script src="./Admin_logo_files/bootstrap-colorpicker.min.js"></script>
+<script src="./Admin_logo_files/bootstrap-timepicker.min.js"></script>
+<script src="./Admin_logo_files/jquery.slimscroll.min.js"></script>
+<script src="./Admin_logo_files/jquery.mCustomScrollbar.concat.min.js"></script>
+<script type="text/javascript">
+    $('body').tooltip({
+        selector: '[data-toggle]',
+        trigger: 'click hover',
+        placement: 'top',
+        delay: {
+            show: 50,
+            hide: 400
+        }
+    })
+</script>
+<!--language js-->
+<script type="text/javascript" src="./Admin_logo_files/bootstrap-select.min.js"></script>
+
+<script type="text/javascript">
+    $(function () {
+        $('.languageselectpicker').selectpicker();
+    });
+</script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $(".studentsidebar").mCustomScrollbar({
+            theme: "minimal"
+        });
+
+        $('.studentsideclose, .overlay').on('click', function () {
+            $('.studentsidebar').removeClass('active');
+            $('.overlay').fadeOut();
+        });
+
+        $('#sidebarCollapse').on('click', function () {
+            $('.studentsidebar').addClass('active');
+            $('.overlay').fadeIn();
+            $('.collapse.in').toggleClass('in');
+            $('a[aria-expanded=true]').attr('aria-expanded', 'false');
+        });
+    });
+</script>
+
+<script src="./Admin_logo_files/icheck.min.js"></script>
+<script src="./Admin_logo_files/bootstrap-datepicker.js"></script>
+
+<script src="./Admin_logo_files/Chart.min.js"></script>
+<script src="./Admin_logo_files/fastclick.min.js"></script>
+<script src="./Admin_logo_files/app.min.js"></script>
+<!--nprogress-->
+<script src="./Admin_logo_files/nprogress.js"></script>
+<!--file dropify-->
+<script src="./Admin_logo_files/dropify.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/jszip.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/pdfmake.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/vfs_fonts.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/buttons.html5.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/buttons.print.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/buttons.colVis.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/dataTables.responsive.min.js"></script>
+<script type="text/javascript" src="./Admin_logo_files/ss.custom.js"></script>
+
+
+
+
+<script src="./Admin_logo_files/fullcalendar.min.js"></script>
+<script src="./Admin_logo_files/locale-all.js"></script>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+    });
+
+    function complete_event(id, status) {
+        $.ajax({
+            url: "https://newlayout.wisibles.com/admin/calendar/markcomplete/" + id,
+            type: "POST",
+            data: {id: id, active: status},
+            dataType: 'json',
+            success: function (res)
+            {
+                if (res.status == "fail") {
+                    var message = "";
+                    $.each(res.error, function (index, value) {
+                        message += value;
+                    });
+                    errorMsg(message);
+                } else {
+                    successMsg(res.message);
+                    window.location.reload(true);
+                }
+            }
+        });
+    }
+
+    function markc(id) {
+        $('#newcheck' + id).change(function () {
+            if (this.checked) {
+                complete_event(id, 'yes');
+            } else {
+                complete_event(id, 'no');
+            }
+        });
+    }
+
+</script>
+
+<!-- Button trigger modal -->
+<!-- Modal -->
+<div class="row">
+    <div class="modal fade" id="sessionModal" tabindex="-1" role="dialog" aria-labelledby="sessionModalLabel">
+        <form action="https://newlayout.wisibles.com/admin/admin/activeSession" id="form_modal_session" class="">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                        <h4 class="modal-title" id="sessionModalLabel">Current Session</h4>
+                    </div>
+                    <div class="modal-body sessionmodal_body">
+                    </div>
+                    <div class="modal-footer">
+                        <div class="col-md-12">
+                            <button type="button" class="btn btn-primary submit_session" data-loading-text="&lt;i class=&#39;fa fa-spinner fa-spin &#39;&gt;&lt;/i&gt; Please Wait...">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<script type="text/javascript">
+    var calendar_date_time_format = 'DD/MM/YYYY';
+
+    var datetime_format = 'DD/MM/YYYY';
+
+    var date_format = 'dd/mm/yyyy';
+
+    function savedata(eventData) {
+        var base_url = 'https://newlayout.wisibles.com/';
+        $.ajax({
+            url: base_url + 'admin/calendar/saveevent',
+            type: 'POST',
+            data: eventData,
+            dataType: "json",
+            success: function (msg) {
+                alert(msg);
+
+            }
+        });
+    }
+
+    $calendar = $('#calendar');
+    var base_url = 'https://newlayout.wisibles.com/';
+    today = new Date();
+    y = today.getFullYear();
+    m = today.getMonth();
+    d = today.getDate();
+    var viewtitle = 'month';
+    var pagetitle = "";
+
+    if (pagetitle == "Dashboard") {
+        viewtitle = 'agendaWeek';
+    }
+
+    $calendar.fullCalendar({
+        viewRender: function (view, element) {
+
+        },
+
+        header: {
+            center: 'title',
+            right: 'month,agendaWeek,agendaDay',
+            left: 'prev,next,today'
+        },
+        firstDay: start_week,
+        defaultDate: today,
+        defaultView: viewtitle,
+        selectable: true,
+        selectHelper: true,
+        views: {
+            month: {// name of view
+                titleFormat: 'MMMM YYYY'
+                        // other view-specific options here
+            },
+            week: {
+                titleFormat: " MMMM D YYYY"
+            },
+            day: {
+                titleFormat: 'D MMM, YYYY'
+            }
+        },
+        timezone: 'UTC',
+        draggable: false,
+        lang: 'en',
+        editable: false,
+        eventLimit: false, // allow "more" link when too many events
+
+        // color classes: [ event-blue | event-azure | event-green | event-orange | event-red ]
+        events: {
+            url: base_url + 'admin/calendar/getevents'
+
+        },
+
+        eventRender: function (event, element) {
+
+            element.attr('title', event.title);
+            element.attr('onclick', event.onclick);
+            element.attr('data-toggle', 'tooltip');
+            if ((!event.url) && (event.event_type != 'task')) {
+                element.attr('title', event.title + '-' + event.description);
+                element.click(function () {
+                    view_event(event.id);
+                });
+            }
+
+        },
+        dayClick: function (date, jsEvent, view) {
+           console.log('Clicked on the entire day: ' + date.format());
+
+
+                var newEventModal= $('#newEventModal');
+                $("#input-field").val('');
+                $("#desc-field").text('');
+                var event_start_from = new Date(date);
+                console.log(event_start_from.toISOString());
+                $('.event_from',newEventModal).data("DateTimePicker").date(event_start_from);
+                $('.event_to',newEventModal).data("DateTimePicker").date(event_start_from);
+                $('#newEventModal').modal('show');
+
+            return false;
+        }
+
+    });
+
+    function view_event(id) {
+
+        $('.selectevent').find('.cpicker-big').removeClass('cpicker-big').addClass('cpicker-small');
+        var base_url = 'https://newlayout.wisibles.com/';
+        if (typeof (id) == 'undefined') {
+            return;
+        }
+        $.ajax({
+            url: base_url + 'admin/calendar/view_event/' + id,
+            type: 'POST',
+            //data: '',
+            dataType: "json",
+            success: function (msg) {
+
+                $("#event_title").val(msg.event_title);
+                $("#event_desc").text(msg.event_description);
+
+                $('#eventid').val(id);
+                if (msg.event_type == 'public') {
+                    $('input:radio[name=eventtype]')[0].checked = true;
+
+                } else if (msg.event_type == 'private') {
+                    $('input:radio[name=eventtype]')[1].checked = true;
+
+                } else if (msg.event_type == 'sameforall') {
+                    $('input:radio[name=eventtype]')[2].checked = true;
+
+                } else if (msg.event_type == 'protected') {
+                    $('input:radio[name=eventtype]')[3].checked = true;
+
+                }
+                //===========
+
+                var __viewModal=$('#viewEventModal');
+ var event_start_from = new Date(msg.start_date);
+ $('.event_from',__viewModal).data("DateTimePicker").date(event_start_from);
+
+  var event_end_to = new Date(msg.end_date);
+ $('.event_to',__viewModal).data("DateTimePicker").date(event_end_to);
+                //============
+
+                $("#event_color").val(msg.event_color);
+                $("#delete_event").attr("onclick", "deleteevent(" + id + ",'Event')");
+                $("#" + msg.colorid).removeClass('cpicker-small').addClass('cpicker-big');
+                $('#viewEventModal').modal('show');
+            }
+        });
+    }
+
+    $(document).ready(function (e) {
+        $("#addevent_form").on('submit', (function (e) {
+
+            e.preventDefault();
+
+            $(".submit_addevent").prop("disabled", true);
+
+            $.ajax({
+                url: "https://newlayout.wisibles.com/admin/calendar/saveevent",
+                type: "POST",
+                data: new FormData(this),
+                dataType: 'json',
+                contentType: false,
+                cache: false,
+                processData: false,
+                success: function (res)
+                {
+
+                    if (res.status == "fail") {
+
+                        var message = "";
+                        $.each(res.error, function (index, value) {
+
+                            message += value;
+                        });
+                        errorMsg(message);
+
+                    } else {
+
+                        successMsg(res.message);
+
+                        window.location.reload(true);
+                    }
+                    $(".submit_addevent").prop("disabled", false);
+                }
+            });
+        }));
+    });
+
+    $(document).ready(function (e) {
+        $("#updateevent_form").on('submit', (function (e) {
+
+            e.preventDefault();
+            $(".submit_update").prop("disabled", true);
+            $.ajax({
+                url: "https://newlayout.wisibles.com/admin/calendar/updateevent",
+                type: "POST",
+                data: new FormData(this),
+                dataType: 'json',
+                contentType: false,
+                cache: false,
+                processData: false,
+                success: function (res)
+                {
+                    if (res.status == "fail") {
+                        var message = "";
+                        $.each(res.error, function (index, value) {
+                            message += value;
+                        });
+                        errorMsg(message);
+
+                    } else {
+
+                        successMsg(res.message);
+                        window.location.reload(true);
+                    } $(".submit_update").prop("disabled", false);
+                }
+            });
+        }));
+    });
+
+    function deleteevent(id, msg) {
+        if (typeof (id) == 'undefined') {
+            return;
+        }
+        if (confirm("Are You Sure Want To Delete? ")) {
+            $.ajax({
+                url: base_url + 'admin/calendar/delete_event/' + id,
+                type: 'POST',
+                dataType: "json",
+                success: function (res) {
+                    if (res.status == "fail") {
+                        errorMsg(res.message);
+                    } else {
+                        successMsg(msg + " Record Delete Successfully");
+                        window.location.reload(true);
+                    }
+                }
+            })
+        }
+    }
+
+    $("body").on('click', '.cpicker', function () {
+        var color = $(this).data('color');
+        // Clicked on the same selected color
+        if ($(this).hasClass('cpicker-big')) {
+            return false;
+        }
+
+        $(this).parents('.cpicker-wrapper').find('.cpicker-big').removeClass('cpicker-big').addClass('cpicker-small');
+        $(this).removeClass('cpicker-small', 'fast').addClass('cpicker-big', 'fast');
+        if ($(this).hasClass('kanban-cpicker')) {
+            $(this).parents('.panel-heading-bg').css('background', color);
+            $(this).parents('.panel-heading-bg').css('border', '1px solid ' + color);
+        } else if ($(this).hasClass('calendar-cpicker')) {
+            $("body").find('input[name="eventcolor"]').val(color);
+        }
+    });
+
+    $(document).ready(function () {
+        moment.lang('en', {
+          week: { dow: start_week }
+        });
+
+        $("body").delegate(".date", "focusin", function () {
+            $(this).datepicker({
+                todayHighlight: false,
+                format: date_format,
+                autoclose: true,
+                weekStart : start_week,
+                language: 'en'
+            });
+        });
+
+        $("body").delegate(".datetime", "focusin", function () {
+            $(this).datetimepicker({
+                format: calendar_date_time_format + ' hh:mm a'
+
+            });
+        });
+
+        $('body').on('focus',".date_fee", function(){
+        $(this).datepicker({
+            format: date_format,
+            autoclose: true,
+            language: 'en',
+            endDate: '+0d',
+            startDate: '',
+            weekStart : start_week,
+            todayHighlight: true
+        });
+      });
+
+        $('.datetime_twelve_hour').datetimepicker({
+               format:  calendar_date_time_format + ' hh:mm a'
+        });
+
+
+            $("#event_date").daterangepicker({
+            timePickerIncrement: 5,
+            locale: {
+            format: calendar_date_time_format
+            }
+           });
+
+///================
+
+        $('.event_from').datetimepicker({
+               format:  calendar_date_time_format + ' hh:mm A',
+        });
+
+        $('.event_to').datetimepicker({
+               format:  calendar_date_time_format + ' hh:mm A',
+        });
+
+//==============
+
+    });
+
+    function loadDate() {
+
+        var date_format = 'dd/mm/yyyy';
+
+        $('.date').datetimepicker({
+            format: datetime_format,
+            locale:
+                    'en',
+
+        });
+    }
+
+    // showdate('this_year');
+
+    function showdate(type) {
+
+            var date_from = '12/01/2026';
+            var date_to = '12/01/2026';
+    
+        if (type == 'period') {
+
+            $.ajax({
+                url: base_url + 'Report/get_betweendate/' + type,
+                type: 'POST',
+                data: {date_from: date_from, date_to: date_to},
+                success: function (res) {
+
+                    $('#date_result').html(res);
+
+                    loadDate();
+                }
+
+            });
+
+        } else {
+            $('#date_result').html('');
+        }
+
+    }
+</script>
+<script type="text/javascript">
+    $(document).on('change','#currencySwitcher',function(e){
+            $.ajax({
+                type: 'POST',
+                url: baseurl+'admin/currency/change_currency',
+                data: {currency_id: $(this).val()},
+                dataType: 'JSON',
+                beforeSend: function() {
+
+                },
+                success: function(data) {
+
+                    successMsg(data.message);
+                    if(data.status){
+
+                  window.location.reload('true');
+                    }
+                },
+                error: function(xhr) { // if error occured
+                    alert("Error occured.please try again");
+
+                },
+                complete: function() {
+
+                }
+            });
+    });
+
+    $calendar_event = $('#calendar_event');
+
+    $calendar_event.fullCalendar({
+        viewRender: function (view, element) {
+
+        },
+
+        header: {
+            center: 'title',
+            right: '',
+            left: 'prev,next'
+        },
+        firstDay: start_week,
+        displayEventTime : false,
+        defaultDate: today,
+        defaultView: viewtitle,
+        selectable: true,
+        selectHelper: true,
+        views: {
+            month: {// name of view
+                titleFormat: 'MMMM YYYY'
+                        // other view-specific options here
+            }
+        },
+        timezone: 'UTC',
+        draggable: false,
+        lang: 'en',
+        editable: false,
+        eventLimit: false, // allow "more" link when too many events
+
+        // color classes: [ event-blue | event-azure | event-green | event-orange | event-red ]
+        events: {
+            url: base_url + 'admin/alumni/getevent'
+
+        },
+
+        eventRender: function (event, element) {
+
+            element.attr('title', event.title);
+            element.attr('data-toggle', 'tooltip');
+            element.click(function () {
+
+                view_event_data(event.id);
+            });
+        }
+
+    });
+</script><container id="my-app-container"></container></body></html>

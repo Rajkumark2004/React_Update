@@ -1,0 +1,354 @@
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { useNavigate, Link } from 'react-router-dom';
+import '../../../utils/include_files.js';
+import Header from '../../../components/Header.jsx';
+import Sidebar from '../../../components/Sidebar.jsx';
+import Footer from '../../../components/Footer.jsx';
+import { useSession } from '../../../context/SessionContext.jsx';
+import { api } from '../../../services/api';
+
+const ReferenceView = () => {
+    const navigate = useNavigate();
+    const { currentSession, clearSession } = useSession();
+
+    // Stats/Session info
+    const sessionYear = currentSession?.session || '2024-25';
+    const appName = 'School Management System';
+
+    // Mock User Data
+    const [loggedInUser, setLoggedInUser] = useState(null);
+    useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            try {
+                setLoggedInUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error('Failed to parse user data:', e);
+            }
+        }
+    }, []);
+
+    const userData = loggedInUser ? {
+        name: loggedInUser.username,
+        role: Object.keys(loggedInUser.roles || {})[0] || 'User',
+        id: loggedInUser.id,
+        avatar: loggedInUser.image || '/uploads/staff_images/default_male.jpg'
+    } : {
+        name: 'Admin User',
+        role: 'Super Admin',
+        id: 1,
+        avatar: '/uploads/staff_images/default_male.jpg'
+    };
+
+    const pendingTasks = [];
+
+    // Form State
+    const [formData, setFormData] = useState({
+        reference: '',
+        description: ''
+    });
+
+    // List State
+    const [reference_list, setReferenceList] = useState([]);
+
+    // Search & Pagination
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+
+    const filteredResults = reference_list.filter(item =>
+        item.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
+
+    const changePage = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
+        setCurrentPage(pageNumber);
+    };
+
+    useEffect(() => {
+        fetchReferenceList();
+    }, []);
+
+    const fetchReferenceList = async () => {
+        try {
+            const data = await api.getReferenceList();
+            if (data.status && data.data) {
+                setReferenceList(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching reference list:', error);
+        }
+    };
+
+
+
+    // Handlers
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await api.addReference(formData);
+            if (response.status) {
+                await fetchReferenceList(); // Refresh list
+                setFormData({ reference: '', description: '' });
+                toast.success('Reference saved successfully');
+            }
+        } catch (error) {
+            console.error('Error saving reference:', error);
+            toast.error('Failed to save reference');
+        }
+    };
+
+
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this?')) {
+            try {
+                const response = await api.deleteReference(id);
+                if (response.status) {
+                    toast.success('Reference deleted successfully');
+                    await fetchReferenceList(); // Refresh list
+                }
+            } catch (error) {
+                console.error('Error deleting reference:', error);
+                toast.error('Failed to delete reference');
+            }
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        clearSession();
+        navigate('/login');
+    };
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        console.log('Searching...');
+    };
+
+    useEffect(() => {
+        if (window.$ && window.$.fn && window.$.fn.popover) {
+            window.$('.detail_popover').popover({
+                placement: 'right',
+                trigger: 'hover',
+                container: 'body',
+                html: true,
+                content: function () {
+                    return window.$(this).closest('td').find('.fee_detail_popover').html();
+                }
+            });
+        }
+    }, [reference_list]);
+
+    return (
+        <div className="wrapper">
+            <Header
+                appName={appName}
+                userData={userData}
+                pendingTasks={pendingTasks}
+                handleLogout={handleLogout}
+            />
+
+            <Sidebar
+                handleSearch={handleSearch}
+                sessionYear={sessionYear}
+            />
+
+            <div className="content-wrapper" style={{ minHeight: '710px', display: 'block' }}>
+                <section className="content-header" style={{ display: 'block', padding: '15px 15px 0 15px' }}>
+
+                </section>
+                <section className="content" style={{ paddingBottom: '80px' }}>
+                    <div className="row">
+                        <div className="col-md-3">
+                            <div className="box border0">
+                                <ul className="tablists">
+                                    <li><Link to="/admin/source">Source</Link></li>
+                                    <li><Link to="/admin/reference" className="active">Reference</Link></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="col-md-4">
+                            <div className="box box-primary">
+                                <div className="box-header with-border">
+                                    <h3 className="box-title">Add Reference</h3>
+                                </div>
+                                <form id="form1" onSubmit={handleSubmit} method="post" acceptCharset="utf-8" encType="multipart/form-data">
+                                    <div className="box-body">
+                                        <div className="form-group">
+                                            <label htmlFor="pwd">Reference</label> <small className="req"> *</small>
+                                            <input
+                                                className="form-control"
+                                                id="description"
+                                                name="reference"
+                                                value={formData.reference}
+                                                onChange={handleInputChange}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label htmlFor="pwd">Description</label>
+                                            <textarea
+                                                className="form-control"
+                                                id="description"
+                                                name="description"
+                                                rows="3"
+                                                value={formData.description}
+                                                onChange={handleInputChange}
+                                            ></textarea>
+                                        </div>
+                                    </div>
+                                    <div className="box-footer">
+                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div className="col-md-5">
+                            <div className="box box-primary">
+                                <div className="box-header ptbnull">
+                                    <h3 className="box-title titlefix">Reference List</h3>
+                                    <div className="box-tools pull-right">
+                                    </div>
+                                </div>
+                                <div className="box-body">
+                                    <div className="download_label">Reference List</div>
+
+                                    {/* Controls */}
+                                    <div className="row" style={{ marginBottom: '10px' }}>
+                                        <div className="col-md-6">
+                                            <div className="dt-buttons btn-group">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => {
+                                                    const headers = ['Reference', 'Description'];
+                                                    const data = filteredResults.map(r => [r.reference, r.description]);
+                                                    const content = [headers.join('\t'), ...data.map(r => r.join('\t'))].join('\n');
+                                                    navigator.clipboard.writeText(content);
+                                                    alert('Copied to clipboard');
+                                                }}>
+                                                    <i className="fa fa-files-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => {
+                                                    const headers = ['Reference', 'Description'];
+                                                    const data = filteredResults.map(r => `"${r.reference}","${r.description}"`);
+                                                    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...data].join('\n');
+                                                    const encodedUri = encodeURI(csvContent);
+                                                    const link = document.createElement("a");
+                                                    link.setAttribute("href", encodedUri);
+                                                    link.setAttribute("download", "reference_list.csv");
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                }}>
+                                                    <i className="fa fa-file-text-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => {
+                                                    const headers = ['Reference', 'Description'];
+                                                    const data = filteredResults.map(r => `"${r.reference}","${r.description}"`);
+                                                    const csvContent = "data:application/vnd.ms-excel;charset=utf-8," + [headers.join(','), ...data].join('\n');
+                                                    const encodedUri = encodeURI(csvContent);
+                                                    const link = document.createElement("a");
+                                                    link.setAttribute("href", encodedUri);
+                                                    link.setAttribute("download", "reference_list.xls");
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => window.print()}>
+                                                    <i className="fa fa-print"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Columns">
+                                                    <i className="fa fa-columns"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="input-group input-group-sm">
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="Search..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="table-responsive mailbox-messages overflow-visible">
+                                        <table className="table table-hover table-striped table-bordered example">
+                                            <thead>
+                                                <tr>
+                                                    <th>Reference</th>
+                                                    <th>Description</th>
+                                                    <th className="text-right noExport">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {currentItems.map((value, key) => (
+                                                    <tr key={key}>
+                                                        <td className="mailbox-name">{value.reference}</td>
+                                                        <td className="mailbox-name">{value.description}</td>
+                                                        <td className="mailbox-date pull-right">
+                                                            <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                                <i className="fa fa-pencil"></i>
+                                                            </Link>
+                                                            <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                                <i className="fa fa-remove"></i>
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Pagination Footer */}
+                                    <div className="row">
+                                        <div className="col-md-5">
+                                            <div className="dataTables_info">
+                                                Records: {filteredResults.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredResults.length)} of {filteredResults.length}
+                                            </div>
+                                        </div>
+                                        <div className="col-md-7">
+                                            <div className="dataTables_paginate paging_simple_numbers">
+                                                <ul className="pagination">
+                                                    <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}>Previous</a>
+                                                    </li>
+                                                    {[...Array(totalPages)].map((_, i) => (
+                                                        <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); changePage(i + 1); }}>{i + 1}</a>
+                                                        </li>
+                                                    ))}
+                                                    <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}>Next</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <Footer />
+        </div>
+    );
+};
+
+export default ReferenceView;

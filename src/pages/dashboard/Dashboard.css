@@ -1,0 +1,869 @@
+:root {
+    --primary-color: #9055e8;
+    /* Violet/Purple */
+    --sidebar-bg: #9055e8;
+    --sidebar-text: #fff;
+    --bg-color: #f4f6f9;
+    --text-dark: #333;
+    --text-muted: #777;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    /* Use dynamic viewport height if supported */
+    background-color: var(--bg-color);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    /* Prevent body scroll */
+}
+
+/* HEADER FULL WIDTH */
+/* HEADER FULL WIDTH */
+.top-header {
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* Changed from flex-start to space-between */
+    gap: 20px;
+    /* Reduced from 750px to reasonable gap */
+    flex-shrink: 0;
+    padding: 0 30px;
+    border-bottom: 1px solid #e1e1e1;
+    background: white;
+    width: 100%;
+}
+
+/* DASHBOARD BODY (Sidebar + Content) */
+.dashboard-body {
+    display: flex;
+    flex: 1;
+    /* height: calc(100vh - 70px);  REMOVED: Let flex handle the height */
+    overflow: hidden;
+    min-height: 0;
+    /* Critical for nested flex scrolling */
+}
+
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* SIDEBAR */
+.dashboard-sidebar {
+    width: 100px;
+    height: 100%;
+    background: #9c52e0;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    flex-shrink: 0;
+    /* No scroll on sidebar itself */
+    overflow: hidden;
+    /* Ensure only menu scrolls */
+}
+
+.session-info-top {
+    background: #8e44d3;
+    padding: 15px 10px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    margin-bottom: 0;
+    flex-shrink: 0;
+    /* Fixed at top, does not scroll */
+}
+
+.session-label {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.session-year {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.dashboard-sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    flex: 1;
+    /* Take remaining space */
+    overflow-y: auto;
+    /* Scroll within this container */
+    scrollbar-width: none;
+    /* Let scrollbar show (Firefox) */
+    -ms-overflow-style: none;
+    /* IE 10+ */
+    padding-bottom: 50px;
+    /* Ensure last items are visible */
+}
+
+.dashboard-sidebar-menu::-webkit-scrollbar {
+    display: none;
+}
+
+/*.sidebar-menu::-webkit-scrollbar {
+    display: none;
+}*/
+
+.dashboard-sidebar-item {
+    width: 100%;
+    padding: 12.5px 5px;
+    /* Increased height by 5px */
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    /* Reduced from 8px */
+    font-size: 10px;
+    /* Reduced from 12px */
+    font-weight: 500;
+    transition: all 0.2s ease;
+    /* Smooth transition for pop-up */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    line-height: 1.2;
+    text-align: center;
+}
+
+.dashboard-sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+    /* Pop up effect */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Highlight shadow */
+    z-index: 10;
+    /* Ensure it pops over adjacent items if needed */
+}
+
+.dashboard-sidebar-item span {
+    max-width: 90px;
+    word-wrap: break-word;
+}
+
+.dashboard-sidebar-item:hover,
+.dashboard-sidebar-item.active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.header-logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.header-logo-img {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    max-width: 200px;
+    /* Safety cap */
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.search-bar-container {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border-bottom: 1px solid #ccc;
+    padding: 5px 0;
+    width: 250px;
+}
+
+.search-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+    color: #444;
+}
+
+/* Placeholder color */
+.search-input::placeholder {
+    color: #666;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.header-icon {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444;
+    position: relative;
+    /* For tooltip positioning */
+}
+
+/* Tooltip styles */
+.header-icon[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 8px;
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    animation: tooltipFadeIn 0.2s forwards;
+}
+
+@keyframes tooltipFadeIn {
+    to {
+        opacity: 1;
+        margin-top: 5px;
+    }
+}
+
+.profile-circle-small {
+    width: 35px;
+    height: 35px;
+    background: #FFECB3;
+    /* Light Yellow/Amber */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #FFD54F;
+}
+
+/* DASHBOARD CONTENT GRID */
+/* DASHBOARD CONTENT GRID */
+.dashboard-content {
+    padding: 15px;
+    /* Reduced from 25px */
+}
+
+.dashboard-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    /* Reduced from 15px */
+}
+
+.col-main {
+    flex: 3;
+}
+
+.col-side {
+    flex: 1;
+    min-width: 300px;
+}
+
+/* WELCOME CARD */
+.welcome-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: var(--card-shadow);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    position: relative;
+    /* overflow: hidden; REMOVED to allow image pop-out */
+    height: 230px;
+    /* Increased height */
+    margin-top: 30px;
+
+    /* Reduced from 40px */
+    /* Space for the pop-out? No, maybe not needed if flex handles spacing, but let's see */
+}
+
+/* ... existing styles ... */
+
+/* STAT CARDS */
+
+/* ... (omitted unrelated lines) ... */
+
+.welcome-illustration {
+    height: 300px;
+    /* Larger than card height */
+    width: auto;
+    object-fit: contain;
+    transform: translateY(15px);
+    /* Force move down */
+    margin-bottom: 2px;
+    margin-right: -33px;
+}
+
+/* ... existing styles ... */
+
+/* STAT CARDS */
+.stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 0px;
+    /* Reduced from 25px */
+    flex: 1;
+    transition: all 0.2s ease;
+    /* Smooth transition */
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: scale(1.05);
+    /* Pop up effect */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Highlight shadow */
+    z-index: 10;
+}
+
+.welcome-text {
+    margin-top: -90px;
+}
+
+.welcome-text h3 {
+    font-size: 23px !important;
+    font-family: "Roboto-Bold", "source-sans-pro" sans-serif;
+    font-weight: 600;
+    /* Reduced from 28px */
+    color: #333;
+    margin: 0 0 5px 25px;
+    /* Reduced to 5px gap */
+}
+
+.welcome-text p {
+    color: #666;
+    font-size: 18px;
+    /* Increased from 14px */
+    max-width: auto;
+    margin-top: 0px !important;
+    margin-bottom: 15px;
+    margin-left: 25px;
+}
+
+.btn-check-now {
+    background: #9055e8 !important;
+    color: white !important;
+    border: none;
+    padding: 10px 40px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    margin-left: 25px;
+    width: auto !important;
+    white-space: nowrap;
+}
+
+.welcome-image {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    margin-right: 75px;
+}
+
+.welcome-illustration {
+    height: 300px;
+    /* Larger than card height */
+    width: auto;
+    object-fit: contain;
+    margin-top: -80px;
+    /* Pull it up to overlap top */
+    margin-bottom: 2px;
+    margin-right: 2px;
+}
+
+/* CONTENT SEARCH BAR */
+.content-search-bar {
+    background: white;
+    padding: 8px 20px;
+    /* Reduced padding */
+    border-radius: 8px;
+    /* Pill shape */
+    display: flex;
+    align-items: center;
+    width: 200px;
+    /* Or fitting width */
+    margin-top: 10px;
+    margin-bottom: 15px;
+    /* Reduced from 30px */
+    box-shadow: var(--card-shadow);
+}
+
+.search-input-large {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 15px;
+    color: #333;
+}
+
+.search-input-large::placeholder {
+    color: #444;
+}
+
+.search-icon-large {
+    cursor: pointer;
+}
+
+/* STAT CARDS */
+
+
+.stat-header {
+    margin-bottom: 15px;
+}
+
+.stat-date {
+    font-size: 12px;
+    color: #999;
+}
+
+.stat-title {
+    font-size: 16px;
+    color: #333;
+    font-weight: 500;
+    margin: 5px 0 2px 0;
+}
+
+.stat-subtitle {
+    font-size: 12px;
+    color: #888;
+}
+
+.progress-container {
+    background: #f0f0f0;
+    height: 6px;
+    border-radius: 3px;
+    margin: 15px 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 3px;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.stat-avatars {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.stat-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid white;
+    margin-right: -10px;
+    background: #ddd;
+}
+
+.icon-circle-add {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 15px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.stat-badge-count {
+    background: #e0d4fc;
+    color: #9055e8;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.stat-badge-count.orange {
+    background: #fff0d4;
+    color: #ff9800;
+}
+
+.stat-badge-count.blue {
+    background: #d4eeff;
+    color: #2196f3;
+}
+
+/* ADMISSIONS TABLE */
+.admissions-card {
+    background: white;
+    border-radius: 0px;
+    padding: 5px;
+    box-shadow: var(--card-shadow);
+
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin-top: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-custom th {
+    text-align: left;
+    padding: 12px;
+    font-size: 13px;
+    color: #666;
+    border-bottom: 1px solid #eee;
+    font-weight: 600;
+}
+
+.table-custom td {
+    padding: 12px;
+    font-size: 14px;
+    color: #444;
+    border-bottom: 1px solid #f9f9f9;
+}
+
+/* SIDE PROFILE CARD */
+.profile-card {
+    height: 200px;
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.profile-info h3 {
+    font-size: 14px !important;
+    font-family: "Roboto-Bold", "source-sans-pro" sans-serif !important;
+    color: #666;
+    margin: 0;
+    font-weight: normal;
+}
+
+.profile-info h2 {
+    font-size: 20px;
+    font-family: 'Roboto-Bold', sans-serif !important;
+    margin: 5px 0;
+    color: #333;
+}
+
+.view-profile-link {
+    color: var(--primary-color);
+    font-size: 13px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    gap: 5px;
+}
+
+.profile-avatar-large {
+    width: 70px;
+    height: 70px;
+    margin-right: 50px;
+    border-radius: 50%;
+    background: #ffe082;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #f0f0f0;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #666;
+}
+
+/* FEE SUMMARY MAIN CARD */
+.fee-summary-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+}
+
+.fee-summary-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    transition: all 0.2s ease;
+    /* Smooth transition */
+    cursor: pointer;
+}
+
+.fee-summary-item:hover {
+    transform: scale(1.05);
+    /* Pop up effect */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Highlight shadow */
+    z-index: 10;
+    background-color: white;
+    /* Ensure background is solid */
+}
+
+.fee-icon-box {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-size: 20px;
+}
+
+.fee-icon-box.purple {
+    background: #f0e6fa;
+    color: #9055e8;
+    border: 1px solid #9055e8;
+}
+
+.fee-icon-box.green {
+    background: #e8f5e9;
+    color: #4caf50;
+    border: 1px solid #4caf50;
+}
+
+.fee-icon-box.pink {
+    background: #fae6e6;
+    color: #e91e63;
+    border: 1px solid #e91e63;
+}
+
+.fee-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.fee-label {
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 3px;
+}
+
+.fee-amount {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* RESPONSIVE */
+/* MOBILE RESPONSIVE MEDIA QUERIES */
+@media screen and (max-width: 768px) {
+
+    /* 1. RESET CONTAINER & SCROLL */
+    .dashboard-container {
+        height: auto;
+        overflow: auto;
+        min-height: 100vh;
+    }
+
+    .dashboard-body {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+    }
+
+    .main-content {
+        overflow-y: visible;
+        padding-bottom: 50px;
+    }
+
+    /* 2. HEADER ADJUSTMENTS */
+    .top-header {
+        padding: 0 15px;
+        gap: 15px;
+        /* Override the large 750px gap */
+        justify-content: space-between;
+    }
+
+    .header-logo-img {
+        height: 35px;
+        /* Smaller logo */
+    }
+
+    .header-right {
+        gap: 10px;
+        margin-top: 0;
+    }
+
+    /* Hide search bar on small screens to save space */
+    .search-bar-container {
+        display: none;
+    }
+
+    /* 3. SIDEBAR AS HORIZONTAL SCROLL */
+    .dashboard-sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        overflow-x: auto;
+        flex-shrink: 0;
+        background: var(--sidebar-bg);
+        /* Ensure styling persists */
+        order: -1;
+        /* Keep at top */
+    }
+
+    .session-info-top {
+        display: none;
+        /* Hide session info to save space */
+    }
+
+    .dashboard-sidebar-menu {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        width: 100%;
+        padding-bottom: 5px;
+        /* Scrollbar space */
+        scrollbar-width: none;
+    }
+
+    .dashboard-sidebar-item {
+        min-width: 70px;
+        padding: 10px 5px;
+        border-bottom: none;
+        font-size: 10px;
+    }
+
+    /* 4. DASHBOARD GRID & WIDGETS */
+    .dashboard-content {
+        padding: 10px;
+    }
+
+    .dashboard-row {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Make columns full width */
+    .col-main,
+    .col-side {
+        width: 100%;
+        flex: none;
+        min-width: 0;
+    }
+
+    /* Welcome Card Reflow */
+    .welcome-card {
+        flex-direction: column;
+        height: auto;
+        text-align: center;
+        padding-bottom: 20px;
+        margin-top: 15px;
+    }
+
+    .welcome-text {
+        order: 2;
+        /* Text below image */
+        margin-top: 10px;
+    }
+
+    .welcome-text h3,
+    .welcome-text p {
+        margin-left: 0;
+        /* Center align */
+    }
+
+    .btn-check-now {
+        margin-left: 0;
+    }
+
+    .welcome-image {
+        order: 1;
+        /* Image on top */
+        margin-right: 0;
+        width: 100%;
+        justify-content: center;
+        height: 150px;
+        /* Reduced height */
+    }
+
+    .welcome-illustration {
+        height: 180px;
+        /* Smaller illustration */
+        margin-top: 0;
+        margin-right: 0;
+        position: static;
+    }
+
+    /* 5. FEE SUMMARY & STATS */
+    .fee-summary-container {
+        margin-top: 0;
+    }
+
+    .profile-card {
+        margin-bottom: 20px;
+    }
+
+    /* Content Search Bar */
+    .content-search-bar {
+        width: 100%;
+        /* Full width */
+        margin-top: 5px !important;
+        margin-bottom: 15px;
+    }
+}

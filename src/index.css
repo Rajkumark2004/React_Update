@@ -1,0 +1,372 @@
+/* Reset default Vite styles for LoginPage */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ========================================
+   GLOBAL SIDEBAR FIX - Applied to all pages
+   Removes white bar gap on right of sidebar
+   ======================================== */
+
+/* Content area should start right after sidebar */
+.content-wrapper,
+.right-side,
+.main-footer {
+  margin-left: 75px !important;
+  /* Match sidebar width */
+}
+
+/* ========================================
+   SKELETON LOADER ANIMATIONS
+   ======================================== */
+.skeleton-loader-container {
+  width: 100%;
+  padding: 10px;
+  background-color: transparent;
+}
+
+.skeleton-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.dashboard-skeleton .skeleton-row {
+  gap: 20px;
+}
+
+.skeleton-column-right {
+  display: flex;
+  flex-direction: column;
+  width: 25%;
+  gap: 20px;
+}
+
+.main-content-row {
+  align-items: flex-start;
+}
+
+/* Static Skeleton Element (No Shimmer) */
+.skeleton-logo {
+  background: #e1e4e8;
+  display: inline-block;
+  position: relative;
+  border-radius: 4px;
+}
+
+/* Base Skeleton Element with Shimmer */
+.skeleton-cell,
+.skeleton-card,
+.skeleton-search,
+.skeleton-icon-circle,
+.skeleton-text-line,
+.skeleton-sidebar-item,
+.skeleton-sidebar-icon,
+.skeleton-sidebar-text {
+  background: #e1e4e8;
+  background-image: linear-gradient(to right, #C0C0C0 0%, #F0F0F0 20%, #C0C0C0 40%, #C0C0C0 100%);
+  background-repeat: no-repeat;
+  background-size: 800px 104px;
+  display: inline-block;
+  position: relative;
+  border-radius: 4px;
+  animation-duration: 0.6s;
+  /* Aggressive speed */
+  animation-fill-mode: forwards;
+  animation-iteration-count: infinite;
+  animation-name: shimmer;
+  animation-timing-function: linear;
+}
+
+/* Helper to remove shimmer manually */
+.no-shimmer {
+  animation-name: none !important;
+  background-image: none !important;
+}
+
+/* Specific Sizes */
+.skeleton-cell {
+  height: 20px;
+  width: 32%;
+}
+
+.skeleton-card-small {
+  height: 120px;
+  width: 32%;
+}
+
+.skeleton-card-large {
+  height: 400px;
+  width: 73%;
+}
+
+.skeleton-card-medium {
+  height: 180px;
+  width: 100%;
+}
+
+/* Header Skeletons */
+.skeleton-logo {
+  width: 150px;
+  height: 40px;
+  margin-right: 20px;
+}
+
+.skeleton-search {
+  width: 250px;
+  height: 34px;
+  margin-top: 8px;
+  border-radius: 20px;
+}
+
+.skeleton-icon-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin: 10px 5px;
+}
+
+/* Sidebar Skeletons */
+.skeleton-sidebar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+  margin-bottom: 5px;
+  background: transparent !important;
+  /* Override base */
+}
+
+.skeleton-sidebar-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  /* Optional: make icons circular */
+  margin-bottom: 5px;
+}
+
+.skeleton-sidebar-text {
+  width: 60px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* Multi-line Text inside Cards */
+.skeleton-line {
+  height: 12px;
+  width: 90%;
+  margin-bottom: 8px;
+  border-radius: 2px;
+  background: #e1e4e8;
+  /* Static background for lines inside animated card */
+}
+
+/* If you want internal lines to also shimmer independently, use the base class */
+.skeleton-line.shimmer {
+  background-image: linear-gradient(to right, #C0C0C0 0%, #F0F0F0 20%, #C0C0C0 40%, #C0C0C0 100%);
+  animation-name: shimmer;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+/* ========================================
+   SLIDE IN ANIMATION
+   ======================================== */
+.slide-in {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.content-wrapper {
+  padding-top: 60px !important;
+  min-height: calc(100vh - 60px) !important;
+}
+
+/* Sidebar fixed width */
+.main-sidebar {
+  width: 85px !important;
+  right: auto;
+  padding-top: 60px !important;
+}
+
+/* Prevent horizontal overflow */
+.wrapper {
+  overflow-x: hidden;
+}
+
+/* Header Logo top margin */
+.main-header .logo {
+  margin-top: 8px !important;
+}
+
+/* Header pull-right items margin */
+.main-header .pull-right {
+  margin-top: 5px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+}
+
+/* Normalize Header Menu Icons */
+.headertopmenu {
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+.headertopmenu>li {
+  width: 45px !important;
+  height: 45px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+.headertopmenu>li>a {
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.main-header .navbar-custom-menu {
+  float: none !important;
+}
+
+.main-header>.navbar {
+  min-height: 50px !important;
+}
+
+.main-header .navbar-form {
+  margin: 0 !important;
+  float: none !important;
+  margin-top: 5px !important;
+  /* Shift search field down */
+}
+
+/* Make icons slightly bigger, specifically WhatsApp */
+.headertopmenu i {
+  font-size: 18px !important;
+}
+
+.headertopmenu .fa-whatsapp {
+  font-size: 22px !important;
+}
+
+/* ========================================
+   THEME COLORS
+   Color: #9854cb
+   ======================================== */
+
+/* Sidebar Background */
+.main-sidebar,
+.left-side {
+  background-color: #9854cb !important;
+}
+
+.sidebar-menu>li>a {
+  border-left: 3px solid transparent;
+  transition: none !important;
+}
+
+/* Sidebar Menu Item Hover/Active (Clean) */
+.sidebar-menu>li:hover>a,
+.sidebar-menu>li.active>a,
+.sidebar-menu>li>a.active {
+  color: #fff !important;
+  background-color: transparent !important;
+  border-left: none !important;
+}
+
+/* Ensure no background on hover for all sidebar elements */
+.sidebar-menu>li:hover {
+  background-color: transparent !important;
+}
+
+/* Modal Header (Active Modals) */
+.modal-header {
+  background-color: #9854cb !important;
+  color: #fff !important;
+  border-bottom-color: #9854cb !important;
+}
+
+.modal-title {
+  color: #fff !important;
+}
+
+/* Close button in modal header */
+.modal-header .close {
+  color: #fff !important;
+  opacity: 0.8;
+}
+
+.modal-header .close:hover {
+  opacity: 1;
+}
+
+/* ========================================
+   SESSION YEAR STYLING
+   Targeted via .current-session-year class
+   ======================================== */
+.current-session-year {
+  font-weight: 500 !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  min-height: 25px !important;
+  padding: 4px 5px 0px !important;
+}
+
+/* ========================================
+   SESSION BLOCK CONTAINER
+   Fixes gap and implements sticky behavior
+   ======================================== */
+.sessionul {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+  position: sticky !important;
+  /* Make it sticky */
+  position: -webkit-sticky !important;
+  /* Safari support */
+  top: 0 !important;
+  z-index: 100 !important;
+  background-color: #9854cb !important;
+  /* Match sidebar background */
+  width: 100% !important;
+
+}
+
+/* Make sidebar text pronounced */
+.sidebar-small-text {
+  color: #fff !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
+}

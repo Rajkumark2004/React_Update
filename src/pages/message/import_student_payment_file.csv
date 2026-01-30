@@ -1,0 +1,2 @@
+admission_no,Fee_type1,Fee_type2,fee_category,date,payment_mode,description,collected_by,reference_no
+1143,1000,2000,fees/discount/oldfee,2025-02-18,Cash,,admin(admin),,
