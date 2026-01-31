@@ -6,6 +6,7 @@ import Footer from '../../../components/Footer';
 import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
+import Loader from '../../../components/Loader';
 
 const FeeMaster = () => {
     const { currentSession } = useSession();
@@ -373,7 +374,7 @@ const FeeMaster = () => {
                                             </thead>
                                             <tbody>
                                                 {initialLoading ? (
-                                                    <tr><td colSpan="3" className="text-center"><ContentShimmer rows={5} columns={3} /></td></tr>
+                                                    <tr><td colSpan="3" className="text-center"><Loader /></td></tr>
                                                 ) : feeMasterList.length === 0 ? (
                                                     <tr><td colSpan="3" className="text-center">No data available</td></tr>
                                                 ) : feeMasterList

@@ -5,7 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import '../../utils/include_files';
 import { useSession } from '../../context/SessionContext';
-import { api } from '../../services/api';
+import { api, API_BASE } from '../../services/api';
 import AssignExamStudent from './AssignExamStudent';
 import AssignExamSubjects from './AssignExamSubjects';
 import TeacherRemark from './TeacherRemark';
@@ -47,6 +47,10 @@ const CBSEExamList = () => {
     const [assessmentTypesForEntry, setAssessmentTypesForEntry] = useState([]);
     const [entryLoading, setEntryLoading] = useState(false);
     const [schSetting, setSchSetting] = useState({});
+    const [entryMarks, setEntryMarks] = useState({}); // { [student_id]: { [type_id]: { marks, is_absent } } }
+    const [entryNotes, setEntryNotes] = useState({}); // { [student_id]: note }
+    const [csvFile, setCsvFile] = useState(null);
+    const [importLoading, setImportLoading] = useState(false);
 
     const mockStudents = [
         { id: 101, admission_no: '1001', firstname: 'John', lastname: 'Doe', class: 'Class 1', section: 'A', father_name: 'Robert Doe', gender: 'Male', category: 'General', roll_no: '1', dob: '2010-05-15', mobileno: '9876543210' },
@@ -97,16 +101,163 @@ const CBSEExamList = () => {
             };
             const response = await api.getSubjectStudent(payload);
             if (response) {
-                // Convert resultlist object to array
                 const results = Object.values(response.resultlist || {});
                 setSubjectStudentResults(results);
                 setAssessmentTypesForEntry(response.exam_assessment_types || []);
                 setSchSetting(response.sch_setting || {});
+
+                // Initialize entry states
+                const initialMarks = {};
+                const initialNotes = {};
+                results.forEach(student => {
+                    const marks = {};
+                    let note = '';
+                    if (student.marks) {
+                        Object.keys(student.marks).forEach(typeId => {
+                            marks[typeId] = {
+                                marks: student.marks[typeId].marks,
+                                is_absent: !!student.marks[typeId].is_absent
+                            };
+                            if (student.marks[typeId].note) note = student.marks[typeId].note;
+                        });
+                    }
+                    initialMarks[student.exam_student_id] = marks;
+                    initialNotes[student.exam_student_id] = note;
+                });
+                setEntryMarks(initialMarks);
+                setEntryNotes(initialNotes);
             }
         } catch (error) {
             console.error("Error fetching subject students:", error);
         } finally {
             setEntryLoading(false);
+        }
+    };
+
+    const handleMarkChange = (studentId, typeId, value) => {
+        setEntryMarks(prev => ({
+            ...prev,
+            [studentId]: {
+                ...(prev[studentId] || {}),
+                [typeId]: {
+                    ...(prev[studentId]?.[typeId] || {}),
+                    marks: value
+                }
+            }
+        }));
+    };
+
+    const handleAbsentChange = (studentId, typeId, checked) => {
+        setEntryMarks(prev => ({
+            ...prev,
+            [studentId]: {
+                ...(prev[studentId] || {}),
+                [typeId]: {
+                    ...(prev[studentId]?.[typeId] || {}),
+                    is_absent: checked,
+                    marks: checked ? 0 : (prev[studentId]?.[typeId]?.marks || '')
+                }
+            }
+        }));
+    };
+
+    const handleNoteChange = (studentId, value) => {
+        setEntryNotes(prev => ({
+            ...prev,
+            [studentId]: value
+        }));
+    };
+
+    const handleSaveExamMarks = async () => {
+        setEntryLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('cbse_exam_timetable_id', subModalConfig.subject.id);
+
+            subjectStudentResults.forEach(student => {
+                const studentId = student.exam_student_id;
+                formData.append('exam_student_id[]', studentId);
+
+                assessmentTypesForEntry.forEach(type => {
+                    const typeId = type.id;
+                    const markData = entryMarks[studentId]?.[typeId] || {};
+
+                    if (markData.is_absent) {
+                        formData.append(`absent[${studentId}][${typeId}]`, '1');
+                    }
+                    formData.append(`mark[${studentId}][${typeId}]`, markData.marks !== undefined ? markData.marks : '');
+                });
+
+                formData.append(`exam_student_note[${studentId}]`, entryNotes[studentId] || '');
+            });
+
+            const response = await api.saveExamMarks(formData);
+            if (response && response.status === 1) {
+                alert(response.message || 'Marks Saved Successfully');
+                setSubModalConfig({ show: false, subject: null });
+            } else {
+                alert(response.message || 'Failed to save marks');
+            }
+        } catch (error) {
+            console.error("Error saving exam marks:", error);
+            alert("Error occurred while saving marks.");
+        } finally {
+            setEntryLoading(false);
+        }
+    };
+
+    const handleImportMarks = async () => {
+        if (!csvFile) {
+            alert("Please select a CSV file first.");
+            return;
+        }
+        setImportLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', csvFile);
+            const response = await api.importExamMarks(formData);
+            if (response && response.status === "1" || response.status === 1) {
+                const importedMarks = response.student_marks || [];
+                const newMarks = { ...entryMarks };
+                const newNotes = { ...entryNotes };
+
+                importedMarks.forEach(item => {
+                    const data = typeof item === 'string' ? JSON.parse(item) : item;
+                    const student = subjectStudentResults.find(s => s.admission_no === data.adm_no);
+                    if (student) {
+                        const sid = student.exam_student_id;
+                        const marksObj = {};
+                        if (assessmentTypesForEntry[0]) marksObj[assessmentTypesForEntry[0].id] = { marks: data.parameter1 };
+                        if (assessmentTypesForEntry[1]) marksObj[assessmentTypesForEntry[1].id] = { marks: data.parameter2 };
+                        if (assessmentTypesForEntry[2]) marksObj[assessmentTypesForEntry[2].id] = { marks: data.parameter3 };
+                        if (assessmentTypesForEntry[3]) marksObj[assessmentTypesForEntry[3].id] = { marks: data.parameter4 };
+
+                        newMarks[sid] = {
+                            ...newMarks[sid],
+                            ...marksObj
+                        };
+                        newNotes[sid] = data.note;
+                    }
+                });
+                setEntryMarks(newMarks);
+                setEntryNotes(newNotes);
+                alert("CSV file uploaded successfully.");
+            } else {
+                let errorMsg = "Failed to import marks";
+                if (response.error) {
+                    if (typeof response.error === 'object') {
+                        errorMsg = Object.values(response.error).join(' ');
+                    } else {
+                        errorMsg = response.error;
+                    }
+                }
+                alert(errorMsg);
+            }
+        } catch (error) {
+            console.error("Error importing marks:", error);
+            alert("Error occurred while importing marks.");
+        } finally {
+            setImportLoading(false);
         }
     };
 
@@ -497,11 +648,11 @@ const CBSEExamList = () => {
                                                                 className="btn btn-default btn-xs"
                                                                 title="Generate Rank"
                                                             ><i className="fa fa-list-alt"></i></a>
-                                                            <a
-                                                                href={`/cbseexam/exam/examwiseadmitcard/${exam.id}`}
+                                                            <Link
+                                                                to={`/cbseexam/exam/examwiseadmitcard/${exam.id}`}
                                                                 className="btn btn-default btn-xs"
                                                                 title="Print Hall Ticket"
-                                                            ><i className="fa fa-ticket"></i></a>
+                                                            ><i className="fa fa-ticket"></i></Link>
                                                             <button
                                                                 className="btn btn-default btn-xs"
                                                                 title="Delete"
@@ -797,6 +948,38 @@ const CBSEExamList = () => {
                                     <div>
                                         <button className="btn btn-default btn-sm mb10" onClick={() => setSubModalConfig({ show: false, subject: null })}><i className="fa fa-arrow-left"></i> Back to Subjects</button>
                                         <h4>Enter {subModalConfig.subject.subject_name} Marks</h4>
+
+                                        {/* CSV Import Section */}
+                                        <div className="row mb20" style={{ backgroundColor: '#f9f9f9', padding: '15px', borderRadius: '4px', border: '1px solid #eee' }}>
+                                            <div className="col-md-8">
+                                                <div className="form-group mb0">
+                                                    <label>Select CSV File <span className="text-danger">*</span></label>
+                                                    <div className="d-flex gap-2">
+                                                        <input
+                                                            type="file"
+                                                            className="form-control"
+                                                            accept=".csv"
+                                                            onChange={(e) => setCsvFile(e.target.files[0])}
+                                                        />
+                                                        <button
+                                                            className="btn btn-primary"
+                                                            onClick={handleImportMarks}
+                                                            disabled={importLoading}
+                                                            style={{ backgroundColor: '#9b59b6', borderColor: '#8e44ad' }}
+                                                        >
+                                                            {importLoading ? <i className="fa fa-spinner fa-spin"></i> : 'Submit'}
+                                                        </button>
+                                                    </div>
+                                                    <small className="text-muted"><i className="fa fa-upload"></i> Drag and drop a file here or click</small>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-4 text-right">
+                                                <a href={`${API_BASE}/student/exportsubjectstudentmarks`} className="btn btn-primary btn-sm" style={{ backgroundColor: '#9b59b6', borderColor: '#8e44ad' }}>
+                                                    <i className="fa fa-download"></i> Download Sample Import File
+                                                </a>
+                                            </div>
+                                        </div>
+
                                         <div className="table-responsive">
                                             {entryLoading ? (
                                                 <div className="text-center p-4">
@@ -804,39 +987,63 @@ const CBSEExamList = () => {
                                                     <p>Loading students...</p>
                                                 </div>
                                             ) : (
-                                                <table className="table table-striped table-bordered">
+                                                <table className="table table-striped table-bordered table-hover">
                                                     <thead>
                                                         <tr>
                                                             <th>Admission No</th>
                                                             <th>Roll No</th>
                                                             <th>Student Name</th>
                                                             <th>Class</th>
+                                                            <th>Father Name</th>
+                                                            <th>Gender</th>
                                                             {assessmentTypesForEntry.map(type => (
-                                                                <th key={type.id}>{type.name} ({type.maximum_marks})</th>
+                                                                <th key={type.id}>{type.name}</th>
                                                             ))}
+                                                            <th>Note</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {subjectStudentResults.length > 0 ? (
                                                             subjectStudentResults.map(student => (
-                                                                <tr key={student.id}>
+                                                                <tr key={student.exam_student_id}>
                                                                     <td>{student.admission_no}</td>
-                                                                    <td>{student.roll_no}</td>
-                                                                    <td>{`${student.firstname} ${student.lastname}`}</td>
+                                                                    <td>{activeExam?.use_exam_roll_no !== 0 ? student.exam_roll_no : (student.roll_no || '-')}</td>
+                                                                    <td>{`${student.firstname}${student.middlename ? ' ' + student.middlename : ''}${student.lastname ? ' ' + student.lastname : ''}`}</td>
                                                                     <td>{`${student.class_name} (${student.section_name})`}</td>
+                                                                    <td>{student.father_name}</td>
+                                                                    <td>{student.gender}</td>
                                                                     {assessmentTypesForEntry.map(type => (
                                                                         <td key={type.id} style={{ minWidth: '150px' }}>
                                                                             <label style={{ display: 'block', fontWeight: 'normal', fontSize: '11px' }}>
-                                                                                <input type="checkbox" /> Mark as Absent
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={entryMarks[student.exam_student_id]?.[type.id]?.is_absent || false}
+                                                                                    onChange={(e) => handleAbsentChange(student.exam_student_id, type.id, e.target.checked)}
+                                                                                /> Mark as Absent
                                                                             </label>
-                                                                            <input type="number" className="form-control input-sm" placeholder={`Max Marks: ${type.maximum_marks}`} />
+                                                                            <input
+                                                                                type="number"
+                                                                                className="form-control input-sm"
+                                                                                value={entryMarks[student.exam_student_id]?.[type.id]?.marks !== undefined ? entryMarks[student.exam_student_id][type.id].marks : ''}
+                                                                                onChange={(e) => handleMarkChange(student.exam_student_id, type.id, e.target.value)}
+                                                                                readOnly={entryMarks[student.exam_student_id]?.[type.id]?.is_absent}
+                                                                                placeholder={`Max Marks: ${type.maximum_marks}`}
+                                                                            />
                                                                         </td>
                                                                     ))}
+                                                                    <td>
+                                                                        <input
+                                                                            type="text"
+                                                                            className="form-control input-sm"
+                                                                            value={entryNotes[student.exam_student_id] || ''}
+                                                                            onChange={(e) => handleNoteChange(student.exam_student_id, e.target.value)}
+                                                                        />
+                                                                    </td>
                                                                 </tr>
                                                             ))
                                                         ) : (
                                                             <tr>
-                                                                <td colSpan={4 + assessmentTypesForEntry.length} className="text-center text-danger">No students found.</td>
+                                                                <td colSpan={7 + assessmentTypesForEntry.length} className="text-center text-danger">No students found.</td>
                                                             </tr>
                                                         )}
                                                     </tbody>
@@ -850,7 +1057,13 @@ const CBSEExamList = () => {
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn btn-default" onClick={closeActionModal}>Close</button>
-                                <button type="button" className="btn btn-primary" onClick={closeActionModal}>Save Changes</button>
+                                {modalConfig.type === 'marks' && subModalConfig.show ? (
+                                    <button type="button" className="btn btn-primary" onClick={handleSaveExamMarks} disabled={entryLoading} style={{ backgroundColor: '#9b59b6', borderColor: '#8e44ad' }}>
+                                        {entryLoading ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
+                                    </button>
+                                ) : (
+                                    <button type="button" className="btn btn-primary" onClick={closeActionModal}>Save Changes</button>
+                                )}
                             </div>
                         </div>
                     </div>

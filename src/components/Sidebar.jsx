@@ -75,7 +75,7 @@ const Sidebar = ({
         { id: 6, icon: 'academics.png', label: 'Academics', url: '#' },
         { id: 7, icon: 'state_examination.png', label: 'State Examinations', url: '/cbseexam/exam' },
         { id: 8, icon: 'courses.png', label: 'Courses', url: '#' },
-        { id: 9, icon: 'transport.png', label: 'Transport', url: '#' },
+        { id: 9, icon: 'transport.png', label: 'Transport', url: '/admin/route' },
         { id: 10, icon: 'messages.png', label: 'Messages', url: '#' },
         { id: 11, icon: 'hr.png', label: 'Human Resource', url: '/admin/staff/search' },
         { id: 12, icon: 'download_resouces.png', label: 'Download Center', url: '#' },

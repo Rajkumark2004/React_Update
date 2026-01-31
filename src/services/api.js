@@ -1,5 +1,5 @@
 
-const API_BASE = 'https://newlayout.wisibles.com/api_admin';
+export const API_BASE = 'https://newlayout.wisibles.com/api_admin';
 
 // Helper function to get the active session ID from localStorage
 // This is the session ID that should be used for all data-related API calls
@@ -765,7 +765,7 @@ export const api = {
     getExamRank: async (examId) => {
         console.log('API Request: Get Exam Rank', examId);
         try {
-            const response = await fetch(`${API_BASE}/cbseexam/exam/exam_ajax_rank`, createFetchOptions('POST', { examid: examId }));
+            const response = await fetch(`${API_BASE}/cbseexam/exam/examwiserank`, createFetchOptions('POST', { exam_id: examId }));
             const data = await response.json();
             console.log('Get Exam Rank Response:', data);
             return data;
@@ -797,6 +797,167 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Templates for Rank Error:', error);
+            throw error;
+        }
+    },
+
+    getRouteList: async () => {
+        console.log('API Request: Get Route List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/route`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Route List Response:', data);
+
+            if (!response.ok) {
+                // It's possible for the API to return success:false but still have data or just be empty
+                // For now, we'll return data as is and let the component handle it
+                // throw new Error(data.message || 'Failed to fetch route list');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Route List Error:', error);
+            throw error;
+        }
+    },
+
+    createRoute: async (payload) => {
+        console.log('API Request: Create Route', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/route/create`, createFetchOptions('POST', payload));
+            const data = await response.json();
+            console.log('Create Route Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Create Route Error:', error);
+            throw error;
+        }
+    },
+
+    getRouteDetails: async (id) => {
+        console.log('API Request: Get Route Details', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/route/get_editdetails/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Route Details Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Route Details Error:', error);
+            throw error;
+        }
+    },
+
+    updateRoute: async (id, payload) => {
+        console.log('API Request: Update Route', id, payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/route/edit/${id}`, createFetchOptions('POST', payload));
+            const data = await response.json();
+            console.log('Update Route Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Route Error:', error);
+            throw error;
+        }
+    },
+
+    deleteRoute: async (id) => {
+        console.log('API Request: Delete Route', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/route/delete/${id}`, createFetchOptions('POST', {}));
+            const data = await response.json();
+            console.log('Delete Route Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Route Error:', error);
+            throw error;
+        }
+    },
+
+
+    // Restoring original getVehicleList for VehicleList.jsx
+    getVehicleList: async () => {
+        console.log('API Request: Get Vehicle List (Actual)');
+        try {
+            const response = await fetch(`${API_BASE}/admin/vehicle/getvehiclelist`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Vehicle List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Vehicle List Error:', error);
+            throw error;
+        }
+    },
+
+    getAssignVehicleRouteList: async () => {
+        console.log('API Request: Get Assign Vehicle Route List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/vehroute/`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Assign Vehicle Route List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Assign Vehicle Route List Error:', error);
+            throw error;
+        }
+    },
+
+    getAssignVehicleRouteDetails: async (id) => {
+        console.log('API Request: Get Assign Vehicle Route Details', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/vehroute/get_editvehroute/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Assign Vehicle Route Details Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Assign Vehicle Route Details Error:', error);
+            throw error;
+        }
+    },
+
+    addAssignVehicleRouteList: async (payload) => {
+        console.log('API Request: Add Assign Vehicle Route List', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/vehroute/`, createFetchOptions('POST', payload));
+            const data = await response.json();
+            console.log('Add Assign Vehicle Route List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Assign Vehicle Route List Error:', error);
+            throw error;
+        }
+    },
+
+    updateAssignVehicleRouteList: async (id, payload) => {
+        console.log('API Request: Update Assign Vehicle Route List', id, payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/vehroute/edit/${id}`, createFetchOptions('POST', payload));
+            const data = await response.json();
+            console.log('Update Assign Vehicle Route List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Assign Vehicle Route List Error:', error);
+            throw error;
+        }
+    },
+
+    deleteAssignVehicleRouteList: async (id) => {
+        console.log('API Request: Delete Assign Vehicle Route List', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/vehroute/delete/${id}`, createFetchOptions('POST', {}));
+            const data = await response.json();
+            console.log('Delete Assign Vehicle Route List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Assign Vehicle Route List Error:', error);
             throw error;
         }
     },
@@ -3371,6 +3532,53 @@ export const api = {
             throw error;
         }
     },
+    printAdmitCard: async (payload) => {
+        try {
+            const formData = new FormData();
+            formData.append('exam_id', payload.exam_id);
+            if (Array.isArray(payload.student_session_id)) {
+                payload.student_session_id.forEach(id => {
+                    formData.append('student_session_id[]', id);
+                });
+            } else {
+                formData.append('student_session_id', payload.student_session_id);
+            }
+            formData.append('session_id', getSessionId());
+
+            const response = await fetch(`${API_BASE}/cbseexam/exam/printadmitcard`, {
+                method: 'POST',
+                body: formData
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Print Admit Card Error:', error);
+            throw error;
+        }
+    },
+
+    getConsolidatedReportResults: async (payload) => {
+        try {
+            const response = await fetch(`${API_BASE}/cbseexam/report/getClassSectionExamResults`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Get Consolidated Report Results Error:', error);
+            throw error;
+        }
+    },
+
 
     getCBSEExamSubjectResult: async (payload) => {
         try {
@@ -3387,6 +3595,32 @@ export const api = {
             return await response.json();
         } catch (error) {
             console.error('Get CBSE Exam Subject Result Error:', error);
+            throw error;
+        }
+    },
+
+    saveExamMarks: async (formData) => {
+        try {
+            const response = await fetch(`${API_BASE}/cbseexam/exam/entrymarks`, {
+                method: 'POST',
+                body: formData,
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Save Exam Marks Error:', error);
+            throw error;
+        }
+    },
+
+    importExamMarks: async (formData) => {
+        try {
+            const response = await fetch(`${API_BASE}/cbseexam/exam/importsubjectmarks`, {
+                method: 'POST',
+                body: formData,
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Import Exam Marks Error:', error);
             throw error;
         }
     },

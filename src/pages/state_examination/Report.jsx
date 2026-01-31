@@ -142,6 +142,27 @@ const Report = () => {
             } finally {
                 setSearchLoading(false);
             }
+        } else if (reportType === 'consolidated') {
+            try {
+                setSearchLoading(true);
+                setResults(null);
+                const payload = {
+                    class_id: parseInt(formData.class_id),
+                    section_id: parseInt(formData.section_id)
+                };
+
+                const response = await api.getConsolidatedReportResults(payload);
+                if (response.status && response.data) {
+                    setResults(response.data);
+                } else {
+                    toast.error("No results found or error in response");
+                }
+            } catch (error) {
+                console.error("Search Consolidated Result Error:", error);
+                toast.error("Error fetching consolidated report");
+            } finally {
+                setSearchLoading(false);
+            }
         } else {
             // Existing mock search for other types
             setResults({
@@ -184,6 +205,19 @@ const Report = () => {
             } catch (error) {
                 console.error("Fetch Exam Subject Error:", error);
                 toast.error("Error loading exam data");
+            }
+        } else if (type === 'consolidated') {
+            try {
+                // Using getCBSEExamList to get classList as per current pattern in CBSEExamList
+                const response = await api.getCBSEExamList();
+                if (response && response.status && response.data) {
+                    if (response.data.classlist) {
+                        setClasses(response.data.classlist);
+                    }
+                }
+            } catch (error) {
+                console.error("Fetch Consolidated Data Error:", error);
+                toast.error("Error loading class data");
             }
         }
     };
@@ -228,7 +262,7 @@ const Report = () => {
                                 </a>
                             </li>
                             <li className={`col-lg-4 col-md-4 col-sm-6 ${reportType === 'consolidated' ? 'active' : ''}`}>
-                                <a href="#" onClick={(e) => { e.preventDefault(); setReportType('consolidated'); }}>
+                                <a href="#" onClick={(e) => { e.preventDefault(); setReportType('consolidated'); fetchReportData('consolidated'); }}>
                                     <i className="fa fa-file-text-o"></i> Consolidated Report
                                 </a>
                             </li>
@@ -384,6 +418,81 @@ const Report = () => {
         </div>
     );
 
+    const renderConsolidatedReportResults = () => {
+        if (!results || !results.subjects || !results.exam_term_assessment || !results.students) return null;
+
+        const subjects = results.subjects;
+        const examTermAssessments = results.exam_term_assessment;
+        const students = results.students;
+
+        // Flatten assessments for each subject to create headers
+        const subjectHeaders = Object.keys(subjects).map(subId => {
+            const subjectName = subjects[subId];
+            const examsForSubject = examTermAssessments.filter(exam => exam.subject_assessments[subId]);
+
+            return {
+                id: subId,
+                name: subjectName,
+                exams: examsForSubject.map(exam => ({
+                    exam_id: exam.exam_id,
+                    exam_name: exam.exam_name,
+                    term_name: exam.term_name,
+                    assessments: Object.values(exam.subject_assessments[subId].assessments)
+                }))
+            };
+        });
+
+        return (
+            <div className="box-body">
+                <div className="table-responsive">
+                    <table className="table table-bordered table-b vertical-middle">
+                        <thead>
+                            <tr>
+                                <th rowSpan="3">Student</th>
+                                <th rowSpan="3">Admission No</th>
+                                {subjectHeaders.map(sub => (
+                                    <th key={sub.id} colSpan={sub.exams.reduce((acc, ex) => acc + ex.assessments.length, 0)} className="text-center">
+                                        {sub.name}
+                                    </th>
+                                ))}
+                            </tr>
+                            <tr>
+                                {subjectHeaders.map(sub => sub.exams.map((ex, idx) => (
+                                    <th key={`${sub.id}_${ex.exam_id}`} colSpan={ex.assessments.length} className="text-center">
+                                        {ex.exam_name} ({ex.term_name})
+                                    </th>
+                                )))}
+                            </tr>
+                            <tr>
+                                {subjectHeaders.map(sub => sub.exams.map(ex => ex.assessments.map(as => (
+                                    <th key={`${sub.id}_${ex.exam_id}_${as.assessment_type_id}`} className="text-center">
+                                        {as.assessment_type_name}<br />(Max: {as.maximum_marks})
+                                    </th>
+                                ))))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {students.map(st => (
+                                <tr key={st.student_id}>
+                                    <td>{st.firstname} {st.lastname}</td>
+                                    <td>{st.admission_no}</td>
+                                    {subjectHeaders.map(sub => sub.exams.map(ex => ex.assessments.map(as => {
+                                        const markData = st.exams?.[ex.exam_id]?.subjects?.[sub.id]?.assessments?.[as.assessment_type_id];
+                                        return (
+                                            <td key={`${st.student_id}_${sub.id}_${ex.exam_id}_${as.assessment_type_id}`} className="text-center">
+                                                {markData ? (markData.is_absent === '1' ? 'A' : (markData.marks || '-')) : '-'}
+                                            </td>
+                                        );
+                                    })))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
+
     const renderConsolidatedReport = () => (
         <div className="row" style={{ marginTop: '10px' }}>
             <div className="col-md-12">
@@ -398,7 +507,7 @@ const Report = () => {
                                     <label>Class</label><small className="req"> *</small>
                                     <select name="class_id" className="form-control" value={formData.class_id} onChange={handleInputChange} required>
                                         <option value="">Select</option>
-                                        {classes.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
+                                        {classes.map(c => <option key={c.id} value={c.id}>{c.class || c.name}</option>)}
                                     </select>
                                 </div>
                             </div>
@@ -407,17 +516,20 @@ const Report = () => {
                                     <label>Section</label><small className="req"> *</small>
                                     <select name="section_id" className="form-control" value={formData.section_id} onChange={handleInputChange} required>
                                         <option value="">Select</option>
-                                        {sections.map(s => <option key={s.id} value={s.id}>{s.section}</option>)}
+                                        {sections.map(s => <option key={s.id} value={s.id}>{s.section || s.name}</option>)}
                                     </select>
                                 </div>
                             </div>
                             <div className="col-sm-12">
                                 <div className="form-group">
-                                    <button type="submit" className="btn btn-primary pull-right btn-sm"><i className="fa fa-search"></i> Search</button>
+                                    <button type="submit" className="btn btn-primary pull-right btn-sm" disabled={searchLoading}>
+                                        {searchLoading ? <i className="fa fa-spinner fa-spin"></i> : <i className="fa fa-search"></i>} Search
+                                    </button>
                                 </div>
                             </div>
                         </form>
                     </div>
+                    {results && reportType === 'consolidated' && renderConsolidatedReportResults()}
                 </div>
             </div>
         </div>

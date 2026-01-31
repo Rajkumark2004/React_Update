@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../../utils/include_files.js';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
-import { useSession } from '../../../context/SessionContext';
-import api from '../../../services/api';
+import '../../utils/include_files.js';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import { useSession } from '../../context/SessionContext';
+import api from '../../services/api';
 
 const AssignPickupPoint = () => {
     const navigate = useNavigate();
@@ -174,7 +174,7 @@ const AssignPickupPoint = () => {
         { id: 5, icon: 'state_examination.png', label: 'State Examinations', url: '#' },
         { id: 6, icon: 'courses.png', label: 'Courses', url: '#' },
         { id: 7, icon: 'homework.png', label: 'Homework', url: '#' },
-        { id: 8, icon: 'transport.png', label: 'Transport', url: '#', active: true },
+        { id: 8, icon: 'transport.png', label: 'Transport', url: '/admin/route', active: true },
         { id: 9, icon: 'messages.png', label: 'Messages', url: '#' },
         { id: 10, icon: 'hr.png', label: 'Human Resource', url: '#' },
         { id: 11, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
@@ -296,7 +296,7 @@ const AssignPickupPoint = () => {
                 mobileNavItems={mobileNavItems}
                 handleSearch={handleSearch}
                 sessionYear={sessionYear}
-                currentUrl="/admin/vehroute"
+                currentUrl="/admin/routepickuppoint"
             />
 
             <div className="content-wrapper">

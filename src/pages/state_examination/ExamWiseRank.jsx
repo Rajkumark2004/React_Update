@@ -27,23 +27,17 @@ const ExamWiseRank = () => {
   const fetchExamRankData = async () => {
     setLoading(true);
     try {
-      // Fetch both rank data and exam details for the name
-      const [rankResponse, detailsResponse] = await Promise.all([
-        api.getExamRank(examId),
-        api.getExamDetails(examId)
-      ]);
+      const response = await api.getExamRank(examId);
 
-      if (rankResponse && rankResponse.data) {
-        setSchSetting(rankResponse.data.sch_setting || {});
-        const students = rankResponse.data.studentList || [];
+      if (response && response.status && response.data) {
+        const data = response.data;
+        setSchSetting(data.sch_setting || {});
+        setExamDetails(data.exam || {});
+        const students = data.studentList || [];
         setStudentList(students);
 
         const exists = students.some(s => s.rank !== null && s.rank !== "" && s.rank !== undefined);
         setHasRanksGenerated(exists);
-      }
-
-      if (detailsResponse && detailsResponse.status) {
-        setExamDetails(detailsResponse.exam);
       }
     } catch (error) {
       console.error("Error fetching exam rank data:", error);
@@ -56,15 +50,13 @@ const ExamWiseRank = () => {
     e.preventDefault();
     setGenerating(true);
     try {
-      const studentSessionIds = studentList.map(s => s.student_session_id);
       const payload = {
-        exam_id: examId,
-        student_session_id: studentSessionIds
+        exam_id: examId
       };
 
       const response = await api.generateExamRank(payload);
       if (response && response.status) {
-        alert("Rank Generated Successfully");
+        alert(response.message || "Rank Generated Successfully");
         fetchExamRankData();
       } else {
         alert("Failed to generate rank. " + (response.message || ""));

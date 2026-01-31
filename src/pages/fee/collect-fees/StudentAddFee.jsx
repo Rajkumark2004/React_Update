@@ -580,7 +580,9 @@ const StudentAddFee = () => {
                 <Sidebar />
                 <div className="content-wrapper" style={{ minHeight: '850px' }}>
                     <section className="content">
-                        <ContentShimmer />
+                        <div className="text-center" style={{ padding: "100px" }}>
+                            <Loader />
+                        </div>
                     </section>
                 </div>
                 <Footer />

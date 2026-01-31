@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import api from '../../services/api';
 
 const VehicleRoute = () => {
     const { id } = useParams();
@@ -11,6 +12,10 @@ const VehicleRoute = () => {
     // Form States
     const [selectedRoute, setSelectedRoute] = useState('');
     const [selectedVehicles, setSelectedVehicles] = useState([]);
+
+    // Store original values for edit payload
+    const [originalRouteId, setOriginalRouteId] = useState('');
+    const [originalVehicleIds, setOriginalVehicleIds] = useState([]);
 
     // Data States
     const [routeList, setRouteList] = useState([]);
@@ -22,63 +27,77 @@ const VehicleRoute = () => {
     const [itemsPerPage] = useState(10);
 
 
-    // Initialize mock data
-    useEffect(() => {
-        const mockRoutes = [
-            { id: 1, route_title: 'Route 1' },
-            { id: 2, route_title: 'Route 2' },
-            { id: 3, route_title: 'Route 3' },
-            { id: 4, route_title: 'Route 4' }
-        ];
-        const mockVehicles = [
-            { id: 1, vehicle_no: 'MH01-1234' },
-            { id: 2, vehicle_no: 'MH01-5678' },
-            { id: 3, vehicle_no: 'MH01-9012' },
-            { id: 4, vehicle_no: 'MH01-3456' },
-        ];
-        const mockVehRouteList = [
-            {
-                id: 1,
-                route_id: 1,
-                route_title: 'Route A',
-                vehicles: [
-                    { id: 1, vehicle_no: 'MH01-1234' },
-                    { id: 2, vehicle_no: 'MH01-5678' }
-                ]
-            },
-            {
-                id: 2,
-                route_id: 2,
-                route_title: 'Route B',
-                vehicles: [
-                    { id: 3, vehicle_no: 'MH01-9012' }
-                ]
-            },
-        ];
+    // Initialize data
+    const fetchData = async () => {
+        try {
+            const response = await api.getAssignVehicleRouteList();
+            if (response.status === 'success' || response.status === true) {
+                setRouteList(response.routelist || []);
+                setVehicleList(response.vehiclelist || []);
 
-        setRouteList(mockRoutes);
-        setVehicleList(mockVehicles);
-        setVehRouteList(mockVehRouteList);
+                const vehRoutes = response.vehroutelist;
+                let normalizedVehRoutes = [];
+                if (Array.isArray(vehRoutes)) {
+                    normalizedVehRoutes = vehRoutes;
+                } else if (typeof vehRoutes === 'object' && vehRoutes !== null) {
+                    normalizedVehRoutes = Object.values(vehRoutes);
+                }
+                setVehRouteList(normalizedVehRoutes);
+            }
+        } catch (error) {
+            console.error('Error fetching vehicle route list:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
     }, []);
 
     // Handle Edit Mode
     useEffect(() => {
-        if (id && vehRouteList.length > 0) {
-            const itemToEdit = vehRouteList.find(item => item.id === parseInt(id));
-            if (itemToEdit) {
-                setIsEditMode(true);
-                setSelectedRoute(itemToEdit.route_id.toString());
-                setSelectedVehicles(itemToEdit.vehicles.map(v => v.id));
+        const fetchEditDetails = async () => {
+            if (id) {
+                try {
+                    const response = await api.getAssignVehicleRouteDetails(id);
+                    if (response.status === true && response.data && response.data.vehroute) {
+                        const vehRoute = response.data.vehroute;
+                        setIsEditMode(true);
+
+                        const routeId = vehRoute.route_id ? vehRoute.route_id.toString() : (response.data.route_id ? response.data.route_id.toString() : '');
+                        setSelectedRoute(routeId);
+                        setOriginalRouteId(routeId); // Store original route ID
+
+                        // Ensure vehicles map properly to simple ID list
+                        if (vehRoute.vehicles && Array.isArray(vehRoute.vehicles)) {
+                            const vehicleIds = vehRoute.vehicles.map(v => v.id);
+                            setSelectedVehicles(vehicleIds);
+                            setOriginalVehicleIds(vehicleIds); // Store original vehicle IDs (already strings/numbers)
+                        } else {
+                            setSelectedVehicles([]);
+                            setOriginalVehicleIds([]);
+                        }
+                    } else {
+                        // Fallback or error handling if needed
+                        console.warn('Could not fetch edit details');
+                    }
+                } catch (error) {
+                    console.error('Error fetching edit details:', error);
+                }
+            } else {
+                setIsEditMode(false);
+                resetForm();
             }
-        } else {
-            setIsEditMode(false);
-            resetForm();
-        }
-    }, [id, vehRouteList]);
+        };
+
+        fetchEditDetails();
+    }, [id]);
 
     const resetForm = () => {
         setSelectedRoute('');
         setSelectedVehicles([]);
+        setOriginalRouteId('');
+        setOriginalVehicleIds([]);
+        setIsEditMode(false); // Ensure edit mode is false on reset
     };
 
     const handleVehicleChange = (vehicleId) => {
@@ -91,7 +110,7 @@ const VehicleRoute = () => {
         });
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
 
         if (!selectedRoute) {
@@ -104,30 +123,60 @@ const VehicleRoute = () => {
             return;
         }
 
-        const routeData = routeList.find(r => r.id === parseInt(selectedRoute));
-        const chosenVehicles = vehicleList.filter(v => selectedVehicles.includes(v.id));
-
-        const newEntry = {
-            id: isEditMode ? parseInt(id) : Date.now(),
-            route_id: parseInt(selectedRoute),
-            route_title: routeData.route_title,
-            vehicles: chosenVehicles
+        let payload = {
+            route_id: selectedRoute,
+            vehicle: selectedVehicles.map(String) // Ensure IDs are strings
         };
 
         if (isEditMode) {
-            setVehRouteList(prev => prev.map(item => item.id === newEntry.id ? newEntry : item));
-            alert('Record Updated Successfully');
-            navigate('/admin/vehroute');
-        } else {
-            setVehRouteList(prev => [...prev, newEntry]);
-            alert('Record Saved Successfully');
-            resetForm();
+            payload = {
+                ...payload,
+                pre_route_id: originalRouteId,
+                prev_vec_route: originalVehicleIds.map(String)
+            };
+        }
+
+        try {
+            let response;
+            if (isEditMode) {
+                response = await api.updateAssignVehicleRouteList(id, payload);
+            } else {
+                response = await api.addAssignVehicleRouteList(payload);
+            }
+
+            if (response.status === 'success' || response.status === true) {
+                alert(response.message || 'Record Saved Successfully');
+                if (isEditMode) {
+                    // Wait for alert to be dismissed (if browser sync) or just navigate
+                    // Better to refetch list IF staying on same page, but we navigate
+                    navigate('/admin/vehroute');
+                } else {
+                    fetchData(); // Refresh list only on create
+                    resetForm();
+                }
+            } else {
+                alert(response.message || 'Failed to save record');
+            }
+        } catch (error) {
+            console.error('Error saving vehicle route:', error);
+            alert('An error occurred while saving the record');
         }
     };
 
-    const handleDelete = (deleteId) => {
+    const handleDelete = async (deleteId) => {
         if (window.confirm('Are you sure you want to delete this?')) {
-            setVehRouteList(prev => prev.filter(item => item.id !== deleteId));
+            try {
+                const response = await api.deleteAssignVehicleRouteList(deleteId);
+                if (response.status === 'success' || response.status === true) {
+                    alert(response.message || 'Record Deleted Successfully');
+                    fetchData(); // Refresh list
+                } else {
+                    alert(response.message || 'Failed to delete record');
+                }
+            } catch (error) {
+                console.error('Error deleting vehicle route:', error);
+                alert('An error occurred while deleting the record');
+            }
         }
     };
 

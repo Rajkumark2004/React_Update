@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import '../../../utils/include_files.js';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
-import { useSession } from '../../../context/SessionContext';
-import api from '../../../services/api';
+import '../../utils/include_files.js';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import { useSession } from '../../context/SessionContext';
+import api from '../../services/api';
 
 const CreateRoute = () => {
     const navigate = useNavigate();
@@ -30,13 +30,20 @@ const CreateRoute = () => {
             } catch (e) { }
         }
 
-        // Mock initial route data
-        setRoutes([
-            { id: 1, route_title: 'Route 1 - City Center' },
-            { id: 2, route_title: 'Route 2 - North Park' },
-            { id: 3, route_title: 'Route 3 - South Gate' }
-        ]);
+        // Fetch route list from API
+        fetchRoutes();
     }, []);
+
+    const fetchRoutes = async () => {
+        try {
+            const response = await api.getRouteList();
+            if (response && response.listroute) {
+                setRoutes(response.listroute);
+            }
+        } catch (error) {
+            console.error('Error fetching routes:', error);
+        }
+    };
 
     const [searchTerm, setSearchTerm] = useState('');
     const filteredRoutes = routes.filter(route =>
@@ -77,7 +84,7 @@ const CreateRoute = () => {
         { id: 5, icon: 'state_examination.png', label: 'State Examinations', url: '#' },
         { id: 6, icon: 'courses.png', label: 'Courses', url: '#' },
         { id: 7, icon: 'homework.png', label: 'Homework', url: '#' },
-        { id: 8, icon: 'transport.png', label: 'Transport', url: '#', active: true },
+        { id: 8, icon: 'transport.png', label: 'Transport', url: '/admin/route', active: true },
         { id: 9, icon: 'messages.png', label: 'Messages', url: '#' },
         { id: 10, icon: 'hr.png', label: 'Human Resource', url: '#' },
         { id: 11, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
@@ -108,7 +115,7 @@ const CreateRoute = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.route_title.trim()) {
             alert('Route Title is required');
@@ -116,32 +123,68 @@ const CreateRoute = () => {
         }
 
         if (isEditing) {
-            setRoutes(routes.map(route =>
-                route.id === editId ? { ...route, route_title: formData.route_title } : route
-            ));
-            setIsEditing(false);
-            setEditId(null);
-            alert('Record Updated Successfully');
+            try {
+                const response = await api.updateRoute(editId, { route_title: formData.route_title });
+                if (response.status === 'success' || response.status === true) {
+                    alert('Record Updated Successfully');
+                    fetchRoutes(); // Refresh the list
+                    setFormData({ route_title: '' });
+                    setIsEditing(false);
+                    setEditId(null);
+                } else {
+                    alert(response.message || 'Failed to update route');
+                }
+            } catch (error) {
+                console.error('Error updating route:', error);
+                alert('An error occurred while updating route');
+            }
         } else {
-            const newRoute = {
-                id: routes.length + 1,
-                route_title: formData.route_title
-            };
-            setRoutes([...routes, newRoute]);
-            alert('Record Saved Successfully');
+            try {
+                const response = await api.createRoute({ route_title: formData.route_title });
+                if (response.status === 'success' || response.status === true) {
+                    alert('Record Saved Successfully');
+                    fetchRoutes(); // Refresh the list
+                    setFormData({ route_title: '' });
+                } else {
+                    alert(response.message || 'Failed to create route');
+                }
+            } catch (error) {
+                console.error('Error creating route:', error);
+                alert('An error occurred while creating route');
+            }
         }
-        setFormData({ route_title: '' });
     };
 
-    const handleEdit = (route) => {
-        setFormData({ route_title: route.route_title });
-        setIsEditing(true);
-        setEditId(route.id);
+    const handleEdit = async (route) => {
+        try {
+            const response = await api.getRouteDetails(route.id);
+            if (response.status === true && response.data && response.data.editroute) {
+                setFormData({ route_title: response.data.editroute.route_title });
+                setIsEditing(true);
+                setEditId(route.id);
+            } else {
+                alert('Failed to fetch route details');
+            }
+        } catch (error) {
+            console.error('Error fetching route details:', error);
+            alert('An error occurred while fetching route details');
+        }
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this?')) {
-            setRoutes(routes.filter(r => r.id !== id));
+            try {
+                const response = await api.deleteRoute(id);
+                if (response.status === 'success' || response.status === true) {
+                    alert('Record Deleted Successfully');
+                    fetchRoutes(); // Refresh the list
+                } else {
+                    alert(response.message || 'Failed to delete route');
+                }
+            } catch (error) {
+                console.error('Error deleting route:', error);
+                alert('An error occurred while deleting route');
+            }
         }
     };
 
@@ -190,11 +233,31 @@ const CreateRoute = () => {
                                             <i className="fa fa-bus" style={{ width: '20px' }}></i> Vehicles
                                         </Link>
                                     </li>
-                                    <li><a href="#"><i className="fa fa-exchange" style={{ width: '20px' }}></i> Assign Vehicle</a></li>
-                                    <li><a href="#"><i className="fa fa-map-marker" style={{ width: '20px' }}></i> Pickup Point</a></li>
-                                    <li><a href="#"><i className="fa fa-location-arrow" style={{ width: '20px' }}></i> Route Pickup Point</a></li>
-                                    <li><a href="#"><i className="fa fa-money" style={{ width: '20px' }}></i> Fees Master</a></li>
-                                    <li><a href="#"><i className="fa fa-user" style={{ width: '20px' }}></i> Student Transport Fees</a></li>
+                                    <li>
+                                        <Link to="/admin/vehroute" className={getActiveMenu('/admin/vehroute')}>
+                                            <i className="fa fa-exchange" style={{ width: '20px' }}></i> Assign Vehicle
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/admin/pickuppoint" className={getActiveMenu('/admin/pickuppoint')}>
+                                            <i className="fa fa-map-marker" style={{ width: '20px' }}></i> Pickup Point
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/admin/routepickuppoint" className={getActiveMenu('/admin/routepickuppoint')}>
+                                            <i className="fa fa-location-arrow" style={{ width: '20px' }}></i> Route Pickup Point
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/admin/transportFeeMaster" className={getActiveMenu('/admin/transportFeeMaster')}>
+                                            <i className="fa fa-money" style={{ width: '20px' }}></i> Fees Master
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/admin/studenttransportfee" className={getActiveMenu('/admin/studenttransportfee')}>
+                                            <i className="fa fa-user" style={{ width: '20px' }}></i> Student Transport Fees
+                                        </Link>
+                                    </li>
                                 </ul>
                             </div>
                         </div>

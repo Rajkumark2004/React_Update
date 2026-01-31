@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../../../utils/include_files.js';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
-import { useSession } from '../../../context/SessionContext';
-import api from '../../../services/api';
+import '../../utils/include_files.js';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import { useSession } from '../../context/SessionContext';
+import api from '../../services/api';
 
 const VehicleList = () => {
     const navigate = useNavigate();
@@ -41,59 +41,23 @@ const VehicleList = () => {
             } catch (e) { }
         }
 
-        // Mock initial vehicle data since we don't have the backend connected for this yet
-        // In a real scenario, this would be an API call
-        setVehicles([
-            {
-                id: 1,
-                vehicle_no: 'VH-001',
-                vehicle_model: 'Tata Starbus',
-                manufacture_year: '2020',
-                registration_number: 'MH-12-AB-1234',
-                chasis_number: 'CH-888999',
-                max_seating_capacity: '40',
-                driver_name: 'Ram Singh',
-                driver_licence: 'DL-999888777',
-                driver_contact: '9876543210',
-            },
-            {
-                id: 2,
-                vehicle_no: 'VH-002',
-                vehicle_model: 'Ashok Leyland',
-                manufacture_year: '2021',
-                registration_number: 'MH-14-CD-5678',
-                chasis_number: 'CH-777666',
-                max_seating_capacity: '50',
-                driver_name: 'Suresh Kumar',
-                driver_licence: 'DL-555444333',
-                driver_contact: '9988776655',
-            },
-            {
-                id: 3,
-                vehicle_no: 'VH-003',
-                vehicle_model: 'Force Traveller',
-                manufacture_year: '2022',
-                registration_number: 'MH-12-EF-9012',
-                chasis_number: 'CH-222333',
-                max_seating_capacity: '20',
-                driver_name: 'Rajesh Patil',
-                driver_licence: 'DL-111222333',
-                driver_contact: '9123456789',
-            },
-            {
-                id: 4,
-                vehicle_no: 'VH-004',
-                vehicle_model: 'Eicher Skyline',
-                manufacture_year: '2019',
-                registration_number: 'MH-12-GH-3456',
-                chasis_number: 'CH-444555',
-                max_seating_capacity: '35',
-                driver_name: 'Amit Sharma',
-                driver_licence: 'DL-666777888',
-                driver_contact: '9876509876',
-            }
-        ]);
+        // Fetch vehicle list from API
+        fetchVehicleList();
     }, []);
+
+    const fetchVehicleList = async () => {
+        try {
+            const response = await api.getVehicleList();
+            if (response && response.vehiclelist) {
+                setVehicles(response.vehiclelist);
+            } else if (Array.isArray(response)) {
+                // Handle if response is just an array
+                setVehicles(response);
+            }
+        } catch (error) {
+            console.error('Error fetching vehicle list:', error);
+        }
+    };
 
     // Search state
     const [searchTerm, setSearchTerm] = useState('');
@@ -138,7 +102,7 @@ const VehicleList = () => {
         { id: 5, icon: 'state_examination.png', label: 'State Examinations', url: '#' },
         { id: 6, icon: 'courses.png', label: 'Courses', url: '#' },
         { id: 7, icon: 'homework.png', label: 'Homework', url: '#' },
-        { id: 8, icon: 'transport.png', label: 'Transport', url: '#', active: true },
+        { id: 8, icon: 'transport.png', label: 'Transport', url: '/admin/route', active: true },
         { id: 9, icon: 'messages.png', label: 'Messages', url: '#' },
         { id: 10, icon: 'hr.png', label: 'Human Resource', url: '#' },
         { id: 11, icon: 'download_resouces.png', label: 'Download Center', url: '#' },

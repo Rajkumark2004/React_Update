@@ -47,6 +47,7 @@ import ExamTimetable from './pages/state_examination/ExamTimetable';
 import ExamSubjects from './pages/state_examination/ExamSubjects';
 import ExamRank from './pages/state_examination/ExamRank';
 import ExamWiseRank from './pages/state_examination/ExamWiseRank';
+import GenerateAdmitCard from './pages/state_examination/GenerateAdmitCard';
 import AssignExamStudent from './pages/state_examination/AssignExamStudent';
 import Rank from './pages/state_examination/Rank';
 import SourceView from './pages/helpdesk/setupfrontoffice/SourceView';
@@ -76,6 +77,15 @@ import FeesReceipt24 from './pages/fee/feereceipt/FeesReceipt24';
 import PrintStudentGroupFees24 from './pages/fee/feereceipt/PrintStudentGroupFees24';
 import PrintFeesByGroupArrayPage from './pages/fee/collect-fees/PrintFeesByGroupArrayPage';
 import SearchPayment from './pages/fee/searchpayment/SearchPayment';
+
+// Transport Pages
+import CreateRoute from './pages/transport/CreateRoute';
+import VehicleList from './pages/transport/VehicleList';
+import VehicleRoute from './pages/transport/VehicleRoute';
+import PickupPointList from './pages/transport/PickupPointList';
+import AssignPickupPoint from './pages/transport/AssignPickupPoint';
+import TransportFeesMaster from './pages/transport/TransportFeesMaster';
+import StudentTransportFees from './pages/transport/StudentTransportFees';
 import { api } from './services/api';
 import { SessionProvider } from './context/SessionContext';
 import { LogoProvider } from './context/LogoContext';
@@ -387,6 +397,7 @@ function App() {
             <Route path="/cbseexam/settings" element={<ProtectedRoute><CBSESettings /></ProtectedRoute>} />
             <Route path="/cbseexam/exam/subjects/:id" element={<ProtectedRoute><ExamSubjects /></ProtectedRoute>} />
             <Route path="/cbseexam/exam/examwiserank/:id" element={<ProtectedRoute><ExamWiseRank /></ProtectedRoute>} />
+            <Route path="/cbseexam/exam/examwiseadmitcard/:id" element={<ProtectedRoute><GenerateAdmitCard /></ProtectedRoute>} />
             <Route path="/cbseexam/exam/assign/:id" element={<ProtectedRoute><AssignExamStudent /></ProtectedRoute>} />
             <Route path="/cbseexam/examrank" element={<ProtectedRoute><ExamRank /></ProtectedRoute>} />
             <Route
@@ -445,6 +456,16 @@ function App() {
             <Route path="/fee/print_receipt_24/:receipt_id" element={<ProtectedRoute><PrintStudentGroupFees24 /></ProtectedRoute>} />
             <Route path="/studentfee/printFeesByGroupArray" element={<ProtectedRoute><PrintFeesByGroupArrayPage /></ProtectedRoute>} />
             <Route path="/studentfee/searchpayment" element={<ProtectedRoute><SearchPayment /></ProtectedRoute>} />
+
+            {/* Transport Routes */}
+            <Route path="/admin/route" element={<ProtectedRoute><CreateRoute /></ProtectedRoute>} />
+            <Route path="/admin/vehicle" element={<ProtectedRoute><VehicleList /></ProtectedRoute>} />
+            <Route path="/admin/vehroute" element={<ProtectedRoute><VehicleRoute /></ProtectedRoute>} />
+            <Route path="/admin/vehroute/edit/:id" element={<ProtectedRoute><VehicleRoute /></ProtectedRoute>} />
+            <Route path="/admin/pickuppoint" element={<ProtectedRoute><PickupPointList /></ProtectedRoute>} />
+            <Route path="/admin/routepickuppoint" element={<ProtectedRoute><AssignPickupPoint /></ProtectedRoute>} />
+            <Route path="/admin/transportFeeMaster" element={<ProtectedRoute><TransportFeesMaster /></ProtectedRoute>} />
+            <Route path="/admin/studenttransportfee" element={<ProtectedRoute><StudentTransportFees /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
       </SessionProvider>
