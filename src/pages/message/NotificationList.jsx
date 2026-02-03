@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 import '../../utils/include_files';
 
 const NotificationList = () => {
@@ -10,32 +12,27 @@ const NotificationList = () => {
     const [notifications, setNotifications] = useState([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    // Mock data initialization
-    useEffect(() => {
-        setNotifications([
-            {
-                id: 1,
-                title: 'Summer Vacation Start',
-                message: 'The summer vacation will start from 1st June 2026. The school will reopen on 1st July 2026.',
-                created_id: 1, // Mock user ID
-                date: '2026-05-20'
-            },
-            {
-                id: 2,
-                title: 'New Session 2026-27',
-                message: 'The new academic session will commence from 1st April 2026. Uniforms and books are available at the store.',
-                created_id: 1,
-                date: '2026-03-15'
-            },
-            {
-                id: 3,
-                title: 'Exam Schedule Updated',
-                message: 'The final examination schedule for Class 10 has been updated. Please check the notice board for details.',
-                created_id: 2,
-                date: '2026-02-10'
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const response = await api.getNotifications();
+            if (response && response.status === true && response.data) {
+                setNotifications(response.data.notification_list || []);
+            } else {
+                toast.error(response.message || 'Failed to fetch circulars');
             }
-        ]);
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            toast.error('Failed to load circulars');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
     }, []);
 
     const openDetails = (notification) => {
@@ -49,10 +46,21 @@ const NotificationList = () => {
         setSelectedNotification(null);
     };
 
-    const handleDelete = (id, e) => {
+    const handleDelete = async (id, e) => {
         e.stopPropagation();
         if (window.confirm('Are you sure you want to delete this circular?')) {
-            setNotifications(notifications.filter(n => n.id !== id));
+            try {
+                const response = await api.deleteNotification(id);
+                if (response.status === true || response.status === 'success') {
+                    toast.success('Circular deleted successfully');
+                    fetchData(); // Refresh list
+                } else {
+                    toast.error(response.message || 'Failed to delete circular');
+                }
+            } catch (error) {
+                console.error('Error deleting circular:', error);
+                toast.error('An error occurred while deleting');
+            }
         }
     };
 
@@ -149,11 +157,12 @@ const NotificationList = () => {
                                             <div id="notificationdata" style={{ padding: '20px' }}>
                                                 <h3>{selectedNotification.title}</h3>
                                                 <hr />
-                                                <div style={{ color: '#666', lineHeight: '1.6' }}>
-                                                    {selectedNotification.message}
-                                                </div>
+                                                <div
+                                                    style={{ color: '#666', lineHeight: '1.6' }}
+                                                    dangerouslySetInnerHTML={{ __html: selectedNotification.message }}
+                                                />
                                                 <div style={{ marginTop: '20px', fontSize: '12px', color: '#999' }}>
-                                                    Published on: {selectedNotification.date}
+                                                    Published on: {selectedNotification.publish_date || selectedNotification.date}
                                                 </div>
                                             </div>
                                         )}

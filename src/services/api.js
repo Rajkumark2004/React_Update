@@ -478,6 +478,357 @@ export const api = {
             throw error;
         }
     },
+    getSubjectGroups: async (payload) => {
+        console.log('API Request: Get Subject Groups', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/subjectgroups`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Get Subject Groups Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Subject Groups Error:', error);
+            throw error;
+        }
+    },
+    getSubjectGroupList: async () => {
+        console.log('API Request: Get Subject Group List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/subjectgroup/`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Subject Group List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Subject Group List Error:', error);
+            throw error;
+        }
+    },
+    addSubjectGroup: async (payload) => {
+        console.log('API Request: Add Subject Group', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/subjectgroup/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Subject Group Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Subject Group Error:', error);
+            throw error;
+        }
+    },
+    getSubjectGroupDetails: async (id) => {
+        console.log('API Request: Get Subject Group Details', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/subjectgroup/subjectGroupDetails_get/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Subject Group Details Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Subject Group Details Error:', error);
+            throw error;
+        }
+    },
+    editSubjectGroup: async (id, payload) => {
+        console.log('API Request: Edit Subject Group', id, payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/subjectgroup/edit/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Edit Subject Group Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Edit Subject Group Error:', error);
+            throw error;
+        }
+    },
+    deleteSubjectGroup: async (id) => {
+        console.log('API Request: Delete Subject Group', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/subjectgroup/delete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Subject Group Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Subject Group Error:', error);
+            throw error;
+        }
+    },
+    getSubjectList: async () => {
+        console.log('API Request: Get Subject List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/subject`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Subject List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Subject List Error:', error);
+            throw error;
+        }
+    },
+    addSubject: async (payload) => {
+        console.log('API Request: Add Subject', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/subject`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Subject Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Subject Error:', error);
+            throw error;
+        }
+    },
+    getSubjectDetails: async (id) => {
+        console.log('API Request: Get Subject Details', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/subject/get_subjectDetails/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Subject Details Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Subject Details Error:', error);
+            throw error;
+        }
+    },
+    deleteSubject: async (id) => {
+        console.log('API Request: Delete Subject', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/subject/delete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Subject Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Subject Error:', error);
+            throw error;
+        }
+    },
+    updateSubject: async (id, payload) => {
+        console.log('API Request: Update Subject', id, payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/subject/edit/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Update Subject Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Subject Error:', error);
+            throw error;
+        }
+    },
+    getAssignSubjectTeacher: async () => {
+        console.log('API Request: Get Assign Subject Teacher');
+        try {
+            const response = await fetch(`${API_BASE}/admin/teacher/assign_subject_teacher`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Assign Subject Teacher Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Assign Subject Teacher Error:', error);
+            throw error;
+        }
+    },
+    assignSubjectTeacher: async (payload) => {
+        console.log('API Request: Assign Subject Teacher', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/teacher/assign_subject_teacher`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Assign Subject Teacher Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Assign Subject Teacher Error:', error);
+            throw error;
+        }
+    },
+    deleteSubjectTeacher: async (id) => {
+        console.log('API Request: Delete Subject Teacher', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/teacher/subjectteacherdelete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Subject Teacher Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Subject Teacher Error:', error);
+            throw error;
+        }
+    },
+    getAssignClassTeacher: async () => {
+        console.log('API Request: Get Assign Class Teacher');
+        try {
+            const response = await fetch(`${API_BASE}/admin/teacher/get_class_teacher_data`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Assign Class Teacher Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Assign Class Teacher Error:', error);
+            throw error;
+        }
+    },
+    assignClassTeacher: async (payload) => {
+        console.log('API Request: Assign Class Teacher', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/teacher/assign_class_teacher`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const text = await response.text();
+            const data = text ? JSON.parse(text) : { status: response.ok };
+            console.log('Assign Class Teacher Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Assign Class Teacher Error:', error);
+            throw error;
+        }
+    },
+    updateClassTeacher: async (payload) => {
+        console.log('API Request: Update Class Teacher', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/teacher/update_class_teacher`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const text = await response.text();
+            const data = text ? JSON.parse(text) : { status: response.ok };
+            console.log('Update Class Teacher Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Class Teacher Error:', error);
+            throw error;
+        }
+    },
+    deleteClassTeacher: async (classId, sectionId) => {
+        console.log('API Request: Delete Class Teacher', classId, sectionId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/teacher/classteacherdelete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    class_id: parseInt(classId),
+                    section_id: parseInt(sectionId)
+                }),
+            });
+            const data = await response.json();
+            console.log('Delete Class Teacher Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Class Teacher Error:', error);
+            throw error;
+        }
+    },
+    getClassTeacherDetails: async (classId, sectionId) => {
+        console.log('API Request: Get Class Teacher Details', classId, sectionId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/teacher/class_teacher_edit/${classId}/${sectionId}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Class Teacher Details Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Class Teacher Details Error:', error);
+            throw error;
+        }
+    },
+    getNotifications: async () => {
+        console.log('API Request: Get Notifications');
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification_class/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Notifications Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Notifications Error:', error);
+            throw error;
+        }
+    },
+    addNotification: async (formData) => {
+        console.log('API Request: Add Notification');
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification_class/add`, {
+                method: 'POST',
+                body: formData,
+            });
+            const text = await response.text();
+            const data = text ? JSON.parse(text) : { status: response.ok };
+            console.log('Add Notification Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Notification Error:', error);
+            throw error;
+        }
+    },
+    deleteNotification: async (id) => {
+        console.log('API Request: Delete Notification', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification_class/delete/${id}`, {
+                method: 'GET', // Response says status true, but usually delete endpoints are POST or DELETE. Checking previous patterns... Actually, the user's URL looks like a GET or I should use POST if it's typical. But I'll stick to the provided URL.
+            });
+            const data = await response.json();
+            console.log('Delete Notification Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Notification Error:', error);
+            throw error;
+        }
+    },
     getClassTimetable: async (payload) => {
         console.log('API Request: Get Class Timetable', payload);
         try {
@@ -493,6 +844,60 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Class Timetable Error:', error);
+            throw error;
+        }
+    },
+    getTimetableData: async (payload) => {
+        console.log('API Request: Get Timetable Data', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/getBydategroupclasssection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Get Timetable Data Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Timetable Data Error:', error);
+            throw error;
+        }
+    },
+    saveTimetableGroup: async (payload) => {
+        console.log('API Request: Save Timetable Group', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/savegroup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Save Timetable Group Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Save Timetable Group Error:', error);
+            throw error;
+        }
+    },
+    getGroupByClassandSection: async (classId, sectionId) => {
+        console.log('API Request: Get Group By Class and Section', { classId, sectionId });
+        try {
+            const response = await fetch(`${API_BASE}/admin/subjectgroup/getGroupByClassandSection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ class_id: classId, section_id: sectionId }),
+            });
+            const data = await response.json();
+            console.log('Get Group By Class and Section Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Group By Class and Section Error:', error);
             throw error;
         }
     },

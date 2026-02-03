@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 const SubjectTeacher = () => {
     const navigate = useNavigate();
@@ -16,102 +18,110 @@ const SubjectTeacher = () => {
     // Data States
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
-    const [allSections, setAllSections] = useState([]);
     const [teacherList, setTeacherList] = useState([]);
     const [subjectList, setSubjectList] = useState([]);
     const [assignmentList, setAssignmentList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    // Initialize mock data
+    // Fetch Initial Data
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getAssignSubjectTeacher();
+            if (data && (data.status === 'success' || data.status === true)) {
+                setClassList(data.classlist || []);
+                setSubjectList(data.batch_subjects || []);
+                setTeacherList(data.staff_list || []);
+                setAssignmentList(data.subject_data || []);
+            } else {
+                toast.error(data.message || 'Failed to load data');
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            toast.error('Failed to load data');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        // Mock Classes
-        setClassList([
-            { id: 0, class: 'Nursery' },
-            { id: 1, class: 'LKG' },
-            { id: 2, class: 'UKG' },
-            { id: 3, class: 'Class 1' },
-            { id: 4, class: 'Class 2' },
-            { id: 5, class: 'Class 3' },
-            { id: 6, class: 'Class 4' },
-            { id: 7, class: 'Class 5' },
-            { id: 8, class: 'Class 6' },
-            { id: 9, class: 'Class 7' },
-            { id: 10, class: 'Class 8' },
-            { id: 11, class: 'Class 9' },
-            { id: 12, class: 'Class 10' },
-            { id: 13, class: '11' }
-        ]);
-
-        // Mock All Sections
-        setAllSections([
-            { section_id: 1, section: 'A', class_id: 1 },
-            { section_id: 2, section: 'B', class_id: 1 },
-            { section_id: 3, section: 'C', class_id: 2 }
-        ]);
-
-        // Mock Teachers
-        setTeacherList([
-            { id: 1, name: 'John', surname: 'Smith', employee_id: 'EMP001' },
-            { id: 2, name: 'Sarah', surname: 'Johnson', employee_id: 'EMP002' },
-            { id: 3, name: 'Michael', surname: 'Brown', employee_id: 'EMP003' }
-        ]);
-
-        // Mock Subjects
-        setSubjectList([
-            { id: 1, name: 'Mathematics' },
-            { id: 2, name: 'Science' },
-            { id: 3, name: 'English' }
-        ]);
-
-        // Mock Assignments
-        setAssignmentList([
-            { stid: 1, class: 'Class 1', section: 'A', name: 'John', surname: 'Smith', employee_id: 'EMP001', subject_name: 'Mathematics' },
-            { stid: 2, class: 'Class 1', section: 'B', name: 'Sarah', surname: 'Johnson', employee_id: 'EMP002', subject_name: 'Science' }
-        ]);
+        fetchData();
     }, []);
 
-    // Update sections when class changes
+    // Fetch Sections when Class Changes
     useEffect(() => {
-        if (classId) {
-            setSectionList(allSections.filter(s => s.class_id === parseInt(classId)));
-        } else {
-            setSectionList([]);
-        }
-        setSectionId('');
-    }, [classId, allSections]);
+        const fetchSections = async () => {
+            if (classId) {
+                try {
+                    const data = await api.getSectionsByClass(classId);
+                    if (data && (data.status === 'success' || data.status === true)) {
+                        // Handle potential different response structures for sections
+                        const sections = data.sections || data.data || Object.values(data);
+                        setSectionList(sections);
+                    } else {
+                        setSectionList([]);
+                    }
+                } catch (error) {
+                    console.error('Error fetching sections:', error);
+                    toast.error('Failed to load sections');
+                    setSectionList([]);
+                }
+            } else {
+                setSectionList([]);
+            }
+            setSectionId('');
+        };
 
-    const handleSave = (e) => {
+        fetchSections();
+    }, [classId]);
+
+    const handleSave = async (e) => {
         e.preventDefault();
         if (!classId || !sectionId || !teacherId || !subjectId) {
-            alert('Please fill all required fields');
+            toast.error('Please fill all required fields');
             return;
         }
 
-        const selectedClass = classList.find(c => c.id === parseInt(classId));
-        const selectedSection = sectionList.find(s => s.section_id === parseInt(sectionId));
-        const selectedTeacher = teacherList.find(t => t.id === parseInt(teacherId));
-        const selectedSubject = subjectList.find(s => s.id === parseInt(subjectId));
-
-        const newAssignment = {
-            stid: Date.now(),
-            class: selectedClass.class,
-            section: selectedSection.section,
-            name: selectedTeacher.name,
-            surname: selectedTeacher.surname,
-            employee_id: selectedTeacher.employee_id,
-            subject_name: selectedSubject.name
+        const payload = {
+            class: classId,
+            section: sectionId,
+            teacher: teacherId,
+            subject_id: subjectId
         };
 
-        setAssignmentList([...assignmentList, newAssignment]);
-        alert('Record Saved Successfully');
-        // Reset form
-        setTeacherId('');
-        setSubjectId('');
+        try {
+            const response = await api.assignSubjectTeacher(payload);
+            if (response.status === 'success' || response.status === true) {
+                toast.success('Record Saved Successfully');
+                // Reset form fields for next entry (keep class/section)
+                setTeacherId('');
+                setSubjectId('');
+                // Refresh list
+                fetchData();
+            } else {
+                toast.error(response.message || 'Failed to save record');
+            }
+        } catch (error) {
+            console.error('Error saving assignment:', error);
+            toast.error('An error occurred while saving');
+        }
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this?')) {
-            setAssignmentList(assignmentList.filter(a => a.stid !== id));
+            try {
+                const response = await api.deleteSubjectTeacher(id);
+                if (response.status === 'success' || response.status === true) {
+                    toast.success('Record Deleted Successfully');
+                    fetchData();
+                } else {
+                    toast.error(response.message || 'Failed to delete record');
+                }
+            } catch (error) {
+                console.error('Error deleting assignment:', error);
+                toast.error('An error occurred while deleting');
+            }
         }
     };
 

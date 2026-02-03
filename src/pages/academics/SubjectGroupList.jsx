@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 const SubjectGroupList = () => {
     const { id } = useParams();
@@ -15,83 +17,77 @@ const SubjectGroupList = () => {
 
     // Mock Data
     const [classList, setClassList] = useState([]);
-    const [allSections, setAllSections] = useState([]);
     const [availableSections, setAvailableSections] = useState([]);
     const [subjectList, setSubjectList] = useState([]);
     const [subjectGroupList, setSubjectGroupList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isEditMode, setIsEditMode] = useState(false);
 
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
-        // Mock Classes
-        const mockClasses = [
-            { id: 1, class: 'Class 1' },
-            { id: 2, class: 'Class 2' },
-            { id: 3, class: 'Class 3' },
-        ];
-        setClassList(mockClasses);
+        fetchInitialData();
+    }, [id]);
 
-        // Mock Sections (linked to classes)
-        const mockAllSections = [
-            { id: 1, section: 'A', class_id: 1 },
-            { id: 2, section: 'B', class_id: 1 },
-            { id: 3, section: 'C', class_id: 2 },
-            { id: 4, section: 'D', class_id: 2 },
-            { id: 5, section: 'E', class_id: 3 },
-            { id: 6, section: 'A', class_id: 3 },
-        ];
-        setAllSections(mockAllSections);
-
-        // Mock Subjects
-        const mockSubjects = [
-            { id: 1, name: 'English' },
-            { id: 2, name: 'Hindi' },
-            { id: 3, name: 'Mathematics' },
-            { id: 4, name: 'Science' },
-            { id: 5, name: 'Social Studies' },
-        ];
-        setSubjectList(mockSubjects);
-
-        // Mock Subject Groups (Existing Data)
-        const mockSubjectGroups = [
-            {
-                id: 1,
-                name: 'Class 1 General',
-                description: 'General subjects for class 1',
-                class_id: 1,
-                class_name: 'Class 1',
-                sections: [
-                    { id: 1, section: 'A', class: 'Class 1' },
-                    { id: 2, section: 'B', class: 'Class 1' }
-                ],
-                subjects: [
-                    { id: 1, name: 'English' },
-                    { id: 3, name: 'Mathematics' }
-                ]
-            },
-            {
-                id: 2,
-                name: 'Class 2 Science Group',
-                description: '',
-                class_id: 2,
-                class_name: 'Class 2',
-                sections: [
-                    { id: 3, section: 'C', class: 'Class 2' }
-                ],
-                subjects: [
-                    { id: 4, name: 'Science' },
-                    { id: 3, name: 'Mathematics' }
-                ]
+    const fetchInitialData = async () => {
+        setLoading(true);
+        try {
+            let data;
+            if (id) {
+                data = await api.getSubjectGroupDetails(id);
+            } else {
+                data = await api.getSubjectGroupList();
             }
-        ];
-        setSubjectGroupList(mockSubjectGroups);
 
-    }, []);
+            if (data && (data.status === 'success' || data.status === true)) {
+                // Common data mapping
+                if (data.data) {
+                    // For details response structure
+                    const details = data.data;
+                    setClassList(details.classlist || []);
+                    setSubjectList(details.subjectlist || []);
+                    // For list response structure (it matches generally but list might be under subjectgroupList)
+                    // But for edit, we might primarily need the single group details to populate form
+                    // The list on the right might still need all groups?
+                    // The user said "when I click on edit, i need the fields in edit/id to be filled from this apis response"
+                    // The list on the right typically shows all items. If getSubjectGroupDetails ONLY returns one item in `subjectgroup`, 
+                    // then the list on the right might be empty or just show that one.
+                    // However, often edit pages still show the full list. 
+                    // If the user *only* wants to fill the form, we should probably fetch the List SEPARATELY if getSubjectGroupDetails doesn't return the full list.
+                    // Looking at the response: "subjectgroup": [{...}] (array of 1).
+                    // So if we use this data for `subjectGroupList` state, the table will only show 1 row.
+                    // This is acceptable behavior for "details/edit" view usually, or we might need to fetch `getSubjectGroupList` AND `getSubjectGroupDetails` if we want the full list + details.
+                    // Given the request focuses on "fields in edit/id to be filled", I'll prioritize populating the form.
+                    // If the list becomes single-item, so be it, unless I see a reason to fetch both.
+                    // Let's check `getSubjectGroupList` response again. It had `subjectgroupList`.
+                    // This new response has `subjectgroup` inside `data`.
 
-    // Handle Edit Mode
+                    setSubjectGroupList(details.subjectgroup || (data.subjectgroupList || []));
+                } else {
+                    // Fallback for getSubjectGroupList standard response
+                    setSubjectGroupList(data.subjectgroupList || []);
+                    setClassList(data.classlist || []);
+                    setSubjectList(data.subjectlist || []);
+                }
+            } else {
+                toast.error(data.message || 'Failed to load initial data');
+            }
+        } catch (error) {
+            console.error('Error fetching subject group data:', error);
+            toast.error('Failed to load subject groups');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle Edit Mode Population
     useEffect(() => {
         if (id && subjectGroupList.length > 0) {
-            const groupToEdit = subjectGroupList.find(g => g.id === parseInt(id));
+            // Find the group related to this ID. 
+            // Since we fetched specifically for this ID if (id) is present in fetchInitialData (mostly), 
+            // the list might only contain this one, or if we fetched all, we find it.
+            const groupToEdit = subjectGroupList.find(g => String(g.id) === String(id));
+
             if (groupToEdit) {
                 setIsEditMode(true);
                 setName(groupToEdit.name);
@@ -99,100 +95,143 @@ const SubjectGroupList = () => {
                 setDescription(groupToEdit.description);
 
                 // Set selections
-                setSelectedSections(groupToEdit.sections.map(s => s.id));
-                setSelectedSubjects(groupToEdit.subjects.map(s => s.id));
+                // The API response for details has `sections` array with `section_id`?
+                // Looking at user provided response:
+                // "sections": [ { ..., "class_id": "10", "section_id": "1", ... } ]
+                // So yes, map `section_id`.
+
+                const sectionIds = groupToEdit.sections ? groupToEdit.sections.map(s => String(s.section_id)) : [];
+
+                // "group_subject": [ { ..., "subject_id": "1", ... } ]
+                const subjectIds = groupToEdit.group_subject ? groupToEdit.group_subject.map(s => String(s.subject_id)) : [];
+
+                setSelectedSections(sectionIds);
+                setSelectedSubjects(subjectIds);
+
+                // Fetch sections for the selected class to populate checkboxes
+                if (groupToEdit.class_id) {
+                    fetchSectionsForClass(groupToEdit.class_id);
+                }
             }
-        } else {
+        } else if (!id) {
+            // Reset if no ID (Add Mode)
             setIsEditMode(false);
             setName('');
             setClassId('');
             setSelectedSections([]);
             setSelectedSubjects([]);
             setDescription('');
-        }
-    }, [id, subjectGroupList]);
-
-    // Update available sections when class changes
-    useEffect(() => {
-        if (classId) {
-            const sections = allSections.filter(s => s.class_id === parseInt(classId));
-            setAvailableSections(sections);
-        } else {
             setAvailableSections([]);
         }
-    }, [classId, allSections]);
+    }, [id, subjectGroupList]); // Re-run when ID changes or list loads
 
+    const fetchSectionsForClass = async (cId) => {
+        try {
+            const data = await api.getSectionsByClass(cId);
+            if (data && (data.status === true || data.status === 'success')) {
+                setAvailableSections(data.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching sections:', error);
+        }
+    };
 
-    const handleClassChange = (e) => {
-        setClassId(e.target.value);
-        setSelectedSections([]); // Reset sections when class changes
+    const handleClassChange = async (e) => {
+        const selectedId = e.target.value;
+        setClassId(selectedId);
+        setSelectedSections([]);
+        setAvailableSections([]);
+
+        if (selectedId) {
+            fetchSectionsForClass(selectedId);
+        }
     };
 
     const handleSectionCheckboxChange = (sectionId) => {
         setSelectedSections(prev => {
-            if (prev.includes(sectionId)) {
-                return prev.filter(id => id !== sectionId);
+            const idStr = String(sectionId);
+            if (prev.includes(idStr)) {
+                return prev.filter(id => id !== idStr);
             } else {
-                return [...prev, sectionId];
+                return [...prev, idStr];
             }
         });
     };
 
     const handleSubjectCheckboxChange = (subjectId) => {
         setSelectedSubjects(prev => {
-            if (prev.includes(subjectId)) {
-                return prev.filter(id => id !== subjectId);
+            const idStr = String(subjectId);
+            if (prev.includes(idStr)) {
+                return prev.filter(id => id !== idStr);
             } else {
-                return [...prev, subjectId];
+                return [...prev, idStr];
             }
         });
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
 
-        if (!name) { alert('The Name field is required.'); return; }
-        if (!classId) { alert('The Class field is required.'); return; }
-        if (selectedSections.length === 0) { alert('The Section field is required.'); return; }
-        if (selectedSubjects.length === 0) { alert('The Subject field is required.'); return; }
+        if (!name) { toast.error('The Name field is required.'); return; }
+        if (!classId) { toast.error('The Class field is required.'); return; }
+        if (selectedSections.length === 0) { toast.error('The Section field is required.'); return; }
+        if (selectedSubjects.length === 0) { toast.error('The Subject field is required.'); return; }
 
-        const selectedClassObj = classList.find(c => c.id === parseInt(classId));
-        const selectedSectionsObjs = allSections
-            .filter(s => selectedSections.includes(s.id))
-            .map(s => ({ ...s, class: selectedClassObj.class }));
-
-        const selectedSubjectsObjs = subjectList
-            .filter(s => selectedSubjects.includes(s.id));
-
-        const newGroup = {
-            id: isEditMode ? parseInt(id) : Date.now(),
-            name: name,
+        const payload = {
+            name,
+            class_id: classId,
             description: description,
-            class_id: parseInt(classId),
-            class_name: selectedClassObj.class,
-            sections: selectedSectionsObjs,
-            subjects: selectedSubjectsObjs
+            subject: selectedSubjects,
+            sections: selectedSections
         };
 
-        if (isEditMode) {
-            setSubjectGroupList(prev => prev.map(g => g.id === newGroup.id ? newGroup : g));
-            alert('Record Updated Successfully');
-            navigate('/admin/subjectgroup');
-        } else {
-            setSubjectGroupList(prev => [...prev, newGroup]);
-            alert('Record Saved Successfully');
-            // Reset form
-            setName('');
-            setClassId('');
-            setSelectedSections([]);
-            setSelectedSubjects([]);
-            setDescription('');
+        try {
+            let response;
+            if (isEditMode) {
+                // payload.id = id; // Not needed in body if URL has it, checking requirement
+                // User payload example does NOT have id in body.
+                response = await api.editSubjectGroup(id, payload);
+            } else {
+                response = await api.addSubjectGroup(payload);
+            }
+
+            if (response.status === 'success' || response.status === true) {
+                toast.success(isEditMode ? 'Record Updated Successfully' : 'Record Saved Successfully');
+                if (isEditMode) {
+                    navigate('/admin/subjectgroup');
+                } else {
+                    // Reset form
+                    setName('');
+                    setClassId('');
+                    setSelectedSections([]);
+                    setSelectedSubjects([]);
+                    setDescription('');
+                    setAvailableSections([]);
+                }
+                fetchInitialData();
+            } else {
+                toast.error(response.message || 'Failed to save record');
+            }
+        } catch (error) {
+            console.error('Error saving subject group:', error);
+            toast.error('An error occurred while saving');
         }
     };
 
-    const handleDelete = (deleteId) => {
+    const handleDelete = async (deleteId) => {
         if (window.confirm('Are you sure you want to delete this?')) {
-            setSubjectGroupList(prev => prev.filter(g => g.id !== deleteId));
+            try {
+                const response = await api.deleteSubjectGroup(deleteId);
+                if (response.status === 'success' || response.status === true) {
+                    toast.success('Record Deleted Successfully');
+                    fetchInitialData();
+                } else {
+                    toast.error(response.message || 'Failed to delete record');
+                }
+            } catch (error) {
+                console.error('Error deleting subject group:', error);
+                toast.error('An error occurred while deleting');
+            }
         }
     };
 
@@ -249,7 +288,7 @@ const SubjectGroupList = () => {
                                                                 <input
                                                                     type="checkbox"
                                                                     value={sec.id}
-                                                                    checked={selectedSections.includes(sec.id)}
+                                                                    checked={selectedSections.includes(String(sec.id))}
                                                                     onChange={() => handleSectionCheckboxChange(sec.id)}
                                                                 />
                                                                 {sec.section}
@@ -270,7 +309,7 @@ const SubjectGroupList = () => {
                                                         <input
                                                             type="checkbox"
                                                             value={subj.id}
-                                                            checked={selectedSubjects.includes(subj.id)}
+                                                            checked={selectedSubjects.includes(String(subj.id))}
                                                             onChange={() => handleSubjectCheckboxChange(subj.id)}
                                                         />
                                                         {subj.name}
@@ -339,8 +378,8 @@ const SubjectGroupList = () => {
                                                             </div>
                                                         </td>
                                                         <td className="text-left">
-                                                            <ol>
-                                                                {group.sections.map((sec, idx) => (
+                                                            <ol className="p-0" style={{ paddingLeft: '15px' }}>
+                                                                {group.sections && group.sections.map((sec, idx) => (
                                                                     <li key={idx}>{sec.class}({sec.section})</li>
                                                                 ))}
                                                             </ol>
@@ -348,7 +387,7 @@ const SubjectGroupList = () => {
                                                         <td>
                                                             <table width="100%">
                                                                 <tbody>
-                                                                    {group.subjects.map((subj, idx) => (
+                                                                    {group.group_subject && group.group_subject.map((subj, idx) => (
                                                                         <tr key={idx}><td><div>{subj.name}</div></td></tr>
                                                                     ))}
                                                                 </tbody>

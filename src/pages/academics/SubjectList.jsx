@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 const SubjectList = () => {
     const { id } = useParams();
@@ -13,30 +15,44 @@ const SubjectList = () => {
     const [subjectType, setSubjectType] = useState('');
     const [subjectCode, setSubjectCode] = useState('');
 
-    // Subject Types (radio options)
-    const subjectTypes = [
-        { key: 'theory', value: 'Theory' },
-        { key: 'practical', value: 'Practical' }
-    ];
+    // Subject Types (radio options) - now dynamic
+    const [subjectTypes, setSubjectTypes] = useState([]);
 
     // Data States
     const [subjectList, setSubjectList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isEditMode, setIsEditMode] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    // Initialize mock data
+    // Fetch Initial Data
+    const fetchInitialData = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getSubjectList();
+            if (data && (data.status === 'success' || data.status === true)) {
+                setSubjectList(data.subjectlist || []);
+
+                // Map subject_types object to array for rendering
+                if (data.subject_types) {
+                    const typesArray = Object.entries(data.subject_types).map(([key, value]) => ({
+                        key,
+                        value
+                    }));
+                    setSubjectTypes(typesArray);
+                }
+            } else {
+                toast.error(data.message || 'Failed to load subjects');
+            }
+        } catch (error) {
+            console.error('Error fetching subject list:', error);
+            toast.error('Failed to load subjects');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const mockSubjects = [
-            { id: 1, name: 'English', code: 'ENG101', type: 'theory' },
-            { id: 2, name: 'Hindi', code: 'HIN102', type: 'theory' },
-            { id: 3, name: 'Mathematics', code: 'MAT103', type: 'theory' },
-            { id: 4, name: 'Science', code: 'SCI104', type: 'practical' },
-            { id: 5, name: 'Social Studies', code: 'SOC105', type: 'theory' },
-            { id: 6, name: 'Computer Science', code: 'CS106', type: 'practical' },
-            { id: 7, name: 'Physics', code: 'PHY107', type: 'practical' },
-            { id: 8, name: 'Chemistry', code: 'CHE108', type: 'practical' },
-        ];
-        setSubjectList(mockSubjects);
+        fetchInitialData();
     }, []);
 
     // Handle Edit Mode
@@ -57,42 +73,62 @@ const SubjectList = () => {
         }
     }, [id, subjectList]);
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
 
         if (!subjectName) {
-            alert('The Subject Name field is required.');
+            toast.error('The Subject Name field is required.');
             return;
         }
         if (!subjectType) {
-            alert('The Subject Type field is required.');
+            toast.error('The Subject Type field is required.');
             return;
         }
 
-        const newSubject = {
-            id: isEditMode ? parseInt(id) : Date.now(),
+        const payload = {
             name: subjectName,
-            code: subjectCode,
-            type: subjectType
+            type: subjectType,
+            code: subjectCode
         };
 
-        if (isEditMode) {
-            setSubjectList(prev => prev.map(s => s.id === newSubject.id ? newSubject : s));
-            alert('Record Updated Successfully');
-            navigate('/admin/subject');
-        } else {
-            setSubjectList(prev => [...prev, newSubject]);
-            alert('Record Saved Successfully');
-            // Reset form
-            setSubjectName('');
-            setSubjectCode('');
-            setSubjectType('');
+        try {
+            if (isEditMode) {
+                // TODO: Implement Edit API when available
+                toast.success('Edit functionality pending API integration');
+                // navigate('/admin/subject'); 
+            } else {
+                const response = await api.addSubject(payload);
+                if (response.status === 'success' || response.status === true) {
+                    toast.success('Record Saved Successfully');
+                    fetchInitialData();
+                    // Reset form
+                    setSubjectName('');
+                    setSubjectCode('');
+                    setSubjectType('');
+                } else {
+                    toast.error(response.message || 'Failed to save subject');
+                }
+            }
+        } catch (error) {
+            console.error('Error saving subject:', error);
+            toast.error('An error occurred while saving.');
         }
     };
 
-    const handleDelete = (deleteId) => {
+    const handleDelete = async (deleteId) => {
         if (window.confirm('Are you sure you want to delete this?')) {
-            setSubjectList(prev => prev.filter(s => s.id !== deleteId));
+            try {
+                const response = await api.deleteSubject(deleteId);
+                if (response.status === 'success' || response.status === true) {
+                    toast.success('Record Deleted Successfully');
+                    fetchInitialData();
+                } else {
+                    toast.error(response.message || 'Failed to delete subject');
+                }
+            } catch (error) {
+                console.error('Error deleting subject:', error);
+                toast.error('An error occurred while deleting');
+            }
         }
     };
 
@@ -178,7 +214,7 @@ const SubjectList = () => {
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Subject List</h3>
                                     <div className="btn-group pull-right">
-                                        <button onClick={() => window.history.back()} className="btn btn-primary btn-xs">
+                                        <button onClick={() => navigate('/admin/timetable/classreport')} className="btn btn-primary btn-xs">
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
                                     </div>
@@ -225,7 +261,9 @@ const SubjectList = () => {
                                                         <tr key={subject.id}>
                                                             <td className="mailbox-name">{subject.name}</td>
                                                             <td className="mailbox-name">{subject.code}</td>
-                                                            <td className="mailbox-name">{subject.type.charAt(0).toUpperCase() + subject.type.slice(1)}</td>
+                                                            <td className="mailbox-name">
+                                                                {subjectTypes.find(t => t.key === subject.type)?.value || subject.type}
+                                                            </td>
                                                             <td className="mailbox-date pull-right no-print">
                                                                 <Link
                                                                     to={`/admin/subject/edit/${subject.id}`}

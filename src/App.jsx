@@ -82,6 +82,7 @@ import SearchPayment from './pages/fee/searchpayment/SearchPayment';
 import ClassList from './pages/academics/ClassList';
 import SectionList from './pages/academics/SectionList';
 import SubjectList from './pages/academics/SubjectList';
+import SubjectEdit from './pages/academics/SubjectEdit';
 import ClassTimetable from './pages/academics/ClassTimetable';
 import AssignClassTeacher from './pages/academics/AssignClassTeacher';
 import SubjectTeacher from './pages/academics/SubjectTeacher';
@@ -104,6 +105,7 @@ import BulkMail from './pages/message/BulkMail';
 import EmailSmsLog from './pages/message/EmailSmsLog';
 import EmailTemplate from './pages/message/EmailTemplate';
 import NotificationList from './pages/message/NotificationList';
+import NotificationAdd from './pages/message/NotificationAdd';
 import SMSTemplate from './pages/message/SMSTemplate';
 import ScheduleLog from './pages/message/ScheduleLog';
 import SendReminders from './pages/message/SendReminders';
@@ -497,13 +499,15 @@ function App() {
             <Route path="/admin/section" element={<ProtectedRoute><SectionList /></ProtectedRoute>} />
             <Route path="/admin/section/edit/:id" element={<ProtectedRoute><SectionList /></ProtectedRoute>} />
             <Route path="/admin/subject" element={<ProtectedRoute><SubjectList /></ProtectedRoute>} />
-            <Route path="/admin/subject/edit/:id" element={<ProtectedRoute><SubjectList /></ProtectedRoute>} />
+            <Route path="/admin/subject/edit/:id" element={<ProtectedRoute><SubjectEdit /></ProtectedRoute>} />
             <Route path="/admin/timetable/classreport" element={<ProtectedRoute><ClassTimetable /></ProtectedRoute>} />
             <Route path="/admin/timetable/mytimetable" element={<ProtectedRoute><TeacherTimetable /></ProtectedRoute>} />
             <Route path="/admin/teacher/assign_class_teacher" element={<ProtectedRoute><AssignClassTeacher /></ProtectedRoute>} />
+            <Route path="/admin/teacher/update_class_teacher/:class_id/:section_id" element={<ProtectedRoute><AssignClassTeacher /></ProtectedRoute>} />
             <Route path="/admin/teacher/assign_subject_teacher" element={<ProtectedRoute><SubjectTeacher /></ProtectedRoute>} />
             <Route path="/admin/stdtransfer" element={<ProtectedRoute><StdTransfer /></ProtectedRoute>} />
             <Route path="/admin/subjectgroup" element={<ProtectedRoute><SubjectGroupList /></ProtectedRoute>} />
+            <Route path="/admin/subjectgroup/edit/:id" element={<ProtectedRoute><SubjectGroupList /></ProtectedRoute>} />
             <Route path="/admin/timetable/create" element={<ProtectedRoute><TimetableCreate /></ProtectedRoute>} />
 
             {/* Message Routes */}
@@ -514,7 +518,8 @@ function App() {
             <Route path="/admin/mail/sms_template" element={<ProtectedRoute><SMSTemplate /></ProtectedRoute>} />
             <Route path="/admin/mail/schedule_log" element={<ProtectedRoute><ScheduleLog /></ProtectedRoute>} />
             <Route path="/admin/mail/send_reminders" element={<ProtectedRoute><SendReminders /></ProtectedRoute>} />
-            <Route path="/admin/notification_class/add" element={<ProtectedRoute><NotificationAddEdit /></ProtectedRoute>} />
+            <Route path="/admin/notification_class/index" element={<ProtectedRoute><NotificationList /></ProtectedRoute>} />
+            <Route path="/admin/notification_class/add" element={<ProtectedRoute><NotificationAdd /></ProtectedRoute>} />
             <Route path="/admin/notification_class/edit/:id" element={<ProtectedRoute><NotificationAddEdit /></ProtectedRoute>} />
             <Route path="/admin/mailsms/edit_schedule/:id" element={<ProtectedRoute><ScheduleEdit /></ProtectedRoute>} />
           </Routes>

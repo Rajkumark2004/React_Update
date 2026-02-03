@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 import '../../utils/include_files';
 
 const NotificationAddEdit = () => {
@@ -73,6 +75,24 @@ const NotificationAddEdit = () => {
 
     const handleFileChange = (e) => {
         setFormData({ ...formData, file: e.target.files[0] });
+    };
+
+    const handleDelete = async () => {
+        if (!id) return;
+        if (window.confirm('Are you sure you want to delete this circular?')) {
+            try {
+                const response = await api.deleteNotification(id);
+                if (response.status === true || response.status === 'success') {
+                    toast.success('Circular deleted successfully');
+                    navigate('/admin/notification_class/index');
+                } else {
+                    toast.error(response.message || 'Failed to delete circular');
+                }
+            } catch (error) {
+                console.error('Error deleting circular:', error);
+                toast.error('An error occurred while deleting');
+            }
+        }
     };
 
     const handleSubmit = (e) => {
@@ -224,6 +244,16 @@ const NotificationAddEdit = () => {
                                     </div>
                                     <div className="box-footer">
                                         <div className="pull-right">
+                                            {isEditMode && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleDelete}
+                                                    className="btn btn-default"
+                                                    style={{ marginRight: '5px' }}
+                                                >
+                                                    <i className="fa fa-trash-o"></i> Delete
+                                                </button>
+                                            )}
                                             <button type="submit" className="btn btn-primary" disabled={loading}>
                                                 <i className="fa fa-envelope-o"></i> {loading ? 'Sending...' : (isEditMode ? 'Update' : 'Send')}
                                             </button>

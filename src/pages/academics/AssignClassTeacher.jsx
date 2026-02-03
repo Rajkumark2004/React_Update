@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 import '../../utils/include_files';
 
 const AssignClassTeacher = () => {
@@ -12,57 +14,99 @@ const AssignClassTeacher = () => {
     const [selectedTeachers, setSelectedTeachers] = useState([]);
 
     // Data States
+    const [classList, setClassList] = useState([]);
     const [sectionOptions, setSectionOptions] = useState([]);
+    const [teacherList, setTeacherList] = useState([]);
     const [assignTeacherList, setAssignTeacherList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    // Mock Data
-    const classes = [
-        { id: 0, class: 'Nursery' },
-        { id: 1, class: 'LKG' },
-        { id: 2, class: 'UKG' },
-        { id: 3, class: 'Class 1' },
-        { id: 4, class: 'Class 2' },
-        { id: 5, class: 'Class 3' },
-        { id: 6, class: 'Class 4' },
-        { id: 7, class: 'Class 5' },
-        { id: 8, class: 'Class 6' },
-        { id: 9, class: 'Class 7' },
-        { id: 10, class: 'Class 8' },
-        { id: 11, class: 'Class 9' },
-        { id: 12, class: 'Class 10' },
-        { id: 13, class: '11' }
-    ];
-
-    const sections = {
-        1: [{ id: 1, section: 'A' }, { id: 2, section: 'B' }],
-        2: [{ id: 1, section: 'A' }, { id: 3, section: 'C' }],
-        3: [{ id: 2, section: 'B' }]
+    // Fetch Initial Data
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const response = await api.getAssignClassTeacher();
+            if (response && response.status === true && response.data) {
+                const data = response.data;
+                setClassList(data.classes || []);
+                setTeacherList(data.teachers || []);
+                setAssignTeacherList(data.assigned_teachers || []);
+            } else {
+                toast.error(response.message || 'Failed to load data');
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            toast.error('Failed to load data');
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const teachers = [
-        { id: 1, name: 'Jason', surname: 'Sharlton', employee_id: '90000234' },
-        { id: 2, name: 'Jane', surname: 'Doe', employee_id: '90000123' },
-        { id: 3, name: 'John', surname: 'Smith', employee_id: '90000456' }
-    ];
-
-    // Simulate initial data fetch
     useEffect(() => {
-        // Mock assignments
-        setAssignTeacherList([
-            { class_id: 1, section_id: 1, class: 'Class 1', section: 'A', teachers: [teachers[0], teachers[1]] },
-            { class_id: 2, section_id: 1, class: 'Class 2', section: 'A', teachers: [teachers[2]] }
-        ]);
+        fetchData();
     }, []);
 
-    // Effects
+    const { class_id: editClassId, section_id: editSectionId } = useParams();
+
+    // Fetch Details if in Edit Mode
     useEffect(() => {
-        if (classId) {
-            setSectionOptions(sections[classId] || []);
-        } else {
-            setSectionOptions([]);
-        }
-    }, [classId]);
+        const fetchDetails = async () => {
+            if (editClassId && editSectionId) {
+                try {
+                    const response = await api.getClassTeacherDetails(editClassId, editSectionId);
+                    if (response && response.status === true && response.data) {
+                        const data = response.data;
+                        setClassId(data.class_id);
+                        setSectionId(data.section_id);
+
+                        // Populate teacher list from all_teachers if provided
+                        if (data.all_teachers) {
+                            setTeacherList(data.all_teachers);
+                        }
+
+                        // Extract teacher IDs from assigned_teachers
+                        const assignedIds = (data.assigned_teachers || []).map(t => parseInt(t.id));
+                        setSelectedTeachers(assignedIds);
+                    } else {
+                        toast.error(response.message || 'Failed to fetch assignment details');
+                    }
+                } catch (error) {
+                    console.error('Error fetching details:', error);
+                    toast.error('Failed to load assignment details');
+                }
+            }
+        };
+
+        fetchDetails();
+    }, [editClassId, editSectionId]);
+
+    // Fetch Sections when Class Changes
+    useEffect(() => {
+        const fetchSections = async () => {
+            if (classId) {
+                try {
+                    const data = await api.getSectionsByClass(classId);
+                    if (data && (data.status === 'success' || data.status === true)) {
+                        const sections = data.sections || data.data || Object.values(data);
+                        setSectionOptions(sections);
+                    } else {
+                        setSectionOptions([]);
+                    }
+                } catch (error) {
+                    console.error('Error fetching sections:', error);
+                    setSectionOptions([]);
+                }
+            } else {
+                setSectionOptions([]);
+            }
+            // Only reset sectionId if NOT in edit mode and switching class
+            if (!editClassId) {
+                setSectionId('');
+            }
+        };
+
+        fetchSections();
+    }, [classId, editClassId]);
 
     // Handlers
     const handleTeacherToggle = (teacherId) => {
@@ -75,34 +119,76 @@ const AssignClassTeacher = () => {
         });
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        if (classId && sectionId && selectedTeachers.length > 0) {
-            alert('Class Teacher assigned successfully');
-            // Logic to update state would go here in a real app
-            window.location.reload();
-        } else {
-            alert('Please fill all required fields');
+        if (!classId || !sectionId || selectedTeachers.length === 0) {
+            toast.error('Please fill all required fields');
+            return;
+        }
+
+        const payload = {
+            class_id: parseInt(classId),
+            section_id: parseInt(sectionId),
+            teachers: selectedTeachers.map(id => parseInt(id))
+        };
+
+        try {
+            const response = editClassId
+                ? await api.updateClassTeacher(payload)
+                : await api.assignClassTeacher(payload);
+
+            if (response.status === 'success' || response.status === true) {
+                toast.success('Record Saved Successfully');
+                // Reset form
+                setClassId('');
+                setSectionId('');
+                setSelectedTeachers([]);
+                // Refresh list
+                fetchData();
+                // If we were editing, navigate back to the main list
+                if (editClassId) {
+                    navigate('/admin/teacher/assign_class_teacher');
+                }
+            } else {
+                toast.error(response.message || 'Failed to save record');
+            }
+        } catch (error) {
+            console.error('Error saving assignment:', error);
+            toast.error(error.message || 'An error occurred while saving');
         }
     };
 
-    const handleDelete = (class_id, section_id) => {
-        if (confirm('Are you sure you want to delete this?')) {
-            alert('Deleted successfully');
-            // Logic to update state would go here in a real app
+    const handleDelete = async (class_id, section_id) => {
+        if (window.confirm('Are you sure you want to delete this?')) {
+            try {
+                const response = await api.deleteClassTeacher(class_id, section_id);
+                if (response.status === 'success' || response.status === true) {
+                    toast.success('Record Deleted Successfully');
+                    fetchData();
+                } else {
+                    toast.error(response.message || 'Failed to delete record');
+                }
+            } catch (error) {
+                console.error('Error deleting assignment:', error);
+                toast.error('An error occurred while deleting');
+            }
         }
     };
 
     // Filter Logic
     const filteredList = assignTeacherList.filter(item => {
         const term = searchTerm.toLowerCase();
-        const classMatch = item.class.toLowerCase().includes(term);
-        const sectionMatch = item.section.toLowerCase().includes(term);
-        const teacherMatch = item.teachers.some(t =>
-            t.name.toLowerCase().includes(term) ||
-            t.surname.toLowerCase().includes(term) ||
-            t.employee_id.toLowerCase().includes(term)
-        );
+        const firstTeacher = item.teachers?.[0];
+        const classVal = item.class || firstTeacher?.class || "";
+        const sectionVal = item.section || firstTeacher?.section || "";
+
+        const classMatch = classVal.toLowerCase().includes(term);
+        const sectionMatch = sectionVal.toLowerCase().includes(term);
+        const teacherMatch = item.teachers?.some(t =>
+            t.name?.toLowerCase().includes(term) ||
+            t.surname?.toLowerCase().includes(term) ||
+            t.employee_id?.toLowerCase().includes(term)
+        ) || false;
         return classMatch || sectionMatch || teacherMatch;
     });
 
@@ -136,7 +222,7 @@ const AssignClassTeacher = () => {
                                                 onChange={(e) => setClassId(e.target.value)}
                                             >
                                                 <option value="">Select</option>
-                                                {classes.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
+                                                {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
                                             </select>
                                         </div>
                                         <div className="form-group">
@@ -147,18 +233,18 @@ const AssignClassTeacher = () => {
                                                 onChange={(e) => setSectionId(e.target.value)}
                                             >
                                                 <option value="">Select</option>
-                                                {sectionOptions.map(s => <option key={s.id} value={s.id}>{s.section}</option>)}
+                                                {sectionOptions.map(s => <option key={s.section_id} value={s.section_id}>{s.section}</option>)}
                                             </select>
                                         </div>
                                         <div className="form-group">
                                             <label>Class Teacher</label><small className="req"> *</small>
-                                            {teachers.map(teacher => (
+                                            {teacherList.map(teacher => (
                                                 <div className="checkbox" key={teacher.id}>
                                                     <label>
                                                         <input
                                                             type="checkbox"
-                                                            checked={selectedTeachers.includes(teacher.id)}
-                                                            onChange={() => handleTeacherToggle(teacher.id)}
+                                                            checked={selectedTeachers.includes(parseInt(teacher.id))}
+                                                            onChange={() => handleTeacherToggle(parseInt(teacher.id))}
                                                         />
                                                         {teacher.name} {teacher.surname} ({teacher.employee_id})
                                                     </label>
@@ -234,10 +320,14 @@ const AssignClassTeacher = () => {
                                                 <tbody>
                                                     {filteredList.map((item, index) => (
                                                         <tr key={index} role="row" className={index % 2 === 0 ? "odd" : "even"}>
-                                                            <td className="mailbox-name">{item.class}</td>
-                                                            <td>{item.section}</td>
+                                                            <td className="mailbox-name">
+                                                                {item.class || item.teachers?.[0]?.class}
+                                                            </td>
                                                             <td>
-                                                                {item.teachers.map((t, idx) => (
+                                                                {item.section || item.teachers?.[0]?.section}
+                                                            </td>
+                                                            <td>
+                                                                {(item.teachers || []).map((t, idx) => (
                                                                     <div key={idx}>
                                                                         {t.name} {t.surname} ({t.employee_id})<br />
                                                                     </div>
