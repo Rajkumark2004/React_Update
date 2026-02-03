@@ -452,22 +452,47 @@ export const api = {
             const data = await response.json();
             console.log('Get Classes Response:', data);
 
-            if (!response.ok || !data.status) {
-                throw new Error(data.message || 'Failed to fetch classes');
-            }
-
-            // Reverse class_sections so order is Nursery -> 11
             // Handle both direct and nested data structures
-            if (data.class_sections && Array.isArray(data.class_sections)) {
-                data.class_sections = data.class_sections.reverse();
-            }
-            if (data.data && data.data.class_sections && Array.isArray(data.data.class_sections)) {
-                data.data.class_sections = data.data.class_sections.reverse();
+            return data.data?.class_sections || data.result || data.data || [];
+        } catch (error) {
+            console.error('Get Classes API Error:', error);
+            throw error;
+        }
+    },
+    getClassReportPreData: async () => {
+        console.log('API Request: Get Class Report Pre-Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/classreport/get_classreport`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Class Report Pre-Data Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch class report pre-data');
             }
 
             return data;
         } catch (error) {
-            console.error('Get Classes API Error:', error);
+            console.error('Get Class Report Pre-Data Error:', error);
+            throw error;
+        }
+    },
+    getClassTimetable: async (payload) => {
+        console.log('API Request: Get Class Timetable', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/classreport`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Get Class Timetable Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Class Timetable Error:', error);
             throw error;
         }
     },
@@ -800,7 +825,29 @@ export const api = {
             throw error;
         }
     },
+    deleteVehicle: async (id) => {
+        console.log('API Request: Delete Vehicle', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/vehicle/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id }),
+            });
 
+            const data = await response.json();
+            console.log('Delete Vehicle Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to delete vehicle');
+            }
+            return data;
+        } catch (error) {
+            console.error('Delete Vehicle Error:', error);
+            throw error;
+        }
+    },
     getRouteList: async () => {
         console.log('API Request: Get Route List');
         try {
@@ -881,14 +928,87 @@ export const api = {
     getVehicleList: async () => {
         console.log('API Request: Get Vehicle List (Actual)');
         try {
-            const response = await fetch(`${API_BASE}/admin/vehicle/getvehiclelist`, {
+            const response = await fetch(`${API_BASE}/admin/vehicle`, {
                 method: 'GET',
             });
             const data = await response.json();
             console.log('Get Vehicle List Response:', data);
             return data;
         } catch (error) {
-            console.error('Get Vehicle List Error:', error);
+            throw error;
+        }
+    },
+    addVehicle: async (vehicleData) => {
+        console.log('API Request: Add Vehicle', vehicleData);
+        try {
+            const formData = new FormData();
+            // Append all fields to FormData
+            Object.keys(vehicleData).forEach(key => {
+                if (vehicleData[key] !== null) {
+                    formData.append(key, vehicleData[key]);
+                }
+            });
+
+            const response = await fetch(`${API_BASE}/admin/vehicle/add`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+            console.log('Add Vehicle Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to add vehicle');
+            }
+            return data;
+        } catch (error) {
+            throw error;
+        }
+    },
+    updateVehicle: async (id, vehicleData) => {
+        console.log('API Request: Update Vehicle', id, vehicleData);
+        try {
+            const formData = new FormData();
+            // Append all fields to FormData
+            Object.keys(vehicleData).forEach(key => {
+                // If it's the photo and it's null, we might want to skip it or handle it
+                if (vehicleData[key] !== null) {
+                    formData.append(key, vehicleData[key]);
+                }
+            });
+
+            const response = await fetch(`${API_BASE}/admin/vehicle/edit/${id}`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+            console.log('Update Vehicle Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update vehicle');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Vehicle Error:', error);
+            throw error;
+        }
+    },
+    getVehicleDetails: async (id) => {
+        console.log('API Request: Get Vehicle Details', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/vehicle/getsinglevehicledata/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Vehicle Details Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch vehicle details');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Vehicle Details Error:', error);
             throw error;
         }
     },
@@ -2656,7 +2776,10 @@ export const api = {
     getIncomeList: async () => {
         console.log('API Request: Get Income List');
         try {
-            const data = await api.getWithSession('/admin/income');
+            const url = appendSessionToUrl(`${API_BASE}/admin/income/getincomelist`);
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log('Get Income List Response:', data);
             return data;
         } catch (error) {
             console.error('Get Income List Error:', error);
@@ -2794,7 +2917,10 @@ export const api = {
     getExpenseList: async () => {
         console.log('API Request: Get Expense List');
         try {
-            const data = await api.getWithSession('/admin/expense');
+            const url = appendSessionToUrl(`${API_BASE}/admin/expense/getexpenselist`);
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log('Get Expense List Response:', data);
             return data;
         } catch (error) {
             console.error('Get Expense List Error:', error);

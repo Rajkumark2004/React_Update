@@ -14,6 +14,7 @@ const VehicleList = () => {
     // State for mock data (replicating listVehicle)
     const [vehicles, setVehicles] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
         vehicle_no: '',
         vehicle_model: '',
@@ -48,7 +49,9 @@ const VehicleList = () => {
     const fetchVehicleList = async () => {
         try {
             const response = await api.getVehicleList();
-            if (response && response.vehiclelist) {
+            if (response && response.data) {
+                setVehicles(response.data);
+            } else if (response && response.vehiclelist) {
                 setVehicles(response.vehiclelist);
             } else if (Array.isArray(response)) {
                 // Handle if response is just an array
@@ -130,16 +133,32 @@ const VehicleList = () => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Mimic save
-        const newVehicle = {
-            id: vehicles.length + 1,
-            ...formData,
-            vehicle_photo: formData.vehicle_photo ? formData.vehicle_photo.name : ''
-        };
-        setVehicles([...vehicles, newVehicle]);
+        try {
+            let response;
+            if (editingId) {
+                response = await api.updateVehicle(editingId, formData);
+            } else {
+                response = await api.addVehicle(formData);
+            }
+
+            if (response.status) {
+                alert(editingId ? 'Vehicle Updated Successfully' : 'Vehicle Added Successfully');
+                handleCloseModal();
+                fetchVehicleList(); // Refresh list
+            } else {
+                alert(response.message || 'Failed to save vehicle');
+            }
+        } catch (error) {
+            console.error('Error saving vehicle:', error);
+            alert('Error saving vehicle');
+        }
+    };
+
+    const handleCloseModal = () => {
         setIsAddModalOpen(false);
+        setEditingId(null);
         setFormData({
             vehicle_no: '',
             vehicle_model: '',
@@ -153,7 +172,54 @@ const VehicleList = () => {
             vehicle_photo: null,
             note: ''
         });
-        alert('Vehicle Added Successfully (Mock)');
+    };
+
+    const handleEdit = async (id) => {
+        try {
+            setEditingId(id);
+            const response = await api.getVehicleDetails(id);
+            if (response && response.status && response.data) {
+                const data = response.data;
+                setFormData({
+                    vehicle_no: data.vehicle_no || '',
+                    vehicle_model: data.vehicle_model || '',
+                    manufacture_year: data.manufacture_year || '',
+                    registration_number: data.registration_number || '',
+                    chasis_number: data.chasis_number || '',
+                    max_seating_capacity: data.max_seating_capacity || '',
+                    driver_name: data.driver_name || '',
+                    driver_licence: data.driver_licence || '',
+                    driver_contact: data.driver_contact || '',
+                    vehicle_photo: null,
+                    note: data.note || ''
+                });
+                setIsAddModalOpen(true);
+            } else {
+                alert('Failed to fetch vehicle details');
+                setEditingId(null);
+            }
+        } catch (error) {
+            console.error('Error fetching vehicle details:', error);
+            alert('Error fetching vehicle details');
+            setEditingId(null);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this vehicle?')) {
+            try {
+                const response = await api.deleteVehicle(id);
+                if (response.status) {
+                    alert('Vehicle Deleted Successfully');
+                    fetchVehicleList();
+                } else {
+                    alert(response.message || 'Failed to delete vehicle');
+                }
+            } catch (error) {
+                console.error('Error deleting vehicle:', error);
+                alert('Error deleting vehicle');
+            }
+        }
     };
 
     return (
@@ -181,7 +247,7 @@ const VehicleList = () => {
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix"> Vehicle List</h3>
                                     <div className="box-tools pull-right">
-                                        <button type="button" className="btn btn-sm btn-primary" onClick={() => setIsAddModalOpen(true)}>
+                                        <button type="button" className="btn btn-sm btn-primary" onClick={() => { setEditingId(null); setIsAddModalOpen(true); }}>
                                             <i className="fa fa-plus"></i> Add
                                         </button>
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs mright5" style={{ marginLeft: '5px' }}>
@@ -240,8 +306,8 @@ const VehicleList = () => {
                                                         <td className="mailbox-name"> {data.driver_contact}</td>
                                                         <td className="mailbox-date pull-right no-print white-space-nowrap">
                                                             <a className="btn btn-default btn-xs vehicledetails" data-toggle="tooltip" title="View"><i className="fa fa-reorder"></i></a>
-                                                            <a className="btn btn-default btn-xs editvehicle" data-toggle="tooltip" title="Edit"><i className="fa fa-pencil"></i></a>
-                                                            <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete" onClick={() => { if (window.confirm('Are you sure you want to delete this?')) { alert('Delete logic'); } }}><i className="fa fa-remove"></i></a>
+                                                            <a className="btn btn-default btn-xs editvehicle" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data.id)}><i className="fa fa-pencil"></i></a>
+                                                            <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete" onClick={() => handleDelete(data.id)}><i className="fa fa-remove"></i></a>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -265,8 +331,8 @@ const VehicleList = () => {
                         <div className="modal-dialog modal-lg" role="document">
                             <div className="modal-content modal-media-content">
                                 <div className="modal-header modal-media-header">
-                                    <button type="button" className="close" onClick={() => setIsAddModalOpen(false)}>&times;</button>
-                                    <h4 className="box-title">Add Vehicle</h4>
+                                    <button type="button" className="close" onClick={handleCloseModal}>&times;</button>
+                                    <h4 className="box-title">{editingId ? 'Edit Vehicle' : 'Add Vehicle'}</h4>
                                 </div>
 
                                 <form id="addvehicleform" onSubmit={handleSubmit} encType="multipart/form-data">

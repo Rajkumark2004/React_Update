@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
-import { api } from '../../../services/api';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const IncomeEdit = () => {
@@ -31,65 +31,39 @@ const IncomeEdit = () => {
 
     const fetchInitialData = async () => {
         try {
-            const [incomeRes, headRes] = await Promise.all([
-                api.getIncomeList(),
-                api.getIncomeHeadList()
-            ]);
-
+            // Fetch income heads
+            const headRes = await api.getIncomeHeadList();
+            console.log('Income Head Response:', headRes);
             let heads = [];
-            if (headRes && headRes.data) heads = headRes.data;
-            else if (Array.isArray(headRes)) heads = headRes;
+            if (headRes) {
+                heads = headRes.data || headRes.incheadlist || (Array.isArray(headRes) ? headRes : []);
+            }
             setIncomeHeadList(heads);
 
-            let list = [];
-            if (incomeRes && incomeRes.data) list = incomeRes.data;
-            else if (incomeRes && incomeRes.aaData) list = incomeRes.aaData;
-            else if (Array.isArray(incomeRes)) list = incomeRes;
-            setIncomeList(list);
+            // Fetch the specific income details
+            const incomeDetail = await api.fetchIncome(id);
+            console.log('Income Detail Response:', incomeDetail);
 
-            const item = list.find(f => f.id == id);
-            if (item) {
+            if (incomeDetail && incomeDetail.data) {
+                const item = incomeDetail.data;
                 setFormData({
-                    inc_head_id: item.inc_head_id,
-                    name: item.name,
-                    invoice_no: item.invoice_no,
-                    date: item.date, // Format might need adjustment YYYY-MM-DD
-                    amount: item.amount,
-                    description: item.description,
-                    documents: null // Can't preset file input
+                    inc_head_id: item.income_head_id || item.inc_head_id || '',
+                    name: item.name || '',
+                    invoice_no: item.invoice_no || '',
+                    date: item.date || '',
+                    amount: item.amount || '',
+                    description: item.note || item.description || '',
+                    documents: null
                 });
-
-                // If date is DD/MM/YYYY, convert to YYYY-MM-DD for input type=date
-                if (item.date && item.date.includes('/')) {
-                    const parts = item.date.split('/');
-                    if (parts.length === 3) {
-                        // assuming d/m/y or m/d/y? PHP usually stores Y-m-d or d-m-Y.
-                        // Display might be d/m/Y.
-                        // Let's assume input type="date" needs YYYY-MM-DD.
-                        // Check global date format?
-                        // If we just use what's there, we'll see.
-                        // If it's d-m-Y, convert.
-                    }
-                }
             } else {
-                // Try individual fetch if available
-                try {
-                    const detail = await api.fetchIncome(id);
-                    if (detail && detail.data) {
-                        // setFormData...
-                    } else {
-                        toast.error('Income not found');
-                        navigate('/admin/income');
-                    }
-                } catch (e) {
-                    toast.error('Income not found');
-                    navigate('/admin/income');
-                }
+                toast.error('Income not found');
+                navigate('/admin/income');
             }
 
         } catch (error) {
             console.error('Error fetching data:', error);
-            toast.error('Failed to load data');
+            toast.error('Failed to load income data');
+            navigate('/admin/income');
         } finally {
             setInitialLoading(false);
         }

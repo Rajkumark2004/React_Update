@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
-import { api } from '../../../services/api';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const ExpenseEdit = () => {
@@ -31,52 +31,39 @@ const ExpenseEdit = () => {
 
     const fetchInitialData = async () => {
         try {
-            const [expenseRes, headRes] = await Promise.all([
-                api.getExpenseList(),
-                api.getExpenseHeadList()
-            ]);
-
+            // Fetch expense heads
+            const headRes = await api.getExpenseHeadList();
+            console.log('Expense Head Response:', headRes);
             let heads = [];
-            if (headRes && headRes.data) heads = headRes.data;
-            else if (Array.isArray(headRes)) heads = headRes;
+            if (headRes) {
+                heads = headRes.data || headRes.expheadlist || (Array.isArray(headRes) ? headRes : []);
+            }
             setExpenseHeadList(heads);
 
-            let list = [];
-            if (expenseRes && expenseRes.data) list = expenseRes.data;
-            else if (expenseRes && expenseRes.aaData) list = expenseRes.aaData;
-            else if (Array.isArray(expenseRes)) list = expenseRes;
-            setExpenseList(list);
+            // Fetch the specific expense details
+            const expenseDetail = await api.fetchExpense(id);
+            console.log('Expense Detail Response:', expenseDetail);
 
-            const item = list.find(f => f.id == id);
-            if (item) {
+            if (expenseDetail && expenseDetail.expense) {
+                const item = expenseDetail.expense;
                 setFormData({
-                    exp_head_id: item.exp_head_id,
-                    name: item.name,
-                    invoice_no: item.invoice_no,
-                    date: item.date,
-                    amount: item.amount,
-                    description: item.description,
+                    exp_head_id: item.exp_head_id || '',
+                    name: item.name || '',
+                    invoice_no: item.invoice_no || '',
+                    date: item.date || '',
+                    amount: item.amount || '',
+                    description: item.note || item.description || '',
                     documents: null
                 });
-
             } else {
-                try {
-                    const detail = await api.fetchExpense(id);
-                    if (detail && detail.data) {
-                        // setFormData... not implemented fully as we rely on list usually or logic
-                    } else {
-                        toast.error('Expense not found');
-                        navigate('/admin/expense');
-                    }
-                } catch (e) {
-                    toast.error('Expense not found');
-                    navigate('/admin/expense');
-                }
+                toast.error('Expense not found');
+                navigate('/admin/expense');
             }
 
         } catch (error) {
             console.error('Error fetching data:', error);
-            toast.error('Failed to load data');
+            toast.error('Failed to load expense data');
+            navigate('/admin/expense');
         } finally {
             setInitialLoading(false);
         }

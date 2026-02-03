@@ -24,7 +24,6 @@ const DashboardTest = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             // Basic loading simulation is replaced by actual fetch
-            // but we keep a minimum delay or just standard async/await
             try {
                 setLoading(true);
                 const response = await api.getDashboardData();

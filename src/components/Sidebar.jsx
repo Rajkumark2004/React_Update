@@ -62,7 +62,21 @@ const Sidebar = ({
         '/admin/staff/search',
         '/admin/source',
         '/admin/reference',
-        '/homework'
+        '/homework',
+        '/admin/mail',
+        '/admin/mail/email_sms_log',
+        '/admin/mail/email_template',
+        '/admin/notification',
+        '/admin/mail/sms_template',
+        '/admin/mail/schedule_log',
+        '/admin/mail/send_reminders',
+        '/admin/notification_class/add',
+        '/admin/notification_class/edit',
+        '/admin/mailsms/edit_schedule',
+        '/admin/income',
+        '/admin/incomehead',
+        '/admin/expense',
+        '/admin/expensehead'
     ];
 
     // Default menus - only SIS and System Settings have working pages
@@ -72,16 +86,16 @@ const Sidebar = ({
         { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
         { id: 4, icon: 'homework.png', label: 'Homework', url: '/homework' },
         { id: 5, icon: 'Fees.png', label: 'Fees Collection', url: '/studentfee' },
-        { id: 6, icon: 'academics.png', label: 'Academics', url: '#' },
+        { id: 6, icon: 'academics.png', label: 'Academics', url: '/admin/timetable/classreport' },
         { id: 7, icon: 'state_examination.png', label: 'State Examinations', url: '/cbseexam/exam' },
         { id: 8, icon: 'courses.png', label: 'Courses', url: '#' },
         { id: 9, icon: 'transport.png', label: 'Transport', url: '/admin/route' },
-        { id: 10, icon: 'messages.png', label: 'Messages', url: '#' },
+        { id: 10, icon: 'messages.png', label: 'Messages', url: '/admin/notification' },
         { id: 11, icon: 'hr.png', label: 'Human Resource', url: '/admin/staff/search' },
         { id: 12, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
         { id: 13, icon: 'certificate.png', label: 'Certificate', url: '#' },
-        { id: 14, icon: 'income.png', label: 'Income', url: '#' },
-        { id: 15, icon: 'expenses.png', label: 'Expenses', url: '#' },
+        { id: 14, icon: 'income.png', label: 'Income', url: '/admin/income' },
+        { id: 15, icon: 'expenses.png', label: 'Expenses', url: '/admin/expense' },
         { id: 16, icon: 'hostle.png', label: 'Hostel', url: '#' },
         { id: 17, icon: 'reports.png', label: 'Reports', url: '#' },
         { id: 18, icon: 'settings.png', label: 'System Settings', url: '/settings' }

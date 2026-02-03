@@ -1,51 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
-import { api } from '../../../services/api';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
-const IncomeHeadEdit = () => {
+const ExpenseHeadEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [incomeHeadList, setIncomeHeadList] = useState([]);
+    const [expenseHeadList, setExpenseHeadList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [formData, setFormData] = useState({
-        income_category: '',
+        expensehead: '',
         description: ''
     });
 
     useEffect(() => {
-        fetchIncomeHeadList();
+        fetchExpenseHeadList();
     }, []);
 
-    const fetchIncomeHeadList = async () => {
+    const fetchExpenseHeadList = async () => {
         try {
-            const response = await api.getIncomeHeadList();
+            const response = await api.getExpenseHeadList();
+            console.log('Expense Head Response:', response);
             let list = [];
-            if (response && response.data) {
-                list = response.data;
-            } else if (Array.isArray(response)) {
-                list = response;
+            if (response) {
+                list = response.data || response.expheadlist || (Array.isArray(response) ? response : []);
             }
-            setIncomeHeadList(list);
+            setExpenseHeadList(list);
 
             const item = list.find(f => f.id == id);
             if (item) {
                 setFormData({
-                    income_category: item.income_category,
+                    expensehead: item.exp_category || item.expensehead,
                     description: item.description
                 });
             } else {
-                toast.error('Income Head not found');
-                navigate('/admin/incomehead');
+                toast.error('Expense Head not found');
+                navigate('/admin/expensehead');
             }
 
         } catch (error) {
-            console.error('Error fetching income heads:', error);
-            toast.error('Failed to fetch income heads');
+            console.error('Error fetching expense heads:', error);
+            toast.error('Failed to fetch expense heads');
         } finally {
             setInitialLoading(false);
         }
@@ -60,16 +59,16 @@ const IncomeHeadEdit = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await api.editIncomeHead(id, formData);
+            const response = await api.editExpenseHead(id, formData);
             if (response.status || response.success) {
-                toast.success('Income Head updated successfully');
-                navigate('/admin/incomehead');
+                toast.success('Expense Head updated successfully');
+                navigate('/admin/expensehead');
             } else {
-                toast.error(response.message || 'Failed to update income head');
+                toast.error(response.message || 'Failed to update expense head');
             }
         } catch (error) {
-            console.error('Error updating income head:', error);
-            toast.error(error.message || 'Failed to update income head');
+            console.error('Error updating expense head:', error);
+            toast.error(error.message || 'Failed to update expense head');
         } finally {
             setLoading(false);
         }
@@ -78,17 +77,17 @@ const IncomeHeadEdit = () => {
     const handleDelete = async (deleteId) => {
         if (window.confirm('Are you sure you want to delete this?')) {
             try {
-                const response = await api.deleteIncomeHead(deleteId);
+                const response = await api.deleteExpenseHead(deleteId);
                 if (response.status || response.success) {
-                    toast.success('Income Head deleted successfully');
-                    fetchIncomeHeadList();
-                    if (deleteId == id) navigate('/admin/incomehead');
+                    toast.success('Expense Head deleted successfully');
+                    fetchExpenseHeadList();
+                    if (deleteId == id) navigate('/admin/expensehead');
                 } else {
-                    toast.error(response.message || 'Failed to delete income head');
+                    toast.error(response.message || 'Failed to delete expense head');
                 }
             } catch (error) {
-                console.error('Error deleting income head:', error);
-                toast.error('Failed to delete income head');
+                console.error('Error deleting expense head:', error);
+                toast.error('Failed to delete expense head');
             }
         }
     };
@@ -103,18 +102,18 @@ const IncomeHeadEdit = () => {
                         <div className="col-md-4">
                             <div className="box box-primary">
                                 <div className="box-header with-border">
-                                    <h3 className="box-title">Edit Income Head</h3>
+                                    <h3 className="box-title">Edit Expense Head</h3>
                                 </div>
                                 <form onSubmit={handleSubmit}>
                                     <div className="box-body">
                                         <div className="form-group">
-                                            <label>Income Head</label> <small className="req">*</small>
+                                            <label>Expense Head</label> <small className="req">*</small>
                                             <input
                                                 autoFocus
-                                                name="income_category"
+                                                name="expensehead"
                                                 type="text"
                                                 className="form-control"
-                                                value={formData.income_category}
+                                                value={formData.expensehead}
                                                 onChange={handleInputChange}
                                                 required
                                             />
@@ -141,15 +140,16 @@ const IncomeHeadEdit = () => {
                         <div className="col-md-8">
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
-                                    <h3 className="box-title titlefix">Income Head List</h3>
+                                    <h3 className="box-title titlefix">Expense Head List</h3>
                                 </div>
                                 <div className="box-body">
-                                    <div className="download_label">Income Head List</div>
+                                    <div className="download_label">Expense Head List</div>
                                     <div className="table-responsive mailbox-messages overflow-visible">
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Income Head</th>
+                                                    <th>Expense Head</th>
+                                                    <th>Description</th>
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
@@ -158,25 +158,22 @@ const IncomeHeadEdit = () => {
                                                     <tr>
                                                         <td colSpan="2" className="text-center">Loading...</td>
                                                     </tr>
-                                                ) : incomeHeadList.length === 0 ? (
+                                                ) : expenseHeadList.length === 0 ? (
                                                     <tr>
                                                         <td colSpan="2" className="text-center">No data available in table</td>
                                                     </tr>
                                                 ) : (
-                                                    incomeHeadList.map((head) => (
+                                                    expenseHeadList.map((head) => (
                                                         <tr key={head.id}>
                                                             <td className="mailbox-name">
-                                                                <span
-                                                                    data-toggle="tooltip"
-                                                                    title={head.description || 'No Description'}
-                                                                    style={{ cursor: 'pointer' }}
-                                                                >
-                                                                    {head.income_category}
-                                                                </span>
+                                                                {head.exp_category}
+                                                            </td>
+                                                            <td className="mailbox-name">
+                                                                {head.description}
                                                             </td>
                                                             <td className="mailbox-date pull-right">
                                                                 <Link
-                                                                    to={`/admin/incomehead/edit/${head.id}`}
+                                                                    to={`/admin/expensehead/edit/${head.id}`}
                                                                     className="btn btn-default btn-xs"
                                                                     data-toggle="tooltip"
                                                                     title="Edit"
@@ -210,4 +207,4 @@ const IncomeHeadEdit = () => {
     );
 };
 
-export default IncomeHeadEdit;
+export default ExpenseHeadEdit;

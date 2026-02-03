@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
-import { api } from '../../../services/api';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
-const IncomeHead = () => {
+const IncomeHeadEdit = () => {
+    const { id } = useParams();
+    const navigate = useNavigate();
     const [incomeHeadList, setIncomeHeadList] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
     const [formData, setFormData] = useState({
-        income_category: '', // API expects income_category for Name? Checked user php input: name="income_category" typically for head
+        incomehead: '',
         description: ''
     });
-    const [initialLoading, setInitialLoading] = useState(true);
 
     useEffect(() => {
         fetchIncomeHeadList();
@@ -22,13 +24,24 @@ const IncomeHead = () => {
     const fetchIncomeHeadList = async () => {
         try {
             const response = await api.getIncomeHeadList();
-            if (response && response.data) {
-                setIncomeHeadList(response.data);
-            } else if (Array.isArray(response)) {
-                setIncomeHeadList(response);
-            } else {
-                setIncomeHeadList([]);
+            console.log('Income Head Response:', response);
+            let list = [];
+            if (response) {
+                list = response.data || response.incheadlist || (Array.isArray(response) ? response : []);
             }
+            setIncomeHeadList(list);
+
+            const item = list.find(f => f.id == id);
+            if (item) {
+                setFormData({
+                    incomehead: item.income_category || item.incomehead,
+                    description: item.description
+                });
+            } else {
+                toast.error('Income Head not found');
+                navigate('/admin/incomehead');
+            }
+
         } catch (error) {
             console.error('Error fetching income heads:', error);
             toast.error('Failed to fetch income heads');
@@ -46,29 +59,29 @@ const IncomeHead = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await api.addIncomeHead(formData);
-            if (response.status) {
-                toast.success('Income Head added successfully');
-                setFormData({ income_category: '', description: '' });
-                fetchIncomeHeadList();
+            const response = await api.editIncomeHead(id, formData);
+            if (response.status || response.success) {
+                toast.success('Income Head updated successfully');
+                navigate('/admin/incomehead');
             } else {
-                toast.error(response.message || 'Failed to add income head');
+                toast.error(response.message || 'Failed to update income head');
             }
         } catch (error) {
-            console.error('Error adding income head:', error);
-            toast.error(error.message || 'Failed to add income head');
+            console.error('Error updating income head:', error);
+            toast.error(error.message || 'Failed to update income head');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (deleteId) => {
         if (window.confirm('Are you sure you want to delete this?')) {
             try {
-                const response = await api.deleteIncomeHead(id);
-                if (response.status || response.success) { // Sometimes legacy APIs return success:true
+                const response = await api.deleteIncomeHead(deleteId);
+                if (response.status || response.success) {
                     toast.success('Income Head deleted successfully');
                     fetchIncomeHeadList();
+                    if (deleteId == id) navigate('/admin/incomehead');
                 } else {
                     toast.error(response.message || 'Failed to delete income head');
                 }
@@ -89,7 +102,7 @@ const IncomeHead = () => {
                         <div className="col-md-4">
                             <div className="box box-primary">
                                 <div className="box-header with-border">
-                                    <h3 className="box-title">Add Income Head</h3>
+                                    <h3 className="box-title">Edit Income Head</h3>
                                 </div>
                                 <form onSubmit={handleSubmit}>
                                     <div className="box-body">
@@ -97,10 +110,10 @@ const IncomeHead = () => {
                                             <label>Income Head</label> <small className="req">*</small>
                                             <input
                                                 autoFocus
-                                                name="income_category"
+                                                name="incomehead"
                                                 type="text"
                                                 className="form-control"
-                                                value={formData.income_category}
+                                                value={formData.incomehead}
                                                 onChange={handleInputChange}
                                                 required
                                             />
@@ -136,6 +149,7 @@ const IncomeHead = () => {
                                             <thead>
                                                 <tr>
                                                     <th>Income Head</th>
+                                                    <th>Description</th>
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
@@ -152,13 +166,10 @@ const IncomeHead = () => {
                                                     incomeHeadList.map((head) => (
                                                         <tr key={head.id}>
                                                             <td className="mailbox-name">
-                                                                <span
-                                                                    data-toggle="tooltip"
-                                                                    title={head.description || 'No Description'}
-                                                                    style={{ cursor: 'pointer' }}
-                                                                >
-                                                                    {head.income_category}
-                                                                </span>
+                                                                {head.income_category}
+                                                            </td>
+                                                            <td className="mailbox-name">
+                                                                {head.description}
                                                             </td>
                                                             <td className="mailbox-date pull-right">
                                                                 <Link
@@ -196,4 +207,4 @@ const IncomeHead = () => {
     );
 };
 
-export default IncomeHead;
+export default IncomeHeadEdit;

@@ -61,14 +61,14 @@ import FeeGroupEdit from './pages/fee/feegroup/FeeGroupEdit';
 import FeeMaster from './pages/fee/feemaster/FeeMaster';
 import FeeMasterEdit from './pages/fee/feemaster/FeeMasterEdit';
 import AssignFeeMaster from './pages/fee/feemaster/AssignFeeMaster';
-import IncomeHead from './pages/fee/incomehead/IncomeHead';
-import IncomeHeadEdit from './pages/fee/incomehead/IncomeHeadEdit';
-import IncomeList from './pages/fee/income/IncomeList';
-import IncomeEdit from './pages/fee/income/IncomeEdit';
-import ExpenseHead from './pages/fee/expensehead/ExpenseHead';
-import ExpenseHeadEdit from './pages/fee/expensehead/ExpenseHeadEdit';
-import ExpenseList from './pages/fee/expense/ExpenseList';
-import ExpenseEdit from './pages/fee/expense/ExpenseEdit';
+import IncomeHead from './pages/income/IncomeHead';
+import IncomeHeadEdit from './pages/income/IncomeHeadEdit';
+import IncomeList from './pages/income/IncomeList';
+import IncomeEdit from './pages/income/IncomeEdit';
+import ExpenseHead from './pages/expense/ExpenseHead';
+import ExpenseHeadEdit from './pages/expense/ExpenseHeadEdit';
+import ExpenseList from './pages/expense/ExpenseList';
+import ExpenseEdit from './pages/expense/ExpenseEdit';
 import StudentFeeSearch from './pages/fee/collect-fees/StudentFeeSearch';
 import StudentAddFee from './pages/fee/collect-fees/StudentAddFee';
 import FeeCarryForward from './pages/fee/feecarry/FeeCarryForward';
@@ -78,6 +78,18 @@ import PrintStudentGroupFees24 from './pages/fee/feereceipt/PrintStudentGroupFee
 import PrintFeesByGroupArrayPage from './pages/fee/collect-fees/PrintFeesByGroupArrayPage';
 import SearchPayment from './pages/fee/searchpayment/SearchPayment';
 
+// Academics Pages
+import ClassList from './pages/academics/ClassList';
+import SectionList from './pages/academics/SectionList';
+import SubjectList from './pages/academics/SubjectList';
+import ClassTimetable from './pages/academics/ClassTimetable';
+import AssignClassTeacher from './pages/academics/AssignClassTeacher';
+import SubjectTeacher from './pages/academics/SubjectTeacher';
+import StdTransfer from './pages/academics/StdTransfer';
+import SubjectGroupList from './pages/academics/SubjectGroupList';
+import TeacherTimetable from './pages/academics/TeacherTimetable';
+import TimetableCreate from './pages/academics/TimetableCreate';
+
 // Transport Pages
 import CreateRoute from './pages/transport/CreateRoute';
 import VehicleList from './pages/transport/VehicleList';
@@ -86,6 +98,18 @@ import PickupPointList from './pages/transport/PickupPointList';
 import AssignPickupPoint from './pages/transport/AssignPickupPoint';
 import TransportFeesMaster from './pages/transport/TransportFeesMaster';
 import StudentTransportFees from './pages/transport/StudentTransportFees';
+
+// Message Pages
+import BulkMail from './pages/message/BulkMail';
+import EmailSmsLog from './pages/message/EmailSmsLog';
+import EmailTemplate from './pages/message/EmailTemplate';
+import NotificationList from './pages/message/NotificationList';
+import SMSTemplate from './pages/message/SMSTemplate';
+import ScheduleLog from './pages/message/ScheduleLog';
+import SendReminders from './pages/message/SendReminders';
+import NotificationAddEdit from './pages/message/NotificationAddEdit';
+import ScheduleEdit from './pages/message/ScheduleEdit';
+
 import { api } from './services/api';
 import { SessionProvider } from './context/SessionContext';
 import { LogoProvider } from './context/LogoContext';
@@ -466,6 +490,33 @@ function App() {
             <Route path="/admin/routepickuppoint" element={<ProtectedRoute><AssignPickupPoint /></ProtectedRoute>} />
             <Route path="/admin/transportFeeMaster" element={<ProtectedRoute><TransportFeesMaster /></ProtectedRoute>} />
             <Route path="/admin/studenttransportfee" element={<ProtectedRoute><StudentTransportFees /></ProtectedRoute>} />
+
+            {/* Academics Routes */}
+            <Route path="/admin/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
+            <Route path="/admin/classes/edit/:id" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />
+            <Route path="/admin/section" element={<ProtectedRoute><SectionList /></ProtectedRoute>} />
+            <Route path="/admin/section/edit/:id" element={<ProtectedRoute><SectionList /></ProtectedRoute>} />
+            <Route path="/admin/subject" element={<ProtectedRoute><SubjectList /></ProtectedRoute>} />
+            <Route path="/admin/subject/edit/:id" element={<ProtectedRoute><SubjectList /></ProtectedRoute>} />
+            <Route path="/admin/timetable/classreport" element={<ProtectedRoute><ClassTimetable /></ProtectedRoute>} />
+            <Route path="/admin/timetable/mytimetable" element={<ProtectedRoute><TeacherTimetable /></ProtectedRoute>} />
+            <Route path="/admin/teacher/assign_class_teacher" element={<ProtectedRoute><AssignClassTeacher /></ProtectedRoute>} />
+            <Route path="/admin/teacher/assign_subject_teacher" element={<ProtectedRoute><SubjectTeacher /></ProtectedRoute>} />
+            <Route path="/admin/stdtransfer" element={<ProtectedRoute><StdTransfer /></ProtectedRoute>} />
+            <Route path="/admin/subjectgroup" element={<ProtectedRoute><SubjectGroupList /></ProtectedRoute>} />
+            <Route path="/admin/timetable/create" element={<ProtectedRoute><TimetableCreate /></ProtectedRoute>} />
+
+            {/* Message Routes */}
+            <Route path="/admin/mail" element={<ProtectedRoute><BulkMail /></ProtectedRoute>} />
+            <Route path="/admin/mail/email_sms_log" element={<ProtectedRoute><EmailSmsLog /></ProtectedRoute>} />
+            <Route path="/admin/mail/email_template" element={<ProtectedRoute><EmailTemplate /></ProtectedRoute>} />
+            <Route path="/admin/notification" element={<ProtectedRoute><NotificationList /></ProtectedRoute>} />
+            <Route path="/admin/mail/sms_template" element={<ProtectedRoute><SMSTemplate /></ProtectedRoute>} />
+            <Route path="/admin/mail/schedule_log" element={<ProtectedRoute><ScheduleLog /></ProtectedRoute>} />
+            <Route path="/admin/mail/send_reminders" element={<ProtectedRoute><SendReminders /></ProtectedRoute>} />
+            <Route path="/admin/notification_class/add" element={<ProtectedRoute><NotificationAddEdit /></ProtectedRoute>} />
+            <Route path="/admin/notification_class/edit/:id" element={<ProtectedRoute><NotificationAddEdit /></ProtectedRoute>} />
+            <Route path="/admin/mailsms/edit_schedule/:id" element={<ProtectedRoute><ScheduleEdit /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
       </SessionProvider>

@@ -21,15 +21,13 @@ const ClassTimetable = () => {
     const fetchClasses = async () => {
         setLoading(true);
         try {
-            const data = await api.getClasses();
-            console.log('Classes API Response:', data);
-            if (data && data.status) {
-                // Check multiple possible data paths based on other components
-                const classes = data.data?.class_sections || data.result || data.data || [];
-                setClassList(Array.isArray(classes) ? classes : []);
+            const data = await api.getClassReportPreData();
+            console.log('Class Report Pre-Data Response:', data);
+            if (data && data.status === 'success') {
+                setClassList(data.classlist || []);
             }
         } catch (error) {
-            console.error('Error fetching classes:', error);
+            console.error('Error fetching class report data:', error);
         } finally {
             setLoading(false);
         }
@@ -42,23 +40,14 @@ const ClassTimetable = () => {
         if (!classId) return;
 
         try {
-            const sessionId = localStorage.getItem('activeSessionId') || localStorage.getItem('defaultSessionId') || '9';
-            // Fetch sections by class using the existing API pattern
-            const response = await fetch(`https://newlayout.wisibles.com/api_admin/Sections/getByClass?class_id=${classId}&session_id=${sessionId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            const data = await response.json();
+            const data = await api.getSectionsByClass(classId);
             console.log('Sections API Response:', data);
 
-            // Sections can be in data.data, data.result, or direct array
-            const sections = data.data || data.result || data || [];
-            if (Array.isArray(sections)) {
-                setSectionList(sections);
-            } else if (typeof sections === 'object') {
-                setSectionList(Object.values(sections).filter(s => typeof s === 'object'));
+            // Response structure is {status: true, data: [...] }
+            if (data && data.status && Array.isArray(data.data)) {
+                setSectionList(data.data);
+            } else if (Array.isArray(data)) {
+                setSectionList(data);
             } else {
                 setSectionList([]);
             }
@@ -74,26 +63,20 @@ const ClassTimetable = () => {
         setSearchLoading(true);
         try {
             const sessionId = localStorage.getItem('activeSessionId') || localStorage.getItem('defaultSessionId') || '9';
-            const response = await fetch('https://newlayout.wisibles.com/api_admin/admin/timetable/classreport', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    class_id: selectedClass,
-                    section_id: selectedSection,
-                    session_id: sessionId,
-                    search: 'search'
-                }),
-            });
-            const data = await response.json();
-            // The API response might contain the timetable data directly or wrapped
+            const payload = {
+                class_id: selectedClass,
+                section_id: selectedSection,
+                session_id: sessionId,
+                search: 'search'
+            };
+            const data = await api.getClassTimetable(payload);
+            console.log('Timetable Response:', data);
+
             if (data && data.status) {
                 setTimetable(data.timetable || data.result || null);
             } else {
                 setTimetable(data.timetable || data || null);
             }
-            console.log('Timetable Data:', data);
         } catch (error) {
             console.error('Error fetching timetable:', error);
         } finally {
@@ -140,10 +123,10 @@ const ClassTimetable = () => {
                                         <Link to="/admin/subject"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/academic/6.png" alt="icon6" className="img-fluid" style={{ width: '20px' }} /> Subjects</Link>
                                     </li>
                                     <li>
-                                        <Link to="/classes"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/academic/7.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Class</Link>
+                                        <Link to="/admin/classes"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/academic/7.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Class</Link>
                                     </li>
                                     <li>
-                                        <Link to="/sections"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/academic/8.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Sections</Link>
+                                        <Link to="/admin/section"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/academic/8.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Sections</Link>
                                     </li>
                                     <li>
                                         <Link to="/admin/teacher/assign_subject_teacher"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/academic/9.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Assign Subject Teacher</Link>
