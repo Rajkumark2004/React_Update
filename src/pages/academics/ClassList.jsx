@@ -3,6 +3,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 const ClassList = () => {
     const { id } = useParams();
@@ -13,69 +15,64 @@ const ClassList = () => {
     const [sectionsList, setSectionsList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isEditMode, setIsEditMode] = useState(false);
+    const [initialSections, setInitialSections] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    // Mock Data for Sections (vehiclelist)
+    // Fetch Initial Data
     useEffect(() => {
-        // Initialize mock data only once or if empty
-        // In a real app, this would be an API call
-        const mockSections = [
-            { id: 1, section: 'A' },
-            { id: 2, section: 'B' },
-            { id: 3, section: 'C' },
-            { id: 4, section: 'D' },
-            { id: 5, section: 'E' },
-        ];
-        setSectionsList(mockSections);
-
-        const mockClasses = [
-            {
-                id: 1,
-                class: 'Class 1',
-                vehicles: [
-                    { id: 1, section: 'A' },
-                    { id: 2, section: 'B' }
-                ]
-            },
-            {
-                id: 2,
-                class: 'Class 2',
-                vehicles: [
-                    { id: 1, section: 'A' },
-                    { id: 3, section: 'C' }
-                ]
-            },
-            {
-                id: 3,
-                class: 'Class 3',
-                vehicles: [
-                    { id: 2, section: 'B' },
-                    { id: 4, section: 'D' }
-                ]
+        const fetchClassesAndSections = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getClasses();
+                if (data && data.status === 'success') {
+                    setSectionsList(data.sectionlist || []);
+                    setClassList(data.classsectionlist || []);
+                }
+            } catch (error) {
+                console.error('Error fetching classes:', error);
+                toast.error('Failed to load classes');
+            } finally {
+                setLoading(false);
             }
-        ];
-        // Only set if we don't have data (to persist somewhat during nav in this mock env)
-        // But since we navigate away and back, state resets. 
-        // We'll just reset it for now.
-        setClassList(mockClasses);
+        };
+        fetchClassesAndSections();
     }, []);
 
     // Handle Edit Mode
     useEffect(() => {
-        if (id && classList.length > 0) {
-            const classToEdit = classList.find(c => c.id === parseInt(id));
-            if (classToEdit) {
-                setIsEditMode(true);
-                setClassName(classToEdit.class);
-                // Map vehicle objects back to IDs
-                const sectionIds = classToEdit.vehicles.map(v => v.id);
-                setSelectedSections(sectionIds);
+        const fetchClassDetails = async () => {
+            if (id) {
+                setLoading(true);
+                try {
+                    const data = await api.getClassForEdit(id);
+                    if (data && data.status === 'success') {
+                        setIsEditMode(true);
+                        setClassName(data.class.class);
+                        // Map sections to their section_id (which corresponds to id in sectionlist)
+                        const sectionIds = (data.class.sections || []).map(s => s.section_id);
+                        setSelectedSections(sectionIds);
+                        setInitialSections(sectionIds);
+
+                        // Ensure sections list is populated if it comes with the edit response
+                        if (data.sectionlist) {
+                            setSectionsList(data.sectionlist);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching class details:', error);
+                    toast.error('Failed to load class details');
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+                setIsEditMode(false);
+                setClassName('');
+                setSelectedSections([]);
+                setInitialSections([]);
             }
-        } else {
-            setIsEditMode(false);
-            setClassName('');
-            setSelectedSections([]);
-        }
-    }, [id, classList]);
+        };
+        fetchClassDetails();
+    }, [id]);
 
 
     const handleCheckboxChange = (sectionId) => {
@@ -88,53 +85,81 @@ const ClassList = () => {
         });
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
         if (!className) {
-            alert('The Class field is required.');
+            toast.error('The Class field is required.');
             return;
         }
         if (selectedSections.length === 0) {
-            alert('The Section field is required.');
+            toast.error('The Section field is required.');
             return;
         }
 
-        const selectedVehicles = sectionsList.filter(s => selectedSections.includes(s.id));
-
-        if (isEditMode) {
-            // Update existing
-            const updatedList = classList.map(c => {
-                if (c.id === parseInt(id)) {
-                    return {
-                        ...c,
-                        class: className,
-                        vehicles: selectedVehicles
-                    };
+        try {
+            if (isEditMode) {
+                const payload = {
+                    id: id,
+                    pre_class_id: id,
+                    prev_sections: initialSections,
+                    class: className,
+                    sections: selectedSections
+                };
+                const response = await api.updateClass(payload);
+                if (response.status === 'success') {
+                    toast.success('Record Updated Successfully');
+                    setClassName('');
+                    setSelectedSections([]);
+                    setInitialSections([]);
+                    navigate('/admin/classes');
+                    // Refresh data
+                    const data = await api.getClasses();
+                    if (data && data.status === 'success') {
+                        setClassList(data.classsectionlist || []);
+                    }
                 }
-                return c;
-            });
-            setClassList(updatedList);
-            alert('Record Updated Successfully');
-            navigate('/admin/classes'); // Go back to add mode/clear url
-        } else {
-            // Add new
-            const newClass = {
-                id: classList.length > 0 ? Math.max(...classList.map(c => c.id)) + 1 : 1,
-                class: className,
-                vehicles: selectedVehicles
-            };
-            setClassList([...classList, newClass]);
-            setClassName('');
-            setSelectedSections([]);
-            alert('Record Saved Successfully');
+            } else {
+                // Add new
+                const payload = {
+                    class: className,
+                    sections: selectedSections
+                };
+                const response = await api.addClass(payload);
+                if (response.status === 'success') {
+                    toast.success('Record Saved Successfully');
+                    setClassName('');
+                    setSelectedSections([]);
+                    // Refresh data
+                    const data = await api.getClasses();
+                    if (data && data.status === 'success') {
+                        setClassList(data.classsectionlist || []);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error saving class:', error);
+            toast.error(error.message || 'Failed to save record');
         }
     };
 
-    const handleDelete = (deleteId) => {
+    const handleDelete = async (deleteId) => {
         if (window.confirm('Are you sure you want to delete this class? All students in this class will also be deleted.')) {
-            setClassList(classList.filter(c => c.id !== deleteId));
-            if (isEditMode && parseInt(id) === deleteId) {
-                navigate('/admin/classes');
+            try {
+                const response = await api.deleteClass(deleteId);
+                if (response.status === 'success') {
+                    toast.success('Record Deleted Successfully');
+                    // Refresh data
+                    const data = await api.getClasses();
+                    if (data && data.status === 'success') {
+                        setClassList(data.classsectionlist || []);
+                    }
+                    if (isEditMode && parseInt(id) === deleteId) {
+                        navigate('/admin/classes');
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting class:', error);
+                toast.error(error.message || 'Failed to delete record');
             }
         }
     };
@@ -261,7 +286,7 @@ const ClassList = () => {
                                                                 {vehroute.class}
                                                             </td>
                                                             <td>
-                                                                {vehroute.vehicles && vehroute.vehicles.length > 0 && vehroute.vehicles.map((value, index) => (
+                                                                {vehroute.sections && vehroute.sections.length > 0 && vehroute.sections.map((value, index) => (
                                                                     <div key={index}>{value.section}</div>
                                                                 ))}
                                                             </td>

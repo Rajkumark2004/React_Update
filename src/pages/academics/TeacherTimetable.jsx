@@ -1,72 +1,68 @@
 import React, { useState, useEffect } from 'react';
-import '../../utils/include_files';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 const TeacherTimetable = () => {
     const navigate = useNavigate();
     const [selectedTeacher, setSelectedTeacher] = useState('');
     const [timetable, setTimetable] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [fetchLoading, setFetchLoading] = useState(true);
     const [hasSearched, setHasSearched] = useState(false);
+    const [staffList, setStaffList] = useState([]);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [fullTimetableData, setFullTimetableData] = useState(null);
 
-    const teachers = [
-        { id: 1, name: 'Jason Sharlton', surname: '', employee_id: '90000234' },
-        { id: 2, name: 'Jane', surname: 'Doe', employee_id: '90000123' }
-    ];
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            setFetchLoading(true);
+            try {
+                const data = await api.getTeacherTimetable();
+                if (data.status === 'success') {
+                    setStaffList(data.staff_list || []);
+                    setIsAdmin(data.is_admin || false);
+                    setFullTimetableData(data.timetable || {});
+                } else {
+                    toast.error(data.message || 'Failed to load data');
+                }
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+                toast.error('Failed to load initial data');
+            } finally {
+                setFetchLoading(false);
+            }
+        };
+        fetchInitialData();
+    }, []);
 
-    // Mock Timetables
-    const timetables = {
-        1: {
-            'Monday': [
-                { subject_name: 'Mathematics', subject_code: 'M101', class: 'Class 1', section: 'A', time_from: '09:00 AM', time_to: '10:00 AM', room_no: '101' },
-                { subject_name: 'Science', subject_code: 'S101', class: 'Class 2', section: 'B', time_from: '10:00 AM', time_to: '11:00 AM', room_no: '102' }
-            ],
-            'Tuesday': [
-                { subject_name: 'English', subject_code: 'E101', class: 'Class 1', section: 'A', time_from: '09:00 AM', time_to: '10:00 AM', room_no: '101' }
-            ],
-            'Wednesday': [],
-            'Thursday': [
-                { subject_name: 'History', subject_code: 'H101', class: 'Class 3', section: 'C', time_from: '11:00 AM', time_to: '12:00 PM', room_no: '104' }
-            ],
-            'Friday': [
-                { subject_name: 'Geography', subject_code: 'G101', class: 'Class 4', section: 'A', time_from: '09:00 AM', time_to: '10:00 AM', room_no: '101' }
-            ],
-            'Saturday': [],
-            'Sunday': []
-        },
-        2: {
-            'Monday': [
-                { subject_name: 'English', subject_code: 'E101', class: 'Class 2', section: 'B', time_from: '09:00 AM', time_to: '10:00 AM', room_no: '105' }
-            ],
-            'Tuesday': [],
-            'Wednesday': [
-                { subject_name: 'Arts', subject_code: 'A101', class: 'Class 1', section: 'A', time_from: '01:00 PM', time_to: '02:00 PM', room_no: 'Hall' }
-            ],
-            'Thursday': [],
-            'Friday': [],
-            'Saturday': [],
-            'Sunday': []
-        }
-    };
-
-    const handleSearch = (e) => {
+    const handleSearch = async (e) => {
         e.preventDefault();
+        if (!selectedTeacher) {
+            toast.error('Please select a teacher');
+            return;
+        }
         setLoading(true);
         setHasSearched(true);
         setTimetable(null);
 
-        // Simulate Network Delay
-        setTimeout(() => {
-            if (selectedTeacher && timetables[selectedTeacher]) {
-                setTimetable(timetables[selectedTeacher]);
+        try {
+            const data = await api.searchTeacherTimetable(selectedTeacher);
+            if (data && data.timetable) {
+                setTimetable(data.timetable);
             } else {
-                setTimetable({}); // Empty if no data
+                setTimetable(data || {});
             }
+        } catch (error) {
+            console.error('Error searching teacher timetable:', error);
+            toast.error('Failed to fetch timetable data');
+            setTimetable({});
+        } finally {
             setLoading(false);
-        }, 500);
+        }
     };
 
     return (
@@ -110,7 +106,7 @@ const TeacherTimetable = () => {
                                                     onChange={(e) => setSelectedTeacher(e.target.value)}
                                                 >
                                                     <option value="">Select</option>
-                                                    {teachers.map(teacher => (
+                                                    {staffList.map(teacher => (
                                                         <option key={teacher.id} value={teacher.id}>
                                                             {teacher.name} {teacher.surname} ({teacher.employee_id})
                                                         </option>

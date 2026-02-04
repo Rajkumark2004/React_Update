@@ -33,17 +33,16 @@ const TimetableCreate = () => {
     const [searchLoading, setSearchLoading] = useState(false);
     const [showTimetable, setShowTimetable] = useState(false);
 
-    // Initial Data Fetch (Classes, Staff, Subjects)
+    // Initial Data Fetch (Classes, Staff)
     useEffect(() => {
         const fetchInitialData = async () => {
             setLoading(true);
             try {
-                // Using assign_subject_teacher endpoint as it returns classes, staff and subjects
-                const data = await api.getAssignSubjectTeacher();
+                // Using admin/timetable/create endpoint as requested
+                const data = await api.getTimetableCreate();
                 if (data && (data.status === 'success' || data.status === true)) {
                     setClassList(data.classlist || []);
-                    setStaffList(data.staff_list || []);
-                    setSubjectList(data.batch_subjects || []);
+                    setStaffList(data.staff || []);
                 }
             } catch (error) {
                 console.error('Error fetching initial data:', error);
@@ -82,6 +81,7 @@ const TimetableCreate = () => {
         if (!selectedClass || !sectionId) return;
 
         try {
+            // Using the numerical section_id as requested
             const data = await api.getGroupByClassandSection(selectedClass, sectionId);
             if (Array.isArray(data)) {
                 setSubjectGroupList(data);
@@ -104,10 +104,10 @@ const TimetableCreate = () => {
         try {
             const payload = {
                 class_id: selectedClass,
-                section_id: selectedSection,
+                section_id: selectedSection, // Directly using numerical section_id
                 subject_group_id: selectedSubjectGroup
             };
-            const response = await api.createTimetable(payload);
+            const response = await api.createTimetablePost(payload);
 
             // Extract metadata from response if available
             if (response.getDaysnameList) {
@@ -342,7 +342,7 @@ const TimetableCreate = () => {
                                                         required
                                                     >
                                                         <option value="">Select</option>
-                                                        {sectionList.map(s => <option key={s.section_id} value={s.section_id}>{s.section}</option>)}
+                                                        {sectionList.map(s => <option key={s.id || s.section_id} value={s.section_id}>{s.section}</option>)}
                                                     </select>
                                                 </div>
                                             </div>

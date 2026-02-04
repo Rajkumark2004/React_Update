@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 const SectionList = () => {
     const { id } = useParams();
@@ -15,62 +17,113 @@ const SectionList = () => {
     const [sectionList, setSectionList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isEditMode, setIsEditMode] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    // Initialize mock data
+    // Fetch Initial Data
     useEffect(() => {
-        const mockSections = [
-            { id: 1, section: 'A' },
-            { id: 2, section: 'B' },
-            { id: 3, section: 'C' },
-            { id: 4, section: 'D' },
-            { id: 5, section: 'E' },
-            { id: 6, section: 'F' },
-        ];
-        setSectionList(mockSections);
+        const fetchSections = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getSections();
+                if (data && data.status === 'success') {
+                    setSectionList(data.sectionlist || []);
+                }
+            } catch (error) {
+                console.error('Error fetching sections:', error);
+                toast.error('Failed to load sections');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSections();
     }, []);
 
     // Handle Edit Mode
     useEffect(() => {
-        if (id && sectionList.length > 0) {
-            const sectionToEdit = sectionList.find(s => s.id === parseInt(id));
-            if (sectionToEdit) {
-                setIsEditMode(true);
-                setSectionName(sectionToEdit.section);
+        const fetchSectionDetails = async () => {
+            if (id) {
+                setLoading(true);
+                try {
+                    const data = await api.getSectionForEdit(id);
+                    if (data && data.status === 'success') {
+                        setIsEditMode(true);
+                        setSectionName(data.section.section);
+                    }
+                } catch (error) {
+                    console.error('Error fetching section details:', error);
+                    toast.error('Failed to load section details');
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+                setIsEditMode(false);
+                setSectionName('');
             }
-        } else {
-            setIsEditMode(false);
-            setSectionName('');
-        }
-    }, [id, sectionList]);
+        };
+        fetchSectionDetails();
+    }, [id]);
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
 
         if (!sectionName) {
-            alert('The Section Name field is required.');
+            toast.error('The Section Name field is required.');
             return;
         }
 
-        const newSection = {
-            id: isEditMode ? parseInt(id) : Date.now(),
-            section: sectionName
-        };
-
-        if (isEditMode) {
-            setSectionList(prev => prev.map(s => s.id === newSection.id ? newSection : s));
-            alert('Record Updated Successfully');
-            navigate('/admin/section');
-        } else {
-            setSectionList(prev => [...prev, newSection]);
-            alert('Record Saved Successfully');
-            // Reset form
-            setSectionName('');
+        try {
+            if (isEditMode) {
+                const payload = { section: sectionName };
+                const response = await api.updateSection(id, payload);
+                if (response.status === 'success') {
+                    toast.success('Record Updated Successfully');
+                    setSectionName('');
+                    navigate('/admin/section');
+                    // Refresh data
+                    const data = await api.getSections();
+                    if (data && data.status === 'success') {
+                        setSectionList(data.sectionlist || []);
+                    }
+                }
+            } else {
+                // Add new
+                const payload = { section: sectionName };
+                const response = await api.addSection(payload);
+                if (response.status === 'success') {
+                    toast.success('Record Saved Successfully');
+                    setSectionName('');
+                    // Refresh data
+                    const data = await api.getSections();
+                    if (data && data.status === 'success') {
+                        setSectionList(data.sectionlist || []);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error saving section:', error);
+            toast.error(error.message || 'Failed to save record');
         }
     };
 
-    const handleDelete = (deleteId) => {
+    const handleDelete = async (deleteId) => {
         if (window.confirm('Section will also delete all students under this section so be careful as this action is irreversible.')) {
-            setSectionList(prev => prev.filter(s => s.id !== deleteId));
+            try {
+                const response = await api.deleteSection(deleteId);
+                if (response.status === 'success') {
+                    toast.success('Record Deleted Successfully');
+                    // Refresh data
+                    const data = await api.getSections();
+                    if (data && data.status === 'success') {
+                        setSectionList(data.sectionlist || []);
+                    }
+                    if (isEditMode && parseInt(id) === deleteId) {
+                        navigate('/admin/section');
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting section:', error);
+                toast.error(error.message || 'Failed to delete record');
+            }
         }
     };
 
@@ -85,7 +138,7 @@ const SectionList = () => {
             <div className="content-wrapper" style={{ minHeight: '655px', marginTop: '18px' }}>
                 <section className="content-header">
                     <h1>
-                        <i className="fa fa-mortar-board"></i> Academics <small>Student Fees</small>
+                        <i className="fa fa-mortar-board"></i> Academics
                     </h1>
                 </section>
 

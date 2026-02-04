@@ -443,19 +443,305 @@ export const api = {
             throw error;
         }
     },
+
+    getSections: async () => {
+        console.log('API Request: Get Sections');
+        try {
+            const response = await fetch(`${API_BASE}/sections`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Sections Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch sections');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get Sections API Error:', error);
+            throw error;
+        }
+    },
+
+    addSection: async (payload) => {
+        console.log('API Request: Add Section', payload);
+        try {
+            const response = await fetch(`${API_BASE}/sections/index`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Section Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to add section');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Add Section API Error:', error);
+            throw error;
+        }
+    },
+
+    getSectionForEdit: async (id) => {
+        console.log('API Request: Get Section For Edit', id);
+        try {
+            const response = await fetch(`${API_BASE}/sections/edit/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Section For Edit Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch section for edit');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get Section For Edit API Error:', error);
+            throw error;
+        }
+    },
+
+    updateSection: async (id, payload) => {
+        console.log('API Request: Update Section', { id, payload });
+        try {
+            const response = await fetch(`${API_BASE}/sections/edit/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Update Section Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to update section');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Update Section API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteSection: async (id) => {
+        console.log('API Request: Delete Section', id);
+        try {
+            const response = await fetch(`${API_BASE}/sections/delete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Section Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to delete section');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Delete Section API Error:', error);
+            throw error;
+        }
+    },
+
+    getStdTransferPreData: async () => {
+        console.log('API Request: Get Student Transfer Pre-Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/stdtransfer/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Student Transfer Pre-Data Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch student transfer pre-data');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get Student Transfer Pre-Data API Error:', error);
+            throw error;
+        }
+    },
+
+    searchStdTransferStudents: async (payload) => {
+        console.log('API Request: Search Student Transfer Students', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/stdtransfer/index`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Search Student Transfer Students Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to search student transfer students');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Search Student Transfer Students API Error:', error);
+            throw error;
+        }
+    },
+
+    promoteStudents: async (payload) => {
+        console.log('API Request: Promote Students', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/stdtransfer/promote`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Promote Students Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to promote students');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Promote Students API Error:', error);
+            throw error;
+        }
+    },
     getClasses: async () => {
         console.log('API Request: Get Classes');
         try {
-            const response = await fetch(`${API_BASE}/Classes/classIndexApi`, {
+            const response = await fetch(`${API_BASE}/classes`, {
                 method: 'GET',
             });
             const data = await response.json();
             console.log('Get Classes Response:', data);
 
-            // Handle both direct and nested data structures
-            return data.data?.class_sections || data.result || data.data || [];
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch classes');
+            }
+
+            return data;
         } catch (error) {
             console.error('Get Classes API Error:', error);
+            throw error;
+        }
+    },
+
+    addClass: async (payload) => {
+        console.log('API Request: Add Class', payload);
+        try {
+            const formData = new FormData();
+            formData.append('class', payload.class);
+            if (payload.sections && Array.isArray(payload.sections)) {
+                payload.sections.forEach(sectionId => {
+                    formData.append('sections[]', sectionId);
+                });
+            }
+
+            const response = await fetch(`${API_BASE}/classes`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Add Class Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to add class');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Add Class API Error:', error);
+            throw error;
+        }
+    },
+
+    getClassForEdit: async (id) => {
+        console.log('API Request: Get Class For Edit', id);
+        try {
+            const response = await fetch(`${API_BASE}/classes/edit/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Class For Edit Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch class for edit');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get Class For Edit API Error:', error);
+            throw error;
+        }
+    },
+
+    updateClass: async (payload) => {
+        console.log('API Request: Update Class', payload);
+        try {
+            const formData = new FormData();
+            formData.append('id', payload.id);
+            formData.append('pre_class_id', payload.pre_class_id);
+            formData.append('class', payload.class);
+
+            if (payload.prev_sections && Array.isArray(payload.prev_sections)) {
+                payload.prev_sections.forEach(sectionId => {
+                    formData.append('prev_sections[]', sectionId);
+                });
+            }
+
+            if (payload.sections && Array.isArray(payload.sections)) {
+                payload.sections.forEach(sectionId => {
+                    formData.append('sections[]', sectionId);
+                });
+            }
+
+            const response = await fetch(`${API_BASE}/classes/edit/${payload.id}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Update Class Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to update class');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Update Class API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteClass: async (id) => {
+        console.log('API Request: Delete Class', id);
+        try {
+            const response = await fetch(`${API_BASE}/classes/delete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Class Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to delete class');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Delete Class API Error:', error);
             throw error;
         }
     },
@@ -865,6 +1151,53 @@ export const api = {
             throw error;
         }
     },
+    getTimetableCreate: async () => {
+        console.log('API Request: Get Timetable Create Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/create`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            const data = await response.json();
+            console.log('Get Timetable Create Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch timetable create data');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get Timetable Create Error:', error);
+            throw error;
+        }
+    },
+
+    createTimetablePost: async (payload) => {
+        console.log('API Request: Create Timetable Post', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Create Timetable Post Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to create timetable');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Create Timetable Post Error:', error);
+            throw error;
+        }
+    },
+
     saveTimetableGroup: async (payload) => {
         console.log('API Request: Save Timetable Group', payload);
         try {
@@ -2556,6 +2889,53 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Staff List API Error:', error);
+            throw error;
+        }
+    },
+
+    getTeacherTimetable: async () => {
+        console.log('API Request: Get Teacher Timetable');
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/mytimetable`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const data = await response.json();
+            console.log('Teacher Timetable Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch teacher timetable');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get Teacher Timetable API Error:', error);
+            throw error;
+        }
+    },
+
+    searchTeacherTimetable: async (teacherId) => {
+        console.log('API Request: Search Teacher Timetable', { teacher: teacherId });
+        try {
+            const response = await fetch(`${API_BASE}/admin/timetable/getteachertimetable`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ teacher: teacherId }),
+            });
+
+            const data = await response.json();
+            console.log('Search Teacher Timetable Response:', data);
+
+            // The response structure might be similar to mytimetable or just the timetable object.
+            // Adjust based on observation if needed.
+            return data;
+        } catch (error) {
+            console.error('Search Teacher Timetable API Error:', error);
             throw error;
         }
     },
