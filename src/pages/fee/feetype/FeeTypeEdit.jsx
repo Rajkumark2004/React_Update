@@ -234,7 +234,9 @@ const FeeTypeEdit = () => {
                                             <tbody>
                                                 {initialLoading ? (
                                                     <tr>
-                                                        <td colSpan="3" className="text-center">Loading...</td>
+                                                        <td colSpan="3" className="text-center">
+                                                            <i className="fa fa-spinner fa-spin"></i> Loading...
+                                                        </td>
                                                     </tr>
                                                 ) : feetypeList
                                                     .filter(f => f.type.toLowerCase().includes(searchTerm.toLowerCase()) || f.code.toLowerCase().includes(searchTerm.toLowerCase()))

@@ -77,18 +77,8 @@ const FeesForward = () => {
         const fetchClasses = async () => {
             try {
                 const response = await api.getClasses();
-                if (response && response.class_sections) {
-                    const classes = response.class_sections.map(c => ({
-                        id: c.class_id || c.id,
-                        class: c.class
-                    }));
-                    setClassList(classes);
-                } else if (response && response.data && response.data.class_sections) {
-                    const classes = response.data.class_sections.map(c => ({
-                        id: c.class_id || c.id,
-                        class: c.class
-                    }));
-                    setClassList(classes);
+                if (response && response.status === 'success' && response.classsectionlist) {
+                    setClassList(response.classsectionlist);
                 }
             } catch (error) {
                 console.error("Error fetching classes:", error);
@@ -107,18 +97,12 @@ const FeesForward = () => {
 
         if (selectedClassId) {
             try {
-                // Use getSections as referenced in StudentSearch.jsx
-                const response = await api.getSections();
-                let sectionsData = [];
-
+                const response = await api.getSectionsByClass(selectedClassId);
                 if (response && response.data) {
-                    sectionsData = response.data;
+                    setSections(response.data);
                 } else if (response && Array.isArray(response)) {
-                    sectionsData = response;
+                    setSections(response);
                 }
-
-                setSections(Array.isArray(sectionsData) ? sectionsData : []);
-
             } catch (error) {
                 console.error("Error fetching sections:", error);
             }
@@ -344,7 +328,7 @@ const FeesForward = () => {
                                                     >
                                                         <option value="">Select</option>
                                                         {sections.map((section) => (
-                                                            <option key={section.id} value={section.id}>
+                                                            <option key={section.section_id || section.id} value={section.section_id || section.id}>
                                                                 {section.section}
                                                             </option>
                                                         ))}

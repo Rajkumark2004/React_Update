@@ -97,24 +97,12 @@ const StudentAdmission = () => {
     useEffect(() => {
         const fetchDropdownData = async () => {
             try {
-                const classesRes = await api.getClasses();
-                if (classesRes && classesRes.status && classesRes.data) {
-                    // Classes are in data.class_sections
-                    if (classesRes.data.class_sections && Array.isArray(classesRes.data.class_sections)) {
-                        setClasses(classesRes.data.class_sections);
-                    }
+                const response = await api.getStudentCreatePreData();
+                if (response && response.status === 'success' && response.data && Array.isArray(response.data.classlist)) {
+                    setClasses(response.data.classlist);
                 }
             } catch (err) {
                 console.warn('Failed to fetch classes:', err);
-            }
-
-            try {
-                const sectionsRes = await api.getSections();
-                if (sectionsRes && sectionsRes.status && sectionsRes.data) {
-                    setSections(sectionsRes.data);
-                }
-            } catch (err) {
-                console.warn('Failed to fetch sections:', err);
             } finally {
                 setInitialLoading(false);
             }
@@ -122,12 +110,31 @@ const StudentAdmission = () => {
         fetchDropdownData();
     }, []);
 
-    const handleInputChange = (e) => {
+    const handleInputChange = async (e) => {
         const { name, value, type, files } = e.target;
         if (type === 'file') {
             setFormData(prev => ({ ...prev, [name]: files[0] }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
+
+            // Trigger section fetch if class changes
+            if (name === 'class_id') {
+                setSections([]); // Clear sections
+                setFormData(prev => ({ ...prev, section_id: '' })); // Reset section selection
+
+                if (value) {
+                    try {
+                        const response = await api.getSectionsByClass(value);
+                        if (response && response.data) {
+                            setSections(response.data);
+                        } else if (response && Array.isArray(response)) {
+                            setSections(response);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching sections by class:', error);
+                    }
+                }
+            }
         }
     };
 
@@ -365,7 +372,7 @@ const StudentAdmission = () => {
                                                         <label>Section <small className="req"> *</small></label>
                                                         <select name="section_id" className="form-control" value={formData.section_id} onChange={handleInputChange}>
                                                             <option value="">Select</option>
-                                                            {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.section}</option>)}
+                                                            {sections.map(sec => <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>)}
                                                         </select>
                                                     </div>
                                                 </div>

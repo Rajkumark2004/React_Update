@@ -27,6 +27,12 @@ import StudentAttendance from './pages/attendance/StudentAttendance.jsx';
 import DailyAttendanceReport from './pages/attendance/DailyAttendanceReport';
 import StaffAttendanceReport from './pages/attendance/approve_leave/StaffAttendanceReport';
 import AttendanceReport from './pages/attendance/AttendanceReport.jsx';
+import StaffAttendanceList from './pages/HR/StaffAttendanceList';
+import StaffLeaveRequest from './pages/HR/StaffLeaveRequest';
+import LeaveRequest from './pages/HR/LeaveRequest';
+import LeaveTypes from './pages/HR/LeaveTypes';
+import Designation from './pages/HR/Designation';
+import Department from './pages/HR/Department';
 import EnquiryView from './pages/helpdesk/admissionenquiry/EnquiryView';
 import ApproveLeave from './pages/attendance/approve_leave/ApproveLeave';
 import HomeworkList from './pages/homework/HomeworkList';
@@ -111,6 +117,8 @@ import ScheduleLog from './pages/message/ScheduleLog';
 import SendReminders from './pages/message/SendReminders';
 import NotificationAddEdit from './pages/message/NotificationAddEdit';
 import ScheduleEdit from './pages/message/ScheduleEdit';
+import OnlineCourseCategory from './pages/courses/OnlineCourseCategory';
+import OnlineCourseList from './pages/courses/OnlineCourseList';
 
 import { api } from './services/api';
 import { SessionProvider } from './context/SessionContext';
@@ -338,10 +346,58 @@ function App() {
               }
             />
             <Route
+              path="/admin/staff/attendance"
+              element={
+                <ProtectedRoute>
+                  <StaffAttendanceList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/approve_leave"
               element={
                 <ProtectedRoute>
                   <ApproveLeave />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/leaverequest"
+              element={
+                <ProtectedRoute>
+                  <StaffLeaveRequest />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/staff/leaverequest"
+              element={
+                <ProtectedRoute>
+                  <LeaveRequest />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/leavetypes"
+              element={
+                <ProtectedRoute>
+                  <LeaveTypes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/designation"
+              element={
+                <ProtectedRoute>
+                  <Designation />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/department"
+              element={
+                <ProtectedRoute>
+                  <Department />
                 </ProtectedRoute>
               }
             />
@@ -522,6 +578,10 @@ function App() {
             <Route path="/admin/notification_class/add" element={<ProtectedRoute><NotificationAdd /></ProtectedRoute>} />
             <Route path="/admin/notification_class/edit/:id" element={<ProtectedRoute><NotificationAddEdit /></ProtectedRoute>} />
             <Route path="/admin/mailsms/edit_schedule/:id" element={<ProtectedRoute><ScheduleEdit /></ProtectedRoute>} />
+
+            {/* Course Routes */}
+            <Route path="/admin/onlinecourse" element={<ProtectedRoute><OnlineCourseCategory /></ProtectedRoute>} />
+            <Route path="/admin/onlinecourse/list/:id" element={<ProtectedRoute><OnlineCourseList /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
       </SessionProvider>

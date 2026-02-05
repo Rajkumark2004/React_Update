@@ -212,7 +212,11 @@ const FeeType = () => {
                                             </thead>
                                             <tbody>
                                                 {initialLoading ? (
-                                                    <tr><td colSpan="3" className="text-center"><ContentShimmer rows={5} columns={3} /></td></tr>
+                                                    <tr>
+                                                        <td colSpan="3" className="text-center">
+                                                            <i className="fa fa-spinner fa-spin"></i> Loading...
+                                                        </td>
+                                                    </tr>
                                                 ) : feetypeList.length === 0 ? (
                                                     <tr><td colSpan="3" className="text-center">No data available in table</td></tr>
                                                 ) : feetypeList

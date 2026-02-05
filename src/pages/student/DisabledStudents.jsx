@@ -45,11 +45,9 @@ const DisabledStudents = () => {
 
     const fetchClasses = async () => {
         try {
-            const response = await api.getClasses();
-            if (response && response.data && response.data.class_sections) {
-                setClassList(response.data.class_sections);
-            } else if (response.class_sections) {
-                setClassList(response.class_sections);
+            const response = await api.getDisabledStudentsPreData();
+            if (response && response.status && response.data && response.data.classlist) {
+                setClassList(response.data.classlist);
             }
         } catch (error) {
             console.error('Error fetching classes:', error);
@@ -60,9 +58,11 @@ const DisabledStudents = () => {
 
     const fetchSections = async (classId) => {
         try {
-            const response = await api.getSections();
+            const response = await api.getSectionsByClass(classId);
             if (response && response.data) {
                 setSectionList(response.data);
+            } else if (response && Array.isArray(response)) {
+                setSectionList(response);
             }
         } catch (error) {
             console.error('Error fetching sections:', error);
@@ -236,9 +236,7 @@ const DisabledStudents = () => {
                                                                 >
                                                                     <option value="">Select</option>
                                                                     {sectionList.map((section) => (
-                                                                        <option key={section.id} value={section.id}>
-                                                                            {section.section}
-                                                                        </option>
+                                                                        <option key={section.section_id || section.id} value={section.section_id}>{section.section}</option>
                                                                     ))}
                                                                 </select>
                                                             </div>

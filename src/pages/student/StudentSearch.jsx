@@ -55,13 +55,9 @@ const StudentSearch = () => {
     useEffect(() => {
         const fetchClasses = async () => {
             try {
-                const classesRes = await api.getClasses();
-                if (classesRes && (classesRes.data || classesRes.class_sections)) {
-                    if (classesRes.data && classesRes.data.class_sections) {
-                        setClasses(classesRes.data.class_sections);
-                    } else if (classesRes.class_sections) {
-                        setClasses(classesRes.class_sections);
-                    }
+                const response = await api.getStudentSearchInfo();
+                if (response && response.data && Array.isArray(response.data.classlist)) {
+                    setClasses(response.data.classlist);
                 }
             } catch (err) {
                 console.warn('Failed to fetch classes:', err);
@@ -83,15 +79,15 @@ const StudentSearch = () => {
 
         if (classId) {
             try {
-                // Fetch all sections as per user requirement to see API call
-                const response = await api.getSections();
+                // Fetch sections for the selected class
+                const response = await api.getSectionsByClass(classId);
                 if (response && response.data) {
                     setSections(response.data);
                 } else if (response && Array.isArray(response)) {
                     setSections(response);
                 }
             } catch (error) {
-                console.error('Error fetching sections:', error);
+                console.error('Error fetching sections by class:', error);
             }
         }
     };
@@ -265,7 +261,7 @@ const StudentSearch = () => {
                                                                 >
                                                                     <option value="">Select</option>
                                                                     {sections.map((sec) => (
-                                                                        <option key={sec.id} value={sec.id}>{sec.section}</option>
+                                                                        <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
                                                                     ))}
                                                                 </select>
                                                                 <span className="text-danger"></span>

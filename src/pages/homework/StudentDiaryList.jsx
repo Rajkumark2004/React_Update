@@ -65,9 +65,8 @@ const StudentDiaryList = () => {
             try {
                 setInitialLoading(true);
                 const response = await api.getClasses();
-                if (response && (response.data || response.class_sections)) {
-                    const classList = response.data?.class_sections || response.class_sections || [];
-                    setClasses(classList);
+                if (response && response.status === 'success' && response.classsectionlist) {
+                    setClasses(response.classsectionlist);
                 }
             } catch (error) {
                 console.error("Failed to fetch classes", error);
@@ -80,10 +79,10 @@ const StudentDiaryList = () => {
 
     const fetchSections = async (classId) => {
         try {
-            const response = await api.getSections();
+            const response = await api.getSectionsByClass(classId);
             if (response && response.data) {
                 setSections(response.data);
-            } else if (Array.isArray(response)) {
+            } else if (response && Array.isArray(response)) {
                 setSections(response);
             }
         } catch (error) {
@@ -392,7 +391,7 @@ const StudentDiaryList = () => {
                                                         >
                                                             <option value="">Select</option>
                                                             {sections.map(sec => (
-                                                                <option key={sec.section_id || sec.id} value={sec.section_id || sec.id}>{sec.section}</option>
+                                                                <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
                                                             ))}
                                                         </select>
                                                         <span className="section_id_error text-danger"></span>
@@ -541,7 +540,7 @@ const StudentDiaryList = () => {
                                                             >
                                                                 <option value="">Select</option>
                                                                 {sections.map(sec => (
-                                                                    <option key={sec.section_id || sec.id} value={sec.section_id || sec.id}>{sec.section}</option>
+                                                                    <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
                                                                 ))}
                                                             </select>
                                                             <span id="name_add_error" className="text-danger"></span>
@@ -646,7 +645,7 @@ const StudentDiaryList = () => {
                                                             >
                                                                 <option value="">Select</option>
                                                                 {sections.map(sec => (
-                                                                    <option key={sec.section_id || sec.id} value={sec.section_id || sec.id}>{sec.section}</option>
+                                                                    <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
                                                                 ))}
                                                             </select>
                                                         </div>

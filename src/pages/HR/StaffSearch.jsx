@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -123,17 +124,17 @@ const StaffSearch = () => {
                                     <h3 className="box-title">Human Resource</h3>
                                 </div>
                                 <ul className="tablists">
-                                    <li><a href="/admin/staff/search" className="active"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/1.png" alt="icon1" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Directory</a></li>
-                                    <li><a href="/admin/staff/attendance"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/2.png" alt="icon2" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Attendance</a></li>
+                                    <li><Link to="/admin/staff/search" className="active"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/1.png" alt="icon1" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Directory</Link></li>
+                                    <li><Link to="/admin/staff/attendance"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/2.png" alt="icon2" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Attendance</Link></li>
                                     <li><a href="/admin/payroll"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/3.png" alt="icon3" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Payroll</a></li>
-                                    <li><a href="/admin/leaverequest"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/4.png" alt="icon4" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Approve Leave Request</a></li>
-                                    <li><a href="/admin/staff/leaverequest"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/5.png" alt="icon5" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Apply Leave</a></li>
-                                    <li><a href="/admin/leavetypes"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/6.png" alt="icon6" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Leave Type</a></li>
-                                    <li><a href="/admin/staff/rating"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/7.png" alt="icon7" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Teachers Rating</a></li>
-                                    <li><a href="/admin/department"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/8.png" alt="icon8" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Department</a></li>
-                                    <li><a href="/admin/designation"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/9.png" alt="icon9" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Designation</a></li>
-                                    <li><a href="/admin/disabledstaff"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/88.png" alt="icon10" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Disabled Staff</a></li>
-                                    <li><a href="/admin/staff/staffrecruitment"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/1.png" alt="icon11" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Recruitment</a></li>
+                                    <li><Link to="/admin/leaverequest"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/4.png" alt="icon4" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Approve Leave Request</Link></li>
+                                    <li><Link to="/admin/staff/leaverequest"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/5.png" alt="icon5" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Apply Leave</Link></li>
+                                    <li><Link to="/admin/leavetypes"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/6.png" alt="icon6" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Leave Type</Link></li>
+                                    <li><Link to="/admin/staff/rating"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/7.png" alt="icon7" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Teachers Rating</Link></li>
+                                    <li><Link to="/admin/department"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/8.png" alt="icon8" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Department</Link></li>
+                                    <li><Link to="/admin/designation"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/9.png" alt="icon9" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Designation</Link></li>
+                                    <li><Link to="/admin/disabledstaff"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/88.png" alt="icon10" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Disabled Staff</Link></li>
+                                    <li><Link to="/admin/staff/staffrecruitment"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/1.png" alt="icon11" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Recruitment</Link></li>
                                 </ul>
                             </div>
                         </div>

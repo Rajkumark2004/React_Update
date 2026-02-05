@@ -239,6 +239,21 @@ export const api = {
             throw error;
         }
     },
+    getStudentCreatePreData: async () => {
+        console.log('API Request: Get Student Create Pre Data');
+        try {
+            const response = await fetch(`${API_BASE}/student/create`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Student Create Pre Data Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Student Create Pre Data API Error:', error);
+            throw error;
+        }
+    },
+
     getStudentList: async (classId, sectionId, params = {}) => {
         console.log('API Request: Get Student List', { classId, sectionId, ...params });
         try {
@@ -616,6 +631,22 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Promote Students API Error:', error);
+            throw error;
+        }
+    },
+
+    getStudentSearchInfo: async () => {
+        console.log('API Request: Get Student Search Info');
+        try {
+            const url = `${API_BASE}/student/search`;
+            const response = await fetch(url, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Student Search Info Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Student Search Info API Error:', error);
             throw error;
         }
     },
@@ -2180,6 +2211,21 @@ export const api = {
         }
 
         return data;
+    },
+
+    getDisabledStudentsPreData: async () => {
+        console.log('API Request: Get Disabled Students Pre Data');
+        try {
+            const response = await fetch(`${API_BASE}/student/get_disablestudentslist`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Disabled Students Pre Data Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Disabled Students Pre Data API Error:', error);
+            throw error;
+        }
     },
 
     searchDisabledStudents: async (searchText = '') => {
@@ -4532,6 +4578,492 @@ export const api = {
             return await response.json();
         } catch (error) {
             console.error('Import Exam Marks Error:', error);
+            throw error;
+        }
+    },
+
+    getOnlineCourseCategoryList: async () => {
+        console.log('API Request: Get Online Course Category List');
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/onlinecourse`);
+            const response = await fetch(url, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Online Course Category List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Online Course Category List API Error:', error);
+            throw error;
+        }
+    },
+
+    addOnlineCourseCategory: async (payload) => {
+        console.log('API Request: Add Online Course Category', payload);
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/onlinecourse/add`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Online Course Category Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Online Course Category API Error:', error);
+            throw error;
+        }
+    },
+
+    getOnlineCourseVideoList: async (categoryId) => {
+        console.log('API Request: Get Online Course Video List', categoryId);
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/onlinecourse/list`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ category_id: categoryId }),
+            });
+            const data = await response.json();
+            console.log('Get Online Course Video List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Online Course Video List API Error:', error);
+            throw error;
+        }
+    },
+
+    addOnlineCourseVideo: async (payload) => {
+        console.log('API Request: Add Online Course Video', payload);
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/onlinecourse/add_video`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Online Course Video Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Online Course Video API Error:', error);
+            throw error;
+        }
+    },
+
+    updateOnlineCourseVideo: async (payload) => {
+        console.log('API Request: Update Online Course Video', payload);
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/onlinecourse/edit_video`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Update Online Course Video Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Online Course Video API Error:', error);
+            throw error;
+        }
+    },
+
+    getOnlineCourseVideoDetails: async (id) => {
+        console.log('API Request: Get Online Course Video Details', id);
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/onlinecourse/get_video_details`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id }),
+            });
+            const data = await response.json();
+            console.log('Get Online Course Video Details Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Online Course Video Details API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteOnlineCourseVideo: async (id) => {
+        console.log('API Request: Delete Online Course Video', id);
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/onlinecourse/delete_video`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id }),
+            });
+            const data = await response.json();
+            console.log('Delete Online Course Video Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Online Course Video API Error:', error);
+            throw error;
+        }
+    },
+
+    getStaffAttendanceIndex: async () => {
+        console.log('API Request: Get Staff Attendance Index');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staffattendance/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Staff Attendance Index Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Staff Attendance Index API Error:', error);
+            throw error;
+        }
+    },
+
+    searchStaffAttendance: async (payload) => {
+        console.log('API Request: Search Staff Attendance', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/staffattendance/index`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Search Staff Attendance Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Search Staff Attendance API Error:', error);
+            throw error;
+        }
+    },
+    getDepartmentList: async () => {
+        console.log('API Request: Get Department List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/department/department`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Department List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Department List API Error:', error);
+            throw error;
+        }
+    },
+    addDepartment: async (payload) => {
+        console.log('API Request: Add Department', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/department/department`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Department Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Department API Error:', error);
+            throw error;
+        }
+    },
+    getDepartmentForEdit: async (id) => {
+        console.log('API Request: Get Department For Edit', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/department/departmentedit/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Department For Edit Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Department For Edit API Error:', error);
+            throw error;
+        }
+    },
+    updateDepartment: async (payload) => {
+        console.log('API Request: Update Department', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/department/department`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Update Department Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Department API Error:', error);
+            throw error;
+        }
+    },
+    deleteDepartment: async (id) => {
+        console.log('API Request: Delete Department', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/department/departmentdelete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Department Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Department API Error:', error);
+            throw error;
+        }
+    },
+    getDesignationList: async () => {
+        console.log('API Request: Get Designation List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/designation/designation`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Designation List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Designation List API Error:', error);
+            throw error;
+        }
+    },
+    addDesignation: async (payload) => {
+        console.log('API Request: Add Designation', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/designation/designation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Designation Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Designation API Error:', error);
+            throw error;
+        }
+    },
+    getDesignationForEdit: async (id) => {
+        console.log('API Request: Get Designation For Edit', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/designation/designationedit/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Designation For Edit Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Designation For Edit API Error:', error);
+            throw error;
+        }
+    },
+    updateDesignation: async (payload) => {
+        console.log('API Request: Update Designation', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/designation/designation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Update Designation Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Designation API Error:', error);
+            throw error;
+        }
+    },
+    deleteDesignation: async (id) => {
+        console.log('API Request: Delete Designation', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/designation/designationdelete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Designation Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Designation API Error:', error);
+            throw error;
+        }
+    },
+    getLeaveTypeList: async () => {
+        console.log('API Request: Get Leave Type List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/leavetypes/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Leave Type List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Leave Type List API Error:', error);
+            throw error;
+        }
+    },
+    createLeaveType: async (payload) => {
+        console.log('API Request: Create Leave Type', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leavetypes/createleavetype`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Create Leave Type Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Create Leave Type API Error:', error);
+            throw error;
+        }
+    },
+    getLeaveTypeForEdit: async (id) => {
+        console.log('API Request: Get Leave Type For Edit', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leavetypes/leaveedit/${id}`, {
+                method: 'POST',
+            });
+            const data = await response.json();
+            console.log('Get Leave Type For Edit Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Leave Type For Edit API Error:', error);
+            throw error;
+        }
+    },
+    updateLeaveType: async (payload) => {
+        console.log('API Request: Update Leave Type', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leavetypes/createleavetype`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Update Leave Type Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Leave Type API Error:', error);
+            throw error;
+        }
+    },
+    deleteLeaveType: async (id) => {
+        console.log('API Request: Delete Leave Type', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leavetypes/leavedelete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Leave Type Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Leave Type API Error:', error);
+            throw error;
+        }
+    },
+    getStaffLeaveIndex: async () => {
+        console.log('API Request: Get Staff Leave Index');
+        try {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Staff Leave Index Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Staff Leave Index API Error:', error);
+            throw error;
+        }
+    },
+    addStaffLeave: async (payload) => {
+        console.log('API Request: Add Staff Leave', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/addLeave`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Staff Leave Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Add Staff Leave API Error:', error);
+            throw error;
+        }
+    },
+    getStaffLeaveRecord: async (payload) => {
+        console.log('API Request: Get Staff Leave Record', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/leaveRecord`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Staff Leave Record Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Staff Leave Record API Error:', error);
+            throw error;
+        }
+    },
+    deleteStaffLeave: async (id, staff_id) => {
+        console.log('API Request: Delete Staff Leave', { id, staff_id });
+        try {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/remove/${id}/${staff_id}`, {
+                method: 'POST',
+            });
+            const data = await response.json();
+            console.log('Delete Staff Leave Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Staff Leave API Error:', error);
+            throw error;
+        }
+    },
+    updateStaffLeaveStatus: async (payload) => {
+        console.log('API Request: Update Staff Leave Status', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/leaveStatus`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Update Staff Leave Status Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Update Staff Leave Status API Error:', error);
             throw error;
         }
     },

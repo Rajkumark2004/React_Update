@@ -38,6 +38,9 @@ const Sidebar = ({
         // Settings - active for /settings paths
         if (menuUrl === '/settings' && currentPath.startsWith('/settings')) return true;
 
+        // Courses - active for /admin/onlinecourse
+        if (menuUrl === '/admin/onlinecourse' && currentPath.startsWith('/admin/onlinecourse')) return true;
+
         // Exact match for any other routes
         return currentPath === menuUrl;
     };
@@ -76,7 +79,8 @@ const Sidebar = ({
         '/admin/income',
         '/admin/incomehead',
         '/admin/expense',
-        '/admin/expensehead'
+        '/admin/expensehead',
+        '/admin/onlinecourse'
     ];
 
     // Default menus - only SIS and System Settings have working pages
@@ -88,7 +92,7 @@ const Sidebar = ({
         { id: 5, icon: 'Fees.png', label: 'Fees Collection', url: '/studentfee' },
         { id: 6, icon: 'academics.png', label: 'Academics', url: '/admin/timetable/classreport' },
         { id: 7, icon: 'state_examination.png', label: 'State Examinations', url: '/cbseexam/exam' },
-        { id: 8, icon: 'courses.png', label: 'Courses', url: '#' },
+        { id: 8, icon: 'courses.png', label: 'Courses', url: '/admin/onlinecourse' },
         { id: 9, icon: 'transport.png', label: 'Transport', url: '/admin/route' },
         { id: 10, icon: 'messages.png', label: 'Messages', url: '/admin/notification' },
         { id: 11, icon: 'hr.png', label: 'Human Resource', url: '/admin/staff/search' },

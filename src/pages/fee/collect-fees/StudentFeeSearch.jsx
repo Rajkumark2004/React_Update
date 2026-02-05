@@ -42,16 +42,16 @@ const StudentFeeSearch = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch Classes
-                const classesRes = await api.getClasses();
-                if (classesRes && (classesRes.data || classesRes.class_sections)) {
-                    const classes = classesRes.data?.class_sections || classesRes.class_sections || [];
-                    setClassList(classes);
+                // Fetch Today's Collection Stats and Class List from studentfee API
+                const response = await api.getStudentFeeIndex();
+
+                // Populate Class List
+                if (response && response.classlist && Array.isArray(response.classlist)) {
+                    setClassList(response.classlist);
                 }
 
-                // Fetch Today's Collection Stats
-                const statsRes = await api.getStudentFeeIndex();
-                if (statsRes && statsRes.fees_data && Array.isArray(statsRes.fees_data)) {
+                // Populate Stats
+                if (response && response.fees_data && Array.isArray(response.fees_data)) {
                     const newStats = {
                         cash: 0,
                         card: 0,
@@ -59,7 +59,7 @@ const StudentFeeSearch = () => {
                         total: 0
                     };
 
-                    statsRes.fees_data.forEach(item => {
+                    response.fees_data.forEach(item => {
                         const amount = parseFloat(item.total_amount || 0);
                         const mode = (item.mode || '').toLowerCase();
 
@@ -67,10 +67,8 @@ const StudentFeeSearch = () => {
                         if (mode === 'cash') newStats.cash += amount;
                         else if (mode === 'card') newStats.card += amount;
                         else if (mode === 'upi') newStats.upi += amount;
-                        else if (mode === 'cheque') { /* Add logic if needed, or group in Total */ }
-                        else if (mode === 'bank_transfer') { /* Add logic if needed */ }
+                        // total is handled below
 
-                        // Always add to total
                         newStats.total += amount;
                     });
 
@@ -98,22 +96,14 @@ const StudentFeeSearch = () => {
 
         if (classId) {
             try {
-                // Using api.getSections or a variation if specific to class
-                // The PHP makes an AJAX call to 'sections/getByClass'
-                // We'll use our existing logic if possible or fetch all sections
-                const res = await api.getSections(); // This usually fetches all sections, might need filtering by class if the API doesn't support 'getByClass' directly or check if there's a specific endpoint. 
-                // Assuming api.getSections returns all, we might need to filter. 
-                // Actually relying on the previous StudentSearch logic:
-                // In StudentSearch, it fetched all sections? No, let's verify.
-                // The api.js getSections fetches ALL. We might need to filter client side if the API is dumb, or assumes the user picks from a filtered list.
-                // For now, let's just set the sections from the response.
+                const res = await api.getSectionsByClass(classId);
                 if (res && res.data) {
-                    // In a real app we'd filter by class_id if the API returns a flat list with class_id
-                    // But for pixel replication, just showing the behavior is key.
                     setSectionList(res.data);
+                } else if (res && Array.isArray(res)) {
+                    setSectionList(res);
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Error fetching sections by class:', err);
             }
         }
     };
@@ -430,7 +420,7 @@ const StudentFeeSearch = () => {
                                                                     >
                                                                         <option value="">Select</option>
                                                                         {sectionList.map(sec => (
-                                                                            <option key={sec.id || sec.section_id} value={sec.id || sec.section_id}>{sec.section}</option>
+                                                                            <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
                                                                         ))}
                                                                     </select>
                                                                 </div>

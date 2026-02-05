@@ -192,7 +192,9 @@ const FeeGroup = () => {
                                             <tbody>
                                                 {initialLoading ? (
                                                     <tr>
-                                                        <td colSpan="3" className="text-center"><ContentShimmer rows={5} columns={3} /></td>
+                                                        <td colSpan="3" className="text-center">
+                                                            <i className="fa fa-spinner fa-spin"></i> Loading...
+                                                        </td>
                                                     </tr>
                                                 ) : feegroupList.length === 0 ? (
                                                     <tr>

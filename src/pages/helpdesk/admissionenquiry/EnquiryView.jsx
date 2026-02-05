@@ -73,11 +73,13 @@ const EnquiryView = () => {
 
                 // Set class list from same response if not already set or refreshing
                 if (Array.isArray(response.data.class_list)) {
+                    console.log('Setting classList from API:', response.data.class_list);
                     setClassList(response.data.class_list);
                 }
 
                 // Set source list (API uses 'sourcelist')
                 if (Array.isArray(response.data.sourcelist)) {
+                    console.log('Setting sourceList from API:', response.data.sourcelist);
                     setSourceList(response.data.sourcelist);
                 }
             } else if (response && Array.isArray(response.data)) {
@@ -104,34 +106,6 @@ const EnquiryView = () => {
 
     useEffect(() => {
         fetchEnquiryList();
-
-        // Fetch classes for filter dropdown
-        const fetchClasses = async () => {
-            try {
-                const classesRes = await api.getClasses();
-                if (classesRes && classesRes.class_sections) {
-                    setClassList(classesRes.class_sections);
-                } else if (classesRes && classesRes.data && classesRes.data.class_sections) {
-                    setClassList(classesRes.data.class_sections);
-                }
-            } catch (err) {
-                console.warn('Failed to fetch classes:', err);
-            }
-        };
-        fetchClasses();
-
-        // Fetch sources for dropdowns
-        const fetchSources = async () => {
-            try {
-                const sourceRes = await api.getSourceList();
-                if (sourceRes && sourceRes.data) {
-                    setSourceList(sourceRes.data);
-                }
-            } catch (err) {
-                console.warn('Failed to fetch sources:', err);
-            }
-        };
-        fetchSources();
     }, []);
 
     const handleFilterChange = (e) => {
