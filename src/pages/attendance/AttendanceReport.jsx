@@ -62,8 +62,8 @@ const AttendanceReport = () => {
     const fetchClasses = async () => {
         try {
             const response = await api.getClasses();
-            if (response && (response.data || response.class_sections)) {
-                const classesData = response.data?.class_sections || response.class_sections || [];
+            if (response && (response.classsectionlist || response.data)) {
+                const classesData = response.classsectionlist || response.data || [];
                 if (Array.isArray(classesData)) {
                     setClassList(classesData);
                 } else {
@@ -84,12 +84,15 @@ const AttendanceReport = () => {
 
         if (classId) {
             try {
-                // Fetch all sections as per user requirement to see API call
-                const response = await api.getSections();
-                if (response && response.data) {
+                const response = await api.getSectionsByClass(classId);
+                if (response && response.status === 'success' && response.data) {
                     setSectionList(response.data);
-                } else if (response && Array.isArray(response)) {
+                } else if (Array.isArray(response)) {
                     setSectionList(response);
+                } else if (response && response.sections) {
+                    setSectionList(response.sections);
+                } else {
+                    setSectionList(response.data || []);
                 }
             } catch (error) {
                 console.error('Error fetching sections:', error);
@@ -183,7 +186,7 @@ const AttendanceReport = () => {
                                                         >
                                                             <option value="">Select</option>
                                                             {sectionList.map(sec => (
-                                                                <option key={sec.id || sec.section_id} value={sec.id || sec.section_id}>{sec.section}</option>
+                                                                <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
                                                             ))}
                                                         </select>
                                                     </div>

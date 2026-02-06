@@ -41,6 +41,9 @@ const Sidebar = ({
         // Courses - active for /admin/onlinecourse
         if (menuUrl === '/admin/onlinecourse' && currentPath.startsWith('/admin/onlinecourse')) return true;
 
+        // Messages - active for /admin/notification and related paths
+        if (menuUrl === '/admin/notification' && (currentPath.startsWith('/admin/notification') || currentPath.startsWith('/admin/mail'))) return true;
+
         // Exact match for any other routes
         return currentPath === menuUrl;
     };

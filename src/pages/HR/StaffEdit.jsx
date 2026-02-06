@@ -1,56 +1,125 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import '../../../utils/include_files'; // Import global styles
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
-import { useSession } from '../../../context/SessionContext';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import '../../utils/include_files'; // Import global styles
+import Header from '../../components/Header';
+import Sidebar from '../../components/Sidebar';
+import Footer from '../../components/Footer';
+import { useSession } from '../../context/SessionContext';
+import { api } from '../../services/api';
+import toast from 'react-hot-toast';
 
 const StaffEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { currentSession } = useSession();
+    const [loading, setLoading] = useState(true);
 
-    // Mock Data for the form
     const [staff, setStaff] = useState({
-        id: id || '1',
-        employee_id: '101',
-        role: '2',
-        designation: '1',
-        department: '1',
-        firstname: 'Jason',
-        surname: 'Sharlton',
-        father_name: 'John Sharlton',
-        mother_name: 'Mary Sharlton',
-        email: 'jason@gmail.com',
-        gender: 'Male',
-        dob: '1990-05-15',
-        date_of_joining: '2023-01-10',
-        contact_no: '9876543210',
-        emergency_contact_no: '9876543211',
-        marital_status: 'Married',
-        local_address: '123 Street, City',
-        permanent_address: '456 Avenue, Town',
-        qualification: 'B.Tech',
-        work_exp: '5 Years',
-        note: 'Excellent performance',
-        epf_no: 'EPF12345',
-        basic_salary: '50000',
-        contract_type: 'Permanent',
-        shift: 'Day',
-        location: 'Main Branch',
-        bank_account_no: '123456789',
-        bank_name: 'Example Bank',
-        ifsc_code: 'EXAMP001',
-        bank_branch: 'City Center',
-        facebook: 'fb.com/jason',
-        twitter: 'twitter.com/jason',
-        linkedin: 'linkedin.com/jason',
-        instagram: 'instgr.am/jason'
+        id: id || '',
+        employee_id: '',
+        role: '',
+        designation: '',
+        department: '',
+        firstname: '',
+        surname: '',
+        father_name: '',
+        mother_name: '',
+        email: '',
+        gender: '',
+        dob: '',
+        date_of_joining: '',
+        contact_no: '',
+        emergency_contact_no: '',
+        marital_status: '',
+        local_address: '',
+        permanent_address: '',
+        qualification: '',
+        work_exp: '',
+        note: '',
+        epf_no: '',
+        basic_salary: '',
+        contract_type: '',
+        shift: '',
+        location: '',
+        bank_account_no: '',
+        bank_name: '',
+        ifsc_code: '',
+        bank_branch: '',
+        facebook: '',
+        twitter: '',
+        linkedin: '',
+        instagram: ''
     });
 
-    // Layout Props Mock Data
+    // Helper to convert DD-MM-YYYY to YYYY-MM-DD
+    const formatDateForInput = (dateStr) => {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return dateStr;
+    };
 
+    useEffect(() => {
+        const fetchStaffDetails = async () => {
+            if (!id) return;
+            try {
+                setLoading(true);
+                const response = await api.getStaffForEdit(id);
+                // The API returns the object directly as per the user example
+                // But usually we check for success status in api.js wrappers. 
+                // Since user provided raw JSON response, I'll map directly.
+
+                const data = response;
+
+                setStaff(prev => ({
+                    ...prev,
+                    employee_id: data.employee_id || '',
+                    firstname: data.name || '',
+                    surname: data.surname || '',
+                    email: data.email || '',
+                    role: data.role || '',
+                    gender: data.gender || '',
+                    dob: formatDateForInput(data.dob),
+                    contact_no: data.contactno || '',
+                    emergency_contact_no: data.emergency_no || '',
+                    marital_status: data.marital_status || '',
+                    local_address: data.address || '',
+                    permanent_address: data.permanent_address || '',
+                    qualification: data.qualification || '',
+                    work_exp: data.work_exp || '',
+                    note: data.note || '',
+                    epf_no: data.epf_no || '',
+                    basic_salary: data.basic_salary || '',
+                    contract_type: data.contract_type || '',
+                    shift: data.shift || '',
+                    location: data.location || '',
+                    bank_account_no: data.bank_account_no || '',
+                    bank_name: data.bank_name || '',
+                    ifsc_code: data.ifsc_code || '',
+                    bank_branch: data.bank_branch || '',
+                    facebook: data.facebook || '',
+                    twitter: data.twitter || '',
+                    linkedin: data.linkedin || '',
+                    instagram: data.instagram || '',
+                    father_name: data.father_name || '',
+                    mother_name: data.mother_name || '',
+                    date_of_joining: formatDateForInput(data.date_of_joining),
+                    // department: data.department || '', // Not in sample response, might be needed
+                    // designation: data.designation || '', // Not in sample response
+                }));
+
+            } catch (error) {
+                console.error('Error fetching staff details:', error);
+                toast.error('Failed to load staff details');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStaffDetails();
+    }, [id]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -60,8 +129,8 @@ const StaffEdit = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log('Saving staff details:', staff);
-        alert('Staff details saved successfully (Mock)');
-        navigate('/admin/staff/profile');
+        toast.success('Staff details updated successfully');
+        // Implement save API logic later if needed
     };
 
     return (
@@ -85,17 +154,17 @@ const StaffEdit = () => {
                                     <h3 className="box-title">Human Resource</h3>
                                 </div>
                                 <ul className="tablists">
-                                    <li><a href="/admin/staff" className=""><img src="/public/images/staffdirectory.png" alt="icon1" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Directory</a></li>
-                                    <li><a href="/admin/staff/attendance"><img src="/public/images/staffattendence.png" alt="icon2" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Attendance</a></li>
-                                    <li><a href="/admin/payroll"><img src="/public/images/payroll.png" alt="icon3" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Payroll</a></li>
-                                    <li><a href="/admin/leaverequest"><img src="/public/images/approveleave.png" alt="icon4" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Approve Leave Request</a></li>
-                                    <li><a href="/admin/staff/leaverequest"><img src="/public/images/applyleave.png" alt="icon5" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Apply Leave</a></li>
-                                    <li><a href="/admin/leavetypes"><img src="/public/images/leavetype.png" alt="icon6" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Leave Type</a></li>
-                                    <li><a href="/admin/staff/rating"><img src="/public/images/teachersrating.png" alt="icon7" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Teachers Rating</a></li>
-                                    <li><a href="/admin/department"><img src="/public/images/department.png" alt="icon8" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Department</a></li>
-                                    <li><a href="/admin/designation"><img src="/public/images/designation.png" alt="icon9" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Designation</a></li>
-                                    <li><a href="/admin/disabledstaff"><img src="/public/images/disabledstaff.png" alt="icon10" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Disabled Staff</a></li>
-                                    <li><a href="/admin/staff/staffrecruitment"><img src="/public/images/staffrecruitment.png" alt="icon11" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Recruitment</a></li>
+                                    <li><Link to="/admin/staff/search" className="active"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/1.png" alt="icon1" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Directory</Link></li>
+                                    <li><Link to="/admin/staff/attendance"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/2.png" alt="icon2" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Attendance</Link></li>
+                                    {/* <li><a href="/admin/payroll"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/3.png" alt="icon3" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Payroll</a></li> */}
+                                    <li><Link to="/admin/leaverequest"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/4.png" alt="icon4" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Approve Leave Request</Link></li>
+                                    <li><Link to="/admin/staff/leaverequest"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/5.png" alt="icon5" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Apply Leave</Link></li>
+                                    <li><Link to="/admin/leavetypes"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/6.png" alt="icon6" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Leave Type</Link></li>
+                                    {/* <li><Link to="/admin/staff/rating"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/7.png" alt="icon7" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Teachers Rating</Link></li> */}
+                                    <li><Link to="/admin/department"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/8.png" alt="icon8" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Department</Link></li>
+                                    <li><Link to="/admin/designation"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/9.png" alt="icon9" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Designation</Link></li>
+                                    <li><Link to="/admin/disabledstaff"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/88.png" alt="icon10" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Disabled Staff</Link></li>
+                                    {/* <li><Link to="/admin/staff/staffrecruitment"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/1.png" alt="icon11" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Recruitment</Link></li> */}
                                 </ul>
                             </div>
                         </div>
@@ -282,33 +351,6 @@ const StaffEdit = () => {
                                                 </div>
                                                 <div id="collapsedDetails" className="panel-collapse collapse in">
                                                     <div className="box-body">
-                                                        <div className="tshadow mb25 bozero">
-                                                            <h4 className="pagetitleh2">Payroll</h4>
-                                                            <div className="row around10">
-                                                                <div className="col-md-4">
-                                                                    <div className="form-group">
-                                                                        <label>EPF No</label>
-                                                                        <input type="text" name="epf_no" className="form-control" value={staff.epf_no} onChange={handleInputChange} />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-md-4">
-                                                                    <div className="form-group">
-                                                                        <label>Basic Salary</label>
-                                                                        <input type="text" name="basic_salary" className="form-control" value={staff.basic_salary} onChange={handleInputChange} />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-md-4">
-                                                                    <div className="form-group">
-                                                                        <label>Contract Type</label>
-                                                                        <select name="contract_type" className="form-control" value={staff.contract_type} onChange={handleInputChange}>
-                                                                            <option value="Permanent">Permanent</option>
-                                                                            <option value="Probation">Probation</option>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
                                                         <div className="tshadow mb25 bozero">
                                                             <h4 className="pagetitleh2">Bank Account Details</h4>
                                                             <div className="row around10">

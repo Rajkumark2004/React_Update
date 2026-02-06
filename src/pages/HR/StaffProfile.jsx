@@ -200,10 +200,10 @@ const StaffProfile = () => {
                                         <p className="text-muted text-center">{staff.role}</p>
 
                                         {/* Rating */}
-                                        <div className="text-center">
+                                        {/* <div className="text-center">
                                             <h3>{renderStars(staff.rating)}</h3>
                                             <h5>{staff.rating} average based on {staff.reviews_count} reviews.</h5>
-                                        </div>
+                                        </div> */}
 
                                         <ul className="list-group list-group-unbordered">
                                             <li className="list-group-item listnoback">
@@ -248,9 +248,9 @@ const StaffProfile = () => {
                                         <li className={activeTab === 'profile' ? 'active' : ''}>
                                             <a href="#profile" onClick={(e) => { e.preventDefault(); setActiveTab('profile'); }}>Profile</a>
                                         </li>
-                                        <li className={activeTab === 'payroll' ? 'active' : ''}>
+                                        {/* <li className={activeTab === 'payroll' ? 'active' : ''}>
                                             <a href="#payroll" onClick={(e) => { e.preventDefault(); setActiveTab('payroll'); }}>Payroll</a>
-                                        </li>
+                                        </li> */}
                                         <li className={activeTab === 'leaves' ? 'active' : ''}>
                                             <a href="#leaves" onClick={(e) => { e.preventDefault(); setActiveTab('leaves'); }}>Leaves</a>
                                         </li>
@@ -281,7 +281,15 @@ const StaffProfile = () => {
                                             </a>
                                         </li>
                                         <li className="pull-right">
-                                            <a href="#" className="text-light" title="Edit" onClick={(e) => e.preventDefault()}>
+                                            <a
+                                                href={`/admin/staff/edit/${staff.id}`}
+                                                className="text-light"
+                                                title="Edit"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    navigate(`/admin/staff/edit/${staff.id}`);
+                                                }}
+                                            >
                                                 <i className="fa fa-pencil"></i>
                                             </a>
                                         </li>
@@ -357,70 +365,9 @@ const StaffProfile = () => {
                                         </div>
 
                                         {/* Payroll Tab */}
-                                        <div className={`tab-pane ${activeTab === 'payroll' ? 'active' : ''}`} id="payroll">
-                                            <div className="row row-flex">
-                                                <div className="col-lg-3 col-md-4 col-sm-6">
-                                                    <div className="staffprofile">
-                                                        <h5>Total Net Salary Paid</h5>
-                                                        <h4>₹{payroll.net_salary}</h4>
-                                                        <div className="icon"><i className="fa fa-money"></i></div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-lg-3 col-md-4 col-sm-6">
-                                                    <div className="staffprofile">
-                                                        <h5>Total Gross Salary</h5>
-                                                        <h4>₹{payroll.gross_salary}</h4>
-                                                        <div className="icon"><i className="fa fa-money"></i></div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-lg-3 col-md-4 col-sm-6">
-                                                    <div className="staffprofile">
-                                                        <h5>Total Earning</h5>
-                                                        <h4>₹{payroll.total_earning}</h4>
-                                                        <div className="icon"><i className="fa fa-money"></i></div>
-                                                    </div>
-                                                </div>
-                                                <div className="col-lg-3 col-md-4 col-sm-6">
-                                                    <div className="staffprofile">
-                                                        <h5>Total Deduction</h5>
-                                                        <h4>₹{payroll.total_deduction}</h4>
-                                                        <div className="icon"><i className="fa fa-money"></i></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="table-responsive">
-                                                <div className="download_label">Details for {staff.name}</div>
-                                                <table className="table table-hover table-striped">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Payslip #</th>
-                                                            <th>Month - Year</th>
-                                                            <th>Date</th>
-                                                            <th>Mode</th>
-                                                            <th>Status</th>
-                                                            <th className="text-right">Net Salary (₹)</th>
-                                                            <th className="text-right">Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {payroll.payslips.map(slip => (
-                                                            <tr key={slip.id}>
-                                                                <td>{slip.id}</td>
-                                                                <td>{slip.month} - {slip.year}</td>
-                                                                <td>{slip.date}</td>
-                                                                <td>{slip.mode}</td>
-                                                                <td><span className="label label-success">{slip.status}</span></td>
-                                                                <td className="text-right">{slip.net_salary}</td>
-                                                                <td className="text-right">
-                                                                    <button className="btn btn-primary btn-xs" title="View Payslip">View Payslip</button>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
+                                        {/* <div className={`tab-pane ${activeTab === 'payroll' ? 'active' : ''}`} id="payroll">
+                                            ... (content hidden) ...
+                                        </div> */}
 
                                         {/* Leaves Tab */}
                                         <div className={`tab-pane ${activeTab === 'leaves' ? 'active' : ''}`} id="leaves">

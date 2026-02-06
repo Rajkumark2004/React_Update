@@ -113,13 +113,12 @@ const LeaveRequest = () => {
         setLoading(true);
         try {
             const payload = {
-                leaverequestid: formData.id,
                 applieddate: formData.applieddate.split('-').reverse().join('/'),
                 leave_type: formData.leave_type,
                 leave_from_date: formData.leave_from_date.split('-').reverse().join('/'),
                 leave_to_date: formData.leave_to_date.split('-').reverse().join('/'),
                 reason: formData.reason,
-                filename: formData.filename
+                leaverequestid: formData.id
             };
 
             const response = await api.addStaffLeave(payload);

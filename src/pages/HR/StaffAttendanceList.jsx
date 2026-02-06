@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 
 const StaffAttendanceList = () => {
     const navigate = useNavigate();
+    console.log('StaffAttendanceList mounted');
     const { currentSession } = useSession();
     const sessionYear = currentSession?.session || '2024-25';
 

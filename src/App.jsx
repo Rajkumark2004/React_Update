@@ -39,6 +39,7 @@ import HomeworkList from './pages/homework/HomeworkList';
 import DailyAssignmentList from './pages/homework/DailyAssignmentList';
 import StudentDiaryList from './pages/homework/StudentDiaryList';
 import StaffProfile from './pages/HR/StaffProfile';
+import StaffEdit from './pages/HR/StaffEdit';
 import StaffSearch from './pages/HR/StaffSearch';
 import CBSEExamList from './pages/state_examination/CBSEExamList';
 import CBSEGradeList from './pages/state_examination/CBSEGradeList';
@@ -117,6 +118,7 @@ import ScheduleLog from './pages/message/ScheduleLog';
 import SendReminders from './pages/message/SendReminders';
 import NotificationAddEdit from './pages/message/NotificationAddEdit';
 import ScheduleEdit from './pages/message/ScheduleEdit';
+import NoticeBoard from './pages/message/NoticeBoard';
 import OnlineCourseCategory from './pages/courses/OnlineCourseCategory';
 import OnlineCourseList from './pages/courses/OnlineCourseList';
 
@@ -442,6 +444,14 @@ function App() {
               }
             />
             <Route
+              path="/admin/staff/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <StaffEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/staff/search"
               element={
                 <ProtectedRoute>
@@ -570,7 +580,7 @@ function App() {
             <Route path="/admin/mail" element={<ProtectedRoute><BulkMail /></ProtectedRoute>} />
             <Route path="/admin/mail/email_sms_log" element={<ProtectedRoute><EmailSmsLog /></ProtectedRoute>} />
             <Route path="/admin/mail/email_template" element={<ProtectedRoute><EmailTemplate /></ProtectedRoute>} />
-            <Route path="/admin/notification" element={<ProtectedRoute><NotificationList /></ProtectedRoute>} />
+            <Route path="/admin/notification" element={<ProtectedRoute><NoticeBoard /></ProtectedRoute>} />
             <Route path="/admin/mail/sms_template" element={<ProtectedRoute><SMSTemplate /></ProtectedRoute>} />
             <Route path="/admin/mail/schedule_log" element={<ProtectedRoute><ScheduleLog /></ProtectedRoute>} />
             <Route path="/admin/mail/send_reminders" element={<ProtectedRoute><SendReminders /></ProtectedRoute>} />
@@ -578,6 +588,8 @@ function App() {
             <Route path="/admin/notification_class/add" element={<ProtectedRoute><NotificationAdd /></ProtectedRoute>} />
             <Route path="/admin/notification_class/edit/:id" element={<ProtectedRoute><NotificationAddEdit /></ProtectedRoute>} />
             <Route path="/admin/mailsms/edit_schedule/:id" element={<ProtectedRoute><ScheduleEdit /></ProtectedRoute>} />
+
+            <Route path="/admin/communicate" element={<Navigate to="/admin/notification" replace />} />
 
             {/* Course Routes */}
             <Route path="/admin/onlinecourse" element={<ProtectedRoute><OnlineCourseCategory /></ProtectedRoute>} />
