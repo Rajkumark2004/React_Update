@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
-import { api } from '../../services/api';
-import { toast } from 'react-hot-toast';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 import '../../utils/include_files';
 
 const NotificationAdd = () => {
@@ -25,11 +25,10 @@ const NotificationAdd = () => {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const data = await api.getClasses();
-                if (Array.isArray(data)) {
-                    setClassList(data);
-                } else if (data && data.data) {
-                    setClassList(data.data);
+                const response = await api.getClasses();
+                if (response && response.status === 'success') {
+                    const classes = [...(response.classsectionlist || [])].reverse();
+                    setClassList(classes);
                 }
             } catch (error) {
                 console.error('Error fetching classes:', error);
@@ -38,21 +37,18 @@ const NotificationAdd = () => {
         fetchInitialData();
     }, []);
 
-    // Fetch Sections when Class Changes
+    // Update Sections when Class Changes
     useEffect(() => {
         const fetchSections = async () => {
             if (classId) {
                 try {
-                    const data = await api.getSectionsByClass(classId);
-                    if (data && (data.status === 'success' || data.status === true)) {
-                        const sections = data.sections || data.data || (Array.isArray(data) ? data : []);
+                    const response = await api.getSectionsByClass(classId);
+                    if (response && response.status === 'success') {
+                        const sections = response.data || [];
                         setSectionOptions(sections);
-                    } else {
-                        setSectionOptions([]);
                     }
                 } catch (error) {
                     console.error('Error fetching sections:', error);
-                    setSectionOptions([]);
                 }
             } else {
                 setSectionOptions([]);

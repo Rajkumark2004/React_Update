@@ -442,6 +442,79 @@ export const api = {
             throw error;
         }
     },
+    updateStaff: async (id, staffData) => {
+        console.log('API Request: Update Staff', id, staffData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/staff/edit/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(staffData),
+            });
+            const data = await response.json();
+            console.log('Update Staff Response:', data);
+
+            if (!response.ok || data.status !== 'success') { // Check for both response.ok and api specific status if applicable
+                // Some legacy endpoints might return 200 with {status: false}
+                if (data.status === 0 || data.success === false) {
+                    throw new Error(data.message || 'Failed to update staff');
+                }
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Staff API Error:', error);
+            throw error;
+        }
+    },
+
+    getEmployeeByRole: async (roleId) => {
+        console.log('API Request: Get Employee By Role', roleId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/staff/getEmployeeByRole`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ role: roleId }),
+            });
+            const data = await response.json();
+            console.log('Get Employee By Role Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch employees');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Employee By Role API Error:', error);
+            throw error;
+        }
+    },
+
+    addStaffLeave: async (payload) => {
+        console.log('API Request: Add Staff Leave', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/addLeave`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Add Staff Leave Response:', data);
+
+            if (!response.ok || (data.status !== 'success' && data.status !== true)) {
+                if (data.status === 0 || data.success === false) {
+                    throw new Error(data.message || 'Failed to add staff leave');
+                }
+            }
+            return data;
+        } catch (error) {
+            console.error('Add Staff Leave API Error:', error);
+            throw error;
+        }
+    },
 
     getStudentCreate: async () => {
         console.log('API Request: Get Student Create Data');
@@ -1425,29 +1498,6 @@ export const api = {
             console.error('Get Sessions API Error:', error);
             // Return empty structure on error so dropdown can still render
             return { status: false, result: [], session: [] };
-        }
-    },
-
-    getStaffForEdit: async (id) => {
-        console.log('API Request: Get Staff For Edit', id);
-        try {
-            const response = await fetch(`${API_BASE}/staff/edit/${id}`, {
-                method: 'GET',
-            });
-
-            console.log('Get Staff For Edit Response Status:', response.status);
-            const data = await response.json();
-            console.log('Get Staff For Edit Response Data:', data);
-
-            if (!response.ok) {
-                // If the response is not ok, we still try to return the data if it has a message
-                // but usually we might want to throw or return a standardized error structure
-                throw new Error(data.message || 'Failed to fetch staff details');
-            }
-            return data;
-        } catch (error) {
-            console.error('Get Staff For Edit API Error:', error);
-            throw error;
         }
     },
 
@@ -2826,65 +2876,17 @@ export const api = {
         return { status: true, data: [] };
     },
 
-    getApproveLeaveList: async () => {
-        const url = `${API_BASE}/admin/approve_leave/get_list`;
-        try {
-            const response = await fetch(url);
-            return await response.json();
-        } catch (e) {
-            return { status: true, data: [] };
-        }
-    },
 
-    addLeave: async (formData) => {
-        const url = `${API_BASE}/admin/approve_leave/add`;
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData,
-        });
-        return await response.json();
-    },
-
-    updateLeaveStatus: async (data) => {
-        const url = `${API_BASE}/admin/approve_leave/status`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        return await response.json();
-    },
-
-    deleteLeave: async (data) => {
-        const url = `${API_BASE}/admin/approve_leave/remove_leave`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        return await response.json();
-    },
-
-    getLeaveDetails: async (data) => {
-        const url = `${API_BASE}/admin/approve_leave/get_details`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
-        });
-        return await response.json();
-    },
-
-    getStudentsForLeave: async (classId, sectionId) => {
-        const url = `${API_BASE}/admin/approve_leave/searchByClassSection/${classId}`;
-        const formData = new FormData();
-        formData.append('section_id', sectionId);
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData
-        });
-        return await response.text();
-    },
+    //getStudentsForLeave: async (classId, sectionId) => {
+    //const url = `${API_BASE}/admin/approve_leave/searchByClassSection/${classId}`;
+    //const formData = new FormData();
+    //formData.append('section_id', sectionId);
+    //const response = await fetch(url, {
+    // method: 'POST',
+    //body: formData
+    // });
+    //return await response.text();
+    // },
 
     // Student Diary (Class-wise Homework) API
     // GET /studentdairy/studentDairyListApi
@@ -5042,7 +5044,7 @@ export const api = {
     addStaffLeave: async (payload) => {
         console.log('API Request: Add Staff Leave', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/leaverequest/add_staff_leave`, {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/addLeave`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -5104,6 +5106,240 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Update Staff Leave Status API Error:', error);
+            throw error;
+        }
+    },
+
+    getNoticeBoardList: async (roleId) => {
+        console.log('API Request: Get Notice Board List', roleId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification/index/${roleId}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Notice Board List Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch notice board list');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Notice Board List API Error:', error);
+            throw error;
+        }
+    },
+
+    getNoticeBoardAdd: async () => {
+        console.log('API Request: Get Notice Board Add Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification/get_add`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Notice Board Add Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching notice board add data:', error);
+            throw error;
+        }
+    },
+
+    addNoticeBoard: async (formData) => {
+        console.log('API Request: Add Notice Board');
+        // Log formData entries for debugging
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ', ' + pair[1]);
+        }
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification/add`, {
+                method: 'POST',
+                body: formData, // Sending FormData directly for file upload support
+            });
+            const data = await response.json();
+            console.log('Add Notice Board Response:', data);
+
+            if (!response.ok || (data.status !== 'success' && data.status !== true)) {
+                if (data.status === 0 || data.success === false) {
+                    throw new Error(data.message || 'Failed to add notice');
+                }
+            }
+            return data;
+        } catch (error) {
+            console.error('Add Notice Board API Error:', error);
+            throw error;
+        }
+    },
+
+    getNoticeBoard: async (id, roleId) => {
+        console.log('API Request: Get Notice Board', id, roleId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification/edit/${id}/${roleId}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Notice Board Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching notice board:', error);
+            throw error;
+        }
+    },
+
+    updateNoticeBoard: async (id, roleId, formData) => {
+        console.log('API Request: Update Notice Board', id, roleId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification/save_edit_data/${id}/${roleId}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Update Notice Board Response:', data);
+
+            if (!response.ok || (data.status !== 'success' && data.status !== true)) {
+                if (data.status === 0 || data.success === false) {
+                    throw new Error(data.message || 'Failed to update notice');
+                }
+            }
+            return data;
+        } catch (error) {
+            console.error('Error updating notice board:', error);
+            throw error;
+        }
+    },
+
+    deleteNoticeBoard: async (id, roleId) => {
+        console.log('API Request: Delete Notice Board', id, roleId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: id,
+                    role_id: roleId
+                }),
+            });
+            const data = await response.json();
+            console.log('Delete Notice Board Response:', data);
+
+            if (!response.ok || (data.status !== 'success' && data.status !== true)) {
+                if (data.status === 0 || data.success === false) {
+                    throw new Error(data.message || 'Failed to delete notice');
+                }
+            }
+            return data;
+        } catch (error) {
+            console.error('Error deleting notice board:', error);
+            throw error;
+        }
+    },
+
+    getMailSMSCompose: async () => {
+        console.log('API Request: Get MailSMS Compose Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/compose`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get MailSMS Compose Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching mailsms compose data:', error);
+            throw error;
+        }
+    },
+
+    searchMailSMS: async (keyword, category) => {
+        console.log('API Request: Search MailSMS', { keyword, category });
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/search`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    keyword: keyword,
+                    category: category
+                }),
+            });
+            const data = await response.json();
+            console.log('Search MailSMS Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error searching mailsms:', error);
+            throw error;
+        }
+    },
+
+    sendIndividualEmail: async (payload) => {
+        console.log('API Request: Send Individual Email', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/send_individual`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Send Individual Email Response:', data);
+
+            // For this API: status 0 = success, status 1 = failure
+            if (!response.ok || data.status === 1 || data.status === '1') {
+                throw new Error(data.message || 'Failed to send email');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error sending individual email:', error);
+            throw error;
+        }
+    },
+
+    sendGroupEmail: async (payload) => {
+        console.log('API Request: Send Group Email', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/send_group`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Send Group Email Response:', data);
+
+            // For this API: status 0 = success, status 1 = failure
+            if (!response.ok || data.status === 1 || data.status === '1') {
+                throw new Error(data.message || 'Failed to send email');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error sending group email:', error);
+            throw error;
+        }
+    },
+
+    getNotificationDetail: async (messageId, roleId) => {
+        console.log('API Request: Get Notification Detail', { messageId, roleId });
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification/notification`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message_id: messageId,
+                    role_id: roleId,
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch notification detail');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Notification Detail API Error:', error);
             throw error;
         }
     },

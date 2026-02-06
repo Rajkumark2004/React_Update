@@ -97,6 +97,8 @@ import StdTransfer from './pages/academics/StdTransfer';
 import SubjectGroupList from './pages/academics/SubjectGroupList';
 import TeacherTimetable from './pages/academics/TeacherTimetable';
 import TimetableCreate from './pages/academics/TimetableCreate';
+import NoticeBoardAdd from './pages/message/NoticeBoardAdd.jsx';
+import NoticeBoardEdit from './pages/message/NoticeBoardEdit.jsx';
 
 // Transport Pages
 import CreateRoute from './pages/transport/CreateRoute';
@@ -119,6 +121,8 @@ import SendReminders from './pages/message/SendReminders';
 import NotificationAddEdit from './pages/message/NotificationAddEdit';
 import ScheduleEdit from './pages/message/ScheduleEdit';
 import NoticeBoard from './pages/message/NoticeBoard';
+import { SendWhatsApp, WhatsAppLog, WhatsAppScheduleLog } from './pages/message/sendWhatsapp';
+import { ComposeEmail, ComposeSMS, EmailSMSLog, EmailSMSScheduleLog, EmailTemplate as MailEmailTemplate, SMSTemplate as MailSMSTemplate } from './pages/message/mailsms';
 import OnlineCourseCategory from './pages/courses/OnlineCourseCategory';
 import OnlineCourseList from './pages/courses/OnlineCourseList';
 
@@ -581,6 +585,8 @@ function App() {
             <Route path="/admin/mail/email_sms_log" element={<ProtectedRoute><EmailSmsLog /></ProtectedRoute>} />
             <Route path="/admin/mail/email_template" element={<ProtectedRoute><EmailTemplate /></ProtectedRoute>} />
             <Route path="/admin/notification" element={<ProtectedRoute><NoticeBoard /></ProtectedRoute>} />
+            <Route path="/admin/notification/add" element={<ProtectedRoute><NoticeBoardAdd /></ProtectedRoute>} />
+            <Route path="/admin/notification/edit/:id" element={<ProtectedRoute><NoticeBoardEdit /></ProtectedRoute>} />
             <Route path="/admin/mail/sms_template" element={<ProtectedRoute><SMSTemplate /></ProtectedRoute>} />
             <Route path="/admin/mail/schedule_log" element={<ProtectedRoute><ScheduleLog /></ProtectedRoute>} />
             <Route path="/admin/mail/send_reminders" element={<ProtectedRoute><SendReminders /></ProtectedRoute>} />
@@ -588,6 +594,19 @@ function App() {
             <Route path="/admin/notification_class/add" element={<ProtectedRoute><NotificationAdd /></ProtectedRoute>} />
             <Route path="/admin/notification_class/edit/:id" element={<ProtectedRoute><NotificationAddEdit /></ProtectedRoute>} />
             <Route path="/admin/mailsms/edit_schedule/:id" element={<ProtectedRoute><ScheduleEdit /></ProtectedRoute>} />
+
+            {/* SendWhatsApp Routes */}
+            <Route path="/admin/sendwhatsapp/compose_sms" element={<ProtectedRoute><SendWhatsApp /></ProtectedRoute>} />
+            <Route path="/admin/sendwhatsapp" element={<ProtectedRoute><WhatsAppLog /></ProtectedRoute>} />
+            <Route path="/admin/sendwhatsapp/schedule" element={<ProtectedRoute><WhatsAppScheduleLog /></ProtectedRoute>} />
+
+            {/* MailSMS Routes */}
+            <Route path="/admin/mailsms/compose" element={<ProtectedRoute><ComposeEmail /></ProtectedRoute>} />
+            <Route path="/admin/mailsms/compose_sms" element={<ProtectedRoute><ComposeSMS /></ProtectedRoute>} />
+            <Route path="/admin/mailsms" element={<ProtectedRoute><EmailSMSLog /></ProtectedRoute>} />
+            <Route path="/admin/mailsms/schedule" element={<ProtectedRoute><EmailSMSScheduleLog /></ProtectedRoute>} />
+            <Route path="/admin/mailsms/email_template" element={<ProtectedRoute><MailEmailTemplate /></ProtectedRoute>} />
+            <Route path="/admin/mailsms/sms_template" element={<ProtectedRoute><MailSMSTemplate /></ProtectedRoute>} />
 
             <Route path="/admin/communicate" element={<Navigate to="/admin/notification" replace />} />
 
