@@ -37,18 +37,15 @@ const StudentAttendance = () => {
 
     const fetchClasses = async () => {
         try {
-            const response = await api.getClasses();
-            if (response && (response.data || response.class_sections)) {
-                // Handle various likely response structures
-                const classesData = response.data?.class_sections || response.class_sections || [];
-                if (Array.isArray(classesData)) {
-                    setClassList(classesData);
-                } else {
-                    setClassList([]);
-                }
+            const response = await api.getStudentCreate();
+            if (response && response.status === 'success' && response.data && response.data.classlist) {
+                setClassList(response.data.classlist);
+            } else {
+                setClassList([]);
             }
         } catch (error) {
             console.error('Error fetching classes:', error);
+            // Fallback for resiliency if needed, or just log
         } finally {
             setInitialLoading(false);
         }
@@ -61,16 +58,24 @@ const StudentAttendance = () => {
 
         if (classId) {
             try {
-                // User expects an API call. Using the provided generic Sections API.
-                // Note: The provided API response does not include class_id, so strict filtering 
-                // might not be possible unless the class list itself contains the mapping.
-                // We will try to fetch sections and populate the list.
-                const response = await api.getSections();
-
-                if (response && response.data) {
+                const response = await api.getSectionsByClass(classId);
+                // Assuming response structure { status: "success", data: [...] } or direct array
+                if (response && response.status === 'success' && response.data) {
+                    // Check if data is array or object mapping
+                    // The getByClass API often returns map { section_id: section_name } or array of objects
+                    // Adjust based on typical response. If array of objects:
                     setSectionList(response.data);
-                } else if (response && Array.isArray(response)) {
+                } else if (Array.isArray(response)) {
                     setSectionList(response);
+                } else if (response && response.sections) {
+                    setSectionList(response.sections);
+                } else {
+                    // If it is simple key-value pair, map it
+                    // But usually getByClass returns array of objects like [{section_id, section, ...}]
+                    // Let's assume standard array for now or check response type in usage
+                    console.log("Sections response", response);
+                    // Safe fallback if it returns directly the list
+                    setSectionList(response.data || []);
                 }
             } catch (error) {
                 console.error('Error fetching sections:', error);
@@ -243,7 +248,7 @@ const StudentAttendance = () => {
                                                         >
                                                             <option value="">Select</option>
                                                             {sectionList.map(sec => (
-                                                                <option key={sec.id || sec.section_id} value={sec.id || sec.section_id}>{sec.section}</option>
+                                                                <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
                                                             ))}
                                                         </select>
                                                     </div>

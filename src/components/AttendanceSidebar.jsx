@@ -21,11 +21,6 @@ const AttendanceSidebar = () => {
                         <i className="fa fa-calendar" style={{ marginRight: '5px' }}></i> Attendance By Date
                     </Link>
                 </li>
-                <li className={currentPath === '/approve_leave' ? 'active' : ''}>
-                    <Link to="/approve_leave" className={currentPath === '/approve_leave' ? 'active' : ''}>
-                        <i className="fa fa-check-square-o" style={{ marginRight: '5px' }}></i> Approve Leave
-                    </Link>
-                </li>
                 {/* Add other links as per PHP if needed, e.g. Late Entries */}
                 {/* Replaced images with Icons as per original images not found */}
             </ul>

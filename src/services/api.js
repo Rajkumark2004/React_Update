@@ -442,6 +442,23 @@ export const api = {
             throw error;
         }
     },
+
+    getStudentCreate: async () => {
+        console.log('API Request: Get Student Create Data');
+        try {
+            const response = await fetch(`${API_BASE}/student/create`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch student create data');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Student Create Data Error:', error);
+            throw error;
+        }
+    },
     getSectionsByClass: async (classId) => {
         console.log('API Request: Get Sections By Class', classId);
         try {
@@ -1408,6 +1425,29 @@ export const api = {
             console.error('Get Sessions API Error:', error);
             // Return empty structure on error so dropdown can still render
             return { status: false, result: [], session: [] };
+        }
+    },
+
+    getStaffForEdit: async (id) => {
+        console.log('API Request: Get Staff For Edit', id);
+        try {
+            const response = await fetch(`${API_BASE}/staff/edit/${id}`, {
+                method: 'GET',
+            });
+
+            console.log('Get Staff For Edit Response Status:', response.status);
+            const data = await response.json();
+            console.log('Get Staff For Edit Response Data:', data);
+
+            if (!response.ok) {
+                // If the response is not ok, we still try to return the data if it has a message
+                // but usually we might want to throw or return a standardized error structure
+                throw new Error(data.message || 'Failed to fetch staff details');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Staff For Edit API Error:', error);
+            throw error;
         }
     },
 
@@ -4988,7 +5028,7 @@ export const api = {
     getStaffLeaveIndex: async () => {
         console.log('API Request: Get Staff Leave Index');
         try {
-            const response = await fetch(`${API_BASE}/admin/leaverequest/index`, {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/leaverequest`, {
                 method: 'GET',
             });
             const data = await response.json();
@@ -5002,7 +5042,7 @@ export const api = {
     addStaffLeave: async (payload) => {
         console.log('API Request: Add Staff Leave', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/leaverequest/addLeave`, {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/add_staff_leave`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
