@@ -89,6 +89,29 @@ const ComposeEmail = () => {
         performSearch();
     }, [searchQuery, searchCategory]);
 
+    // Fetch sections when class is selected
+    useEffect(() => {
+        const fetchSections = async () => {
+            if (selectedClassId) {
+                try {
+                    const response = await api.getSectionsByClass(selectedClassId);
+                    if (response && (response.status === 'success' || response.status === true)) {
+                        setSections(response.data || []);
+                    } else {
+                        setSections([]);
+                    }
+                } catch (error) {
+                    console.error('Error fetching sections:', error);
+                    setSections([]);
+                }
+            } else {
+                setSections([]);
+            }
+        };
+        fetchSections();
+    }, [selectedClassId]);
+
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -96,6 +119,10 @@ const ComposeEmail = () => {
 
     const handleUserCheckbox = (value) => {
         setSelectedUsers(prev => prev.includes(value) ? prev.filter(u => u !== value) : [...prev, value]);
+    };
+
+    const handleSectionCheckbox = (sectionId) => {
+        setSelectedSections(prev => prev.includes(sectionId) ? prev.filter(s => s !== sectionId) : [...prev, sectionId]);
     };
 
     // Handle selecting a recipient from search results
@@ -237,8 +264,51 @@ const ComposeEmail = () => {
                 // Reset form
                 setFormData({ templateId: '', title: '', message: '', sendType: 'send_now', scheduleDateTime: '' });
                 setSelectedUsers([]);
+            } else if (activeTab === 'class') {
+                // Validate class and sections
+                if (!selectedClassId) {
+                    toast.error('Please select a class');
+                    setLoading(false);
+                    return;
+                }
+                if (selectedSections.length === 0) {
+                    toast.error('Please select at least one section');
+                    setLoading(false);
+                    return;
+                }
+
+                // Build FormData payload
+                const formDataPayload = new FormData();
+                formDataPayload.append('class_send_type', formData.sendType === 'send_now' ? 'send_now' : 'schedule');
+                formDataPayload.append('class_title', formData.title);
+                formDataPayload.append('class_message', formData.message);
+                formDataPayload.append('class_id', selectedClassId);
+                selectedSections.forEach(sectionId => {
+                    formDataPayload.append('user[]', sectionId);
+                });
+                formDataPayload.append('class_send_by', 'email');
+                formDataPayload.append('template_id', formData.templateId || '');
+
+                if (formData.sendType === 'schedule' && formData.scheduleDateTime) {
+                    // Format: DD/MM/YYYY hh:mm am/pm
+                    const dt = new Date(formData.scheduleDateTime);
+                    const day = String(dt.getDate()).padStart(2, '0');
+                    const month = String(dt.getMonth() + 1).padStart(2, '0');
+                    const year = dt.getFullYear();
+                    let hours = dt.getHours();
+                    const ampm = hours >= 12 ? 'pm' : 'am';
+                    hours = hours % 12 || 12;
+                    const mins = String(dt.getMinutes()).padStart(2, '0');
+                    formDataPayload.append('schedule_date_time', `${day}/${month}/${year} ${String(hours).padStart(2, '0')}:${mins} ${ampm}`);
+                }
+
+                await api.sendClassEmail(formDataPayload);
+                toast.success('Email sent successfully!');
+                // Reset form
+                setFormData({ templateId: '', title: '', message: '', sendType: 'send_now', scheduleDateTime: '' });
+                setSelectedClassId('');
+                setSelectedSections([]);
             } else {
-                // TODO: Handle class tab
                 toast.success('Email sent successfully!');
             }
         } catch (error) {
@@ -387,7 +457,7 @@ const ComposeEmail = () => {
                                                         </select>
                                                         <div className="well" style={{ minHeight: '260px' }}>
                                                             <b>Section</b>
-                                                            {sections.map(s => <div key={s.id} className="checkbox"><label><input type="checkbox" /> {s.section}</label></div>)}
+                                                            {sections.map(s => <div key={s.section_id} className="checkbox"><label><input type="checkbox" checked={selectedSections.includes(s.section_id)} onChange={() => handleSectionCheckbox(s.section_id)} /> {s.section}</label></div>)}
                                                         </div>
                                                     </>
                                                 )}

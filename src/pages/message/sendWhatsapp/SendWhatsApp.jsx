@@ -36,6 +36,10 @@ const SendWhatsApp = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [selectedRecipients, setSelectedRecipients] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [selectedSearchResult, setSelectedSearchResult] = useState(null);
+    const [selectedTableFilter, setSelectedTableFilter] = useState('');
+    const [messageToOptions, setMessageToOptions] = useState([]);
 
     // Class Tab State
     const [classForm, setClassForm] = useState({
@@ -52,23 +56,59 @@ const SendWhatsApp = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch classes
-                const classResponse = await api.getClasses();
-                if (classResponse && classResponse.data) {
-                    setClassList(classResponse.data);
-                }
+                const response = await api.getWhatsAppCompose();
+                if (response && response.status === true && response.data) {
+                    // Set class list
+                    if (response.data.classlist) {
+                        setClassList(response.data.classlist);
+                    }
 
-                // Fetch roles
-                const rolesResponse = await api.getRoles();
-                if (rolesResponse && rolesResponse.data) {
-                    setRoles(rolesResponse.data.filter(r => r.name !== 'Super Admin'));
+                    // Set roles (exclude Super Admin)
+                    if (response.data.roles) {
+                        setRoles(response.data.roles.filter(r => r.name !== 'Super Admin'));
+                    }
                 }
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching WhatsApp compose data:', error);
             }
         };
         fetchData();
     }, []);
+
+    // Live search for Individual tab
+    useEffect(() => {
+        const performSearch = async () => {
+            if (searchQuery && searchCategory) {
+                setSearchLoading(true);
+                try {
+                    const response = await api.searchMailSMS(searchQuery, searchCategory);
+                    if (response && response.status === true) {
+                        setSearchResults(response.data || []);
+                    } else {
+                        setSearchResults([]);
+                    }
+                } catch (error) {
+                    console.error('Error searching:', error);
+                    setSearchResults([]);
+                } finally {
+                    setSearchLoading(false);
+                }
+            } else {
+                setSearchResults([]);
+            }
+        };
+        performSearch();
+    }, [searchQuery, searchCategory]);
+
+    // Build messageToOptions from roles
+    useEffect(() => {
+        const options = [
+            { id: 'student', name: 'Students' },
+            { id: 'parent', name: 'Guardians' },
+            ...roles.map(r => ({ id: r.id, name: r.name }))
+        ];
+        setMessageToOptions(options);
+    }, [roles]);
 
     // Fetch sections when class changes
     const handleClassChange = async (classId) => {
@@ -108,16 +148,37 @@ const SendWhatsApp = () => {
 
         setLoading(true);
         try {
-            // API call would go here
-            toast.success('WhatsApp message sent successfully');
-            setGroupForm({
-                message_type: '',
-                video_link: '',
-                message: '',
-                users: [],
-                send_type: 'send_now',
-                schedule_date_time: ''
-            });
+            // Build payload
+            const payload = {
+                message_type_group: groupForm.message_type,
+                video_link_grp: groupForm.message_type === 'video' ? groupForm.video_link : '',
+                group_message: groupForm.message,
+                user: groupForm.users,
+                send_type: groupForm.send_type
+            };
+
+            // Add schedule date/time if scheduling
+            if (groupForm.send_type === 'schedule' && groupForm.schedule_date_time) {
+                const dateTime = new Date(groupForm.schedule_date_time);
+                payload.schedule_date = dateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+                payload.schedule_time = dateTime.toTimeString().split(' ')[0]; // HH:MM:SS
+            }
+
+            const response = await api.sendWhatsAppGroup(payload);
+
+            if (response && response.status === true) {
+                toast.success('WhatsApp message sent successfully');
+                setGroupForm({
+                    message_type: '',
+                    video_link: '',
+                    message: '',
+                    users: [],
+                    send_type: 'send_now',
+                    schedule_date_time: ''
+                });
+            } else {
+                toast.error(response.message || 'Failed to send message');
+            }
         } catch (error) {
             toast.error('Failed to send message');
         } finally {
@@ -143,16 +204,50 @@ const SendWhatsApp = () => {
 
         setLoading(true);
         try {
-            // API call would go here
-            toast.success('WhatsApp message sent successfully');
-            setIndividualForm({
-                message_type: '',
-                video_link: '',
-                message: '',
-                send_type: 'send_now',
-                schedule_date_time: ''
-            });
-            setSelectedRecipients([]);
+            // Build user_list from selectedRecipients
+            const userList = selectedRecipients.map(recipient => ({
+                category: recipient.category,
+                record_id: recipient.record_id || recipient.id,
+                email: recipient.email || '',
+                guardianEmail: recipient.guardianEmail || '',
+                mobileno: recipient.mobileno || '',
+                app_key: ''
+            }));
+
+            // Build payload
+            const payload = {
+                message_type_individual: individualForm.message_type,
+                video_link_indv: individualForm.message_type === 'video' ? individualForm.video_link : '',
+                individual_message: individualForm.message,
+                selected_value: searchCategory || 'student',
+                individual_send_type: individualForm.send_type,
+                user_list: [userList] // Nested array structure as per API
+            };
+
+            // Add schedule date/time if scheduling
+            if (individualForm.send_type === 'schedule' && individualForm.schedule_date_time) {
+                const dateTime = new Date(individualForm.schedule_date_time);
+                payload.schedule_date = dateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+                payload.schedule_time = dateTime.toTimeString().split(' ')[0]; // HH:MM:SS
+            }
+
+            const response = await api.sendWhatsAppIndividual(payload);
+
+            if (response && response.status === true) {
+                toast.success('WhatsApp message sent successfully');
+                setIndividualForm({
+                    message_type: '',
+                    video_link: '',
+                    message: '',
+                    send_type: 'send_now',
+                    schedule_date_time: ''
+                });
+                setSelectedRecipients([]);
+                setSearchQuery('');
+                setSearchCategory('');
+            } else {
+                toast.error(response.message || 'Failed to send message');
+            }
         } catch (error) {
             toast.error('Failed to send message');
         } finally {
@@ -178,18 +273,40 @@ const SendWhatsApp = () => {
 
         setLoading(true);
         try {
-            // API call would go here
-            toast.success('WhatsApp message sent successfully');
-            setClassForm({
-                message_type: '',
-                video_link: '',
-                message: '',
-                class_id: '',
-                sections: [],
-                send_type: 'send_now',
-                schedule_date_time: ''
-            });
-            setSectionList([]);
+            // Build payload
+            const payload = {
+                message_type_class: classForm.message_type,
+                video_link_cls: classForm.message_type === 'video' ? classForm.video_link : '',
+                class_message: classForm.message,
+                class_id: parseInt(classForm.class_id),
+                user: classForm.sections, // Section IDs
+                class_send_type: classForm.send_type
+            };
+
+            // Add schedule date/time if scheduling
+            if (classForm.send_type === 'schedule' && classForm.schedule_date_time) {
+                const dateTime = new Date(classForm.schedule_date_time);
+                payload.schedule_date = dateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+                payload.schedule_time = dateTime.toTimeString().split(' ')[0]; // HH:MM:SS
+            }
+
+            const response = await api.sendWhatsAppClass(payload);
+
+            if (response && response.status === true) {
+                toast.success('WhatsApp message sent successfully');
+                setClassForm({
+                    message_type: '',
+                    video_link: '',
+                    message: '',
+                    class_id: '',
+                    sections: [],
+                    send_type: 'send_now',
+                    schedule_date_time: ''
+                });
+                setSectionList([]);
+            } else {
+                toast.error(response.message || 'Failed to send message');
+            }
         } catch (error) {
             toast.error('Failed to send message');
         } finally {
@@ -217,19 +334,44 @@ const SendWhatsApp = () => {
         });
     };
 
-    // Add recipient to individual list
-    const addRecipient = () => {
-        if (!searchQuery.trim()) {
-            toast.error('Please select a recipient');
-            return;
+    // Handle selecting a recipient from search results
+    const handleSelectRecipient = (result) => {
+        let displayName = '';
+        if (searchCategory === 'student') {
+            displayName = `${result.firstname || result.name || ''} ${result.lastname || ''} (${result.admission_no || ''})`;
+        } else if (searchCategory === 'parent') {
+            displayName = `${result.guardian_name || result.name || ''} (${result.guardian_phone || ''})`;
+        } else {
+            displayName = `${result.name || result.firstname || ''} ${result.lastname || ''}`;
         }
-        // In real implementation, this would add from search results
-        toast.info('Recipient search functionality requires API integration');
+
+        const newRecipient = {
+            id: result.id,
+            name: displayName.trim(),
+            category: searchCategory
+        };
+
+        setSelectedRecipients(prev => {
+            const exists = prev.some(r => r.id === result.id && r.category === searchCategory);
+            if (!exists) {
+                return [...prev, newRecipient];
+            }
+            return prev;
+        });
+        setSearchQuery('');
+        setSearchResults([]);
+        setSelectedSearchResult(null);
     };
 
-    // Remove recipient from individual list
-    const removeRecipient = (id) => {
-        setSelectedRecipients(prev => prev.filter(r => r.id !== id));
+    // Get display name for search result
+    const getResultDisplayName = (result) => {
+        if (searchCategory === 'student') {
+            return `${result.firstname || result.name || ''} ${result.lastname || ''} (${result.admission_no || ''})`.trim();
+        } else if (searchCategory === 'parent') {
+            return `${result.guardian_name || result.name || ''} (${result.guardian_phone || ''})`;
+        } else {
+            return `${result.name || result.firstname || ''} ${result.lastname || ''}`.trim();
+        }
     };
 
     return (
@@ -430,62 +572,72 @@ const SendWhatsApp = () => {
                                                 <div className="col-md-4">
                                                     <div className="form-group">
                                                         <label>Message To<small className="req"> *</small></label>
-                                                        <div className="input-group">
-                                                            <div className="input-group-btn">
-                                                                <select
-                                                                    className="btn btn-default"
-                                                                    value={searchCategory}
-                                                                    onChange={(e) => setSearchCategory(e.target.value)}
-                                                                    style={{ height: '34px' }}
-                                                                >
-                                                                    <option value="">Select</option>
-                                                                    <option value="student">Students</option>
-                                                                    <option value="parent">Guardians</option>
-                                                                    <option value="student_guardian">Students & Guardians</option>
-                                                                    <option value="staff">Staff</option>
-                                                                </select>
-                                                            </div>
-                                                            <input
-                                                                type="text"
-                                                                className="form-control"
-                                                                value={searchQuery}
-                                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                                placeholder="Search..."
-                                                            />
-                                                            <span className="input-group-btn">
-                                                                <button type="button" className="btn btn-primary" onClick={addRecipient}>Add</button>
-                                                            </span>
-                                                        </div>
+                                                        <select className="form-control" value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)}>
+                                                            <option value="">Select</option>
+                                                            {messageToOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
+                                                        </select>
                                                     </div>
-
-                                                    <div className="dual-list list-right">
-                                                        <div className="well" style={{ minHeight: '260px' }}>
-                                                            <div className="row">
-                                                                <div className="col-md-12">
-                                                                    <div className="input-group">
-                                                                        <input type="text" className="form-control" placeholder="Search..." />
-                                                                        <div className="input-group-btn">
-                                                                            <span className="btn btn-default input-group-addon" style={{ height: '28px' }}>
-                                                                                <i className="fa fa-search"></i>
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div>
-                                                                <ul className="list-group send_list">
-                                                                    {selectedRecipients.map(recipient => (
-                                                                        <li key={recipient.id} className="list-group-item">
-                                                                            <i className="fa fa-user"></i> {recipient.name} ({recipient.category})
-                                                                            <i
-                                                                                className="fa fa-trash pull-right text-danger"
-                                                                                style={{ cursor: 'pointer' }}
-                                                                                onClick={() => removeRecipient(recipient.id)}
-                                                                            ></i>
+                                                    <div className="input-group">
+                                                        <input type="text" className="form-control" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                                                        <span className="input-group-btn"><button className="btn btn-primary" type="button" onClick={() => { if (selectedSearchResult) { handleSelectRecipient(selectedSearchResult); } }}>Add</button></span>
+                                                    </div>
+                                                    {(searchLoading || searchQuery) && (
+                                                        <div className="well" style={{ minHeight: '150px', maxHeight: '200px', overflowY: 'auto', marginTop: '10px' }}>
+                                                            {searchLoading && <div className="text-center"><i className="fa fa-spinner fa-spin"></i> Searching...</div>}
+                                                            {!searchLoading && searchResults.length === 0 && searchQuery && <div className="text-muted">No results found</div>}
+                                                            {!searchLoading && searchResults.length > 0 && (
+                                                                <ul className="list-group">
+                                                                    {searchResults.map((r, i) => (
+                                                                        <li key={i}
+                                                                            className={`list-group-item ${selectedSearchResult?.id === r.id ? 'active' : ''}`}
+                                                                            style={{ cursor: 'pointer' }}
+                                                                            onClick={() => setSelectedSearchResult(r)}>
+                                                                            {getResultDisplayName(r)}
                                                                         </li>
                                                                     ))}
                                                                 </ul>
-                                                            </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {/* Selected Recipients Table */}
+                                                    <div style={{ marginTop: '15px' }}>
+                                                        <b>Selected Recipients ({selectedRecipients.length})</b>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            placeholder="Filter selected..."
+                                                            value={selectedTableFilter}
+                                                            onChange={(e) => setSelectedTableFilter(e.target.value)}
+                                                            style={{ marginTop: '5px', marginBottom: '5px' }}
+                                                        />
+                                                        <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                                                            <table className="table table-bordered table-striped table-condensed">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>#</th>
+                                                                        <th>Name</th>
+                                                                        <th>Action</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {selectedRecipients
+                                                                        .filter(r => r.name.toLowerCase().includes(selectedTableFilter.toLowerCase()))
+                                                                        .map((r, i) => (
+                                                                            <tr key={i}>
+                                                                                <td>{i + 1}</td>
+                                                                                <td>{r.name}</td>
+                                                                                <td>
+                                                                                    <button type="button" className="btn btn-xs btn-danger" onClick={() => setSelectedRecipients(prev => prev.filter((_, idx) => idx !== i))}>
+                                                                                        <i className="fa fa-remove"></i>
+                                                                                    </button>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    {selectedRecipients.length === 0 && (
+                                                                        <tr><td colSpan="3" className="text-center text-muted">No recipients selected</td></tr>
+                                                                    )}
+                                                                </tbody>
+                                                            </table>
                                                         </div>
                                                     </div>
                                                 </div>

@@ -126,6 +126,16 @@ import { ComposeEmail, ComposeSMS, EmailSMSLog, EmailSMSScheduleLog, EmailTempla
 import OnlineCourseCategory from './pages/courses/OnlineCourseCategory';
 import OnlineCourseList from './pages/courses/OnlineCourseList';
 
+// Hostel Pages
+import HostelRoom from './pages/hostel/HostelRoom';
+import HostelRoomEdit from './pages/hostel/HostelRoomEdit';
+import StudentHostelReport from './pages/hostel/StudentHostelReport';
+import RoomType from './pages/hostel/RoomType';
+import RoomTypeEdit from './pages/hostel/RoomTypeEdit';
+import Hostel from './pages/hostel/Hostel';
+import HostelEdit from './pages/hostel/HostelEdit';
+
+
 import { api } from './services/api';
 import { SessionProvider } from './context/SessionContext';
 import { LogoProvider } from './context/LogoContext';
@@ -562,6 +572,16 @@ function App() {
             <Route path="/admin/routepickuppoint" element={<ProtectedRoute><AssignPickupPoint /></ProtectedRoute>} />
             <Route path="/admin/transportFeeMaster" element={<ProtectedRoute><TransportFeesMaster /></ProtectedRoute>} />
             <Route path="/admin/studenttransportfee" element={<ProtectedRoute><StudentTransportFees /></ProtectedRoute>} />
+
+            {/* Hostel Routes */}
+            <Route path="/admin/hostelroom" element={<ProtectedRoute><HostelRoom /></ProtectedRoute>} />
+            <Route path="/admin/hostelroom/edit/:id" element={<ProtectedRoute><HostelRoomEdit /></ProtectedRoute>} />
+            <Route path="/admin/studenthostelreport" element={<ProtectedRoute><StudentHostelReport /></ProtectedRoute>} />
+            <Route path="/admin/roomtype" element={<ProtectedRoute><RoomType /></ProtectedRoute>} />
+            <Route path="/admin/roomtype/edit/:id" element={<ProtectedRoute><RoomTypeEdit /></ProtectedRoute>} />
+            <Route path="/admin/hostel" element={<ProtectedRoute><Hostel /></ProtectedRoute>} />
+            <Route path="/admin/hostel/edit/:id" element={<ProtectedRoute><HostelEdit /></ProtectedRoute>} />
+
 
             {/* Academics Routes */}
             <Route path="/admin/classes" element={<ProtectedRoute><ClassList /></ProtectedRoute>} />

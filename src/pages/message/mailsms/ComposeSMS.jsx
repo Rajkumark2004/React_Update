@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import Footer from '../../../components/Footer';
 import toast from 'react-hot-toast';
+import api from '../../../services/api';
 
 const ComposeSMS = () => {
     const navigate = useNavigate();
@@ -19,17 +20,95 @@ const ComposeSMS = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchCategory, setSearchCategory] = useState('');
     const [selectedClassId, setSelectedClassId] = useState('');
+    const [selectedSections, setSelectedSections] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [selectedSearchResult, setSelectedSearchResult] = useState(null);
+    const [selectedTableFilter, setSelectedTableFilter] = useState('');
 
-    // Mock data
-    const smsTemplates = [{ id: '1', title: 'Reminder SMS' }, { id: '2', title: 'Alert SMS' }];
-    const classList = [{ id: '1', class: 'Class 1' }, { id: '2', class: 'Class 2' }];
-    const roles = [{ id: '1', name: 'Teacher' }, { id: '2', name: 'Accountant' }];
-    const sections = [{ id: '1', section: 'A' }, { id: '2', section: 'B' }];
-    const sendThroughList = { sms: 'SMS', whatsapp: 'WhatsApp', notification: 'Notification' };
-    const birthdayList = {
-        students: [{ id: '1', name: 'John Doe', admission_no: 'STU001', contact_no: '9876543210' }],
-        staff: [{ id: '1', name: 'Jane Smith', employee_id: 'EMP001', contact_no: '9876543211' }]
-    };
+    // State for API data
+    const [smsTemplates, setSmsTemplates] = useState([]);
+    const [classList, setClassList] = useState([]);
+    const [roles, setRoles] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [sendThroughList, setSendThroughList] = useState({});
+    const [birthdayList, setBirthdayList] = useState({ students: [], staff: [] });
+    const [messageToOptions, setMessageToOptions] = useState([]);
+
+    // Fetch compose data on mount
+    useEffect(() => {
+        const fetchComposeData = async () => {
+            try {
+                const response = await api.getSMSCompose();
+                if (response && response.status === true) {
+                    const data = response.data || {};
+                    setSmsTemplates(data.sms_template_list || []);
+                    setClassList(data.classlist || []);
+                    setRoles(data.roles || []);
+                    setSendThroughList(data.send_through_list || {});
+                    setBirthdayList(data.birthDaysList || { students: [], staff: [] });
+
+                    // Build messageToOptions: Students, Guardians + all roles
+                    const options = [
+                        { id: 'student', name: 'Students' },
+                        { id: 'parent', name: 'Guardians' },
+                        ...(data.roles || []).map(r => ({ id: r.id, name: r.name }))
+                    ];
+                    setMessageToOptions(options);
+                }
+            } catch (error) {
+                console.error('Error fetching compose data:', error);
+            }
+        };
+        fetchComposeData();
+    }, []);
+
+    // Live search on keystroke in Individual tab
+    useEffect(() => {
+        const performSearch = async () => {
+            if (searchQuery && searchCategory) {
+                setSearchLoading(true);
+                try {
+                    const response = await api.searchMailSMS(searchQuery, searchCategory);
+                    if (response && response.status === true) {
+                        setSearchResults(response.data || []);
+                    } else {
+                        setSearchResults([]);
+                    }
+                } catch (error) {
+                    console.error('Error searching:', error);
+                    setSearchResults([]);
+                } finally {
+                    setSearchLoading(false);
+                }
+            } else {
+                setSearchResults([]);
+            }
+        };
+        performSearch();
+    }, [searchQuery, searchCategory]);
+
+    // Fetch sections when class is selected
+    useEffect(() => {
+        const fetchSections = async () => {
+            if (selectedClassId) {
+                try {
+                    const response = await api.getSectionsByClass(selectedClassId);
+                    if (response && (response.status === 'success' || response.status === true)) {
+                        setSections(response.data || []);
+                    } else {
+                        setSections([]);
+                    }
+                } catch (error) {
+                    console.error('Error fetching sections:', error);
+                    setSections([]);
+                }
+            } else {
+                setSections([]);
+            }
+        };
+        fetchSections();
+    }, [selectedClassId]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -47,6 +126,56 @@ const ComposeSMS = () => {
         setSelectedUsers(prev => prev.includes(value) ? prev.filter(u => u !== value) : [...prev, value]);
     };
 
+    const handleSectionCheckbox = (sectionId) => {
+        setSelectedSections(prev => prev.includes(sectionId) ? prev.filter(s => s !== sectionId) : [...prev, sectionId]);
+    };
+
+    // Handle selecting a recipient from search results
+    const handleSelectRecipient = (result) => {
+        // Build display name based on category
+        let displayName = '';
+        if (searchCategory === 'student') {
+            displayName = `${result.firstname || result.name || ''} ${result.lastname || ''} (${result.admission_no || ''})`;
+        } else if (searchCategory === 'parent') {
+            displayName = `${result.guardian_name || result.name || ''} (${result.guardian_phone || ''})`;
+        } else {
+            displayName = `${result.name || result.firstname || ''} ${result.lastname || ''}`;
+        }
+
+        // Store recipient with all required fields for API
+        const newRecipient = {
+            id: result.id,
+            name: displayName.trim(),
+            category: searchCategory,
+            record_id: result.id,
+            email: result.email || '',
+            guardianEmail: result.guardian_email || '',
+            mobileno: result.mobileno || ''
+        };
+
+        setSelectedRecipients(prev => {
+            const exists = prev.some(r => r.id === result.id && r.category === searchCategory);
+            if (!exists) {
+                return [...prev, newRecipient];
+            }
+            return prev;
+        });
+        setSearchQuery(''); // Clear search after selection
+        setSearchResults([]); // Clear results
+        setSelectedSearchResult(null); // Clear selected result
+    };
+
+    // Get display name for search result
+    const getResultDisplayName = (result) => {
+        if (searchCategory === 'student') {
+            return `${result.firstname || result.name || ''} ${result.lastname || ''} (${result.admission_no || ''})`.trim();
+        } else if (searchCategory === 'parent') {
+            return `${result.guardian_name || result.name || ''} (${result.guardian_phone || ''})`;
+        } else {
+            return `${result.name || result.firstname || ''} ${result.lastname || ''}`.trim();
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.title || !formData.message) {
@@ -57,11 +186,144 @@ const ComposeSMS = () => {
             toast.error('Please select at least one send method');
             return;
         }
+
         setLoading(true);
-        setTimeout(() => {
-            toast.success('SMS sent successfully!');
+
+        try {
+            if (activeTab === 'group') {
+                // Validate selected users
+                if (selectedUsers.length === 0) {
+                    toast.error('Please select at least one group');
+                    setLoading(false);
+                    return;
+                }
+
+                // Build user array
+                const userArray = selectedUsers.map(u => String(u));
+
+                const payload = {
+                    send_type: formData.sendType === 'send_now' ? 'send_now' : 'schedule',
+                    group_title: formData.title,
+                    group_message: formData.message,
+                    group_send_by: formData.sendBy,
+                    user: userArray
+                };
+
+                if (formData.sendType === 'schedule' && formData.scheduleDateTime) {
+                    // Format: DD/MM/YYYY hh:mm am/pm
+                    const dt = new Date(formData.scheduleDateTime);
+                    const day = String(dt.getDate()).padStart(2, '0');
+                    const month = String(dt.getMonth() + 1).padStart(2, '0');
+                    const year = dt.getFullYear();
+                    let hours = dt.getHours();
+                    const ampm = hours >= 12 ? 'pm' : 'am';
+                    hours = hours % 12 || 12;
+                    const mins = String(dt.getMinutes()).padStart(2, '0');
+                    payload.schedule_date_time = `${day}/${month}/${year} ${String(hours).padStart(2, '0')}:${mins} ${ampm}`;
+                }
+
+                await api.sendGroupSMS(payload);
+                toast.success('SMS sent successfully!');
+                // Reset form
+                setFormData({ templateId: '', title: '', message: '', templateIdField: '', sendType: 'send_now', scheduleDateTime: '', sendBy: [] });
+                setSelectedUsers([]);
+            } else if (activeTab === 'individual') {
+                // Validate recipients
+                if (selectedRecipients.length === 0) {
+                    toast.error('Please select at least one recipient');
+                    setLoading(false);
+                    return;
+                }
+
+                // Build user_list payload (wrapped in array as per API spec)
+                const userList = selectedRecipients.map(r => [{
+                    category: r.category,
+                    record_id: r.record_id,
+                    email: r.email,
+                    guardianEmail: r.guardianEmail,
+                    mobileno: r.mobileno,
+                    app_key: ''
+                }]);
+
+                const payload = {
+                    individual_send_type: formData.sendType === 'send_now' ? 'send_now' : 'schedule',
+                    individual_title: formData.title,
+                    individual_message: formData.message,
+                    individual_send_by: formData.sendBy,
+                    individual_template_id: formData.templateId || '',
+                    user_list: userList
+                };
+
+                if (formData.sendType === 'schedule' && formData.scheduleDateTime) {
+                    // Format: YYYY-MM-DD hh:mm AM/PM (different from email)
+                    const dt = new Date(formData.scheduleDateTime);
+                    const day = String(dt.getDate()).padStart(2, '0');
+                    const month = String(dt.getMonth() + 1).padStart(2, '0');
+                    const year = dt.getFullYear();
+                    let hours = dt.getHours();
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12 || 12;
+                    const mins = String(dt.getMinutes()).padStart(2, '0');
+                    payload.schedule_date_time = `${year}-${month}-${day} ${String(hours).padStart(2, '0')}:${mins} ${ampm}`;
+                }
+
+                await api.sendIndividualSMS(payload);
+                toast.success('SMS sent successfully!');
+                // Reset form
+                setFormData({ templateId: '', title: '', message: '', templateIdField: '', sendType: 'send_now', scheduleDateTime: '', sendBy: [] });
+                setSelectedRecipients([]);
+            } else if (activeTab === 'class') {
+                // Validate class and sections
+                if (!selectedClassId) {
+                    toast.error('Please select a class');
+                    setLoading(false);
+                    return;
+                }
+                if (selectedSections.length === 0) {
+                    toast.error('Please select at least one section');
+                    setLoading(false);
+                    return;
+                }
+
+                const payload = {
+                    class_send_type: formData.sendType === 'send_now' ? 'send_now' : 'schedule',
+                    class_title: formData.title,
+                    class_message: formData.message,
+                    class_id: parseInt(selectedClassId),
+                    user: selectedSections.map(s => parseInt(s)),
+                    class_send_by: formData.sendBy,
+                    class_template_id: formData.templateId || ''
+                };
+
+                if (formData.sendType === 'schedule' && formData.scheduleDateTime) {
+                    // Format: YYYY-MM-DD hh:mm AM/PM
+                    const dt = new Date(formData.scheduleDateTime);
+                    const day = String(dt.getDate()).padStart(2, '0');
+                    const month = String(dt.getMonth() + 1).padStart(2, '0');
+                    const year = dt.getFullYear();
+                    let hours = dt.getHours();
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12 || 12;
+                    const mins = String(dt.getMinutes()).padStart(2, '0');
+                    payload.schedule_date_time = `${year}-${month}-${day} ${String(hours).padStart(2, '0')}:${mins} ${ampm}`;
+                }
+
+                await api.sendClassSMS(payload);
+                toast.success('SMS sent successfully!');
+                // Reset form
+                setFormData({ templateId: '', title: '', message: '', templateIdField: '', sendType: 'send_now', scheduleDateTime: '', sendBy: [] });
+                setSelectedClassId('');
+                setSelectedSections([]);
+            } else {
+                // TODO: Handle other tabs
+                toast.success('SMS sent successfully!');
+            }
+        } catch (error) {
+            console.error('Error sending SMS:', error);
+            toast.error(error.message || 'Failed to send SMS');
+        } finally {
             setLoading(false);
-        }, 1000);
+        }
     };
 
     const charCount = formData.message.length;
@@ -77,18 +339,18 @@ const ComposeSMS = () => {
                             <div className="nav-tabs-custom">
                                 <ul className="nav nav-tabs">
                                     <li className="pull-left header">Send SMS</li>
-                                    {['group', 'individual', 'class', 'birthday'].map(tab => (
-                                        <li key={tab} className={activeTab === tab ? 'active' : ''}>
-                                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab(tab); }}>
-                                                {tab === 'birthday' ? "Today's Birthday" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                            </a>
-                                        </li>
-                                    ))}
                                     <li className="pull-right">
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs" style={{ marginTop: '5px' }}>
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
                                     </li>
+                                    {['class', 'individual', 'group'].map(tab => (
+                                        <li key={tab} className={`pull-right ${activeTab === tab ? 'active' : ''}`}>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab(tab); }}>
+                                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                            </a>
+                                        </li>
+                                    ))}
                                 </ul>
                                 <div className="tab-content">
                                     <form onSubmit={handleSubmit}>
@@ -136,17 +398,77 @@ const ComposeSMS = () => {
                                                 )}
                                                 {activeTab === 'individual' && (
                                                     <>
-                                                        <div className="input-group mb-2">
+                                                        <div className="form-group">
                                                             <select className="form-control" value={searchCategory} onChange={(e) => setSearchCategory(e.target.value)}>
                                                                 <option value="">Select</option>
-                                                                <option value="student">Students</option>
-                                                                <option value="parent">Guardians</option>
-                                                                <option value="staff">Staff</option>
+                                                                {messageToOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.name}</option>)}
                                                             </select>
-                                                            <input type="text" className="form-control" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-                                                            <span className="input-group-btn"><button className="btn btn-primary" type="button">Add</button></span>
                                                         </div>
-                                                        <div className="well" style={{ minHeight: '260px' }}><ul className="list-group">{selectedRecipients.map((r, i) => <li key={i} className="list-group-item">{r.name}</li>)}</ul></div>
+                                                        <div className="input-group">
+                                                            <input type="text" className="form-control" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                                                            <span className="input-group-btn"><button className="btn btn-primary" type="button" onClick={() => { if (selectedSearchResult) { handleSelectRecipient(selectedSearchResult); setSelectedSearchResult(null); } }}>Add</button></span>
+                                                        </div>
+
+                                                        {(searchLoading || searchQuery) && (
+                                                            <div className="well" style={{ minHeight: '150px', maxHeight: '200px', overflowY: 'auto', marginTop: '10px' }}>
+                                                                {searchLoading && <div className="text-center"><i className="fa fa-spinner fa-spin"></i> Searching...</div>}
+                                                                {!searchLoading && searchResults.length === 0 && searchQuery && <div className="text-muted">No results found</div>}
+                                                                {!searchLoading && searchResults.length > 0 && (
+                                                                    <ul className="list-group">
+                                                                        {searchResults.map((result, i) => (
+                                                                            <li key={i}
+                                                                                className={`list-group-item ${selectedSearchResult?.id === result.id ? 'active' : ''}`}
+                                                                                style={{ cursor: 'pointer' }}
+                                                                                onClick={() => setSelectedSearchResult(result)}>
+                                                                                {getResultDisplayName(result)}
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                )}
+                                                            </div>
+                                                        )}
+
+                                                        {/* Selected Recipients Table */}
+                                                        <div style={{ marginTop: '15px' }}>
+                                                            <b>Selected Recipients ({selectedRecipients.length})</b>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                placeholder="Filter selected..."
+                                                                value={selectedTableFilter}
+                                                                onChange={(e) => setSelectedTableFilter(e.target.value)}
+                                                                style={{ marginTop: '5px', marginBottom: '5px' }}
+                                                            />
+                                                            <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                                                                <table className="table table-bordered table-striped table-condensed">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>#</th>
+                                                                            <th>Name</th>
+                                                                            <th>Action</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {selectedRecipients
+                                                                            .filter(r => r.name.toLowerCase().includes(selectedTableFilter.toLowerCase()))
+                                                                            .map((r, i) => (
+                                                                                <tr key={i}>
+                                                                                    <td>{i + 1}</td>
+                                                                                    <td>{r.name}</td>
+                                                                                    <td>
+                                                                                        <button type="button" className="btn btn-xs btn-danger" onClick={() => setSelectedRecipients(prev => prev.filter((_, idx) => idx !== i))}>
+                                                                                            <i className="fa fa-remove"></i>
+                                                                                        </button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ))}
+                                                                        {selectedRecipients.length === 0 && (
+                                                                            <tr><td colSpan="3" className="text-center text-muted">No recipients selected</td></tr>
+                                                                        )}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
                                                     </>
                                                 )}
                                                 {activeTab === 'class' && (
@@ -157,7 +479,7 @@ const ComposeSMS = () => {
                                                         </select>
                                                         <div className="well" style={{ minHeight: '260px' }}>
                                                             <b>Section</b>
-                                                            {sections.map(s => <div key={s.id} className="checkbox"><label><input type="checkbox" /> {s.section}</label></div>)}
+                                                            {sections.map(s => <div key={s.section_id} className="checkbox"><label><input type="checkbox" checked={selectedSections.includes(s.section_id)} onChange={() => handleSectionCheckbox(s.section_id)} /> {s.section}</label></div>)}
                                                         </div>
                                                     </>
                                                 )}
@@ -172,12 +494,12 @@ const ComposeSMS = () => {
                                             </div>
                                         </div>
                                         <div className="box-footer">
-                                            <div className="pull-right">
+                                            <div className="pull-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                                 {activeTab !== 'birthday' && (
                                                     <>
-                                                        <label className="radio-inline"><input type="radio" name="sendType" value="send_now" checked={formData.sendType === 'send_now'} onChange={handleInputChange} /> Send Now</label>
-                                                        <label className="radio-inline"><input type="radio" name="sendType" value="schedule" checked={formData.sendType === 'schedule'} onChange={handleInputChange} /> Schedule</label>
-                                                        {formData.sendType === 'schedule' && <input type="datetime-local" className="form-control" style={{ display: 'inline-block', width: 'auto', marginRight: '10px' }} name="scheduleDateTime" value={formData.scheduleDateTime} onChange={handleInputChange} />}
+                                                        <label className="radio-inline" style={{ marginRight: '10px' }}><input type="radio" name="sendType" value="send_now" checked={formData.sendType === 'send_now'} onChange={handleInputChange} /> Send Now</label>
+                                                        <label className="radio-inline" style={{ marginRight: '10px' }}><input type="radio" name="sendType" value="schedule" checked={formData.sendType === 'schedule'} onChange={handleInputChange} /> Schedule</label>
+                                                        {formData.sendType === 'schedule' && <input type="datetime-local" className="form-control" style={{ display: 'inline-block', width: 'auto' }} name="scheduleDateTime" value={formData.scheduleDateTime} onChange={handleInputChange} />}
                                                     </>
                                                 )}
                                                 <button type="submit" className="btn btn-primary" disabled={loading}><i className="fa fa-envelope-o"></i> {loading ? 'Sending...' : 'Submit'}</button>

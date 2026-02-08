@@ -14,10 +14,8 @@ const NoticeBoard = () => {
     const [loading, setLoading] = useState(false);
     const [userRole, setUserRole] = useState(null);
     const [selectedNotification, setSelectedNotification] = useState(null);
-    const [notificationHtml, setNotificationHtml] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [roleId, setRoleId] = useState('7'); // Default to 7 if not found
-    const [detailLoading, setDetailLoading] = useState(false);
 
     const fetchNotifications = async () => {
         setLoading(true);
@@ -62,28 +60,6 @@ const NoticeBoard = () => {
     const openDetails = async (notification) => {
         setSelectedNotification(notification);
         setIsSidebarOpen(true);
-        setNotificationHtml(null); // Clear previous content
-        setDetailLoading(true);
-
-        try {
-            console.log('Fetching details for:', notification.id, 'with roleId:', roleId);
-            const response = await api.getNotificationDetail(notification.id, roleId);
-            console.log('Notification Detail Response:', response);
-
-            if (response && response.status && response.page) {
-                setNotificationHtml(response.page);
-            } else {
-                console.warn('Response status is success but "page" is missing or status is false');
-                // Fallback to basic info if response is not as expected
-                setNotificationHtml(`<h3>${notification.title}</h3><p>${notification.message}</p>`);
-            }
-        } catch (error) {
-            console.error('Error fetching notification detail:', error);
-            // Fallback to basic info if API fails
-            setNotificationHtml(`<h3>${notification.title}</h3><p>${notification.message}</p>`);
-        } finally {
-            setDetailLoading(false);
-        }
     };
 
     const closeDetails = (e) => {
@@ -209,6 +185,9 @@ const NoticeBoard = () => {
                                         <Link to="/admin/notification/add" className="btn btn-primary btn-sm">
                                             <i className="fa fa-plus"></i> Post New Message
                                         </Link>
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm" style={{ marginLeft: '5px' }}>
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs mright5 hide-desktop">
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
@@ -224,21 +203,20 @@ const NoticeBoard = () => {
                                         <div className="alert alert-info" style={{ marginTop: '10px' }}>No Record Found</div>
                                     ) : (
                                         notifications.map((notification) => (
-                                            <div key={notification.id} className="email-info d-flex" style={{ borderBottom: '1px solid #f4f4f4', padding: '10px 0' }}>
-                                                <a href="#" className="navbar-toggle2 force-visible mail-sidebar w-100" onClick={(e) => { e.preventDefault(); openDetails(notification); }} style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
-                                                    <h4 className="h4-title" style={{ margin: '0 0 5px 0', fontSize: '15px' }}>
+                                            <div key={notification.id} className="email-info d-flex" style={{ borderBottom: '1px solid #f4f4f4', padding: '10px 0', cursor: 'pointer' }} onClick={() => openDetails(notification)}>
+                                                <div style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
+                                                    <h4 className="h4-title" style={{ margin: '0', fontSize: '15px' }}>
                                                         <i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i>
                                                         {notification.title}
                                                     </h4>
-                                                    <div className="email-discription" style={{ color: '#666', fontSize: '13px' }} dangerouslySetInnerHTML={{ __html: notification.message.substring(0, 100) + '...' }}></div>
-                                                </a>
-                                                <div className="d-flex ptt10 hover-show" style={{ marginLeft: '10px' }}>
+                                                </div>
+                                                <div className="hover-show" style={{ marginLeft: '10px', display: 'inline-flex', gap: '5px', alignItems: 'center' }}>
                                                     {notification.created_id == user_id && (
                                                         <>
-                                                            <Link to={`/admin/notification/edit/${notification.id}`} className="" data-toggle="tooltip" title="Edit" style={{ marginRight: '5px', color: '#666' }}>
+                                                            <Link to={`/admin/notification/edit/${notification.id}`} className="" data-toggle="tooltip" title="Edit" style={{ color: '#666' }} onClick={(e) => e.stopPropagation()}>
                                                                 <i className="fa fa-pencil"></i>
                                                             </Link>
-                                                            <Link to="#" className="" data-toggle="tooltip" title="Delete" onClick={(e) => { e.preventDefault(); handleDelete(notification.id); }} style={{ color: '#666' }}>
+                                                            <Link to="#" className="" data-toggle="tooltip" title="Delete" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(notification.id); }} style={{ color: '#666' }}>
                                                                 <i className="fa fa-remove"></i>
                                                             </Link>
                                                         </>
@@ -249,35 +227,77 @@ const NoticeBoard = () => {
                                     )}
                                 </div>
 
-                                {/* Sidebar Container / Drawer */}
-                                <aside className={`sidebar-container ${isSidebarOpen ? 'open' : ''}`} role="dialog">
-                                    <article className="email-collection">
-                                        <a href="#" className="mail-sidebar mail-close-btn" onClick={closeDetails}>
-                                            <i className="fa fa-times fs-2"></i>
+                                {/* Notice Detail Panel */}
+                                <aside className={`notice-detail-panel ${isSidebarOpen ? 'open' : ''}`} role="dialog">
+                                    <div className="notice-detail-content">
+                                        <a href="#" className="notice-close-btn" onClick={closeDetails}>
+                                            <i className="fa fa-times"></i>
                                         </a>
                                         {selectedNotification && (
-                                            <div id="notificationdata" style={{ padding: '20px' }}>
-                                                {detailLoading ? (
-                                                    <div className="text-center p20">
-                                                        <i className="fa fa-spinner fa-spin fa-2x"></i>
-                                                        <p>Loading details...</p>
+                                            <div id="notificationdata" style={{ padding: '0' }}>
+                                                <div>
+                                                    {/* Header with back arrow and title */}
+                                                    <div style={{ padding: '15px 20px', borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                        <a href="#" onClick={closeDetails} style={{ color: '#00bcd4', fontSize: '24px' }}>
+                                                            <i className="fa fa-arrow-left"></i>
+                                                        </a>
+                                                        <h3 style={{ margin: 0, flex: 1, fontSize: '18px', fontWeight: 500 }}>{selectedNotification.title}</h3>
                                                     </div>
-                                                ) : notificationHtml ? (
-                                                    <div dangerouslySetInnerHTML={{ __html: notificationHtml }}></div>
-                                                ) : (
-                                                    <div>
-                                                        <h3>{selectedNotification.title}</h3>
-                                                        <ul className="list-unstyled">
-                                                            <li><i className="fa fa-calendar-check-o"></i> Publish Date: {selectedNotification.publish_date}</li>
-                                                            <li><i className="fa fa-calendar"></i> Notice Date: {selectedNotification.date}</li>
-                                                            <li><i className="fa fa-user"></i> Created By: {selectedNotification.created_by}</li>
-                                                        </ul>
-                                                        <div className="email-body" style={{ marginTop: '20px' }} dangerouslySetInnerHTML={{ __html: selectedNotification.message }}></div>
+
+                                                    {/* Message content */}
+                                                    <div style={{ padding: '20px' }}>
+                                                        <div style={{ marginBottom: '20px', fontSize: '15px', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedNotification.message }}></div>
+
+                                                        {/* Date information */}
+                                                        <div style={{ display: 'flex', gap: '30px', marginBottom: '20px', fontSize: '14px' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <i className="fa fa-calendar" style={{ color: '#666' }}></i>
+                                                                <span>Publish Date: {selectedNotification.publish_date}</span>
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <i className="fa fa-calendar" style={{ color: '#666' }}></i>
+                                                                <span>Notice Date: {selectedNotification.date}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Created By */}
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', fontSize: '14px' }}>
+                                                            <i className="fa fa-user" style={{ color: '#666' }}></i>
+                                                            <span>Created By: {selectedNotification.created_by} ({selectedNotification.created_id})</span>
+                                                        </div>
+
+                                                        {/* Divider */}
+                                                        <hr style={{ margin: '20px 0', borderColor: '#e0e0e0' }} />
+
+                                                        {/* Message To section */}
+                                                        <div>
+                                                            <h4 style={{ fontSize: '16px', marginBottom: '15px', fontWeight: 500 }}>Message To</h4>
+                                                            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                                                                {selectedNotification.visible_staff === 'Yes' && (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                                                        <i className="fa fa-users" style={{ color: '#666' }}></i>
+                                                                        <span>Admin</span>
+                                                                    </div>
+                                                                )}
+                                                                {selectedNotification.visible_student === 'Yes' && (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                                                        <i className="fa fa-user" style={{ color: '#666' }}></i>
+                                                                        <span>Student</span>
+                                                                    </div>
+                                                                )}
+                                                                {selectedNotification.visible_parent === 'Yes' && (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                                                        <i className="fa fa-user" style={{ color: '#666' }}></i>
+                                                                        <span>Parent</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                )}
+                                                </div>
                                             </div>
                                         )}
-                                    </article>
+                                    </div>
                                 </aside>
                             </div>
                         </div>
@@ -286,7 +306,7 @@ const NoticeBoard = () => {
             </div>
             <Footer />
             <style>{`
-                .sidebar-container {
+                .notice-detail-panel {
                     position: fixed;
                     top: 0;
                     right: -500px;
@@ -298,21 +318,23 @@ const NoticeBoard = () => {
                     transition: all 0.3s ease;
                     overflow-y: auto;
                 }
-                .sidebar-container.open {
+                .notice-detail-panel.open {
                     right: 0;
                 }
-                .mail-close-btn {
+                .notice-close-btn {
                     position: absolute;
                     top: 10px;
                     right: 15px;
                     font-size: 20px;
                     color: #444;
-                }
-                .email-info:hover .hover-show {
-                    display: block !important;
+                    z-index: 10;
                 }
                 .hover-show {
-                    display: none !important;
+                    opacity: 0;
+                    transition: opacity 0.2s ease;
+                }
+                .email-info:hover .hover-show {
+                    opacity: 1;
                 }
                 .email-info:hover {
                     background-color: #f9f9f9;

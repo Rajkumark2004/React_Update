@@ -3881,6 +3881,252 @@ export const api = {
         }
     },
 
+    // Hostel Room API
+    getHostelRoomData: async () => {
+        console.log('API Request: Get Hostel Room Data');
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/Hostelroom/index`);
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log('Get Hostel Room Data Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Hostel Room Data Error:', error);
+            throw error;
+        }
+    },
+
+    createHostelRoom: async (data) => {
+        console.log('API Request: Create Hostel Room', data);
+        try {
+            const response = await fetch(`${API_BASE}/admin/Hostelroom/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...data, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Create Hostel Room Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Create Hostel Room Error:', error);
+            throw error;
+        }
+    },
+
+    updateHostelRoom: async (data) => {
+        console.log('API Request: Update Hostel Room', data);
+        try {
+            const response = await fetch(`${API_BASE}/admin/Hostelroom/edit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...data, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Update Hostel Room Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Update Hostel Room Error:', error);
+            throw error;
+        }
+    },
+
+    deleteHostelRoom: async (id) => {
+        console.log('API Request: Delete Hostel Room', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/Hostelroom/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Delete Hostel Room Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Delete Hostel Room Error:', error);
+            throw error;
+        }
+    },
+
+    getStudentHostelDetails: async () => {
+        console.log('API Request: Get Student Hostel Details');
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/Hostelroom/studenthosteldetails`);
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log('Get Student Hostel Details Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Student Hostel Details Error:', error);
+            throw error;
+        }
+    },
+
+    getRoomTypeData: async () => {
+        console.log('API Request: Get Room Type Data');
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/admin/Roomtype/index`);
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log('Get Room Type Data Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Room Type Data Error:', error);
+            throw error;
+        }
+    },
+
+    createRoomType: async (data) => {
+        console.log('API Request: Create Room Type', data);
+        try {
+            const response = await fetch(`${API_BASE}/admin/Roomtype/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...data, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Create Room Type Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Create Room Type Error:', error);
+            throw error;
+        }
+    },
+
+    updateRoomType: async (data) => {
+        console.log('API Request: Update Room Type', data);
+        try {
+            const response = await fetch(`${API_BASE}/admin/Roomtype/edit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...data, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Update Room Type Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Update Room Type Error:', error);
+            throw error;
+        }
+    },
+
+    deleteRoomType: async (id) => {
+        console.log('API Request: Delete Room Type', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/Roomtype/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Delete Room Type Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Delete Room Type Error:', error);
+            throw error;
+        }
+    },
+
+    getHostelData: async () => {
+        console.log('API Request: Get Hostel Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/hostel/index`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ session_id: getSessionId() })
+            });
+            const data = await response.json();
+            console.log('Get Hostel Data Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Hostel Data Error:', error);
+            throw error;
+        }
+    },
+
+    createHostel: async (data) => {
+        console.log('API Request: Create Hostel', data);
+        try {
+            const response = await fetch(`${API_BASE}/admin/hostel/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...data, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Create Hostel Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Create Hostel Error:', error);
+            throw error;
+        }
+    },
+
+    updateHostel: async (data) => {
+        console.log('API Request: Update Hostel', data);
+        try {
+            const response = await fetch(`${API_BASE}/admin/hostel/edit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ...data, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Update Hostel Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Update Hostel Error:', error);
+            throw error;
+        }
+    },
+
+    deleteHostel: async (id) => {
+        console.log('API Request: Delete Hostel', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/hostel/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id, session_id: getSessionId() })
+            });
+            const result = await response.json();
+            console.log('Delete Hostel Response:', result);
+            return result;
+        } catch (error) {
+            console.error('Delete Hostel Error:', error);
+            throw error;
+        }
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // Search Payment API
     searchPayment: async (data) => {
         console.log('API Request: Search Payment', data);
@@ -5250,6 +5496,93 @@ export const api = {
         }
     },
 
+    getSMSCompose: async () => {
+        console.log('API Request: Get SMS Compose Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/compose_sms`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get SMS Compose Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching SMS compose data:', error);
+            throw error;
+        }
+    },
+
+    getWhatsAppCompose: async () => {
+        console.log('API Request: Get WhatsApp Compose Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/sendwhatsapp/compose_sms`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get WhatsApp Compose Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching WhatsApp compose data:', error);
+            throw error;
+        }
+    },
+
+    sendWhatsAppGroup: async (payload) => {
+        console.log('API Request: Send WhatsApp Group Message', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/sendwhatsapp/send_group_sms`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Send WhatsApp Group Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error sending WhatsApp group message:', error);
+            throw error;
+        }
+    },
+
+    sendWhatsAppIndividual: async (payload) => {
+        console.log('API Request: Send WhatsApp Individual Message', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/sendwhatsapp/send_individual_sms`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Send WhatsApp Individual Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error sending WhatsApp individual message:', error);
+            throw error;
+        }
+    },
+
+    sendWhatsAppClass: async (payload) => {
+        console.log('API Request: Send WhatsApp Class Message', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/sendwhatsapp/send_class_sms`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Send WhatsApp Class Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error sending WhatsApp class message:', error);
+            throw error;
+        }
+    },
+
     searchMailSMS: async (keyword, category) => {
         console.log('API Request: Search MailSMS', { keyword, category });
         try {
@@ -5316,6 +5649,99 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Error sending group email:', error);
+            throw error;
+        }
+    },
+
+    sendClassEmail: async (formData) => {
+        console.log('API Request: Send Class Email', formData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/send_class`, {
+                method: 'POST',
+                body: formData, // FormData object
+            });
+            const data = await response.json();
+            console.log('Send Class Email Response:', data);
+
+            // For this API: status 0 = success, status 1 = failure
+            if (!response.ok || data.status === 1 || data.status === '1') {
+                throw new Error(data.message || 'Failed to send email');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error sending class email:', error);
+            throw error;
+        }
+    },
+
+    sendGroupSMS: async (payload) => {
+        console.log('API Request: Send Group SMS', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/send_group_sms`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Send Group SMS Response:', data);
+
+            // For this API: status 0 = success, status 1 = failure
+            if (!response.ok || data.status === 1 || data.status === '1') {
+                throw new Error(data.message || 'Failed to send SMS');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error sending group SMS:', error);
+            throw error;
+        }
+    },
+
+    sendIndividualSMS: async (payload) => {
+        console.log('API Request: Send Individual SMS', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/send_individual_sms`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Send Individual SMS Response:', data);
+
+            // For this API: status 0 = success, status 1 = failure
+            if (!response.ok || data.status === 1 || data.status === '1') {
+                throw new Error(data.message || 'Failed to send SMS');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error sending individual SMS:', error);
+            throw error;
+        }
+    },
+
+    sendClassSMS: async (payload) => {
+        console.log('API Request: Send Class SMS', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/mailsms/send_class_sms`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Send Class SMS Response:', data);
+
+            // For this API: status 0 = success, status 1 = failure
+            if (!response.ok || data.status === 1 || data.status === '1') {
+                throw new Error(data.message || 'Failed to send SMS');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error sending class SMS:', error);
             throw error;
         }
     },

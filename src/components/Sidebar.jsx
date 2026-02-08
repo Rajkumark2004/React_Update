@@ -44,6 +44,9 @@ const Sidebar = ({
         // Messages - active for /admin/notification and related paths
         if (menuUrl === '/admin/notification' && (currentPath.startsWith('/admin/notification') || currentPath.startsWith('/admin/mail'))) return true;
 
+        // Hostel - active for /admin/hostelroom and /admin/studenthostelreport paths
+        if (menuUrl === '/admin/hostelroom' && (currentPath.startsWith('/admin/hostelroom') || currentPath.startsWith('/admin/studenthostelreport'))) return true;
+
         // Exact match for any other routes
         return currentPath === menuUrl;
     };
@@ -83,7 +86,14 @@ const Sidebar = ({
         '/admin/incomehead',
         '/admin/expense',
         '/admin/expensehead',
-        '/admin/onlinecourse'
+        '/admin/onlinecourse',
+        '/admin/hostelroom',
+        '/admin/hostelroom/edit',
+        '/admin/studenthostelreport',
+        '/admin/roomtype',
+        '/admin/roomtype/edit',
+        '/admin/hostel',
+        '/admin/hostel/edit'
     ];
 
     // Default menus - only SIS and System Settings have working pages
@@ -103,7 +113,7 @@ const Sidebar = ({
         { id: 13, icon: 'certificate.png', label: 'Certificate', url: '#' },
         { id: 14, icon: 'income.png', label: 'Income', url: '/admin/income' },
         { id: 15, icon: 'expenses.png', label: 'Expenses', url: '/admin/expense' },
-        { id: 16, icon: 'hostle.png', label: 'Hostel', url: '#' },
+        { id: 16, icon: 'hostle.png', label: 'Hostel', url: '/admin/hostelroom' },
         { id: 17, icon: 'reports.png', label: 'Reports', url: '#' },
         { id: 18, icon: 'settings.png', label: 'System Settings', url: '/settings' }
     ];
