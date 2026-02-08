@@ -11,7 +11,7 @@ const StaffLeaveRequest = () => {
 
     const [leaveRequests, setLeaveRequests] = useState([]);
     const [roles, setRoles] = useState([]);
-    const [staffByRole, setStaffByRole] = useState({});
+    const [staffByRole, setStaffByRole] = useState([]); // Array to hold staff list for dropdown
     const [leaveTypes, setLeaveTypes] = useState([]);
 
     const [showAddModal, setShowAddModal] = useState(false);
@@ -19,6 +19,12 @@ const StaffLeaveRequest = () => {
     const [selectedLeave, setSelectedLeave] = useState(null);
     const [isEdit, setIsEdit] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    // Detail Modal Status/Remark
+    const [detailStatus, setDetailStatus] = useState({
+        status: '',
+        remark: ''
+    });
 
     // Form State (Add/Edit)
     const [formData, setFormData] = useState({
@@ -38,9 +44,9 @@ const StaffLeaveRequest = () => {
         try {
             const response = await api.getStaffLeaveIndex();
             if (response && response.status === 'success') {
-                setLeaveRequests(response.leaveRequests || []);
-                setRoles(response.rolelist || []);
-                setLeaveTypes(response.leavetypes || []);
+                setLeaveRequests(response.leave_request || []);
+                setRoles(response.staffrole || []);
+                setLeaveTypes(response.leavetype || []);
             }
         } catch (error) {
             console.error('Error fetching initial leave data:', error);
@@ -65,10 +71,22 @@ const StaffLeaveRequest = () => {
         }
     };
 
-    const handleRoleChange = (e) => {
-        const role = e.target.value;
-        setFormData({ ...formData, role: role, empname: '' });
-        // Fetch staff for this role if not already loaded or if API exists
+    const handleRoleChange = async (e) => {
+        const roleId = e.target.value;
+        setFormData({ ...formData, role: roleId, empname: '' }); // empname reset
+        setStaffByRole([]); // Clear previous list
+
+        if (roleId) {
+            try {
+                const response = await api.getEmployeeByRole(roleId);
+                if (response && response.data) {
+                    setStaffByRole(response.data);
+                }
+            } catch (error) {
+                console.error('Error fetching staff by role:', error);
+                toast.error('Failed to fetch staff list');
+            }
+        }
     };
 
     const handleAddLeave = () => {
@@ -106,6 +124,10 @@ const StaffLeaveRequest = () => {
 
     const handleViewDetails = (leave) => {
         setSelectedLeave(leave);
+        setDetailStatus({
+            status: leave.status,
+            remark: leave.admin_remark || ''
+        });
         setShowDetailModal(true);
     };
 
@@ -121,8 +143,12 @@ const StaffLeaveRequest = () => {
         e.preventDefault();
         setLoading(true);
         try {
+            // Find role name from roles array using ID
+            const roleObj = roles.find(r => r.id == formData.role);
+            const roleName = roleObj ? roleObj.type : formData.role;
+
             const payload = {
-                role: formData.role,
+                role: roleName,
                 empname: formData.empname,
                 applieddate: formData.applieddate.split('-').reverse().join('/'),
                 leave_from_date: formData.leave_from_date.split('-').reverse().join('/'),
@@ -151,9 +177,27 @@ const StaffLeaveRequest = () => {
 
     const handleUpdateStatus = async (e) => {
         e.preventDefault();
-        // Extract status and remark from form
-        toast.success('Status updated successfully');
-        setShowDetailModal(false);
+        setLoading(true);
+        try {
+            const payload = {
+                leave_request_id: selectedLeave.id,
+                status: detailStatus.status,
+                detailremark: detailStatus.remark
+            };
+            const response = await api.updateStaffLeaveStatus(payload);
+            if (response && (response.status === 'success' || response.status === true)) {
+                toast.success('Status updated successfully');
+                setShowDetailModal(false);
+                fetchInitialData();
+            } else {
+                toast.error(response?.message || 'Failed to update status');
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            toast.error('An error occurred while updating status');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -274,7 +318,7 @@ const StaffLeaveRequest = () => {
                                                 required
                                             >
                                                 <option value="">Select</option>
-                                                {roles.map(r => <option key={r.id} value={r.type}>{r.type}</option>)}
+                                                {roles.map(r => <option key={r.id} value={r.id}>{r.type}</option>)}
                                             </select>
                                         </div>
                                         <div className="form-group col-md-6">
@@ -284,10 +328,14 @@ const StaffLeaveRequest = () => {
                                                 value={formData.empname}
                                                 onChange={(e) => setFormData({ ...formData, empname: e.target.value })}
                                                 required
+                                                disabled={!formData.role}
                                             >
                                                 <option value="">Select</option>
-                                                {/* In a real scenario, we'd have a staff list. 
-                                                    For now, using resultList from attendance if available or simplified mapping. */}
+                                                {staffByRole.map(staff => (
+                                                    <option key={staff.id} value={staff.id}>
+                                                        {staff.name} {staff.surname} ({staff.employee_id})
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div className="form-group col-md-6">
@@ -369,8 +417,17 @@ const StaffLeaveRequest = () => {
                                                 <input
                                                     type="radio"
                                                     name="addstatus"
-                                                    value="approved"
-                                                    checked={formData.status === 'approved'}
+                                                    value="pending"
+                                                    checked={formData.status === 'pending'}
+                                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                                /> Pending
+                                            </label>
+                                            <label className="radio-inline">
+                                                <input
+                                                    type="radio"
+                                                    name="addstatus"
+                                                    value="approve"
+                                                    checked={formData.status === 'approve'}
                                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                                 /> Approved
                                             </label>
@@ -378,8 +435,8 @@ const StaffLeaveRequest = () => {
                                                 <input
                                                     type="radio"
                                                     name="addstatus"
-                                                    value="disapproved"
-                                                    checked={formData.status === 'disapproved'}
+                                                    value="disapprove"
+                                                    checked={formData.status === 'disapprove'}
                                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                                                 /> Disapprove
                                             </label>
@@ -431,13 +488,31 @@ const StaffLeaveRequest = () => {
                                                     <th>Status</th>
                                                     <td>
                                                         <label className="radio-inline">
-                                                            <input type="radio" name="status" value="pending" defaultChecked={selectedLeave.status === 'pending'} /> Pending
+                                                            <input
+                                                                type="radio"
+                                                                name="status"
+                                                                value="pending"
+                                                                checked={detailStatus.status === 'pending'}
+                                                                onChange={(e) => setDetailStatus({ ...detailStatus, status: e.target.value })}
+                                                            /> Pending
                                                         </label>
                                                         <label className="radio-inline">
-                                                            <input type="radio" name="status" value="approved" defaultChecked={selectedLeave.status === 'approved'} /> Approve
+                                                            <input
+                                                                type="radio"
+                                                                name="status"
+                                                                value="approve"
+                                                                checked={detailStatus.status === 'approve'}
+                                                                onChange={(e) => setDetailStatus({ ...detailStatus, status: e.target.value })}
+                                                            /> Approve
                                                         </label>
                                                         <label className="radio-inline">
-                                                            <input type="radio" name="status" value="disapproved" defaultChecked={selectedLeave.status === 'disapproved'} /> Disapprove
+                                                            <input
+                                                                type="radio"
+                                                                name="status"
+                                                                value="disapprove"
+                                                                checked={detailStatus.status === 'disapprove'}
+                                                                onChange={(e) => setDetailStatus({ ...detailStatus, status: e.target.value })}
+                                                            /> Disapprove
                                                         </label>
                                                     </td>
                                                     <th>Reason</th>
@@ -445,8 +520,13 @@ const StaffLeaveRequest = () => {
                                                 </tr>
                                                 <tr>
                                                     <th>Note</th>
-                                                    <td colspan="3">
-                                                        <textarea className="form-control" defaultValue={selectedLeave.admin_remark} rows="2"></textarea>
+                                                    <td colSpan="3">
+                                                        <textarea
+                                                            className="form-control"
+                                                            value={detailStatus.remark}
+                                                            onChange={(e) => setDetailStatus({ ...detailStatus, remark: e.target.value })}
+                                                            rows="2"
+                                                        ></textarea>
                                                     </td>
                                                 </tr>
                                                 <tr>

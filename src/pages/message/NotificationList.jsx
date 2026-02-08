@@ -13,10 +13,23 @@ const NotificationList = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [roleId, setRoleId] = useState('7'); // Default to 7 if not found
 
     const fetchData = async () => {
         setLoading(true);
         try {
+            // Extract role ID from user login response
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                // Extract first role ID from roles object (e.g., {"Super Admin": "7"})
+                const roles = user.roles || {};
+                const extractedRoleId = Object.values(roles)[0];
+                if (extractedRoleId) {
+                    setRoleId(extractedRoleId);
+                }
+            }
+
             const response = await api.getNotifications();
             if (response && response.status === true && response.data) {
                 setNotifications(response.data.notification_list || []);

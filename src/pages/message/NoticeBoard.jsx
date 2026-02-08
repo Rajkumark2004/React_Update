@@ -4,42 +4,60 @@ import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 import '../../utils/include_files';
 
 const NoticeBoard = () => {
     const navigate = useNavigate();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [userRole, setUserRole] = useState(null);
     const [selectedNotification, setSelectedNotification] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [roleId, setRoleId] = useState('7'); // Default to 7 if not found
 
-    // Mock Data for Notifications
-    const [notifications] = useState([
-        {
-            id: 1,
-            title: 'School Sports Day',
-            message: '<p>The annual sports day will be held on 25th March. All students are requested to participate.</p>',
-            publish_date: '2024-03-20',
-            created_id: 1 // Assuming 1 is current user for demo
-        },
-        {
-            id: 2,
-            title: 'Parent Teacher Meeting',
-            message: '<p>PTM is scheduled for next Saturday. Please attend.</p>',
-            publish_date: '2024-03-15',
-            created_id: 2
-        },
-        {
-            id: 3,
-            title: 'Holiday Announcement',
-            message: '<p>School will remain closed on Monday due to public holiday.</p>',
-            publish_date: '2024-03-10',
-            created_id: 1
+    const fetchNotifications = async () => {
+        setLoading(true);
+        try {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                // Extract first role ID from roles object (e.g., {"Super Admin": "7"})
+                const roles = user.roles || {};
+                const roleId = Object.values(roles)[0];
+
+                if (roleId) {
+                    setRoleId(roleId);
+                    const response = await api.getNoticeBoardList(roleId);
+                    if (response && response.status && response.data) {
+                        setNotifications(response.data.notificationlist || []);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        } finally {
+            setLoading(false);
         }
-    ]);
+    };
 
-    // Mock User ID
-    const user_id = 1;
+    React.useEffect(() => {
+        fetchNotifications();
+    }, []);
 
-    const openDetails = (notification) => {
+    // Get current user ID from localStorage
+    const getUserId = () => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            return user.id;
+        }
+        return null;
+    };
+    const user_id = getUserId();
+
+    const openDetails = async (notification) => {
         setSelectedNotification(notification);
         setIsSidebarOpen(true);
     };
@@ -48,6 +66,23 @@ const NoticeBoard = () => {
         if (e) e.preventDefault();
         setIsSidebarOpen(false);
         setSelectedNotification(null);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this?')) {
+            try {
+                const response = await api.deleteNoticeBoard(id, roleId);
+                if (response && (response.status === true || response.status === 'success')) {
+                    toast.success('Notification deleted successfully');
+                    fetchNotifications(); // Refresh list
+                } else {
+                    toast.error('Failed to delete notification');
+                }
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+                toast.error('An error occurred while deleting');
+            }
+        }
     };
 
     return (
@@ -78,30 +113,30 @@ const NoticeBoard = () => {
                                         </Link>
                                     </li>
                                     <li>
-                                        <Link to="/admin/mail">
+                                        <Link to="/admin/mailsms/compose">
                                             <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/communication/2.png" alt="icon2" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} />
                                             Send Email
                                         </Link>
                                     </li>
-                                    {/* <li>
+                                    <li>
                                         <Link to="/admin/mailsms/compose_sms">
                                             <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/communication/3.png" alt="icon3" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} />
                                             Send SMS
                                         </Link>
-                                    </li> */}
-                                    {/* <li>
+                                    </li>
+                                    <li>
                                         <Link to="/admin/sendwhatsapp/compose_sms">
                                             <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/communication/3.png" alt="icon2" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} />
                                             Send Whatsapp
                                         </Link>
-                                    </li> */}
+                                    </li>
                                     <li>
                                         <Link to="/admin/notification_class/index">
                                             <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/communication/1.png" alt="icon7" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} />
                                             Circular
                                         </Link>
                                     </li>
-                                    <li>
+                                    {/*} <li>
                                         <Link to="/admin/mail/email_sms_log">
                                             <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/communication/4.png" alt="icon4" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} />
                                             Email / SMS Log
@@ -113,12 +148,12 @@ const NoticeBoard = () => {
                                             Schedule Email SMS Log
                                         </Link>
                                     </li>
-                                    {/* <li>
+                                     <li>
                                         <Link to="/student/bulkmail">
                                             <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/communication/6.png" alt="icon6" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} />
                                             Login Credentials Send
                                         </Link>
-                                    </li> */}
+                                    </li> 
                                     <li>
                                         <Link to="/admin/mail/send_reminders">
                                             <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/fees/fr.png" alt="icon6" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} />
@@ -136,7 +171,7 @@ const NoticeBoard = () => {
                                             <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/communication/8.png" alt="icon7" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} />
                                             SMS Template
                                         </Link>
-                                    </li>
+                                    </li>*/}
                                 </ul>
                             </div>
                         </div>
@@ -147,34 +182,41 @@ const NoticeBoard = () => {
                                 <div className="box-header with-border">
                                     <h3 className="box-title"><i className="fa fa-commenting-o"></i> Notice Board</h3>
                                     <div className="box-tools pull-right">
-                                        <Link to="/admin/notification_class/add" className="btn btn-primary btn-sm">
+                                        <Link to="/admin/notification/add" className="btn btn-primary btn-sm">
                                             <i className="fa fa-plus"></i> Post New Message
                                         </Link>
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm" style={{ marginLeft: '5px' }}>
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs mright5 hide-desktop">
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
                                     </div>
                                 </div>
                                 <div className="box-body pt0">
-                                    {notifications.length === 0 ? (
-                                        <div className="alert alert-info">No Record Found</div>
+                                    {loading ? (
+                                        <div className="text-center p10">
+                                            <i className="fa fa-spinner fa-spin fa-2x"></i>
+                                            <p>Loading notifications...</p>
+                                        </div>
+                                    ) : notifications.length === 0 ? (
+                                        <div className="alert alert-info" style={{ marginTop: '10px' }}>No Record Found</div>
                                     ) : (
                                         notifications.map((notification) => (
-                                            <div key={notification.id} className="email-info d-flex" style={{ borderBottom: '1px solid #f4f4f4', padding: '10px 0' }}>
-                                                <a href="#" className="navbar-toggle2 force-visible mail-sidebar w-100" onClick={(e) => { e.preventDefault(); openDetails(notification); }} style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
-                                                    <h4 className="h4-title" style={{ margin: '0 0 5px 0', fontSize: '15px' }}>
+                                            <div key={notification.id} className="email-info d-flex" style={{ borderBottom: '1px solid #f4f4f4', padding: '10px 0', cursor: 'pointer' }} onClick={() => openDetails(notification)}>
+                                                <div style={{ textDecoration: 'none', color: 'inherit', flex: 1 }}>
+                                                    <h4 className="h4-title" style={{ margin: '0', fontSize: '15px' }}>
                                                         <i className="fa fa-envelope-o" style={{ marginRight: '5px' }}></i>
                                                         {notification.title}
                                                     </h4>
-                                                    <div className="email-discription" style={{ color: '#666', fontSize: '13px' }} dangerouslySetInnerHTML={{ __html: notification.message.substring(0, 100) + '...' }}></div>
-                                                </a>
-                                                <div className="d-flex ptt10 hover-show" style={{ marginLeft: '10px' }}>
-                                                    {notification.created_id === user_id && (
+                                                </div>
+                                                <div className="hover-show" style={{ marginLeft: '10px', display: 'inline-flex', gap: '5px', alignItems: 'center' }}>
+                                                    {notification.created_id == user_id && (
                                                         <>
-                                                            <Link to={`/admin/notification/edit/${notification.id}`} className="" data-toggle="tooltip" title="Edit" style={{ marginRight: '5px', color: '#666' }}>
+                                                            <Link to={`/admin/notification/edit/${notification.id}`} className="" data-toggle="tooltip" title="Edit" style={{ color: '#666' }} onClick={(e) => e.stopPropagation()}>
                                                                 <i className="fa fa-pencil"></i>
                                                             </Link>
-                                                            <Link to="#" className="" data-toggle="tooltip" title="Delete" onClick={(e) => { e.preventDefault(); if (window.confirm('Are you sure you want to delete this?')) console.log('delete'); }} style={{ color: '#666' }}>
+                                                            <Link to="#" className="" data-toggle="tooltip" title="Delete" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(notification.id); }} style={{ color: '#666' }}>
                                                                 <i className="fa fa-remove"></i>
                                                             </Link>
                                                         </>
@@ -185,24 +227,77 @@ const NoticeBoard = () => {
                                     )}
                                 </div>
 
-                                {/* Sidebar Container / Drawer */}
-                                <aside className={`sidebar-container ${isSidebarOpen ? 'open' : ''}`} role="dialog">
-                                    <article className="email-collection">
-                                        <a href="#" className="mail-sidebar mail-close-btn" onClick={closeDetails}>
-                                            <i className="fa fa-times fs-2"></i>
+                                {/* Notice Detail Panel */}
+                                <aside className={`notice-detail-panel ${isSidebarOpen ? 'open' : ''}`} role="dialog">
+                                    <div className="notice-detail-content">
+                                        <a href="#" className="notice-close-btn" onClick={closeDetails}>
+                                            <i className="fa fa-times"></i>
                                         </a>
                                         {selectedNotification && (
-                                            <div id="notificationdata" style={{ padding: '20px' }}>
-                                                <h3>{selectedNotification.title}</h3>
-                                                <ul className="list-unstyled">
-                                                    <li><i className="fa fa-calendar-check-o"></i> Publish Date: {selectedNotification.publish_date}</li>
-                                                    <li><i className="fa fa-calendar"></i> Notice Date: {selectedNotification.publish_date}</li>
-                                                    <li><i className="fa fa-user"></i> Created By: Super Admin</li>
-                                                </ul>
-                                                <div className="email-body" style={{ marginTop: '20px' }} dangerouslySetInnerHTML={{ __html: selectedNotification.message }}></div>
+                                            <div id="notificationdata" style={{ padding: '0' }}>
+                                                <div>
+                                                    {/* Header with back arrow and title */}
+                                                    <div style={{ padding: '15px 20px', borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                        <a href="#" onClick={closeDetails} style={{ color: '#00bcd4', fontSize: '24px' }}>
+                                                            <i className="fa fa-arrow-left"></i>
+                                                        </a>
+                                                        <h3 style={{ margin: 0, flex: 1, fontSize: '18px', fontWeight: 500 }}>{selectedNotification.title}</h3>
+                                                    </div>
+
+                                                    {/* Message content */}
+                                                    <div style={{ padding: '20px' }}>
+                                                        <div style={{ marginBottom: '20px', fontSize: '15px', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedNotification.message }}></div>
+
+                                                        {/* Date information */}
+                                                        <div style={{ display: 'flex', gap: '30px', marginBottom: '20px', fontSize: '14px' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <i className="fa fa-calendar" style={{ color: '#666' }}></i>
+                                                                <span>Publish Date: {selectedNotification.publish_date}</span>
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <i className="fa fa-calendar" style={{ color: '#666' }}></i>
+                                                                <span>Notice Date: {selectedNotification.date}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Created By */}
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', fontSize: '14px' }}>
+                                                            <i className="fa fa-user" style={{ color: '#666' }}></i>
+                                                            <span>Created By: {selectedNotification.created_by} ({selectedNotification.created_id})</span>
+                                                        </div>
+
+                                                        {/* Divider */}
+                                                        <hr style={{ margin: '20px 0', borderColor: '#e0e0e0' }} />
+
+                                                        {/* Message To section */}
+                                                        <div>
+                                                            <h4 style={{ fontSize: '16px', marginBottom: '15px', fontWeight: 500 }}>Message To</h4>
+                                                            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                                                                {selectedNotification.visible_staff === 'Yes' && (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                                                        <i className="fa fa-users" style={{ color: '#666' }}></i>
+                                                                        <span>Admin</span>
+                                                                    </div>
+                                                                )}
+                                                                {selectedNotification.visible_student === 'Yes' && (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                                                        <i className="fa fa-user" style={{ color: '#666' }}></i>
+                                                                        <span>Student</span>
+                                                                    </div>
+                                                                )}
+                                                                {selectedNotification.visible_parent === 'Yes' && (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                                                        <i className="fa fa-user" style={{ color: '#666' }}></i>
+                                                                        <span>Parent</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
-                                    </article>
+                                    </div>
                                 </aside>
                             </div>
                         </div>
@@ -211,7 +306,7 @@ const NoticeBoard = () => {
             </div>
             <Footer />
             <style>{`
-                .sidebar-container {
+                .notice-detail-panel {
                     position: fixed;
                     top: 0;
                     right: -500px;
@@ -223,21 +318,23 @@ const NoticeBoard = () => {
                     transition: all 0.3s ease;
                     overflow-y: auto;
                 }
-                .sidebar-container.open {
+                .notice-detail-panel.open {
                     right: 0;
                 }
-                .mail-close-btn {
+                .notice-close-btn {
                     position: absolute;
                     top: 10px;
                     right: 15px;
                     font-size: 20px;
                     color: #444;
-                }
-                .email-info:hover .hover-show {
-                    display: block !important;
+                    z-index: 10;
                 }
                 .hover-show {
-                    display: none !important;
+                    opacity: 0;
+                    transition: opacity 0.2s ease;
+                }
+                .email-info:hover .hover-show {
+                    opacity: 1;
                 }
                 .email-info:hover {
                     background-color: #f9f9f9;

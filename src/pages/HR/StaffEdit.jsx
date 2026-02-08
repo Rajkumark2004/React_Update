@@ -48,7 +48,11 @@ const StaffEdit = () => {
         facebook: '',
         twitter: '',
         linkedin: '',
-        instagram: ''
+        instagram: '',
+        leave_type_id: [],
+        alloted_leave: [],
+        altid: [],
+        custom_fields: {}
     });
 
     // Helper to convert DD-MM-YYYY to YYYY-MM-DD
@@ -66,49 +70,54 @@ const StaffEdit = () => {
             if (!id) return;
             try {
                 setLoading(true);
-                const response = await api.getStaffForEdit(id);
-                // The API returns the object directly as per the user example
-                // But usually we check for success status in api.js wrappers. 
-                // Since user provided raw JSON response, I'll map directly.
+                const response = await api.getStaffProfile(id);
 
-                const data = response;
+                if (response.status && response.data && response.data.staff) {
+                    const data = response.data.staff;
 
-                setStaff(prev => ({
-                    ...prev,
-                    employee_id: data.employee_id || '',
-                    firstname: data.name || '',
-                    surname: data.surname || '',
-                    email: data.email || '',
-                    role: data.role || '',
-                    gender: data.gender || '',
-                    dob: formatDateForInput(data.dob),
-                    contact_no: data.contactno || '',
-                    emergency_contact_no: data.emergency_no || '',
-                    marital_status: data.marital_status || '',
-                    local_address: data.address || '',
-                    permanent_address: data.permanent_address || '',
-                    qualification: data.qualification || '',
-                    work_exp: data.work_exp || '',
-                    note: data.note || '',
-                    epf_no: data.epf_no || '',
-                    basic_salary: data.basic_salary || '',
-                    contract_type: data.contract_type || '',
-                    shift: data.shift || '',
-                    location: data.location || '',
-                    bank_account_no: data.bank_account_no || '',
-                    bank_name: data.bank_name || '',
-                    ifsc_code: data.ifsc_code || '',
-                    bank_branch: data.bank_branch || '',
-                    facebook: data.facebook || '',
-                    twitter: data.twitter || '',
-                    linkedin: data.linkedin || '',
-                    instagram: data.instagram || '',
-                    father_name: data.father_name || '',
-                    mother_name: data.mother_name || '',
-                    date_of_joining: formatDateForInput(data.date_of_joining),
-                    // department: data.department || '', // Not in sample response, might be needed
-                    // designation: data.designation || '', // Not in sample response
-                }));
+                    setStaff(prev => ({
+                        ...prev,
+                        employee_id: data.employee_id || '',
+                        firstname: data.name || '',
+                        surname: data.surname || '',
+                        email: data.email || '',
+                        role: data.role || '',
+                        gender: data.gender || '',
+                        dob: formatDateForInput(data.dob),
+                        contact_no: data.contactno || '',
+                        emergency_contact_no: data.emergency_no || '',
+                        marital_status: data.marital_status || '',
+                        local_address: data.address || '',
+                        permanent_address: data.permanent_address || '',
+                        qualification: data.qualification || '',
+                        work_exp: data.work_exp || '',
+                        note: data.note || '',
+                        epf_no: data.epf_no || '',
+                        basic_salary: data.basic_salary || '',
+                        contract_type: data.contract_type || '',
+                        shift: data.shift || '',
+                        location: data.location || '',
+                        bank_account_no: data.bank_account_no || '',
+                        bank_name: data.bank_name || '',
+                        ifsc_code: data.ifsc_code || '',
+                        bank_branch: data.bank_branch || '',
+                        facebook: data.facebook || '',
+                        twitter: data.twitter || '',
+                        linkedin: data.linkedin || '',
+                        instagram: data.instagram || '',
+                        father_name: data.father_name || '',
+                        mother_name: data.mother_name || '',
+                        date_of_joining: formatDateForInput(data.date_of_joining),
+                        // department: data.department || '', // Not in sample response, might be needed
+                        // designation: data.designation || '', // Not in sample response
+
+                        // Populate if available in response, else keep defaults or potentially empty
+                        leave_type_id: data.leave_type_id || [],
+                        alloted_leave: data.alloted_leave || [],
+                        altid: data.altid || [],
+                        custom_fields: data.custom_fields || {}
+                    }));
+                }
 
             } catch (error) {
                 console.error('Error fetching staff details:', error);
@@ -126,11 +135,92 @@ const StaffEdit = () => {
         setStaff(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Saving staff details:', staff);
-        toast.success('Staff details updated successfully');
-        // Implement save API logic later if needed
+
+        // Prepare payload according to user request format
+        const payload = {
+            employee_id: staff.employee_id,
+            name: staff.firstname,
+            surname: staff.surname,
+            email: staff.email,
+            role: staff.role,
+            gender: staff.gender,
+            dob: staff.dob, // YYYY-MM-DD from input, user sample showed DD-MM-YYYY but API usually handles YYYY-MM-DD or we might need to format
+
+            contactno: staff.contact_no,
+            emergency_no: staff.emergency_contact_no,
+            marital_status: staff.marital_status,
+            address: staff.local_address,
+            permanent_address: staff.permanent_address,
+            qualification: staff.qualification,
+            work_exp: staff.work_exp,
+            note: staff.note,
+            epf_no: staff.epf_no,
+            basic_salary: staff.basic_salary,
+            contract_type: staff.contract_type,
+            shift: staff.shift,
+            location: staff.location,
+
+            bank_account_no: staff.bank_account_no,
+            bank_name: staff.bank_name,
+            account_title: staff.account_title || '', // Add this field if needed in state
+            ifsc_code: staff.ifsc_code,
+            bank_branch: staff.bank_branch,
+
+            facebook: staff.facebook,
+            twitter: staff.twitter,
+            linkedin: staff.linkedin,
+            instagram: staff.instagram,
+
+            mother_name: staff.mother_name,
+            father_name: staff.father_name,
+
+            is_invisible_user: 1, // field from user sample
+
+            date_of_joining: staff.date_of_joining,
+            date_of_leaving: '', // Or from state if we add it
+
+            leave_type_id: staff.leave_type_id,
+            alloted_leave: staff.alloted_leave,
+            altid: staff.altid,
+
+            custom_fields: staff.custom_fields
+        };
+
+        // Date formatting if needed (User sample showed DD-MM-YYYY, inputs are YYYY-MM-DD)
+        const formatDateForApi = (isoDate) => {
+            if (!isoDate) return '';
+            const parts = isoDate.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`; // Convert to DD-MM-YYYY
+            }
+            return isoDate;
+        };
+
+        // Apply formatting
+        payload.dob = formatDateForApi(payload.dob);
+        payload.date_of_joining = formatDateForApi(payload.date_of_joining);
+
+
+        try {
+            console.log('Saving staff details:', payload);
+            setLoading(true);
+            const response = await api.updateStaff(id, payload);
+
+            if (response.status === 'success' || response.success) {
+                toast.success('Staff details updated successfully');
+                // navigate('/admin/staff/search'); // Optional: redirect back to list
+            } else {
+                toast.error(response.message || 'Failed to update staff');
+            }
+
+        } catch (error) {
+            console.error('Error updating staff:', error);
+            toast.error(error.message || 'An error occurred while saving');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
