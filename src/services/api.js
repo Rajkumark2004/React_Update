@@ -40,6 +40,318 @@ const appendSessionToUrl = (url, includeSession = true) => {
 };
 
 export const api = {
+    getStudentIdCard: async () => {
+        console.log('API Request: Get Student ID Card');
+        try {
+            const response = await fetch(`${API_BASE}/admin/studentidcard`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Student ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch student ID card data');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Student ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    createStudentIdCard: async (formData) => {
+        console.log('API Request: Create Student ID Card', formData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/studentidcard/create`, {
+                method: 'POST',
+                body: formData, // FormData will automatically set correct headers
+            });
+            const data = await response.json();
+            console.log('Create Student ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to create student ID card');
+            }
+            return data;
+        } catch (error) {
+            console.error('Create Student ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    getStudentIdCardEditDetails: async (id) => {
+        console.log('API Request: Get Student ID Card Edit Details', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/studentidcard/get_edit_details/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Student ID Card Edit Details Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch edit details');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Edit Details API Error:', error);
+            throw error;
+        }
+    },
+
+    updateStudentIdCard: async (formData) => {
+        console.log('API Request: Update Student ID Card', formData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/studentidcard/edit`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Update Student ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to update student ID card');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Student ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteStudentIdCard: async (id) => {
+        console.log('API Request: Delete Student ID Card', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/studentidcard/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id }),
+            });
+            const data = await response.json();
+            console.log('Delete Student ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to delete student ID card');
+            }
+            return data;
+        } catch (error) {
+            console.error('Delete Student ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    viewStudentIdCard: async (id) => {
+        console.log('API Request: View Student ID Card', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/studentidcard/view`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id }),
+            });
+            const data = await response.json();
+            console.log('View Student ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch student ID card details');
+            }
+            return data;
+        } catch (error) {
+            console.error('View Student ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    getGenerateIdCardSearchData: async () => {
+        console.log('API Request: Get Generate ID Card Search Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/generateidcard/get_search`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Generate ID Card Search Data Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch generate ID card search data');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Generate ID Card Search Data API Error:', error);
+            throw error;
+        }
+    },
+
+    searchStudentsForIdCard: async (searchParams) => {
+        console.log('API Request: Search Students For ID Card', searchParams);
+        try {
+            const response = await fetch(`${API_BASE}/admin/generateidcard/search`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(searchParams),
+            });
+            const data = await response.json();
+            console.log('Search Students For ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'No students found');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Students For ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    generateIdCards: async (payload) => {
+        console.log('API Request: Generate ID Cards', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/generateidcard/generatemultiple`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Generate ID Cards Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to generate ID cards');
+            }
+            return data;
+        } catch (error) {
+            console.error('Generate ID Cards API Error:', error);
+            throw error;
+        }
+    },
+
+    getStaffIdCards: async () => {
+        console.log('API Request: Get Staff ID Cards');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staffidcard`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Staff ID Cards Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch staff ID cards');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Staff ID Cards API Error:', error);
+            throw error;
+        }
+    },
+
+    createStaffIdCard: async (formData) => {
+        console.log('API Request: Create Staff ID Card');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staffidcard/create`, {
+                method: 'POST',
+                body: formData, // FormData for file uploads
+            });
+            const data = await response.json();
+            console.log('Create Staff ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to create staff ID card');
+            }
+            return data;
+        } catch (error) {
+            console.error('Create Staff ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    getStaffIdCardEditDetails: async (id) => {
+        console.log('API Request: Get Staff ID Card Edit Details', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/staffidcard/get_edit_detail/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Staff ID Card Edit Details Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch edit details');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Staff ID Card Edit Details API Error:', error);
+            throw error;
+        }
+    },
+
+    updateStaffIdCard: async (formData) => {
+        console.log('API Request: Update Staff ID Card');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staffidcard/edit`, {
+                method: 'POST',
+                body: formData, // FormData
+            });
+            const data = await response.json();
+            console.log('Update Staff ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to update staff ID card');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Staff ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteStaffIdCard: async (id) => {
+        console.log('API Request: Delete Staff ID Card', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/staffidcard/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ certificateid: id }),
+            });
+            const data = await response.json();
+            console.log('Delete Staff ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to delete staff ID card');
+            }
+            return data;
+        } catch (error) {
+            console.error('Delete Staff ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    viewStaffIdCard: async (id) => {
+        console.log('API Request: View Staff ID Card', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/staffidcard/view`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ certificateid: id }),
+            });
+            const data = await response.json();
+            console.log('View Staff ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch staff ID card details');
+            }
+            return data;
+        } catch (error) {
+            console.error('View Staff ID Card API Error:', error);
+            throw error;
+        }
+    },
     login: async (username, password) => {
         console.log(' API Request:', { username, password: '***' });
 
@@ -545,6 +857,148 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Sections By Class Error:', error);
+            throw error;
+        }
+    },
+    async getContentList() {
+        console.log('API Request: Get Content List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/content/index`, {
+                method: 'POST',
+            });
+            const data = await response.json();
+            console.log('Get Content List Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch content list');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Content List API Error:', error);
+            throw error;
+        }
+    },
+
+    saveContent: async (formData) => {
+        console.log('API Request: Save Content');
+        try {
+            const response = await fetch(`${API_BASE}/admin/content/index`, {
+                method: 'POST',
+                body: formData, // FormData handles headers
+            });
+            const data = await response.json();
+            console.log('Save Content Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to save content');
+            }
+            return data;
+        } catch (error) {
+            console.error('Save Content API Error:', error);
+            throw error;
+        }
+    },
+
+    downloadContent: async (id) => {
+        console.log('API Request: Download Content', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/content/download`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ Id: id }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to download file');
+            }
+
+            // Create a blob from the response
+            const blob = await response.blob();
+            // Create a link to download the blob
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            // Try to get filename from content-disposition header if available, else default
+            const contentDisposition = response.headers.get('content-disposition');
+            let fileName = 'download';
+            if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (fileNameMatch && fileNameMatch.length === 2)
+                    fileName = fileNameMatch[1];
+            }
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            return true;
+        } catch (error) {
+            console.error('Download Content API Error:', error);
+            throw error;
+        }
+    },
+
+    updateContent: async (formData) => {
+        console.log('API Request: Update Content');
+        try {
+            const response = await fetch(`${API_BASE}/admin/content/edit`, {
+                method: 'POST',
+                body: formData, // FormData handles headers
+            });
+            const data = await response.json();
+            console.log('Update Content Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to update content');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Content API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteContent: async (id) => {
+        console.log('API Request: Delete Content', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/content/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ Id: id }),
+            });
+            const data = await response.json();
+            console.log('Delete Content Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to delete content');
+            }
+            return data;
+        } catch (error) {
+            console.error('Delete Content API Error:', error);
+            throw error;
+        }
+    },
+
+    getWorksheets: async () => {
+        console.log('API Request: Get Worksheets');
+        try {
+            const response = await fetch(`${API_BASE}/admin/content/worksheets`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Worksheets Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch worksheets');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Worksheets API Error:', error);
             throw error;
         }
     },

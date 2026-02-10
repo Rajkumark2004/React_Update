@@ -135,6 +135,26 @@ import RoomTypeEdit from './pages/hostel/RoomTypeEdit';
 import Hostel from './pages/hostel/Hostel';
 import HostelEdit from './pages/hostel/HostelEdit';
 
+// Certificate Pages
+import GenerateCertificate from './pages/certificates/GenerateCertificate';
+import GenerateIdCard from './pages/certificates/GenerateIdCard';
+import GenerateStaffIdCard from './pages/certificates/GenerateStaffIdCard';
+import StaffIdCard from './pages/certificates/StaffIdCard';
+import StudentCertificate from './pages/certificates/StudentCertificate';
+import StudentIdCard from './pages/certificates/StudentIdCard';
+
+// Download Center Pages
+import VideoTutorial from './pages/downloadcenter/VideoTutorial';
+import Assignment from './pages/content/Assignment';
+import StudyMaterial from './pages/content/StudyMaterial';
+import Syllabus from './pages/content/Syllabus';
+import Other from './pages/content/Other';
+import Worksheets from './pages/content/Worksheets';
+import CreateContent from './pages/content/CreateContent';
+import EditContent from './pages/content/EditContent';
+import EditPost from './pages/content/EditPost';
+import Search from './pages/content/Search';
+
 
 import { api } from './services/api';
 import { SessionProvider } from './context/SessionContext';
@@ -581,6 +601,26 @@ function App() {
             <Route path="/admin/roomtype/edit/:id" element={<ProtectedRoute><RoomTypeEdit /></ProtectedRoute>} />
             <Route path="/admin/hostel" element={<ProtectedRoute><Hostel /></ProtectedRoute>} />
             <Route path="/admin/hostel/edit/:id" element={<ProtectedRoute><HostelEdit /></ProtectedRoute>} />
+
+            {/* Certificate Routes */}
+            <Route path="/admin/certificate/generate_certificate" element={<ProtectedRoute><GenerateCertificate /></ProtectedRoute>} />
+            <Route path="/admin/certificate/generate_id_card" element={<ProtectedRoute><GenerateIdCard /></ProtectedRoute>} />
+            <Route path="/admin/certificate/generate_staff_id_card" element={<ProtectedRoute><GenerateStaffIdCard /></ProtectedRoute>} />
+            <Route path="/admin/certificate/staff_id_card" element={<ProtectedRoute><StaffIdCard /></ProtectedRoute>} />
+            <Route path="/admin/certificate/student_certificate" element={<ProtectedRoute><StudentCertificate /></ProtectedRoute>} />
+            <Route path="/admin/certificate/student_id_card" element={<ProtectedRoute><StudentIdCard /></ProtectedRoute>} />
+
+            {/* Download Center Routes */}
+            <Route path="/admin/video_tutorial" element={<ProtectedRoute><VideoTutorial /></ProtectedRoute>} />
+            <Route path="/admin/content/assignment" element={<ProtectedRoute><Assignment /></ProtectedRoute>} />
+            <Route path="/admin/content/studymaterial" element={<ProtectedRoute><StudyMaterial /></ProtectedRoute>} />
+            <Route path="/admin/content/syllabus" element={<ProtectedRoute><Syllabus /></ProtectedRoute>} />
+            <Route path="/admin/content/other" element={<ProtectedRoute><Other /></ProtectedRoute>} />
+            <Route path="/admin/content/worksheets" element={<ProtectedRoute><Worksheets /></ProtectedRoute>} />
+            <Route path="/admin/content/createcontent" element={<ProtectedRoute><CreateContent /></ProtectedRoute>} />
+            <Route path="/admin/content/edit/:id" element={<ProtectedRoute><EditContent /></ProtectedRoute>} />
+            <Route path="/admin/content/editpost/:id" element={<ProtectedRoute><EditPost /></ProtectedRoute>} />
+            <Route path="/admin/content/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
 
 
             {/* Academics Routes */}

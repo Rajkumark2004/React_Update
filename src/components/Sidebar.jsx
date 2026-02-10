@@ -47,6 +47,9 @@ const Sidebar = ({
         // Hostel - active for /admin/hostelroom and /admin/studenthostelreport paths
         if (menuUrl === '/admin/hostelroom' && (currentPath.startsWith('/admin/hostelroom') || currentPath.startsWith('/admin/studenthostelreport'))) return true;
 
+        // Download Center - active for its sub-routes
+        if (menuUrl === '/admin/content/assignment' && (currentPath.startsWith('/admin/content/') || currentPath.startsWith('/admin/video_tutorial'))) return true;
+
         // Exact match for any other routes
         return currentPath === menuUrl;
     };
@@ -88,12 +91,22 @@ const Sidebar = ({
         '/admin/expensehead',
         '/admin/onlinecourse',
         '/admin/hostelroom',
-        '/admin/hostelroom/edit',
         '/admin/studenthostelreport',
         '/admin/roomtype',
         '/admin/roomtype/edit',
         '/admin/hostel',
-        '/admin/hostel/edit'
+        '/admin/hostel/edit',
+        '/admin/hostel/edit',
+        '/admin/content/assignment',
+        '/admin/content/studymaterial',
+        '/admin/content/syllabus',
+        '/admin/content/other',
+        '/admin/content/worksheets',
+        '/admin/content/createcontent',
+        '/admin/content/edit',
+        '/admin/content/editpost',
+        '/admin/content/search',
+        '/admin/video_tutorial'
     ];
 
     // Default menus - only SIS and System Settings have working pages
@@ -109,8 +122,8 @@ const Sidebar = ({
         { id: 9, icon: 'transport.png', label: 'Transport', url: '/admin/route' },
         { id: 10, icon: 'messages.png', label: 'Messages', url: '/admin/notification' },
         { id: 11, icon: 'hr.png', label: 'Human Resource', url: '/admin/staff/search' },
-        { id: 12, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
-        { id: 13, icon: 'certificate.png', label: 'Certificate', url: '#' },
+        { id: 12, icon: 'download_resouces.png', label: 'Download Center', url: '/admin/content/assignment' },
+        { id: 13, icon: 'certificate.png', label: 'Certificate', url: '/admin/certificate/student_id_card' },
         { id: 14, icon: 'income.png', label: 'Income', url: '/admin/income' },
         { id: 15, icon: 'expenses.png', label: 'Expenses', url: '/admin/expense' },
         { id: 16, icon: 'hostle.png', label: 'Hostel', url: '/admin/hostelroom' },
