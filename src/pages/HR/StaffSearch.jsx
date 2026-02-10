@@ -27,7 +27,7 @@ const StaffSearch = () => {
     };
 
 
-    const mobileNavItems = []; // Placeholder
+
 
     const handleLogout = () => {
         console.log("Logout clicked");
@@ -98,7 +98,7 @@ const StaffSearch = () => {
                 handleLogout={handleLogout}
             />
             <Sidebar
-                mobileNavItems={mobileNavItems}
+
                 handleSearch={handleSearch}
                 sessionYear={sessionYear}
             />

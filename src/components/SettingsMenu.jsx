@@ -72,46 +72,7 @@ const SettingsMenu = ({ children }) => {
 
     // Sidebar items
     // Sidebar items
-    const sidebarMenus = [
-        { id: 1, icon: 'helpdesk.png', label: 'Help Desk', url: '/admin/enquiry' },
-        { id: 2, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 3, icon: 'Fees.png', label: 'Fees', url: '/studentfee' },
-        { id: 4, icon: 'attendance.png', label: 'Attendance', url: '#' },
-        { id: 5, icon: 'state_examination.png', label: 'State Examinations', url: '#' },
-        { id: 6, icon: 'courses.png', label: 'Courses', url: '#' },
-        { id: 7, icon: 'homework.png', label: 'Homework', url: '/homework' },
-        { id: 8, icon: 'transport.png', label: 'Transport', url: '#' },
-        { id: 9, icon: 'messages.png', label: 'Messages', url: '#' },
-        { id: 10, icon: 'hr.png', label: 'Human Resource', url: '#' },
-        { id: 11, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
-        { id: 12, icon: 'certificate.png', label: 'Certificate', url: '#' },
-        { id: 13, icon: 'income.png', label: 'Income', url: '#' },
-        { id: 14, icon: 'expenses.png', label: 'Expenses', url: '#' },
-        { id: 15, icon: 'hostle.png', label: 'Hostel', url: '#' },
-        { id: 16, icon: 'reports.png', label: 'Reports', url: '#' },
-        { id: 17, icon: 'settings.png', label: 'System Settings', url: '/settings', active: true }
-    ];
 
-    // Default mobile nav items
-    const mobileNavItems = [
-        { id: 1, icon: 'helpdesk.png', label: 'Help Desk', url: '/admin/enquiry' },
-        { id: 2, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 3, icon: 'Fees.png', label: 'Fees', url: '/studentfee' },
-        { id: 4, icon: 'attendance.png', label: 'Attendance', url: '#' },
-        { id: 5, icon: 'state_examination.png', label: 'State Examinations', url: '#' },
-        { id: 6, icon: 'courses.png', label: 'Courses', url: '#' },
-        { id: 7, icon: 'homework.png', label: 'Homework', url: '#' },
-        { id: 8, icon: 'transport.png', label: 'Transport', url: '#' },
-        { id: 9, icon: 'messages.png', label: 'Messages', url: '#' },
-        { id: 10, icon: 'hr.png', label: 'Human Resource', url: '#' },
-        { id: 11, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
-        { id: 12, icon: 'certificate.png', label: 'Certificate', url: '#' },
-        { id: 13, icon: 'income.png', label: 'Income', url: '#' },
-        { id: 14, icon: 'expenses.png', label: 'Expenses', url: '#' },
-        { id: 15, icon: 'hostle.png', label: 'Hostel', url: '#' },
-        { id: 16, icon: 'reports.png', label: 'Reports', url: '#' },
-        { id: 17, icon: 'settings.png', label: 'System Settings', url: '/settings', active: true }
-    ];
 
 
     return (
@@ -124,8 +85,7 @@ const SettingsMenu = ({ children }) => {
             />
 
             <Sidebar
-                sidebarMenus={sidebarMenus}
-                mobileNavItems={mobileNavItems}
+
                 handleSearch={handleSearch}
                 sessionYear={sessionYear}
                 currentUrl={location.pathname}
@@ -179,11 +139,19 @@ const SettingsMenu = ({ children }) => {
                                                 <img src={getIconPath('8.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Front CMS Setting
                                             </Link>
                                         </li>
-                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('10.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Roles Permissions</a></li>
+                                        <li>
+                                            <Link to="/settings/roles" className={location.pathname.startsWith('/settings/roles') ? "active" : ""}>
+                                                <img src={getIconPath('10.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Roles Permissions
+                                            </Link>
+                                        </li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('11.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Backup Restore</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('12.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Languages</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('14.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Users</a></li>
-                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('15.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Modules</a></li>
+                                        <li>
+                                            <Link to="/settings/modules" className={location.pathname.startsWith('/settings/modules') ? "active" : ""}>
+                                                <img src={getIconPath('15.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Modules
+                                            </Link>
+                                        </li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('16.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Custom Fields</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('17.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Captcha Setting</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('18.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> System Fields</a></li>

@@ -13,6 +13,8 @@ import SessionSettings from './pages/settings/SessionSettings';
 import SmsSettings from './pages/settings/SmsSettings';
 import EmailSettings from './pages/settings/EmailSettings';
 import PrintHeaderFooterSettings from './pages/settings/PrintHeaderFooterSettings';
+import RoleList from './pages/settings/RoleList';
+import ModulePermissions from './pages/settings/ModulePermissions';
 import StudentSearch from './pages/student/StudentSearch';
 
 import StudentAdmission from './pages/student/StudentAdmission';
@@ -266,6 +268,54 @@ function App() {
               element={
                 <ProtectedRoute>
                   <PrintHeaderFooterSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/print-header-footer"
+              element={
+                <ProtectedRoute>
+                  <PrintHeaderFooterSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/roles"
+              element={
+                <ProtectedRoute>
+                  <RoleList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/roles/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <RoleList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/roles/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <RoleList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/roles/permission/:id"
+              element={
+                <ProtectedRoute>
+                  <ModulePermissions />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/modules"
+              element={
+                <ProtectedRoute>
+                  <ModulePermissions />
                 </ProtectedRoute>
               }
             />

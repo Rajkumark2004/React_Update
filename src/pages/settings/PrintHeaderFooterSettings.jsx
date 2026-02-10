@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SettingsMenu from "../../components/SettingsMenu";
 import "../../utils/include_files.js";
 import api from "../../services/api";
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const PrintHeaderFooterSettings = () => {
@@ -18,6 +19,43 @@ const PrintHeaderFooterSettings = () => {
     const [isHovered, setIsHovered] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+
+    useEffect(() => {
+        fetchSettings();
+    }, []);
+
+    const fetchSettings = async () => {
+        setIsLoading(true);
+        try {
+            const response = await api.getPrintHeaderFooterSettings();
+            if (response.status === 'success' && response.result) {
+                const newFormData = { ...formData };
+                const baseUrl = 'https://newlayout.wisibles.com/uploads/print_headerfooter';
+
+                response.result.forEach(item => {
+                    let tabKey = '';
+                    if (item.print_type === 'staff_payslip') tabKey = 'payslip';
+                    else if (item.print_type === 'student_receipt') tabKey = 'fees_receipt';
+                    else if (item.print_type === 'online_admission_receipt') tabKey = 'online_admission';
+                    else if (item.print_type === 'online_exam') tabKey = 'online_exam';
+
+                    if (tabKey) {
+                        newFormData[tabKey] = {
+                            ...newFormData[tabKey],
+                            footer_content: item.footer_content || '',
+                            current_image: item.header_image ? `${baseUrl}/${item.print_type}/${item.header_image}` : newFormData[tabKey].current_image
+                        };
+                    }
+                });
+                setFormData(newFormData);
+            }
+        } catch (error) {
+            console.error('Error fetching print settings:', error);
+            // setMessage({ type: 'error', text: 'Failed to load settings.' });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleTabClick = (tab) => {
         setActiveTab(tab);
@@ -52,33 +90,53 @@ const PrintHeaderFooterSettings = () => {
         e.preventDefault();
         const currentData = formData[activeTab];
 
-        if (!currentData.header_image) {
-            setMessage({ type: 'warning', text: 'Please select an image to upload.' });
-            return;
-        }
+        // Ensure footer content is present if needed, or allow empty.
+        // User requirements imply we focus on correct mapping.
 
         setIsLoading(true);
         setMessage({ type: '', text: '' });
 
         try {
-            // Map tab to logo type for backend
-            const logoTypeMap = {
-                fees_receipt: 'fees_receipt_logo',
-                payslip: 'payslip_logo',
-                online_admission: 'online_admission_logo',
-                online_exam: 'online_exam_logo'
+            const typeMap = {
+                fees_receipt: 'student_receipt',
+                payslip: 'staff_payslip',
+                online_admission: 'online_admission_receipt',
+                online_exam: 'online_exam'
             };
 
-            const response = await api.uploadSchoolLogo(currentData.header_image, logoTypeMap[activeTab]);
-            setMessage({ type: 'success', text: response.message || 'Logo uploaded successfully!' });
+            const messageKeyMap = {
+                fees_receipt: 'message1',
+                payslip: 'message',
+                online_admission: 'admission_message',
+                online_exam: 'message'
+            };
 
-            // Update the current image with the new URL
-            setFormData(prev => ({
-                ...prev,
-                [activeTab]: { ...prev[activeTab], current_image: response.image_url, header_image: null }
-            }));
+            const apiType = typeMap[activeTab];
+            const messageKey = messageKeyMap[activeTab];
+
+            const formDataToSend = new FormData();
+            formDataToSend.append('type', apiType);
+            formDataToSend.append(messageKey, currentData.footer_content);
+
+            if (currentData.header_image instanceof File) {
+                formDataToSend.append('header_image', currentData.header_image);
+            }
+
+            const response = await api.updatePrintHeaderFooterSettings(formDataToSend);
+
+            if (response.status === 'success') {
+                setMessage({ type: 'success', text: response.msg || 'Settings saved successfully!' });
+
+                // If an image was uploaded, we might want to refresh to get the new URL, 
+                // or just rely on the local preview until refresh. 
+                // Ideally, we fetch settings again to ensure everything is consistent.
+                fetchSettings();
+            } else {
+                setMessage({ type: 'error', text: response.msg || response.message || 'Failed to save settings.' });
+            }
+
         } catch (error) {
-            setMessage({ type: 'error', text: error.message || 'Failed to upload logo.' });
+            setMessage({ type: 'error', text: error.message || 'Failed to save settings.' });
         } finally {
             setIsLoading(false);
         }

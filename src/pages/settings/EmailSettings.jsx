@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SettingsMenu from "../../components/SettingsMenu";
 import "../../utils/include_files.js";
+import api from '../../services/api';
 
 import { useNavigate } from 'react-router-dom';
 
 const EmailSettings = () => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
     const [emailType, setEmailType] = useState('send_email');
     const [formData, setFormData] = useState({
         smtp_username: '',
@@ -14,6 +16,7 @@ const EmailSettings = () => {
         smtp_port: '',
         smtp_security: 'tls',
         smtp_auth: 'true',
+
         aws_email: '',
         access_key: '',
         secret_access_key: '',
@@ -22,14 +25,81 @@ const EmailSettings = () => {
     const [showTestModal, setShowTestModal] = useState(false);
     const [testEmail, setTestEmail] = useState('');
 
+    useEffect(() => {
+        fetchEmailConfig();
+    }, []);
+
+    const fetchEmailConfig = async () => {
+        setLoading(true);
+        try {
+            const response = await api.getEmailConfig();
+            if (response.status === 'success' && response.emaillist) {
+                const data = response.emaillist;
+                setEmailType(data.email_type);
+
+                setFormData({
+                    smtp_username: data.smtp_username || '',
+                    smtp_password: data.smtp_password || '',
+                    smtp_server: data.smtp_server || '',
+                    smtp_port: data.smtp_port || '',
+                    smtp_security: data.ssl_tls || 'tls',
+                    smtp_auth: data.smtp_auth || 'true',
+                    aws_email: data.email_type === 'aws_ses' ? (data.smtp_username || '') : '',
+                    access_key: data.api_key || '',
+                    secret_access_key: data.api_secret || '',
+                    region: data.region || ''
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching email config:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ... existing logic ...
+
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        alert('Saving email settings... API integration needed.');
-        console.log('Saved Settings:', { emailType, ...formData });
+        setLoading(true);
+
+        let payload = {
+            email_type: emailType
+        };
+
+        if (emailType === 'smtp') {
+            payload = {
+                ...payload,
+                smtp_username: formData.smtp_username,
+                smtp_password: formData.smtp_password,
+                smtp_server: formData.smtp_server,
+                smtp_port: formData.smtp_port,
+                smtp_security: formData.smtp_security,
+                smtp_auth: formData.smtp_auth
+            };
+        } else if (emailType === 'aws_ses') {
+            payload = {
+                ...payload,
+                access_key: formData.access_key,
+                secret_access_key: formData.secret_access_key,
+                region: formData.region,
+                aws_email: formData.aws_email
+            };
+        }
+
+        try {
+            await api.updateEmailConfig(payload);
+            alert('Email Settings Saved Successfully');
+        } catch (error) {
+            console.error('Error saving email settings:', error);
+            alert(error.message || 'Error saving email settings');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleTestEmail = (e) => {

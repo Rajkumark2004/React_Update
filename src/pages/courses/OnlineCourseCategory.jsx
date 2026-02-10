@@ -71,34 +71,7 @@ const OnlineCourseCategory = () => {
 
     const sessionYear = currentSession?.session || '2024-25';
 
-    // Sidebar Menus (Standard Admin Menu)
-    const sidebarMenus = [
-        { id: 1, icon: 'helpdesk.png', label: 'Help Desk', url: '/admin/enquiry' },
-        { id: 2, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 3, icon: 'Fees.png', label: 'Fees Collection', url: '#' },
-        { id: 4, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
-        { id: 5, icon: 'state_examination.png', label: 'State Examinations', url: '#' },
-        { id: 6, icon: 'courses.png', label: 'Courses', url: '/admin/onlinecourse' },
-        { id: 7, icon: 'homework.png', label: 'Homework', url: '#' },
-        { id: 8, icon: 'transport.png', label: 'Transport', url: '#', active: false },
-        { id: 9, icon: 'messages.png', label: 'Messages', url: '#' },
-        { id: 10, icon: 'hr.png', label: 'Human Resource', url: '#' },
-        { id: 11, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
-        { id: 12, icon: 'certificate.png', label: 'Certificate', url: '#' },
-        { id: 13, icon: 'income.png', label: 'Income', url: '#' },
-        { id: 14, icon: 'expenses.png', label: 'Expenses', url: '#' },
-        { id: 15, icon: 'hostle.png', label: 'Hostel', url: '#' },
-        { id: 16, icon: 'reports.png', label: 'Reports', url: '#' },
-        { id: 17, icon: 'settings.png', label: 'System Settings', url: '/settings' }
-    ];
 
-    const mobileNavItems = [
-        { id: 1, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 2, icon: 'Fees.png', label: 'Fees', url: '#' },
-        { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
-        { id: 4, icon: 'settings.png', label: 'More', url: '/settings' },
-        { id: 5, icon: 'logout', label: 'Logout', url: '#', isLogout: true }
-    ];
 
     const handleLogout = async () => {
         try { await api.logout(); } catch (e) { }
@@ -218,7 +191,7 @@ const OnlineCourseCategory = () => {
             `}</style>
 
             <Header appName="School Management System" userData={userData} pendingTasks={[]} handleLogout={handleLogout} />
-            <Sidebar sidebarMenus={sidebarMenus} mobileNavItems={mobileNavItems} handleSearch={handleSearch} sessionYear={sessionYear} currentUrl="/admin/onlinecourse" />
+            <Sidebar handleSearch={handleSearch} sessionYear={sessionYear} currentUrl="/admin/onlinecourse" />
 
             <div className="content-wrapper">
                 <section className="content">

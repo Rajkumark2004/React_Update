@@ -1,12 +1,46 @@
 import React, { useState } from 'react';
 import SettingsMenu from "../../components/SettingsMenu";
 import "../../utils/include_files.js";
+import api from '../../services/api';
+import { useEffect } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 
 const SmsSettings = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('clickatell');
+    const [activeTab, setActiveTab] = useState('sms_country');
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        fetchSmsConfig();
+    }, []);
+
+    const fetchSmsConfig = async () => {
+        setLoading(true);
+        try {
+            const response = await api.getSmsConfig();
+            if (response.status === 'success' && response.smslist) {
+                const smsCountryConfig = response.smslist.find(item => item.type === 'smscountry');
+                if (smsCountryConfig) {
+                    setFormData(prev => ({
+                        ...prev,
+                        sms_country: {
+                            username: smsCountryConfig.username || '',
+                            password: smsCountryConfig.password || '',
+                            auth_key: smsCountryConfig.authkey || '',
+                            auth_token: smsCountryConfig.api_id || '',
+                            sender_id: smsCountryConfig.senderid || '',
+                            status: smsCountryConfig.is_active || 'disabled'
+                        }
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching SMS config:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // State for all gateways
     const [formData, setFormData] = useState({
@@ -30,23 +64,45 @@ const SmsSettings = () => {
         }));
     };
 
-    const handleSave = (gateway) => {
-        alert(`Saving settings for ${gateway}... API integration needed.`);
-        console.log(`Saving ${gateway}:`, formData[gateway]);
+    const handleSave = async (gateway) => {
+        if (gateway === 'sms_country') {
+            setLoading(true);
+            const payload = {
+                smscountry: formData.sms_country.username,
+                smscountrypassword: formData.sms_country.password,
+                smscountrysenderid: formData.sms_country.sender_id,
+                smscountry_status: formData.sms_country.status,
+                smscountryauthKey: formData.sms_country.auth_key,
+                smscountryauthtoken: formData.sms_country.auth_token
+            };
+
+            try {
+                await api.updateSmsConfig(payload);
+                alert('SMS Settings Saved Successfully');
+            } catch (error) {
+                console.error('Error saving SMS settings:', error);
+                alert(error.message || 'Error saving SMS settings');
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            alert(`Saving settings for ${gateway}... API integration needed.`);
+            console.log(`Saving ${gateway}:`, formData[gateway]);
+        }
     };
 
     const Gateways = [
-        { id: 'clickatell', label: 'Clickatell SMS Gateway' },
-        { id: 'twilio', label: 'Twilio SMS Gateway' },
-        { id: 'msg_nineone', label: 'MSG91' },
-        { id: 'text_local', label: 'Text Local' },
+        // { id: 'clickatell', label: 'Clickatell SMS Gateway' },
+        // { id: 'twilio', label: 'Twilio SMS Gateway' },
+        // { id: 'msg_nineone', label: 'MSG91' },
+        // { id: 'text_local', label: 'Text Local' },
         { id: 'sms_country', label: 'SMS Country' },
-        { id: 'bulk_sms', label: 'Bulk SMS' },
-        { id: 'mobireach', label: 'Mobireach' },
-        { id: 'nexmo', label: 'Nexmo' },
-        { id: 'africastalking', label: 'AfricasTalking' },
-        { id: 'smseg', label: 'SMS Egypt' },
-        { id: 'custom', label: 'Custom SMS Gateway' }
+        // { id: 'bulk_sms', label: 'Bulk SMS' },
+        // { id: 'mobireach', label: 'Mobireach' },
+        // { id: 'nexmo', label: 'Nexmo' },
+        // { id: 'africastalking', label: 'AfricasTalking' },
+        // { id: 'smseg', label: 'SMS Egypt' },
+        // { id: 'custom', label: 'Custom SMS Gateway' }
     ];
 
     return (

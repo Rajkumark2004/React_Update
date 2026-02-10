@@ -35,13 +35,7 @@ const StaffProfile = () => {
 
 
 
-    const mobileNavItems = [
-        { id: 1, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 2, icon: 'Fees.png', label: 'Fees', url: '#' },
-        { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
-        { id: 4, icon: 'settings.png', label: 'More', url: '/settings' },
-        { id: 5, icon: 'logout', label: 'Logout', url: '#', isLogout: true }
-    ];
+
 
     const handleLogout = () => {
         navigate('/login');
@@ -153,7 +147,7 @@ const StaffProfile = () => {
             />
 
             <Sidebar
-                mobileNavItems={mobileNavItems}
+
                 handleSearch={handleSearch}
                 sessionYear={sessionYear}
             />

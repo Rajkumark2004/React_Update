@@ -17,56 +17,107 @@ const SessionSettings = () => {
 
     const [editSession, setEditSession] = useState(null);
 
-    // Fetch sessions on component mount
-    useEffect(() => {
-        const fetchSessions = async () => {
-            try {
-                setIsLoading(true);
-                const response = await api.getSessions();
-                // Map API response to component format
-                const formattedSessions = response.data.map(s => ({
-                    id: parseInt(s.id),
-                    session: s.session,
-                    status: s.active != 0 ? 'active' : 'inactive',
-                    created_at: s.created_at
-                }));
-                setSessions(formattedSessions);
-            } catch (err) {
-                setError(err.message || 'Failed to load sessions');
-                console.error('Error fetching sessions:', err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchSessions();
-    }, []);
-
-    const handleSave = (e) => {
-        e.preventDefault();
-        // Mock save logic
-        if (editSession) {
-            // Edit mode
-            setSessions(sessions.map(s => s.id === editSession.id ? { ...s, session: newSession } : s));
-            setEditSession(null);
-            setNewSession('');
-            alert('Session Updated (Mock)');
-        } else if (newSession) {
-            // Add mode
-            setSessions([...sessions, { id: sessions.length + 1, session: newSession, status: 'inactive' }]);
-            setNewSession('');
-            alert('Session Added (Mock)');
+    const fetchSessions = async () => {
+        try {
+            setIsLoading(true);
+            const response = await api.getSessions();
+            // Map API response to component format
+            const formattedSessions = (response.data || []).map(s => ({
+                id: parseInt(s.id),
+                session: s.session,
+                status: s.active != 0 ? 'active' : 'inactive',
+                created_at: s.created_at
+            }));
+            setSessions(formattedSessions);
+        } catch (err) {
+            setError(err.message || 'Failed to load sessions');
+            console.error('Error fetching sessions:', err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const startEdit = (session) => {
-        setEditSession(session);
-        setNewSession(session.session);
+    // Fetch sessions on component mount
+    useEffect(() => {
+        fetchSessions();
+    }, []);
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+
+        if (editSession) {
+            // Edit mode
+            try {
+                setIsLoading(true);
+                await api.updateSession(editSession.id, { session: newSession });
+                alert('Session Updated Successfully');
+                setEditSession(null);
+                setNewSession('');
+                await fetchSessions();
+            } catch (error) {
+                console.error('Error updating session:', error);
+                alert(error.message || 'Error updating session');
+            } finally {
+                setIsLoading(false);
+            }
+        } else if (newSession) {
+            // Add mode
+            try {
+                setIsLoading(true);
+                await api.createSession(newSession);
+                alert('Session Created Successfully');
+                setNewSession('');
+                await fetchSessions();
+            } catch (error) {
+                console.error('Error creating session:', error);
+                alert(error.message || 'Error creating session');
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    const startEdit = async (session) => {
+        try {
+            setIsLoading(true);
+            const response = await api.getSession(session.id);
+            if (response.status === 'success' && response.session) {
+                setEditSession(response.session);
+                setNewSession(response.session.session);
+            } else {
+                // Fallback to local data if API structure doesn't match expectations
+                setEditSession(session);
+                setNewSession(session.session);
+            }
+        } catch (error) {
+            console.error('Error fetching session details:', error);
+            // Fallback to local data on error
+            setEditSession(session);
+            setNewSession(session.session);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const cancelEdit = () => {
         setEditSession(null);
         setNewSession('');
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this session?')) {
+            try {
+                setIsLoading(true);
+                await api.deleteSession(id);
+                alert('Session Deleted Successfully');
+                await fetchSessions();
+            } catch (error) {
+                console.error('Error deleting session:', error);
+                alert(error.message || 'Error deleting session');
+            } finally {
+                setIsLoading(false);
+            }
+        }
     };
 
     if (viewSession) {
@@ -262,7 +313,12 @@ const SessionSettings = () => {
                                                             <button className="btn btn-default btn-xs" title="Edit" onClick={() => startEdit(session)}>
                                                                 <i className="fa fa-pencil"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="Delete" disabled={session.status === 'active'}>
+                                                            <button
+                                                                className="btn btn-default btn-xs"
+                                                                title="Delete"
+                                                                disabled={session.status === 'active'}
+                                                                onClick={() => handleDelete(session.id)}
+                                                            >
                                                                 <i className="fa fa-remove"></i>
                                                             </button>
                                                         </td>

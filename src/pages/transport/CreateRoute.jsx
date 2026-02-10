@@ -76,33 +76,7 @@ const CreateRoute = () => {
         console.log('Search');
     };
 
-    const sidebarMenus = [
-        { id: 1, icon: 'helpdesk.png', label: 'Help Desk', url: '/admin/enquiry' },
-        { id: 2, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 3, icon: 'Fees.png', label: 'Fees', url: '#' },
-        { id: 4, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
-        { id: 5, icon: 'state_examination.png', label: 'State Examinations', url: '#' },
-        { id: 6, icon: 'courses.png', label: 'Courses', url: '#' },
-        { id: 7, icon: 'homework.png', label: 'Homework', url: '#' },
-        { id: 8, icon: 'transport.png', label: 'Transport', url: '/admin/route', active: true },
-        { id: 9, icon: 'messages.png', label: 'Messages', url: '#' },
-        { id: 10, icon: 'hr.png', label: 'Human Resource', url: '#' },
-        { id: 11, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
-        { id: 12, icon: 'certificate.png', label: 'Certificate', url: '#' },
-        { id: 13, icon: 'income.png', label: 'Income', url: '#' },
-        { id: 14, icon: 'expenses.png', label: 'Expenses', url: '#' },
-        { id: 15, icon: 'hostle.png', label: 'Hostel', url: '#' },
-        { id: 16, icon: 'reports.png', label: 'Reports', url: '#' },
-        { id: 17, icon: 'settings.png', label: 'System Settings', url: '/settings' }
-    ];
 
-    const mobileNavItems = [
-        { id: 1, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 2, icon: 'Fees.png', label: 'Fees', url: '#' },
-        { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
-        { id: 4, icon: 'settings.png', label: 'More', url: '/settings' },
-        { id: 5, icon: 'logout', label: 'Logout', url: '#', isLogout: true }
-    ];
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -203,8 +177,7 @@ const CreateRoute = () => {
             />
 
             <Sidebar
-                sidebarMenus={sidebarMenus}
-                mobileNavItems={mobileNavItems}
+
                 handleSearch={handleSearch}
                 sessionYear={sessionYear}
                 currentUrl="/admin/route"
@@ -225,37 +198,37 @@ const CreateRoute = () => {
                                 <ul className="tablists">
                                     <li className={getActiveMenu('/admin/route')}>
                                         <Link to="/admin/route" className={getActiveMenu('/admin/route')}>
-                                            <i className="fa fa-map-signs" style={{ width: '20px' }}></i> Routes
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/3.png" style={{ width: '20px', marginRight: '5px' }} /> Routes
                                         </Link>
                                     </li>
                                     <li>
                                         <Link to="/admin/vehicle">
-                                            <i className="fa fa-bus" style={{ width: '20px' }}></i> Vehicles
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/4.png" style={{ width: '20px', marginRight: '5px' }} /> Vehicles
                                         </Link>
                                     </li>
                                     <li>
                                         <Link to="/admin/vehroute" className={getActiveMenu('/admin/vehroute')}>
-                                            <i className="fa fa-exchange" style={{ width: '20px' }}></i> Assign Vehicle
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/5.png" style={{ width: '20px', marginRight: '5px' }} /> Assign Vehicle
                                         </Link>
                                     </li>
                                     <li>
                                         <Link to="/admin/pickuppoint" className={getActiveMenu('/admin/pickuppoint')}>
-                                            <i className="fa fa-map-marker" style={{ width: '20px' }}></i> Pickup Point
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/2.png" style={{ width: '20px', marginRight: '5px' }} /> Pickup Point
                                         </Link>
                                     </li>
                                     <li>
                                         <Link to="/admin/routepickuppoint" className={getActiveMenu('/admin/routepickuppoint')}>
-                                            <i className="fa fa-location-arrow" style={{ width: '20px' }}></i> Route Pickup Point
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/6.png" style={{ width: '20px', marginRight: '5px' }} /> Route Pickup Point
                                         </Link>
                                     </li>
                                     <li>
                                         <Link to="/admin/transportFeeMaster" className={getActiveMenu('/admin/transportFeeMaster')}>
-                                            <i className="fa fa-money" style={{ width: '20px' }}></i> Fees Master
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/6.png" style={{ width: '20px', marginRight: '5px' }} /> Fees Master
                                         </Link>
                                     </li>
                                     <li>
                                         <Link to="/admin/studenttransportfee" className={getActiveMenu('/admin/studenttransportfee')}>
-                                            <i className="fa fa-user" style={{ width: '20px' }}></i> Student Transport Fees
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/7.png" style={{ width: '20px', marginRight: '5px' }} /> Student Transport Fees
                                         </Link>
                                     </li>
                                 </ul>

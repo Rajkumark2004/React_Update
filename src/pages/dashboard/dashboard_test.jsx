@@ -161,9 +161,9 @@ const DashboardTest = () => {
     // Mobile Bottom Nav Items
     const mobileNavItems = [
         { id: 1, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 2, icon: 'Fees.png', label: 'Fees', url: '#' },
+        { id: 2, icon: 'Fees.png', label: 'Fees', url: '/studentfee' },
         { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
-        { id: 4, icon: 'settings.png', label: 'More', url: '/settings' },
+        { id: 4, icon: 'settings.png', label: 'More', url: '#', isMore: true },
         { id: 5, icon: 'logout', label: 'Logout', url: '#', isLogout: true }
     ];
 

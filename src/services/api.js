@@ -1955,6 +1955,298 @@ export const api = {
         }
     },
 
+    createSession: async (session) => {
+        console.log('API Request: Create Session', session);
+        try {
+            const response = await fetch(`${API_BASE}/sessions/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ session }),
+            });
+            const data = await response.json();
+            console.log('Create Session Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to create session');
+            }
+            return data;
+        } catch (error) {
+            console.error('Create Session API Error:', error);
+            throw error;
+        }
+    },
+
+    getSession: async (id) => {
+        console.log('API Request: Get Session', id);
+        try {
+            const response = await fetch(`${API_BASE}/sessions/view/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Session Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch session details');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Session API Error:', error);
+            throw error;
+        }
+    },
+
+    updateSession: async (id, sessionData) => {
+        console.log('API Request: Update Session', id, sessionData);
+        try {
+            const response = await fetch(`${API_BASE}/sessions/edit/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(sessionData),
+            });
+            const data = await response.json();
+            console.log('Update Session Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to update session');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Session API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteSession: async (id) => {
+        console.log('API Request: Delete Session', id);
+        try {
+            const response = await fetch(`${API_BASE}/sessions/delete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Session Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to delete session');
+            }
+            return data;
+        } catch (error) {
+            console.error('Delete Session API Error:', error);
+            throw error;
+        }
+    },
+
+    getEmailConfig: async () => {
+        console.log('API Request: Get Email Config');
+        try {
+            const response = await fetch(`${API_BASE}/emailconfig/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Email Config Response:', data);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch email config');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Email Config API Error:', error);
+            throw error;
+        }
+    },
+
+    updateEmailConfig: async (configData) => {
+        console.log('API Request: Update Email Config', configData);
+        try {
+            const response = await fetch(`${API_BASE}/emailconfig/index`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(configData),
+            });
+            const data = await response.json();
+            console.log('Update Email Config Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update email config');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Email Config API Error:', error);
+            throw error;
+        }
+    },
+
+    getSmsConfig: async () => {
+        console.log('API Request: Get SMS Config');
+        try {
+            const response = await fetch(`${API_BASE}/smsconfig`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get SMS Config Response:', data);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch SMS config');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get SMS Config API Error:', error);
+            throw error;
+        }
+    },
+
+    updateSmsConfig: async (configData) => {
+        console.log('API Request: Update SMS Config', configData);
+        try {
+            const response = await fetch(`${API_BASE}/smsconfig/smscountry`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(configData),
+            });
+            const data = await response.json();
+            console.log('Update SMS Config Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update SMS config');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update SMS Config API Error:', error);
+            throw error;
+        }
+    },
+
+    getPrintHeaderFooterSettings: async () => {
+        console.log('API Request: Get Print Header Footer Settings');
+        try {
+            const response = await fetch(`${API_BASE}/admin/print_headerfooter/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Print Header Footer Settings Response:', data);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch print header footer settings');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Print Header Footer Settings API Error:', error);
+            throw error;
+        }
+    },
+
+    updatePrintHeaderFooterSettings: async (formData) => {
+        console.log('API Request: Update Print Header Footer Settings');
+        try {
+            const response = await fetch(`${API_BASE}/admin/print_headerfooter/edit`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Update Print Header Footer Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update settings');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Print Header Footer API Error:', error);
+            throw error;
+        }
+    },
+
+    getRoles: async () => {
+        console.log('API Request: Get Roles');
+        try {
+            const response = await fetch(`${API_BASE}/admin/roles`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Roles Response:', data);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch roles');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Roles API Error:', error);
+            throw error;
+        }
+    },
+
+    createRole: async (roleData) => {
+        console.log('API Request: Create Role', roleData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/roles`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(roleData),
+            });
+            const data = await response.json();
+            console.log('Create Role Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to create role');
+            }
+            return data;
+        } catch (error) {
+            console.error('Create Role API Error:', error);
+            throw error;
+        }
+    },
+
+    updateRole: async (id, roleData) => {
+        console.log('API Request: Update Role', id, roleData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/roles/edit/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(roleData),
+            });
+            const data = await response.json();
+            console.log('Update Role Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update role');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Role API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteRole: async (id) => {
+        console.log('API Request: Delete Role', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/roles/delete/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Delete Role Response:', data);
+
+            if (!response.ok) {
+                // Even if response.ok is false, the server might return a JSON with message
+                throw new Error(data.message || 'Failed to delete role');
+            }
+            return data;
+        } catch (error) {
+            console.error('Delete Role API Error:', error);
+            throw error;
+        }
+    },
+
     // Generic session-aware GET request
     getCBSEExamList: async () => {
         console.log('API Request: Get CBSE Exam List');

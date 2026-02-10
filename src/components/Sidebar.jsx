@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
 import { LogOut } from 'lucide-react';
 import TopSidebar from './TopSidebar';
 
@@ -109,7 +110,7 @@ const Sidebar = ({
         '/admin/video_tutorial'
     ];
 
-    // Default menus - only SIS and System Settings have working pages
+
     const defaultSidebarMenus = [
         { id: 1, icon: 'helpdesk.png', label: 'Help Desk', url: '/admin/enquiry' },
         { id: 2, icon: 'sis.png', label: 'SIS', url: '/student/search' },
@@ -138,14 +139,28 @@ const Sidebar = ({
 
     // Default mobile nav items
     const defaultMobileNavItems = [
-        { id: 1, icon: 'dashboard.png', label: 'Dashboard', url: '/dashboard' },
-        { id: 2, icon: 'Fees.png', label: 'Fees', url: '#' },
-        { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/daily-attendance-report' }, // Updated to daily report as per recent work
+        { id: 1, icon: 'helpdesk.png', label: 'Dashboard', url: '/dashboard' },
+        { id: 2, icon: 'Fees.png', label: 'Fees', url: '/studentfee' },
+        { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' }, // Updated to daily report as per recent work
         { id: 4, icon: 'more', label: 'More', url: '#', isMore: true },
         { id: 5, icon: 'logout', label: 'Logout', url: '#', isLogout: true }
     ];
 
     const mobileItems = mobileNavItems.length > 0 ? mobileNavItems : defaultMobileNavItems;
+
+    const navigate = useNavigate();
+
+    const handleMobileLogout = async (e) => {
+        e.preventDefault();
+        try {
+            await api.logout();
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        navigate('/');
+    };
 
     // Handle click for disabled links
     const handleDisabledClick = (e, url) => {
@@ -330,16 +345,12 @@ const Sidebar = ({
                                     className={showMobileMore ? 'active' : ''}
                                 >
                                     <div className="mobile-icon-container">
-                                        <div style={{ display: 'flex', gap: '2px', alignItems: 'center', justifyContent: 'center', height: '20px' }}>
-                                            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#666' }}></div>
-                                            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#666' }}></div>
-                                            <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#666' }}></div>
-                                        </div>
+                                        <img src="https://newlayout.wisibles.com/backend/images/sidebar/dots.png" alt="More" style={{ width: '20px', height: '20px' }} />
                                     </div>
                                     <span>More</span>
                                 </a>
                             ) : item.isLogout ? (
-                                <a href="#" onClick={(e) => { e.preventDefault(); /* Trigger logout if passed prop */ }}>
+                                <a href="#" onClick={handleMobileLogout}>
                                     <div className="mobile-icon-container">
                                         <img src={logoutIconUrl} alt="Logout" style={{ width: '20px', height: '20px' }} />
                                     </div>
@@ -348,9 +359,7 @@ const Sidebar = ({
                             ) : (
                                 <Link to={item.url}>
                                     <div className="mobile-icon-container">
-                                        {item.icon === 'dashboard.png' ? <i className="fa fa-dashboard" style={{ fontSize: '20px', color: '#666' }}></i> :
-                                            <img src={`/images/${item.icon}`} alt={item.label} style={{ width: '20px', height: '20px' }} />
-                                        }
+                                        <img src={`/images/${item.icon}`} alt={item.label} style={{ width: '20px', height: '20px' }} />
                                     </div>
                                     <span>{item.label}</span>
                                 </Link>
@@ -369,19 +378,108 @@ const Sidebar = ({
                             <button onClick={() => setShowMobileMore(false)} className="close-btn">&times;</button>
                         </div>
                         <div className="mobile-more-grid">
-                            {menus.map((menu) => (
-                                <Link
-                                    key={menu.id}
-                                    to={menu.url}
-                                    className="mobile-more-item"
-                                    onClick={() => setShowMobileMore(false)}
-                                >
-                                    <div className="more-icon">
-                                        <img src={`/images/${menu.icon}`} alt={menu.label} />
-                                    </div>
-                                    <span>{menu.label}</span>
-                                </Link>
-                            ))}
+                            <Link to="/admin/enquiry" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/helpdesk.png" alt="Help Desk" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Help Desk</span>
+                            </Link>
+                            <Link to="/student/search" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/sis.png" alt="SIS" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>SIS</span>
+                            </Link>
+                            <Link to="/studentfee" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/Fees.png" alt="Fees Collection" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Fees Collection</span>
+                            </Link>
+                            <Link to="/student-attendance" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/attendance.png" alt="Attendance" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Attendance</span>
+                            </Link>
+                            <Link to="/cbseexam/exam" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/state_examination.png" alt="State Examinations" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>State Examinations</span>
+                            </Link>
+                            <Link to="/admin/onlinecourse" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/courses.png" alt="Courses" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Courses</span>
+                            </Link>
+                            <Link to="/homework" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/homework.png" alt="Homework" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Homework</span>
+                            </Link>
+                            <Link to="/admin/route" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/transport.png" alt="Transport" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Transport</span>
+                            </Link>
+                            <Link to="/admin/notification" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/messages.png" alt="Messages" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Messages</span>
+                            </Link>
+                            <Link to="/admin/staff/search" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/hr.png" alt="Human Resource" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Human Resource</span>
+                            </Link>
+                            <Link to="/admin/content/assignment" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/download_resouces.png" alt="Download Center" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Download Center</span>
+                            </Link>
+                            <Link to="/admin/certificate/student_id_card" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/certificate.png" alt="Certificate" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Certificate</span>
+                            </Link>
+                            <Link to="/admin/income" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/income.png" alt="Income" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Income</span>
+                            </Link>
+                            <Link to="/admin/expense" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/expenses.png" alt="Expenses" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Expenses</span>
+                            </Link>
+                            <Link to="/admin/hostelroom" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/hostle.png" alt="Hostel" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Hostel</span>
+                            </Link>
+                            <Link to="#" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/reports.png" alt="Reports" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Reports</span>
+                            </Link>
+                            <Link to="/settings" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                                <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                    <img src="/images/settings.png" alt="System Settings" style={{ width: '22px', height: 'auto' }} />
+                                </div>
+                                <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>System Settings</span>
+                            </Link>
                         </div>
                     </div>
                 </div>
