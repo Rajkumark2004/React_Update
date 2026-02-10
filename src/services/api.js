@@ -2020,21 +2020,45 @@ export const api = {
         }
     },
 
-    deleteSession: async (id) => {
-        console.log('API Request: Delete Session', id);
+
+    getRolePermissions: async (id) => {
+        console.log('API Request: Get Role Permissions', id);
         try {
-            const response = await fetch(`${API_BASE}/sessions/delete/${id}`, {
+            const response = await fetch(`${API_BASE}/admin/roles/permission/${id}`, {
                 method: 'GET',
             });
             const data = await response.json();
-            console.log('Delete Session Response:', data);
+            console.log('Get Role Permissions Response:', data);
 
-            if (!response.ok || !data.status) {
-                throw new Error(data.message || 'Failed to delete session');
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch role permissions');
             }
             return data;
         } catch (error) {
-            console.error('Delete Session API Error:', error);
+            console.error('Get Role Permissions API Error:', error);
+            throw error;
+        }
+    },
+
+    updateRolePermissions: async (id, permissionsData) => {
+        console.log('API Request: Update Role Permissions', id, permissionsData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/roles/permission/${id}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(permissionsData),
+            });
+            const data = await response.json();
+            console.log('Update Role Permissions Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update role permissions');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Role Permissions API Error:', error);
             throw error;
         }
     },
@@ -6512,6 +6536,98 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Notification Detail API Error:', error);
+            throw error;
+        }
+    },
+
+    getModulePermissions: async () => {
+        console.log('API Request: Get Module Permissions');
+        try {
+            const response = await fetch(`${API_BASE}/admin/module/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Module Permissions Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch module permissions');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Module Permissions API Error:', error);
+            throw error;
+        }
+    },
+
+    changeModuleStatus: async (id, status) => {
+        console.log('API Request: Change Module Status', { id, status });
+        try {
+            const response = await fetch(`${API_BASE}/admin/module/changeStatus`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id, status }),
+            });
+            const data = await response.json();
+            console.log('Change Module Status Response:', data);
+
+            // API might return {status: "success"} or {status: 1}
+            if (!response.ok || (data.status !== 'success' && data.message !== 'Status Change Successfully')) {
+                // Fallback check if status is boolean/number 1 or "1" if "success" string isn't used
+                if (data.status != 1 && data.status !== true && data.status !== 'success') {
+                    throw new Error(data.message || 'Failed to change module status');
+                }
+            }
+            return data;
+        } catch (error) {
+            console.error('Change Module Status API Error:', error);
+            throw error;
+        }
+    },
+
+    changeStudentStatus: async (id, status) => {
+        console.log('API Request: Change Student Status', { id, status, role: 'student' });
+        try {
+            const response = await fetch(`${API_BASE}/admin/module/changeStudentStatus`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id, status, role: 'student' }),
+            });
+            const data = await response.json();
+            console.log('Change Student Status Response:', data);
+
+            if (!response.ok && data.status !== 'success' && data.status !== 1) {
+                throw new Error(data.message || 'Failed to change student module status');
+            }
+            return data;
+        } catch (error) {
+            console.error('Change Student Status API Error:', error);
+            throw error;
+        }
+    },
+
+    changeParentStatus: async (id, status) => {
+        console.log('API Request: Change Parent Status', { id, status });
+        try {
+            const response = await fetch(`${API_BASE}/admin/module/changeParentStatus`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id, status }),
+            });
+            const data = await response.json();
+            console.log('Change Parent Status Response:', data);
+
+            if (!response.ok && data.status !== 'success' && data.status !== 1) {
+                throw new Error(data.message || 'Failed to change parent module status');
+            }
+            return data;
+        } catch (error) {
+            console.error('Change Parent Status API Error:', error);
             throw error;
         }
     },

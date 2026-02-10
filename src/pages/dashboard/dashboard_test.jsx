@@ -129,7 +129,7 @@ const DashboardTest = () => {
         totalStaff: totalStaffCount,
         staffProgress: parseFloat(data.attendance?.staff_percent || 0),
 
-        feesPaid: parseFloat(data.month_collection || 0),
+        feesPaid: 0,
         totalFees: 0,
         feesProgress: 0
     };

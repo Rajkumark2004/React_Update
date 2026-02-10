@@ -14,6 +14,7 @@ import SmsSettings from './pages/settings/SmsSettings';
 import EmailSettings from './pages/settings/EmailSettings';
 import PrintHeaderFooterSettings from './pages/settings/PrintHeaderFooterSettings';
 import RoleList from './pages/settings/RoleList';
+import RolePermission from './pages/settings/RolePermission';
 import ModulePermissions from './pages/settings/ModulePermissions';
 import StudentSearch from './pages/student/StudentSearch';
 
@@ -307,7 +308,7 @@ function App() {
               path="/settings/roles/permission/:id"
               element={
                 <ProtectedRoute>
-                  <ModulePermissions />
+                  <RolePermission />
                 </ProtectedRoute>
               }
             />

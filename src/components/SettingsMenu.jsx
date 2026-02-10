@@ -16,7 +16,7 @@ const getIconPath = (filename) => {
     return settingsIcons[path] || '';
 };
 
-const SettingsMenu = ({ children }) => {
+const SettingsMenu = ({ children, hideSidebars = false }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -96,7 +96,7 @@ const SettingsMenu = ({ children }) => {
                 <section className="content">
                     <div className="row">
                         {/* FIRST COLUMN: Settings Main Categories */}
-                        {showCategoryMenu && (
+                        {showCategoryMenu && !hideSidebars && (
                             <div className="col-md-2">
                                 <div className="box border0">
                                     <div className="box-header with-border">
@@ -165,7 +165,7 @@ const SettingsMenu = ({ children }) => {
                         )}
 
                         {/* SECOND COLUMN: Sub-menu (Conditional) */}
-                        {showCategoryMenu && (
+                        {showCategoryMenu && !hideSidebars && (
                             <div className="col-md-2">
                                 <div className="box border0">
                                     <div className="box-header with-border">
@@ -184,7 +184,7 @@ const SettingsMenu = ({ children }) => {
 
                         {/* THIRD COLUMN: Content/Form */}
                         {children && (
-                            <div className={showCategoryMenu ? "col-md-8" : "col-md-12"}>
+                            <div className={hideSidebars ? "col-md-12" : (showCategoryMenu ? "col-md-8" : "col-md-12")}>
                                 {children}
                             </div>
                         )}
