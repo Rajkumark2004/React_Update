@@ -13,6 +13,7 @@ import SessionSettings from './pages/settings/SessionSettings';
 import SmsSettings from './pages/settings/SmsSettings';
 import EmailSettings from './pages/settings/EmailSettings';
 import PrintHeaderFooterSettings from './pages/settings/PrintHeaderFooterSettings';
+import PaymentMethods from './pages/settings/paymentsettings/PaymentMethods.jsx';
 import RoleList from './pages/settings/RoleList';
 import RolePermission from './pages/settings/RolePermission';
 import ModulePermissions from './pages/settings/ModulePermissions';
@@ -142,6 +143,7 @@ import HostelEdit from './pages/hostel/HostelEdit';
 import GenerateCertificate from './pages/certificates/GenerateCertificate';
 import GenerateIdCard from './pages/certificates/GenerateIdCard';
 import GenerateStaffIdCard from './pages/certificates/GenerateStaffIdCard';
+import StaffIdCardView from './pages/certificates/StaffIdCardView';
 import StaffIdCard from './pages/certificates/StaffIdCard';
 import StudentCertificate from './pages/certificates/StudentCertificate';
 import StudentIdCard from './pages/certificates/StudentIdCard';
@@ -261,6 +263,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <EmailSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/payment_methods"
+              element={
+                <ProtectedRoute>
+                  <PaymentMethods />
                 </ProtectedRoute>
               }
             />
@@ -657,6 +667,7 @@ function App() {
             <Route path="/admin/certificate/generate_certificate" element={<ProtectedRoute><GenerateCertificate /></ProtectedRoute>} />
             <Route path="/admin/certificate/generate_id_card" element={<ProtectedRoute><GenerateIdCard /></ProtectedRoute>} />
             <Route path="/admin/certificate/generate_staff_id_card" element={<ProtectedRoute><GenerateStaffIdCard /></ProtectedRoute>} />
+            <Route path="/admin/certificate/generate_staff_id_card_view" element={<ProtectedRoute><StaffIdCardView /></ProtectedRoute>} />
             <Route path="/admin/certificate/staff_id_card" element={<ProtectedRoute><StaffIdCard /></ProtectedRoute>} />
             <Route path="/admin/certificate/student_certificate" element={<ProtectedRoute><StudentCertificate /></ProtectedRoute>} />
             <Route path="/admin/certificate/student_id_card" element={<ProtectedRoute><StudentIdCard /></ProtectedRoute>} />

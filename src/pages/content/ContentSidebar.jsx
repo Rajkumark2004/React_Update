@@ -14,10 +14,15 @@ const ContentSidebar = () => {
                 <ul className="list-group list-group-unbordered">
                     <li className="list-group-item">
                         <Link to="/admin/content/createcontent" className={isActive('/admin/content/createcontent') ? 'active' : ''} style={{ color: isActive('/admin/content/createcontent') ? '#444' : 'inherit', fontWeight: isActive('/admin/content/createcontent') ? 'bold' : 'normal' }}>
-                            <i className="fa fa-upload" style={{ marginRight: '5px' }}></i> Upload Content
+                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/download_center/3.png" style={{ marginRight: '5px', width: '20px', height: '20px' }} alt="Upload Content" /> Upload Content
                         </Link>
                     </li>
                     <li className="list-group-item">
+                        <Link to="/admin/content/worksheets" className={isActive('/admin/content/worksheets') ? 'active' : ''} style={{ color: isActive('/admin/content/worksheets') ? '#444' : 'inherit', fontWeight: isActive('/admin/content/worksheets') ? 'bold' : 'normal' }}>
+                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/download_center/1.png" style={{ marginRight: '5px', width: '20px', height: '20px' }} alt="Worksheets" /> Worksheets
+                        </Link>
+                    </li>
+                    {/* <li className="list-group-item">
                         <Link to="/admin/content/assignment" className={isActive('/admin/content/assignment') ? 'active' : ''} style={{ color: isActive('/admin/content/assignment') ? '#444' : 'inherit', fontWeight: isActive('/admin/content/assignment') ? 'bold' : 'normal' }}>
                             <i className="fa fa-file-text-o" style={{ marginRight: '5px' }}></i> Assignments
                         </Link>
@@ -38,15 +43,10 @@ const ContentSidebar = () => {
                         </Link>
                     </li>
                     <li className="list-group-item">
-                        <Link to="/admin/content/worksheets" className={isActive('/admin/content/worksheets') ? 'active' : ''} style={{ color: isActive('/admin/content/worksheets') ? '#444' : 'inherit', fontWeight: isActive('/admin/content/worksheets') ? 'bold' : 'normal' }}>
-                            <i className="fa fa-file-text-o" style={{ marginRight: '5px' }}></i> Worksheets
-                        </Link>
-                    </li>
-                    <li className="list-group-item">
                         <Link to="/admin/video_tutorial" className={isActive('/admin/video_tutorial') ? 'active' : ''} style={{ color: isActive('/admin/video_tutorial') ? '#444' : 'inherit', fontWeight: isActive('/admin/video_tutorial') ? 'bold' : 'normal' }}>
                             <i className="fa fa-video-camera" style={{ marginRight: '5px' }}></i> Video Tutorial
                         </Link>
-                    </li>
+                    </li> */}
                 </ul>
             </div>
         </div>

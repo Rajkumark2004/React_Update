@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
@@ -139,7 +139,7 @@ const Worksheets = () => {
                                                                 {data.date}
                                                             </td>
                                                             <td className="mailbox-name">
-                                                                {data.is_public === "Yes" ? "ALL Classes" : data.class}
+                                                                {data.is_public === "Yes" ? "ALL Classes" : `${data.class} (${data.section_names})`}
                                                             </td>
                                                             <td className="mailbox-date pull-right no-print">
                                                                 <a href="#" className="btn btn-default btn-xs" data-toggle="tooltip" title="Download" onClick={(e) => { e.preventDefault(); handleDownload(data.id, data.title); }}>

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { api } from '../../services/api';
 import '../../utils/include_files.js';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
@@ -10,21 +11,24 @@ const GenerateStaffIdCard = () => {
     const navigate = useNavigate();
     const { currentSession, clearSession } = useSession();
 
-    // Mock Data for Roles
-    const roles = [
-        { id: 1, type: 'Admin' },
-        { id: 2, type: 'Teacher' },
-        { id: 3, type: 'Super Admin' },
-        { id: 4, type: 'Fee Agent' },
-        { id: 5, type: 'Director' },
-        { id: 6, type: 'NON_Teaching' }
-    ];
+    const [roles, setRoles] = useState([]);
+    const [idCards, setIdCards] = useState([]);
 
-    // Mock Data for ID Card Templates
-    const idCards = [
-        { id: 1, title: 'Sample Staff ID Card' },
-        { id: 2, title: 'Sample Staff ID Card Vertical' }
-    ];
+    useEffect(() => {
+        fetchInitialData();
+    }, []);
+
+    const fetchInitialData = async () => {
+        try {
+            const response = await api.getGenerateStaffIdCard();
+            if (response.status && response.data) {
+                setRoles(response.data.staffRolelist || []);
+                setIdCards(response.data.idcardlist || []);
+            }
+        } catch (error) {
+            console.error('Error fetching initial data:', error);
+        }
+    };
 
     // Mock Data for Staff List
     const [staffList, setStaffList] = useState([]);
@@ -67,12 +71,28 @@ const GenerateStaffIdCard = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSearch = (e) => {
+    const handleSearch = async (e) => {
         e.preventDefault();
         setSearchedParams({ ...formData });
-        setStaffList(mockStaffData);
-        setSearched(true);
+
+        try {
+            const data = await api.searchStaffForIdCard(formData.role_id, formData.id_card);
+            if (data && data.status) {
+                setStaffList(data.data || []);
+                setSearched(true);
+            } else {
+                setStaffList([]);
+                setSearched(true);
+                // alert('No staff found');
+            }
+
+        } catch (error) {
+            console.error("Error searching staff:", error);
+            setStaffList([]);
+            setSearched(true);
+        }
     };
+
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
@@ -91,9 +111,11 @@ const GenerateStaffIdCard = () => {
     const handleGenerate = () => {
         if (selectedStaff.length === 0) {
             alert('No record selected');
-        } else {
-            alert('Generating ID Cards for ' + selectedStaff.length + ' staff members...');
+            return;
         }
+
+        const selectedStaffData = staffList.filter(staff => selectedStaff.includes(staff.id));
+        navigate('/admin/certificate/generate_staff_id_card_view', { state: { staffs: selectedStaffData } });
     };
 
     return (
@@ -146,8 +168,8 @@ const GenerateStaffIdCard = () => {
                                 {searched && (
                                     <div className="box-body">
                                         <div style={{ borderTop: '1px solid #f4f4f4', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <h3 className="box-title" style={{ fontSize: '20px' }}>Staff</h3>
-                                            <button className="btn btn-info btn-sm" onClick={handleGenerate}>Generate</button>
+                                            <h3 className="box-title" style={{ fontSize: '20px' }}><i className="fa fa-users"></i> Staff List</h3>
+                                            <button className="btn btn-info btn-sm printSelected pull-right" onClick={handleGenerate} title="Generate Certificate">Generate</button>
                                         </div>
 
                                         <div className="row pb10">
@@ -181,6 +203,7 @@ const GenerateStaffIdCard = () => {
                                                 <thead>
                                                     <tr>
                                                         <th className="text-center"><input type="checkbox" onChange={handleSelectAll} checked={staffList.length > 0 && selectedStaff.length === staffList.length} /></th>
+                                                        <th>Staff ID</th>
                                                         <th>Staff Name</th>
                                                         <th>Designation</th>
                                                         <th>Department</th>
@@ -202,7 +225,12 @@ const GenerateStaffIdCard = () => {
                                                     ).map(staff => (
                                                         <tr key={staff.id}>
                                                             <td className="text-center"><input type="checkbox" checked={selectedStaff.includes(staff.id)} onChange={() => handleSelectStaff(staff.id)} /></td>
-                                                            <td>{staff.name} {staff.surname}</td>
+                                                            <td>{staff.employee_id}</td>
+                                                            <td>
+                                                                <Link to={`/admin/staff/profile/${staff.id}`} style={{ color: '#000' }}>
+                                                                    {staff.name} {staff.surname}
+                                                                </Link>
+                                                            </td>
                                                             <td>{staff.designation}</td>
                                                             <td>{staff.department}</td>
                                                             <td>{staff.father_name}</td>

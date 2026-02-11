@@ -128,7 +128,11 @@ const SettingsMenu = ({ children, hideSidebars = false }) => {
                                                 <img src={getIconPath('5.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Email Setting
                                             </Link>
                                         </li>
-                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('6.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Payment Methods</a></li>
+                                        <li>
+                                            <Link to="/settings/payment_methods" className={location.pathname.startsWith('/settings/payment_methods') ? "active" : ""}>
+                                                <img src={getIconPath('6.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Payment Methods
+                                            </Link>
+                                        </li>
                                         <li>
                                             <Link to="/print-header-footer" className={location.pathname.startsWith('/print-header-footer') ? "active" : ""}>
                                                 <img src={getIconPath('7.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Print Header Footer

@@ -229,6 +229,25 @@ export const api = {
         }
     },
 
+    getGenerateStaffIdCard: async () => {
+        console.log('API Request: Get Generate Staff ID Card Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/generatestaffidcard`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Generate Staff ID Card Data Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch generate staff ID card data');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Generate Staff ID Card Data API Error:', error);
+            throw error;
+        }
+    },
+
     getStaffIdCards: async () => {
         console.log('API Request: Get Staff ID Cards');
         try {
@@ -244,6 +263,55 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Staff ID Cards API Error:', error);
+            throw error;
+        }
+    },
+
+    searchStaffForIdCard: async (roleId, idCardId) => {
+        console.log('API Request: Search Staff For ID Card', { roleId, idCardId });
+        try {
+            const response = await fetch(`${API_BASE}/admin/generatestaffidcard/search`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ role_id: roleId, id_card: idCardId }),
+            });
+            const data = await response.json();
+            console.log('Search Staff For ID Card Response:', data);
+
+            if (!response.ok || !data.status) {
+                // If the search fails or no records found, return empty list or throw
+                // throw new Error(data.message || 'No staff found');
+                return { status: true, data: [] }; // Return empty data on failure to avoid breaking UI
+            }
+            // The PHP API returns `resultlist` in `data`
+            return { status: true, data: data.data.resultlist };
+        } catch (error) {
+            console.error('Search Staff For ID Card API Error:', error);
+            throw error;
+        }
+    },
+
+    generateStaffIdCard: async (payload) => {
+        console.log('API Request: Generate Multiple Staff ID Cards', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/generatestaffidcard/generatemultiple`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Generate Multiple Staff ID Cards Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to generate staff ID cards');
+            }
+            return data;
+        } catch (error) {
+            console.error('Generate Staff ID Cards API Error:', error);
             throw error;
         }
     },
@@ -436,6 +504,98 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get General Settings API Error:', error);
+            throw error;
+        }
+    },
+
+    getPaymentSettings: async () => {
+        console.log('API Request: Get Payment Settings');
+        try {
+            const response = await fetch(`${API_BASE}/admin/paymentsettings/index`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Payment Settings Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch payment settings');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Payment Settings API Error:', error);
+            throw error;
+        }
+    },
+
+    saveCCAvenueSettings: async (settings) => {
+        console.log('API Request: Save CCAvenue Settings', settings);
+        try {
+            const response = await fetch(`${API_BASE}/admin/paymentsettings/ccavenue`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings),
+            });
+            const data = await response.json();
+            console.log('Save CCAvenue Settings Response:', data);
+
+            if (!response.ok || (data.status === 0 && data.error)) { // Check for status 0 or error field just in case
+                throw new Error(data.message || data.error || 'Failed to check CCavenue settings');
+            }
+
+            return data;
+
+        } catch (error) {
+            console.error('Save CCAvenue Settings API Error:', error);
+            throw error;
+        }
+    },
+
+    saveRazorpaySettings: async (settings) => {
+        console.log('API Request: Save Razorpay Settings', settings);
+        try {
+            const response = await fetch(`${API_BASE}/admin/paymentsettings/razorpay`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings),
+            });
+            const data = await response.json();
+            console.log('Save Razorpay Settings Response:', data);
+
+            if (!response.ok || (data.status === 0 && data.error)) {
+                throw new Error(data.message || data.error || 'Failed to save Razorpay settings');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Save Razorpay Settings API Error:', error);
+            throw error;
+        }
+    },
+
+    activatePaymentGateway: async (gateway) => {
+        console.log('API Request: Activate Payment Gateway', gateway);
+        try {
+            const response = await fetch(`${API_BASE}/admin/paymentsettings/setting`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ payment_setting: gateway }),
+            });
+            const data = await response.json();
+            console.log('Activate Payment Gateway Response:', data);
+
+            if (!response.ok || (data.status === 0 && data.error)) {
+                throw new Error(data.message || data.error || 'Failed to activate payment gateway');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Activate Payment Gateway API Error:', error);
             throw error;
         }
     },
@@ -980,25 +1140,6 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Delete Content API Error:', error);
-            throw error;
-        }
-    },
-
-    getWorksheets: async () => {
-        console.log('API Request: Get Worksheets');
-        try {
-            const response = await fetch(`${API_BASE}/admin/content/worksheets`, {
-                method: 'GET',
-            });
-            const data = await response.json();
-            console.log('Get Worksheets Response:', data);
-
-            if (!response.ok || !data.status) {
-                throw new Error(data.message || 'Failed to fetch worksheets');
-            }
-            return data;
-        } catch (error) {
-            console.error('Get Worksheets API Error:', error);
             throw error;
         }
     },
@@ -6122,6 +6263,30 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Update Staff Leave Status API Error:', error);
+            throw error;
+        }
+    },
+
+
+    getWorksheets: async () => {
+        console.log('API Request: Get Worksheets');
+        try {
+            const response = await fetch(`${API_BASE}/admin/content/worksheets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            });
+            const data = await response.json();
+            console.log('Get Worksheets Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch worksheets');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Worksheets API Error:', error);
             throw error;
         }
     },

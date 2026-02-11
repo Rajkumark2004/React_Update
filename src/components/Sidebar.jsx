@@ -123,7 +123,7 @@ const Sidebar = ({
         { id: 9, icon: 'transport.png', label: 'Transport', url: '/admin/route' },
         { id: 10, icon: 'messages.png', label: 'Messages', url: '/admin/notification' },
         { id: 11, icon: 'hr.png', label: 'Human Resource', url: '/admin/staff/search' },
-        { id: 12, icon: 'download_resouces.png', label: 'Download Center', url: '/admin/content/assignment' },
+        { id: 12, icon: 'download_resouces.png', label: 'Download Center', url: '/admin/content/createcontent' },
         { id: 13, icon: 'certificate.png', label: 'Certificate', url: '/admin/certificate/student_id_card' },
         { id: 14, icon: 'income.png', label: 'Income', url: '/admin/income' },
         { id: 15, icon: 'expenses.png', label: 'Expenses', url: '/admin/expense' },
@@ -438,7 +438,7 @@ const Sidebar = ({
                                 </div>
                                 <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Human Resource</span>
                             </Link>
-                            <Link to="/admin/content/assignment" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                            <Link to="/admin/content/createcontent" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
                                 <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
                                     <img src="/images/download_resouces.png" alt="Download Center" style={{ width: '22px', height: 'auto' }} />
                                 </div>

@@ -346,12 +346,12 @@ const StudentIdCard = () => {
                                             Staff ID Card
                                         </Link>
                                     </li>
-                                    {/*} <li style={{ marginBottom: '10px' }}>
+                                    <li style={{ marginBottom: '10px' }}>
                                         <Link to="/admin/certificate/generate_staff_id_card" style={{ display: 'block', padding: '5px', color: '#333' }}>
                                             <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/6.png" alt="icon" style={{ width: '20px', marginRight: '10px' }} />
                                             Generate Staff ID Card
                                         </Link>
-                                    </li>*/}
+                                    </li>
                                 </ul>
                             </div>
                         </div>
