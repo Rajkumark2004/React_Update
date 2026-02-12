@@ -38,6 +38,17 @@ const CCAvenueCheckout = () => {
                         <div className="col-md-8 offset-md-2 text-center">
                             <img src="/uploads/school_content/logo/app_logo.png" alt="School Logo" style={{ maxHeight: '50px' }} /> {/* Mock Logo */}
                         </div>
+                        <div className="col-md-8 offset-md-2 text-center" style={{ marginTop: '20px' }}>
+                            <h5 style={{ color: '#0084B4', fontWeight: 'bold', fontSize: '15px', margin: '0 0 10px 0' }}>
+                                Payment Gateway for India
+                            </h5>
+                            <div style={{ marginBottom: '10px' }}>
+                                <img src="https://newlayout.wisibles.com/backend/images/ccavenue.png?1770874763" alt="CCAvenue" style={{ maxWidth: '180px' }} />
+                            </div>
+                            <a href="https://www.ccavenue.com" target="_blank" rel="noopener noreferrer" style={{ color: '#0084B4', fontSize: '13px', textDecoration: 'none' }}>
+                                https://www.ccavenue.com
+                            </a>
+                        </div>
                         <div className="col-md-6 offset-md-3 mt-4" style={{ marginTop: '20px' }}>
                             <div className="paymentbg" style={{ background: '#fff', borderRadius: '4px', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
                                 <div className="invtext" style={{ padding: '15px', borderBottom: '1px solid #eee', fontSize: '16px', fontWeight: 'bold' }}>

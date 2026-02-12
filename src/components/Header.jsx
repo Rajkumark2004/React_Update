@@ -31,12 +31,7 @@ const Header = ({
     };
     const user = userData || defaultUserData;
 
-    const defaultPendingTasks = [
-        { id: 1, title: 'Review student applications' },
-        { id: 2, title: 'Prepare monthly report' },
-        { id: 3, title: 'Update fee structure' }
-    ];
-    const tasks = pendingTasks.length > 0 ? pendingTasks : defaultPendingTasks;
+    const tasks = pendingTasks;
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -87,22 +82,36 @@ const Header = ({
                                     role="search"
                                     onSubmit={onSearch}
                                 >
-                                    <div className="input-group">
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                         <input
                                             type="text"
                                             name="search_text1"
                                             id="search_text1"
                                             className="form-control search-form search-form3"
                                             placeholder="Search by student name"
+                                            style={{ paddingRight: '35px', borderRadius: '20px', width: '250px' }}
                                         />
-                                        <span className="input-group-btn">
-                                            <button
-                                                type="submit"
-                                                className="btn btn-flat topsidesearchbtn"
-                                            >
-                                                <i className="fa fa-search"></i>
-                                            </button>
-                                        </span>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-flat"
+                                            style={{
+                                                position: 'absolute',
+                                                right: '5px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                padding: '5px',
+                                                color: '#888',
+                                                minWidth: 'auto',
+                                                height: 'auto',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            <i className="fa fa-search"></i>
+                                        </button>
                                     </div>
                                 </form>
                             )}
@@ -139,7 +148,7 @@ const Header = ({
                                             <li className="dropdown" data-toggle="tooltip" title="Tasks">
                                                 <a href="#" className="dropdown-toggle todoicon" data-toggle="dropdown" onClick={(e) => e.preventDefault()}>
                                                     <i className="fa fa-check-square-o"></i>
-                                                    <span className="todo-indicator">{tasks.length}</span>
+                                                    {tasks.length > 0 && <span className="todo-indicator">{tasks.length}</span>}
                                                 </a>
                                                 <ul className="dropdown-menu menuboxshadow">
                                                     <li className="todoview plr10 ssnoti">

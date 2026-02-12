@@ -53,6 +53,37 @@ const LoginPageBackgroundSettings = () => {
         }
     }, [activeModal]);
 
+    useEffect(() => {
+        fetchBackgrounds();
+    }, []);
+
+    const fetchBackgrounds = async () => {
+        try {
+            const response = await api.getLoginPageBackgrounds();
+            if (response.status && response.data) {
+                const data = response.data;
+                const baseUrl = data.base_url; // "https://newlayout.wisibles.com/"
+                const backgroundPath = "uploads/school_content/login_image/";
+
+                const getFullUrl = (filename) => {
+                    if (!filename) return null;
+                    if (filename.startsWith('http')) return filename;
+                    return `${baseUrl}${backgroundPath}${filename}`;
+                };
+
+                const adminBgUrl = getFullUrl(data.admin_login_page_background);
+                const userBgUrl = getFullUrl(data.user_login_page_background);
+
+                setBackgrounds({
+                    admin_logo: adminBgUrl || defaultAdminImage,
+                    user_logo: userBgUrl || defaultUserImage
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching backgrounds:", error);
+        }
+    };
+
     const handleSave = async () => {
         const file = fileInputRef.current?.files[0];
 

@@ -58,9 +58,8 @@ const PaymentMethods = () => {
 
 
     const gateways = [
-
-        { id: 'ccavenue', name: 'CCAvenue', image: 'images/ccavenue.png', desc: 'Payment Gateway for India', url: 'https://www.ccavenue.com' },
-        { id: 'razorpay', name: 'Razorpay', image: 'images/razorpay.jpg', desc: 'Payment Gateway for India', url: 'https://www.razorpay.com' },
+        { id: 'ccavenue', name: 'CCAvenue', image: 'https://newlayout.wisibles.com/backend/images/ccavenue.png?1770874763', desc: 'Payment Gateway for India', url: 'https://www.ccavenue.com' },
+        { id: 'razorpay', name: 'Razorpay', image: 'https://newlayout.wisibles.com//backend/images/razorpay.jpg?1770874763', desc: 'Payment Gateway for India', url: 'https://www.razorpay.com' },
     ]
 
     const [formState, setFormState] = useState({
@@ -198,14 +197,19 @@ const PaymentMethods = () => {
     const secondRowGateways = gateways.slice(15);
 
     return (
-        <SettingsMenu>
+        <SettingsMenu hideSidebars={true}>
             <div className="row">
-                {/* Main Content Box */}
-                <div className="col-md-9">
+                <div className="col-md-12">
                     <div className="box box-primary" style={{ border: 'none', boxShadow: '0 1px 1px rgba(0,0,0,0.1)', background: '#fff' }}>
                         <div className="box-header with-border" style={{ borderBottom: '1px solid #f4f4f4', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <h3 className="box-title" style={{ fontSize: '18px', color: '#333', margin: '0' }}>Payment Methods</h3>
-                            {/* Back button removed as we are in tabs structure now, or keep if desired */}
+                            <button
+                                onClick={() => navigate('/settings')}
+                                className="btn btn-primary btn-sm"
+                                style={{ background: '#9153c3', borderColor: '#9153c3', borderRadius: '20px', fontSize: '12px' }}
+                            >
+                                <i className="fa fa-arrow-left"></i> Back
+                            </button>
                         </div>
                         <div className="box-body" style={{ padding: '20px' }}>
                             {/* Combined Tabs row - scrollable if many */}
@@ -260,23 +264,23 @@ const PaymentMethods = () => {
                     </div>
                 </div>
 
-                {/* Right Selection Box */}
-                <div className="col-md-3">
+                {/* Selection Box now below or could be repositioned as desired */}
+                <div className="col-md-12" style={{ marginTop: '20px' }}>
                     <div className="box box-primary" style={{ border: 'none', boxShadow: '0 1px 1px rgba(0,0,0,0.1)', background: '#fff' }}>
                         <div className="box-header with-border" style={{ borderBottom: '1px solid #f4f4f4', padding: '15px' }}>
                             <h4 style={{ fontSize: '14px', fontWeight: 'bold', margin: 0 }}>Select Payment Gateway</h4>
                         </div>
                         <div className="box-body" style={{ padding: '15px' }}>
-                            <div style={{ marginBottom: '15px' }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', marginBottom: '15px' }}>
                                 {gateways.map(gw => (
-                                    <div key={gw.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                                    <div key={gw.id} style={{ display: 'flex', alignItems: 'center' }}>
                                         <input type="radio" id={`radio-${gw.id}`} name="payment_setting" value={gw.id} checked={selectedGateway === gw.id} onChange={handleGatewayActivation} style={{ marginRight: '10px', cursor: 'pointer' }} />
                                         <label htmlFor={`radio-${gw.id}`} style={{ fontSize: '13px', cursor: 'pointer', margin: 0, fontWeight: 'normal' }}>
                                             {gw.name}
                                         </label>
                                     </div>
                                 ))}
-                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <input type="radio" id="radio-none" name="payment_setting" value="none" checked={selectedGateway === 'none'} onChange={handleGatewayActivation} style={{ marginRight: '10px', cursor: 'pointer' }} />
                                     <label htmlFor="radio-none" style={{ fontSize: '13px', cursor: 'pointer', margin: 0, fontWeight: 'normal' }}>
                                         None

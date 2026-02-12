@@ -121,7 +121,7 @@ const LeaveRequest = () => {
                 leaverequestid: formData.id
             };
 
-            const response = await api.addStaffLeave(payload);
+            const response = await api.addStaffLeaveRequest(payload);
             if (response && response.status === 'success') {
                 toast.success('Leave saved successfully');
                 setShowAddModal(false);

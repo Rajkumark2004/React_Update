@@ -116,7 +116,7 @@ const Sidebar = ({
         { id: 2, icon: 'sis.png', label: 'SIS', url: '/student/search' },
         { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
         { id: 4, icon: 'homework.png', label: 'Homework', url: '/homework' },
-        { id: 5, icon: 'Fees.png', label: 'Fees Collection', url: '/studentfee' },
+        { id: 5, icon: 'Fees.png', label: 'Fees', url: '/studentfee' },
         { id: 6, icon: 'academics.png', label: 'Academics', url: '/admin/timetable/classreport' },
         { id: 7, icon: 'state_examination.png', label: 'State Examinations', url: '/cbseexam/exam' },
         { id: 8, icon: 'courses.png', label: 'Courses', url: '/admin/onlinecourse' },

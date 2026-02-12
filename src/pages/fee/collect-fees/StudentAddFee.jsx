@@ -38,6 +38,7 @@ const StudentAddFee = () => {
     const [showDiscountModal, setShowDiscountModal] = useState(false);
     const [selectedFee, setSelectedFee] = useState(null);
     const [discountAmount, setDiscountAmount] = useState('');
+    const [schSetting, setSchSetting] = useState(null);
 
     useEffect(() => {
         fetchStudentFees();
@@ -57,6 +58,10 @@ const StudentAddFee = () => {
                     setCurrencySymbol(data.sch_setting.currency_symbol);
                 } else if (data.currency_symbol) {
                     setCurrencySymbol(data.currency_symbol);
+                }
+
+                if (data.sch_setting) {
+                    setSchSetting(data.sch_setting);
                 }
 
                 setStudent(studentData);
@@ -320,33 +325,26 @@ const StudentAddFee = () => {
             return;
         }
         try {
-            // Construct payload as per requirement
-            const payloadData = selectedFeesList.map(item => ({
-                fee_category: 'fees', // Hardcoded or item.fee_category
-                trans_fee_id: 0, // Per user request
-                fee_session_group_id: item.fee_session_group_id,
-                fee_master_id: item.fee_master_id,
-                fee_groups_feetype_id: item.fee_groups_feetype_id
+            // Construct payload client-side for PrintFeesByGroupArray
+            // This avoids API roundtrip that might lose selected context or require complex backend logic reconstruction
+            const feearray = selectedFeesList.map(item => ({
+                ...item,
+                amount: item.balance, // Use balance as the amount to pay/print
+                type: item.feeTypeName,
+                code: item.feeTypeCode,
+                fine_amount: item.fine_amount,
+                fee_category: item.fee_category
             }));
 
-            // API Call
-            const response = await api.printFeesByGroup(payloadData);
+            const printData = {
+                feearray: feearray,
+                student: student,
+                sch_setting: schSetting
+            };
 
-            if (typeof response === 'object') {
-                // If JSON response (Data for React Component)
-                localStorage.setItem('printFeesByGroupArrayData', JSON.stringify(response));
-                window.open('/studentfee/printFeesByGroupArray', '_blank');
-            } else {
-                // If HTML response (Server View)
-                const printWindow = window.open('', '_blank');
-                if (printWindow) {
-                    printWindow.document.open();
-                    printWindow.document.write(response);
-                    printWindow.document.close();
-                } else {
-                    toast.error("Popup blocked. Please allow popups for this site.");
-                }
-            }
+            localStorage.setItem('printFeesByGroupArrayData', JSON.stringify(printData));
+            window.open('/studentfee/printFeesByGroupArray', '_blank');
+
         } catch (error) {
             console.error(error);
             toast.error("Failed to generate print view");
@@ -383,31 +381,34 @@ const StudentAddFee = () => {
     };
 
     const handlePrintSingle = async (fee) => {
-        // Construct single item array for print logic
-        const singleItem = [{
-            fee_session_group_id: 0, // Need to verify if this is needed or if master_id is enough
-            fee_master_id: fee.id,
-            fee_groups_feetype_id: fee.fee_groups_feetype_id,
-            fee_category: 'fees',
-            trans_fee_id: 0,
-            // Add other fields expected by backend
-        }];
-        // But for easier replication, we use the selectedFeesList format
-        const item = {
-            uniqueId: `fee-${fee.id}`,
-            student_fees_master_id: fee.id,
-            fee_groups_feetype_id: fee.fee_groups_feetype_id,
-            fee_category: fee.category || 'fees', // Use fee.category for transport fees
-            transport_fees_id: fee.category === 'transport' ? fee.id : 0,
-            balance: fee.balance
-        };
         try {
-            const response = await api.printFeesByGroup([item]);
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(response);
-            printWindow.document.close();
+            const feeCategory = fee.category || fee.fee_category || 'fees';
+            const isTransport = feeCategory === 'transport';
+
+            const item = {
+                amount: fee.balance,
+                type: isTransport ? (fee.month || 'Transport Fee') : (fee.type || fee.feeTypeName),
+                code: isTransport ? (fee.month || '') : (fee.code || fee.feeTypeCode),
+                fine_amount: fee.fine_amount_display || fee.fine_amount || 0,
+                fee_category: feeCategory,
+                fee_master_id: isTransport ? 0 : fee.id,
+                transport_fees_id: isTransport ? fee.id : 0,
+                fee_session_group_id: fee.fee_session_group_id || 0,
+                fee_groups_feetype_id: fee.fee_groups_feetype_id || 0
+            };
+
+            const printData = {
+                feearray: [item],
+                student: student,
+                sch_setting: schSetting
+            };
+
+            localStorage.setItem('printFeesByGroupArrayData', JSON.stringify(printData));
+            window.open('/studentfee/printFeesByGroupArray', '_blank');
+
         } catch (error) {
-            toast.error("Failed to print");
+            console.error(error);
+            toast.error("Failed to generate print view");
         }
     };
 

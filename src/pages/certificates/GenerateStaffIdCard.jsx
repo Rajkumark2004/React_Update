@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../../services/api';
@@ -6,6 +7,9 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import StaffIdCard from '../../components/StaffIdCard';
 
 const GenerateStaffIdCard = () => {
     const navigate = useNavigate();
@@ -33,6 +37,8 @@ const GenerateStaffIdCard = () => {
     // Mock Data for Staff List
     const [staffList, setStaffList] = useState([]);
     const [searched, setSearched] = useState(false);
+    const [generatedData, setGeneratedData] = useState(null); // To store data for PDF generation
+    const [generatingPdf, setGeneratingPdf] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
     const mockStaffData = [
@@ -115,7 +121,105 @@ const GenerateStaffIdCard = () => {
         }
 
         const selectedStaffData = staffList.filter(staff => selectedStaff.includes(staff.id));
-        navigate('/admin/certificate/generate_staff_id_card_view', { state: { staffs: selectedStaffData } });
+        const selectedCardTemplate = idCards.find(card => card.id == formData.id_card);
+
+        // Settings for the school (assuming first item from API response or hardcoded if not available in this scope)
+        // Since we don't have school settings in initial data here, we might need to fetch it or mock it.
+        // For now, let's look at the student implementation. It seems 'sch_setting' comes from the generate API response.
+        // For staff, the user didn't provide a 'generate' API, only 'search'. 
+        // The user asked to "add the same logic for generate".
+        // Use the selected template and staff data. For school settings, we'll try to find it or use defaults.
+
+        // Construct a data object similar to what we get for students to reuse logic if possible, 
+        // or just pass what we have.
+
+        const dataForPdf = {
+            staff: selectedStaffData,
+            id_card: selectedCardTemplate,
+            sch_setting: {
+                school_name: 'Wisibles School', // improved dynamic fetching would be better
+                school_address: 'Hyderabad, Telangana'
+            }
+        };
+
+        setGeneratedData(dataForPdf);
+    };
+
+    useEffect(() => {
+        if (generatedData) {
+            generatePDF();
+        }
+    }, [generatedData]);
+
+    const generatePDF = async () => {
+        setGeneratingPdf(true);
+        // Wait for a moment to ensure new DOM elements are rendered
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const cards = document.getElementsByClassName('staff-id-card-print');
+        if (!cards || cards.length === 0) {
+            console.error("No cards found to print");
+            setGeneratingPdf(false);
+            return;
+        }
+
+        // Check for vertical card setting
+        const isVertical = generatedData.id_card.enable_vertical_card === "1";
+        const orientation = isVertical ? 'p' : 'l';
+
+        const doc = new jsPDF(orientation, 'mm', 'a4');
+        const pageWidth = isVertical ? 210 : 297;
+        const pageHeight = isVertical ? 297 : 210;
+
+        // Standard CR80 dimensions: 85.6mm x 53.98mm
+        const cardWidth = isVertical ? 54 : 86;
+        const cardHeight = isVertical ? 86 : 54;
+
+        const marginX = 10;
+        const marginY = 10;
+        const gapX = 5;
+        const gapY = 5;
+
+        // Calculate columns and rows based on page size and card dimensions
+        const cols = Math.floor((pageWidth - 2 * marginX) / (cardWidth + gapX));
+        const rows = Math.floor((pageHeight - 2 * marginY) / (cardHeight + gapY));
+        const itemsPerPage = cols * rows;
+
+        for (let i = 0; i < cards.length; i++) {
+            if (i > 0 && i % itemsPerPage === 0) {
+                doc.addPage();
+            }
+
+            const card = cards[i];
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 3,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+
+                const indexOnPage = i % itemsPerPage;
+                const col = indexOnPage % cols;
+                const row = Math.floor(indexOnPage / cols);
+
+                const x = marginX + col * (cardWidth + gapX);
+                const y = marginY + row * (cardHeight + gapY);
+
+                doc.addImage(imgData, 'PNG', x, y, cardWidth, cardHeight);
+
+            } catch (err) {
+                console.error("Error processing card " + i, err);
+            }
+        }
+
+        doc.save('staff_id_cards.pdf');
+
+        setGeneratedData(null);
+        setGeneratingPdf(false);
+        alert("Staff ID Cards PDF generated successfully!");
     };
 
     return (
@@ -169,7 +273,14 @@ const GenerateStaffIdCard = () => {
                                     <div className="box-body">
                                         <div style={{ borderTop: '1px solid #f4f4f4', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <h3 className="box-title" style={{ fontSize: '20px' }}><i className="fa fa-users"></i> Staff List</h3>
-                                            <button className="btn btn-info btn-sm printSelected pull-right" onClick={handleGenerate} title="Generate Certificate">Generate</button>
+                                            <button
+                                                className="btn btn-info btn-sm printSelected pull-right"
+                                                onClick={handleGenerate}
+                                                title="Generate Certificate"
+                                                disabled={generatingPdf}
+                                            >
+                                                {generatingPdf ? 'Generating...' : 'Generate'}
+                                            </button>
                                         </div>
 
                                         <div className="row pb10">
@@ -277,6 +388,21 @@ const GenerateStaffIdCard = () => {
                         </div>
                     </div>
                 </section>
+
+                {/* Hidden Render Area for PDF Generation */}
+                {generatedData && (
+                    <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+                        {generatedData.staff.map((staff, index) => (
+                            <div key={index} className="staff-id-card-print">
+                                <StaffIdCard
+                                    staff={staff}
+                                    cardSettings={generatedData.id_card}
+                                    schoolSettings={generatedData.sch_setting}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
             <Footer />
         </div>

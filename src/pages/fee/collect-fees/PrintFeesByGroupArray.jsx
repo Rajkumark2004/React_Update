@@ -99,51 +99,12 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
 
     // Calculation Logic
     let total_amount = 0;
-    let total_deposite_amount = 0;
     let total_fine_amount = 0;
-    let total_discount_amount = 0;
-    let total_balance_amount = 0;
-    const feeNames = [];
 
     if (feearray) {
-        feearray.forEach(feeList => {
-            if (feeList.fee_category === "fees") {
-                let amount = feeList.amount;
-                if (feeList.is_system) {
-                    amount = feeList.student_fees_master_amount;
-                }
-
-                let fee_discount = 0;
-                let fee_paid = 0;
-                let fee_fine = 0;
-
-                if (feeList.amount_detail) {
-                    let fee_deposits = [];
-                    try {
-                        fee_deposits = typeof feeList.amount_detail === 'string'
-                            ? JSON.parse(feeList.amount_detail)
-                            : feeList.amount_detail;
-                    } catch (e) {
-                        // handle error
-                    }
-
-                    if (Array.isArray(fee_deposits) || typeof fee_deposits === 'object') {
-                        Object.values(fee_deposits).forEach(val => {
-                            fee_paid += parseFloat(val.amount || 0);
-                            fee_discount += parseFloat(val.amount_discount || 0);
-                            fee_fine += parseFloat(val.amount_fine || 0);
-                        });
-                    }
-                }
-
-                const feetype_balance = amount - (fee_paid + fee_discount);
-                total_amount += parseFloat(amount);
-                total_discount_amount += fee_discount;
-                total_fine_amount += fee_fine;
-                total_deposite_amount += fee_paid;
-                total_balance_amount += feetype_balance;
-            }
-            if (feeList.type) feeNames.push(feeList.type);
+        feearray.forEach(fee => {
+            total_amount += parseFloat(fee.amount || 0);
+            total_fine_amount += parseFloat(fee.fine_amount || 0);
         });
     }
 
@@ -178,28 +139,28 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
                     </div>
                     <div className="row">
                         <div className="col-sm-3">Admin No &#160;&#160;&#160;:</div>
-                        <div className="col-sm-3">{firstFee.admission_no}</div>
+                        <div className="col-sm-3">{firstFee.admission_no || student.admission_no}</div>
                         <div className="col-sm-2">Roll No</div>
                         <div className="col-sm-1">:</div>
-                        <div className="col-sm-3">{firstFee.roll_no}</div>
+                        <div className="col-sm-3">{firstFee.roll_no || student.roll_no}</div>
                     </div>
                     <div className="row">
                         <div className="col-sm-4">Student's Name</div>
                         <div className="col-sm-1">:</div>
                         <div className="col-sm-6">
-                            {getFullName(firstFee.firstname, firstFee.middlename, firstFee.lastname, sch_setting.middlename, sch_setting.lastname)}
+                            {getFullName(firstFee.firstname || student.firstname, firstFee.middlename || student.middlename, firstFee.lastname || student.lastname, sch_setting.middlename, sch_setting.lastname)}
                         </div>
                     </div>
                     <div className="row">
                         <div className="col-sm-4">Father's Name</div>
                         <div className="col-sm-1">:</div>
-                        <div className="col-sm-6">{firstFee.father_name}</div>
+                        <div className="col-sm-6">{firstFee.father_name || student.father_name}</div>
                     </div>
                     <div className="row">
                         <div className="col-sm-4">Class & Sec</div>
                         <div className="col-sm-1">:</div>
                         <div className="col-sm-6">
-                            {firstFee.class} ({firstFee.section})
+                            {firstFee.class || student.class} ({firstFee.section || student.section})
                         </div>
                     </div>
                 </div>
@@ -226,28 +187,25 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
                             </tr>
                         </thead>
                         <tbody>
-                            <tr className="dark-gray">
-                                <td>1</td>
-                                <td colSpan="4">Tuition Fee</td>
-                                <td className="text text-right">
-                                    {currency_symbol}{amountFormat(total_deposite_amount)}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colSpan="6">
-                                    Remarks: {feeNames.join(", ")}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colSpan="6">
-                                    Received Amount: {currency_symbol}{amountFormat(total_deposite_amount)}
-                                </td>
-                            </tr>
+                            {feearray.map((fee, index) => (
+                                <tr key={index}>
+                                    <td>{index + 1}</td>
+                                    <td colSpan="4">
+                                        {fee.type || fee.feeTypeName}
+                                        {fee.code ? ` (${fee.code})` : ''}
+                                        {fee.fine_amount > 0 && <span className="text-danger"> + Fine ({currency_symbol}{fee.fine_amount})</span>}
+                                    </td>
+                                    <td className="text text-right">
+                                        {currency_symbol}{amountFormat(parseFloat(fee.amount) + parseFloat(fee.fine_amount || 0))}
+                                    </td>
+                                </tr>
+                            ))}
+
                             <tr>
                                 <td></td>
                                 <td colSpan="4" className="text text-right">Total</td>
                                 <td className="text text-right">
-                                    {currency_symbol}{amountFormat(total_deposite_amount)}
+                                    {currency_symbol}{amountFormat(total_amount + total_fine_amount)}
                                 </td>
                             </tr>
                         </tbody>
@@ -258,7 +216,7 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
             <div className="print_footer">
                 <div className="row header ">
                     <div className="col-sm-12">
-                        In Words: {convertToWords(total_deposite_amount)}
+                        In Words: {convertToWords(total_amount + total_fine_amount)}
                     </div>
                 </div>
                 <div className="row header" style={{ marginTop: '10px' }}>

@@ -645,6 +645,45 @@ export const api = {
             throw error;
         }
     },
+
+    getSchoolLogos: async () => {
+        console.log('API Request: Get School Logos');
+        try {
+            const response = await fetch(`${API_BASE}/schsettings/logo`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get School Logos Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch school logos');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get School Logos API Error:', error);
+            throw error;
+        }
+    },
+
+    getLoginPageBackgrounds: async () => {
+        console.log('API Request: Get Login Page Backgrounds');
+        try {
+            const response = await fetch(`${API_BASE}/schsettings/login_page_background`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Login Page Backgrounds Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch login page backgrounds');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Login Page Backgrounds API Error:', error);
+            throw error;
+        }
+    },
+
     uploadLoginBackground: async (file, logoType = 'admin_logo', id = getGeneralSettingsId()) => {
         console.log('API Request: Upload Login Background', { fileName: file.name, logoType, id });
 
@@ -963,10 +1002,10 @@ export const api = {
         }
     },
 
-    addStaffLeave: async (payload) => {
+    addStaffLeaveRequest: async (payload) => {
         console.log('API Request: Add Staff Leave', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/leaverequest/addLeave`, {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/add_staff_leave`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

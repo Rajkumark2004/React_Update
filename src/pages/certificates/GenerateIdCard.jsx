@@ -6,6 +6,9 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { api } from '../../services/api.js';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import StudentIdCard from '../../components/StudentIdCard';
 
 const GenerateIdCard = () => {
     const navigate = useNavigate();
@@ -23,6 +26,8 @@ const GenerateIdCard = () => {
     const [searched, setSearched] = useState(false);
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [generatedData, setGeneratedData] = useState(null);
+    const [generatingPdf, setGeneratingPdf] = useState(false);
 
     useEffect(() => {
         fetchInitialData();
@@ -120,6 +125,7 @@ const GenerateIdCard = () => {
             return;
         }
 
+        setGeneratingPdf(true);
         try {
             const payload = {
                 class_id: formData.class_id,
@@ -128,19 +134,97 @@ const GenerateIdCard = () => {
             };
 
             const response = await api.generateIdCards(payload);
-            if (response.status) {
-                alert('ID Cards generated successfully!');
-                // Typically you might open a PDF or a new window here if the API provides a URL
-                if (response.data) {
-                    // Logic to handle generated cards (e.g., window.open)
-                }
+            if (response.status && response.data) {
+                setGeneratedData(response.data);
+                // PDF generation triggering is handled by useEffect
             } else {
                 alert(response.message || 'Failed to generate ID cards');
+                setGeneratingPdf(false);
             }
         } catch (error) {
             console.error('Error generating ID cards:', error);
             alert(error.message || 'Error occurred while generating ID cards');
+            setGeneratingPdf(false);
         }
+    };
+
+    useEffect(() => {
+        if (generatedData && generatedData.students && generatedData.students.length > 0) {
+            generatePDF();
+        }
+    }, [generatedData]);
+
+    const generatePDF = async () => {
+        // Wait for a moment to ensure new DOM elements are rendered and images started loading
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const cards = document.getElementsByClassName('student-id-card-print');
+        if (!cards || cards.length === 0) {
+            console.error("No cards found to print");
+            setGeneratingPdf(false);
+            return;
+        }
+
+        // Check for vertical card setting
+        const isVertical = generatedData.id_card[0].enable_vertical_card === "1";
+        const orientation = isVertical ? 'p' : 'l';
+
+        const doc = new jsPDF(orientation, 'mm', 'a4');
+        const pageWidth = isVertical ? 210 : 297;
+        const pageHeight = isVertical ? 297 : 210;
+
+        // Standard CR80 dimensions: 85.6mm x 53.98mm
+        const cardWidth = isVertical ? 54 : 86;
+        const cardHeight = isVertical ? 86 : 54;
+
+        const marginX = 10;
+        const marginY = 10;
+        const gapX = 5;
+        const gapY = 5;
+
+        // Calculate columns and rows based on page size and card dimensions
+        const cols = Math.floor((pageWidth - 2 * marginX) / (cardWidth + gapX));
+        const rows = Math.floor((pageHeight - 2 * marginY) / (cardHeight + gapY));
+        const itemsPerPage = cols * rows;
+
+        for (let i = 0; i < cards.length; i++) {
+            // Add page if needed
+            if (i > 0 && i % itemsPerPage === 0) {
+                doc.addPage();
+            }
+
+            const card = cards[i];
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 3, // Higher scale for better quality
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+
+                // Calculate position
+                const indexOnPage = i % itemsPerPage;
+                const col = indexOnPage % cols;
+                const row = Math.floor(indexOnPage / cols);
+
+                const x = marginX + col * (cardWidth + gapX);
+                const y = marginY + row * (cardHeight + gapY);
+
+                doc.addImage(imgData, 'PNG', x, y, cardWidth, cardHeight);
+
+            } catch (err) {
+                console.error("Error processing card " + i, err);
+            }
+        }
+
+        doc.save('student_id_cards.pdf');
+
+        // Cleanup
+        setGeneratedData(null);
+        setGeneratingPdf(false);
+        alert("ID Cards PDF generated successfully!");
     };
 
     const filteredStudents = (Array.isArray(studentList) ? studentList : []).filter(s => {
@@ -215,7 +299,14 @@ const GenerateIdCard = () => {
                                     <div className="box-body">
                                         <div style={{ borderTop: '1px solid #f4f4f4', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <h3 className="box-title" style={{ fontSize: '20px' }}>Student List</h3>
-                                            <button className="btn btn-info btn-sm" onClick={handleGenerate}>Generate</button>
+                                            <h3 className="box-title" style={{ fontSize: '20px' }}>Student List</h3>
+                                            <button
+                                                className="btn btn-info btn-sm"
+                                                onClick={handleGenerate}
+                                                disabled={generatingPdf}
+                                            >
+                                                {generatingPdf ? 'Generating PDF...' : 'Generate'}
+                                            </button>
                                         </div>
 
                                         <div className="row pb10">
@@ -303,6 +394,20 @@ const GenerateIdCard = () => {
                         </div>
                     </div>
                 </section>
+                {/* Hidden Render Area for PDF Generation */}
+                {generatedData && (
+                    <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+                        {generatedData.students.map((student, index) => (
+                            <div key={index} className="student-id-card-print">
+                                <StudentIdCard
+                                    student={student}
+                                    cardSettings={generatedData.id_card[0]}
+                                    schoolSettings={generatedData.sch_setting[0]}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
             <Footer />
         </div>

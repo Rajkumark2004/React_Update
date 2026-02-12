@@ -61,6 +61,52 @@ const LogoSettings = () => {
         }
     }, [activeModal]);
 
+    useEffect(() => {
+        fetchLogos();
+    }, []);
+
+    const fetchLogos = async () => {
+        try {
+            const response = await api.getSchoolLogos();
+            if (response.status && response.data) {
+                const data = response.data;
+                const baseUrl = data.base_url; // "https://newlayout.wisibles.com/"
+
+                const logoPath_applogo = "uploads/school_content/logo/app_logo/";
+                const logoPath_adminlogo = "uploads/school_content/admin_logo/";
+                const logoPath_admin_small_logo = "uploads/school_content/admin_small_logo/";
+                const logoPath_print_logo = "uploads/school_content/logo/";
+
+                // Construct full URLs
+                const getFullUrl = (filename, path) => {
+                    if (!filename) return null;
+                    if (filename.startsWith('http')) return filename;
+                    return `${baseUrl}${path}${filename}`;
+                };
+
+                const printLogoUrl = getFullUrl(data.image, logoPath_print_logo);
+                const adminLogoUrl = getFullUrl(data.admin_logo, logoPath_adminlogo);
+                const adminSmallLogoUrl = getFullUrl(data.admin_small_logo, logoPath_admin_small_logo);
+                const appLogoUrl = getFullUrl(data.app_logo, logoPath_applogo);
+
+                setLogos({
+                    print_logo: printLogoUrl || defaultImage,
+                    admin_logo: adminLogoUrl || defaultAdminLogo,
+                    admin_small_logo: adminSmallLogoUrl || defaultSmallLogo,
+                    app_logo: appLogoUrl || defaultAppLogo
+                });
+
+                // Update context as well if needed
+                if (data.admin_logo) updateLogo('admin_logo', adminLogoUrl);
+                if (data.admin_small_logo) updateLogo('admin_small_logo', adminSmallLogoUrl);
+                if (data.app_logo) updateLogo('app_logo', appLogoUrl);
+                if (data.image) updateLogo('print_logo', printLogoUrl);
+            }
+        } catch (error) {
+            console.error("Error fetching logos:", error);
+        }
+    };
+
     const handleSave = async () => {
         const file = fileInputRef.current?.files[0];
 
