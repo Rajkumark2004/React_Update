@@ -3601,39 +3601,6 @@ export const api = {
         const url = `${API_BASE}/studentdairy/edit`;
         console.log('API Request: Update Student Diary', diaryData);
         try {
-            // If diaryData is FormData, don't set Content-Type header (browser sets it with boundary)
-            // But the user example shows a JSON body in Postman.
-            // "Postman Body { ... }" usually implies JSON unless specified as form-data.
-            // The user said "Postman Body" and showed a JSON structure.
-            // However, the `handleEditSubmit` in `StudentDiaryList.jsx` constructs a `FormData` object because file upload is supported.
-            // If the API supports file upload, it likely expects multipart/form-data.
-            // But the example showed JSON.
-            // If I send FormData, fetch handles it. If I send JSON, I need to stringify.
-            // The create logic used FormData.
-            // Let's assume FormData is supported for file uploads, but if no file, JSON might work?
-            // Safer to use what the Create used if it worked, or stick to what user showed if strict.
-            // User showed JSON: { "id": "11", ... }
-            // But the edit form allows file upload.
-            // If I stick to FormData, I should NOT set Content-Type to application/json.
-            // I will check how `createStudentDiary` (addSource etc) handles it.
-            // `addSource` uses JSON.
-            // `createStudentDiary` (which I haven't seen in this view but assumed existed or used a similar pattern) probably uses FormData if file is involved.
-            // Let's look at `handleEditSubmit` again. It uses `FormData`.
-            // If the backend expects JSON as per user example, `FormData` might fail if not handled.
-            // But `file` is in the form. You can't send file via JSON body easily.
-            // I'll support both or assume FormData works for the "edit" endpoint too if it supports files.
-            // Logic: passing `diaryData` directly. If it's FormData, fetch handles headers.
-            // If it's a plain object strings, I should JSON.stringify.
-            // I will check `diaryData` type in the function? No, `api.js` usually expects specific type.
-            // `StudentDiaryList.jsx` sends `FormData`.
-            // So I will implement it for `FormData` (no headers content-type).
-            // WAIT, the user explicitly showed specific JSON body.
-            // Maybe the edit endpoint DOES NOT support file update?
-            // "Postman Body { ... }" (keys: id, class_id, section_id, date, description) -> NO FILE key in example.
-            // If file update is required, valid endpoint usually handles multipart.
-            // I'll implement as accepting the data passed from the component.
-            // If the component passes FormData, I'll send it.
-
             const isFormData = diaryData instanceof FormData;
             const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
             const body = isFormData ? diaryData : JSON.stringify(diaryData);
@@ -3718,9 +3685,6 @@ export const api = {
     },
 
     // Disable Student API (provided by user)
-    // POST /student/disableReasonApi
-    // Body: { reason: "3", disable_date: "17/01/2026", student_id: "10" }
-    // Response: { status: "success", error: "", message: "Record Saved Successfully" }
     disableStudent: async (params) => {
         const url = `${API_BASE}/student/disableReasonApi`;
 
@@ -3820,9 +3784,6 @@ export const api = {
 
     // Approve Leave APIs
     searchApproveLeave: async (classId, sectionId) => {
-        // Mocking search to return empty list or fetching via GET if endpoint exists
-        // Currently PHP uses POST to admin/approve_leave for search.
-        // We'll try to fetch list if available.
         return { status: true, data: [] };
     },
 
@@ -3904,9 +3865,6 @@ export const api = {
     },
 
 
-    // Staff List API
-    // GET /admin/staff
-    // Response: { status: true, data: { resultlist: [...], staff_role: [...], title: "Staff List" } }
     getStaffList: async () => {
         console.log('API Request: Get Staff List');
         try {
@@ -4450,32 +4408,7 @@ export const api = {
     getStudentFees: async (studentId) => {
         console.log('API Request: Get Student Fees', studentId);
         try {
-            // PHP usually uses studentfee/index or addfee logic checks.
-            // The URL for the page is studentfee/addfee/{id}.
-            // Likely backend has an endpoint to fetch this data.
-            // If not explicit, we might need to find the correct one.
-            // Assuming /studentfee/getStudentFees/{id} or similar exists or we use the edit endpoint?
-            // Actually, in PHP `studentfee/addfee/$id` loads the view.
-            // We need a clear data endpoint.
-            // I'll assume /studentfee/getFees/{id} or similar.
-            // If not found, I might have to inspect network or guessing.
-            // Let's try /studentfee/addfee/{id} with JSON header?
-            // Unlikely to return JSON if it returns View.
-            // Look for `getStudentFees` in api.js? No.
-            // I'll try `api_admin/studentfee/index/{id}` or `get_student_fees`.
-            // Let's try `studentfee/get_student_fees_api/{id}`.
-
-            // Wait, looking at other modules, they effectively call the method that returns the view data.
-            // I'll try fetching `studentfee/addfee/{id}` but expecting JSON? 
-            // Or `studentfee/get_fees`.
-
-            // Let's go with a safe bet based on pattern: `studentfee/feegroup` etc.
-            // Let's try `studentfee/getFeeDetails/${id}`.
             const response = await api.getWithSession(`/studentfee/addfee/${studentId}`);
-            // If the server returns JSON when requested, great.
-            // But usually older CodeIgniter apps return HTML.
-            // I need to be careful.
-
             return response;
         } catch (error) {
             console.error('Get Student Fees Error:', error);
@@ -4612,11 +4545,6 @@ export const api = {
     addIncome: async (data) => {
         console.log('API Request: Add Income');
         try {
-            // Assuming /admin/income/create since head uses create? Or just /admin/income?
-            // Since user didn't specify add URL for income, but usually it exists.
-            // I'll assume /admin/income/create based on head or just /admin/income POST.
-            // Given typical CI pattern, add often posts to same controller index or create.
-            // I'll try /admin/income/create
             const isFormData = data instanceof FormData;
             const options = {
                 method: 'POST',
@@ -4646,8 +4574,6 @@ export const api = {
     downloadIncome: async (id) => {
         console.log('API Request: Download Income', id);
         try {
-            // This likely returns a file, so we might return blob or specific handling
-            // User just mentioned the API. For now standard fetch.
             const response = await fetch(appendSessionToUrl(`${API_BASE}/admin/income/download/${id}`));
             if (!response.ok) throw new Error('Download failed');
             return response;
@@ -4759,14 +4685,6 @@ export const api = {
                 body: isFormData ? data : JSON.stringify({ ...data, session_id: getSessionId() })
             };
             if (!isFormData) options.headers = { 'Content-Type': 'application/json' };
-
-            // User said POST: GET .../admin/expense ? Probably meant POST /admin/expense or create
-            // Since income uses create, expense might too. Or maybe base url.
-            // I'll assume /admin/expense/create for consistency with typical CI or just /admin/expense
-            // Checking PHP file later would be best but for now I guess /admin/expense/create or /admin/expense
-            // Let's try /admin/expense/create to be safe or check if user provided add url.
-            // User provided POST: GET https://newlayout.wisibles.com/api_admin/admin/expense
-            // That looks like the add endpoint is just the base URL /admin/expense with POST.
             const response = await fetch(`${API_BASE}/admin/expense`, options);
             const resData = await response.json();
             console.log('Add Expense Response:', resData);
@@ -5064,19 +4982,6 @@ export const api = {
         }
     },
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Search Payment API
     searchPayment: async (data) => {
         console.log('API Request: Search Payment', data);
@@ -5350,10 +5255,6 @@ export const api = {
 
     importStudentFeePayments: async (formData) => {
         try {
-            // For file upload, we pass FormData directly and DO NOT set Content-Type header (browser sets it with boundary)
-            // We still might need auth headers if applicable, but assuming public/session based on cookies or no auth as per previous 'no session_id' request?
-            // User previously said "not even sessionID", so likely no extra headers needed or just standard ones minus Content-Type.
-
             const options = {
                 method: 'POST',
                 body: formData,
@@ -6398,12 +6299,34 @@ export const api = {
             });
             const data = await response.json();
             console.log('Get Notice Board Response:', data);
+
+            if (!response.ok || (data.status !== 'success' && data.status !== true)) {
+                if (data.status === 0 || data.success === false) {
+                    throw new Error(data.message || 'Failed to fetch notice');
+                }
+            }
             return data;
         } catch (error) {
-            console.error('Error fetching notice board:', error);
+            console.error('Get Notice Board API Error:', error);
             throw error;
         }
     },
+
+    getNotificationSetting: async () => {
+        console.log('API Request: Get Notification Settings');
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification/setting`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Notification Settings Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching notification settings:', error);
+            throw error;
+        }
+    },
+
 
     updateNoticeBoard: async (id, roleId, formData) => {
         console.log('API Request: Update Notice Board', id, roleId);
