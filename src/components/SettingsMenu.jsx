@@ -114,9 +114,9 @@ const SettingsMenu = ({ children, hideSidebars = false }) => {
                                             </Link>
                                         </li>
                                         <li>
-                                            <a href="#" onClick={(e) => e.preventDefault()}>
+                                            <Link to="/settings/notification-setting" className={location.pathname.startsWith('/settings/notification-setting') ? "active" : ""}>
                                                 <img src={getIconPath('3.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Notification Setting
-                                            </a>
+                                            </Link>
                                         </li>
                                         <li>
                                             <Link to="/sms-settings" className={location.pathname.startsWith('/sms-settings') ? "active" : ""}>

@@ -107,7 +107,8 @@ const Sidebar = ({
         '/admin/content/edit',
         '/admin/content/editpost',
         '/admin/content/search',
-        '/admin/video_tutorial'
+        '/admin/video_tutorial',
+        '/admin/reports/student_information'
     ];
 
 
@@ -128,7 +129,7 @@ const Sidebar = ({
         { id: 14, icon: 'income.png', label: 'Income', url: '/admin/income' },
         { id: 15, icon: 'expenses.png', label: 'Expenses', url: '/admin/expense' },
         { id: 16, icon: 'hostle.png', label: 'Hostel', url: '/admin/hostelroom' },
-        { id: 17, icon: 'reports.png', label: 'Reports', url: '#' },
+        { id: 17, icon: 'reports.png', label: 'Reports', url: '/admin/reports/student_information' },
         { id: 18, icon: 'settings.png', label: 'System Settings', url: '/settings' }
     ];
 
@@ -468,7 +469,7 @@ const Sidebar = ({
                                 </div>
                                 <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>Hostel</span>
                             </Link>
-                            <Link to="#" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
+                            <Link to="/admin/reports/student_information" className="mobile-more-item" onClick={() => setShowMobileMore(false)}>
                                 <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
                                     <img src="/images/reports.png" alt="Reports" style={{ width: '22px', height: 'auto' }} />
                                 </div>

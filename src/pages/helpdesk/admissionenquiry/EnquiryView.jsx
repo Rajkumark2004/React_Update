@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
@@ -118,6 +119,18 @@ const EnquiryView = () => {
 
     const handleSearch = (e) => {
         e.preventDefault();
+
+        // Validation: Date logic check
+        if (filterForm.from_date && filterForm.to_date) {
+            const start = new Date(filterForm.from_date);
+            const end = new Date(filterForm.to_date);
+
+            if (end < start) {
+                toast.error('Enquiry To Date cannot be before Enquiry From Date');
+                return;
+            }
+        }
+
         console.log('Search with filters (Internal):', filterForm);
         setLoading(true); // Show loader briefly for UX
         const results = filterEnquiries(masterEnquiryList, filterForm);

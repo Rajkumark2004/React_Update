@@ -390,6 +390,7 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
                                                         className="form-control"
                                                         value={formData.follow_up_date}
                                                         onChange={handleChange}
+                                                        min={new Date().toISOString().split('T')[0]}
                                                     />
                                                 </div>
                                             </div>

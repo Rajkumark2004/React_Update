@@ -646,6 +646,67 @@ export const api = {
         }
     },
 
+    getClassAttendanceReport: async () => {
+        console.log('API Request: Get Class Attendance Report Data');
+        try {
+            const response = await fetch(`${API_BASE}/attendencereports/classattendencereport`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Class Attendance Report Data Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch class attendance report data');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Class Attendance Report Data API Error:', error);
+            throw error;
+        }
+    },
+
+    searchClassAttendanceReport: async (payload) => {
+        console.log('API Request: Search Class Attendance Report', payload);
+        try {
+            const formData = new FormData();
+            Object.keys(payload).forEach(key => formData.append(key, payload[key]));
+
+            const response = await fetch(`${API_BASE}/attendencereports/classattendencereport`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Search Class Attendance Report Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to search class attendance report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Class Attendance Report API Error:', error);
+            throw error;
+        }
+    },
+
+    getAttendanceTypeReport: async () => {
+        console.log('API Request: Get Attendance Type Report Data');
+        try {
+            const response = await fetch(`${API_BASE}/attendencereports/attendancereport`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Attendance Type Report Data Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch attendance type report data');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Attendance Type Report Data API Error:', error);
+            throw error;
+        }
+    },
+
     getSchoolLogos: async () => {
         console.log('API Request: Get School Logos');
         try {
@@ -795,6 +856,25 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Student List API Error:', error);
+            throw error;
+        }
+    },
+
+    getUserLog: async () => {
+        console.log('API Request: Get User Log');
+        try {
+            const response = await fetch(`${API_BASE}/admin/userlog`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get User Log Response:', data);
+
+            if (!response.ok || data.status !== 'success') {
+                throw new Error(data.message || 'Failed to fetch user log');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get User Log API Error:', error);
             throw error;
         }
     },
@@ -5691,6 +5771,68 @@ export const api = {
             return await response.json();
         } catch (error) {
             console.error('Get CBSE Exam Subject Result Error:', error);
+            throw error;
+        }
+    },
+
+    // Get Attendance Type Report Data (GET) - For initial load (types, classes)
+    getAttendanceTypeReport: async () => {
+        try {
+            const response = await fetch(`${API_BASE}/attendencereports/attendancereport`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching attendance type report data:', error);
+            throw error;
+        }
+    },
+
+    // Search Attendance Type Report (POST)
+    searchAttendanceTypeReport: async (payload) => {
+        try {
+            const response = await fetch(`${API_BASE}/attendencereports/attendancereport`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error searching attendance type report:', error);
+            throw error;
+        }
+    },
+
+    // Get Daily Attendance Report (GET)
+    getDailyAttendanceReport: async (date) => {
+        try {
+            let url = appendSessionToUrl(`${API_BASE}/attendencereports/daily_attendance_report`);
+            if (date) {
+                url += `&date=${date}`;
+            }
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching daily attendance report:', error);
             throw error;
         }
     },

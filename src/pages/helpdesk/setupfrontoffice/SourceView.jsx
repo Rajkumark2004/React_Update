@@ -232,6 +232,9 @@ const Source = () => {
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Source List</h3>
                                     <div className="box-tools pull-right">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="box-body">

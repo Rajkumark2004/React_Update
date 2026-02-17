@@ -148,6 +148,7 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
                         name="next_follow_up_date"
                         value={formData.next_follow_up_date}
                         onChange={handleChange}
+                        min={new Date().toISOString().split('T')[0]}
                       />
                     </div>
 

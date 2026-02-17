@@ -61,19 +61,18 @@ const PrintMarksheet = () => {
             try {
                 // Fetch initial marksheet data (classlist, sessionlist, etc.)
                 const response = await api.getCBSEMarksheetData({});
-                if (response.status && response.data) {
+                console.log("PrintMarksheet Initial Data Response:", response);
+
+                if (response && response.status && response.data) {
                     if (response.data.classlist) {
                         setClasses(response.data.classlist);
                     }
-                    // If marksheet can be used as templates initially
                     if (response.data.marksheet) {
                         setTemplates(response.data.marksheet);
                     }
+                } else {
+                    console.warn("Unexpected API response structure:", response);
                 }
-
-                // If specialized templates are still needed from Template/index, 
-                // we can keep this or rely on the ones from marksheet data
-                // For now, let's stick to the ones from marksheet data as it's more specific to this page
             } catch (error) {
                 console.error("Failed to fetch initial data", error);
                 // Fallback

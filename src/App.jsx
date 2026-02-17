@@ -12,6 +12,7 @@ import FrontCMSSettings from './pages/settings/general_settings_options/FrontCMS
 import SessionSettings from './pages/settings/SessionSettings';
 import SmsSettings from './pages/settings/SmsSettings';
 import EmailSettings from './pages/settings/EmailSettings';
+import NotificationSetting from './pages/settings/NotificationSetting';
 import PrintHeaderFooterSettings from './pages/settings/PrintHeaderFooterSettings';
 import PaymentMethods from './pages/settings/paymentsettings/PaymentMethods.jsx';
 import RoleList from './pages/settings/RoleList';
@@ -30,7 +31,8 @@ import DisableReasonEdit from './pages/student/DisableReasonEdit';
 import StudentAttendance from './pages/attendance/StudentAttendance.jsx';
 import DailyAttendanceReport from './pages/attendance/DailyAttendanceReport';
 import StaffAttendanceReport from './pages/attendance/approve_leave/StaffAttendanceReport';
-import AttendanceReport from './pages/attendance/AttendanceReport.jsx';
+import AttendanceReport from './pages/reports/AttendanceReport';
+import RawAttendanceReport from './pages/attendance/AttendanceReport.jsx';
 import StaffAttendanceList from './pages/HR/StaffAttendanceList';
 import StaffLeaveRequest from './pages/HR/StaffLeaveRequest';
 import LeaveRequest from './pages/HR/LeaveRequest';
@@ -159,6 +161,18 @@ import CreateContent from './pages/content/CreateContent';
 import EditContent from './pages/content/EditContent';
 import EditPost from './pages/content/EditPost';
 import Search from './pages/content/Search';
+import StudentInformationReport from './pages/reports/StudentInformationReport';
+import AlumniReport from './pages/reports/AlumniReport';
+// AttendanceReport moved to top
+import AuditTrail from './pages/reports/AuditTrail';
+import LessonPlanReport from './pages/reports/LessonPlanReport';
+import PayrollReport from './pages/reports/PayrollReport';
+import RankReport from './pages/reports/RankReport';
+import StaffReport from './pages/reports/StaffReport';
+import StudentHostelDetails from './pages/reports/StudentHostelDetails';
+import StudentTransportDetails from './pages/reports/StudentTransportDetails';
+import SubjectLessonPlanReport from './pages/reports/SubjectLessonPlanReport';
+import UserLog from './pages/reports/UserLog';
 
 
 import { api } from './services/api';
@@ -263,6 +277,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <EmailSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/notification-setting"
+              element={
+                <ProtectedRoute>
+                  <NotificationSetting />
                 </ProtectedRoute>
               }
             />
@@ -438,7 +460,7 @@ function App() {
               path="/attendance-by-date"
               element={
                 <ProtectedRoute>
-                  <AttendanceReport />
+                  <RawAttendanceReport />
                 </ProtectedRoute>
               }
             />
@@ -735,6 +757,20 @@ function App() {
             {/* Course Routes */}
             <Route path="/admin/onlinecourse" element={<ProtectedRoute><OnlineCourseCategory /></ProtectedRoute>} />
             <Route path="/admin/onlinecourse/list/:id" element={<ProtectedRoute><OnlineCourseList /></ProtectedRoute>} />
+
+            {/* Reports Routes */}
+            <Route path="/admin/reports/student_information" element={<ProtectedRoute><StudentInformationReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/attendance" element={<ProtectedRoute><AttendanceReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/alumni" element={<ProtectedRoute><AlumniReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/audit_trail" element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
+            <Route path="/admin/reports/lesson_plan" element={<ProtectedRoute><LessonPlanReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/payroll" element={<ProtectedRoute><PayrollReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/rank" element={<ProtectedRoute><RankReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/staff" element={<ProtectedRoute><StaffReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/hostel" element={<ProtectedRoute><StudentHostelDetails /></ProtectedRoute>} />
+            <Route path="/admin/reports/transport" element={<ProtectedRoute><StudentTransportDetails /></ProtectedRoute>} />
+            <Route path="/admin/reports/subject_lesson_plan" element={<ProtectedRoute><SubjectLessonPlanReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/user_log" element={<ProtectedRoute><UserLog /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
       </SessionProvider>
