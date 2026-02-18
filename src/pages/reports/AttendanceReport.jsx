@@ -15,8 +15,8 @@ const AttendanceReport = () => {
     // Shared Form states
     const [classId, setClassId] = useState('');
     const [sectionId, setSectionId] = useState('');
-    const [month, setMonth] = useState('January');
-    const [year, setYear] = useState('2025');
+    const [month, setMonth] = useState('');
+    const [year, setYear] = useState('');
     const [date, setDate] = useState('2025-01-01');
     const [dateFrom, setDateFrom] = useState('2025-01-01');
     const [dateTo, setDateTo] = useState('2025-01-31');
@@ -39,6 +39,8 @@ const AttendanceReport = () => {
     const [subjectList, setSubjectList] = useState([]);
     const [attendanceTypesList, setAttendanceTypesList] = useState([]);
     const [searchTypeList, setSearchTypeList] = useState({});
+    const [roleList, setRoleList] = useState([]); // Added for Staff Attendance Report
+    const [studentList, setStudentList] = useState([]); // Added for Late Entries Report Student Selection
 
     // Constants for logic/display (kept for compatibility with existing mock/logic)
     const months = [
@@ -144,7 +146,132 @@ const AttendanceReport = () => {
         }
     }, [activeReport]);
 
+    // Fetch data for Daily Attendance Report when tab is clicked
+    useEffect(() => {
+        if (activeReport === 'daily_report') {
+            const fetchDailyReport = async () => {
+                try {
+                    setLoading(true);
+                    console.log('Auto-fetching Daily Attendance Report on tab click');
+                    const response = await api.getDailyAttendanceReport();
+                    console.log('Daily Attendance Report Response:', response);
 
+                    if (response) {
+                        // Update date from response (convert DD/MM/YYYY to YYYY-MM-DD for input field)
+                        if (response.date) {
+                            // API might return date with escaped slashes like "17\/02\/2026"
+                            // or standard "17/02/2026". We sanitize it just in case.
+                            let dateStr = String(response.date).replace(/\\/g, '');
+                            console.log('Raw date from API:', response.date, 'Sanitized:', dateStr);
+
+                            const parts = dateStr.split('/');
+                            if (parts.length === 3) {
+                                // Assume DD/MM/YYYY -> YYYY-MM-DD
+                                const day = parts[0];
+                                const month = parts[1];
+                                const year = parts[2];
+                                const newDate = `${year}-${month}-${day}`;
+                                console.log('Setting date state to:', newDate);
+                                setDate(newDate);
+                            } else {
+                                console.warn('Date format not recognized:', dateStr);
+                            }
+                        }
+
+                        setReportData({
+                            list: response.resultlist || [],
+                            totals: {
+                                present: response.all_present || 0,
+                                absent: response.all_absent || 0,
+                                present_percent: response.all_present_percent || '0%',
+                                absent_percent: response.all_absent_percent || '0%'
+                            }
+                        });
+                        setSearched(true);
+                    }
+                } catch (error) {
+                    console.error('Error auto-fetching daily attendance report:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchDailyReport();
+        }
+    }, [activeReport]);
+
+    // Fetch data for Staff Attendance Report when tab is clicked
+    useEffect(() => {
+        if (activeReport === 'staff_report') {
+            const fetchStaffReportData = async () => {
+                try {
+                    setLoading(true);
+                    const response = await api.getStaffAttendanceReport();
+                    if (response) {
+                        if (response.role && Array.isArray(response.role)) {
+                            setRoleList(response.role);
+                        }
+                        if (response.monthlist) {
+                            // Ensure it's an array for mapping
+                            setMonthList(Object.values(response.monthlist));
+                        }
+                        if (response.yearlist && Array.isArray(response.yearlist)) {
+                            setYearList(response.yearlist.map(y => y.year));
+                        }
+                        // Helper to create attendance types map if needed, or just use existing list if provided
+                        if (response.attendencetypeslist && Array.isArray(response.attendencetypeslist)) {
+                            setAttendanceTypesList(response.attendencetypeslist);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching staff attendance report data:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchStaffReportData();
+        }
+    }, [activeReport]);
+
+    // Fetch data for Late Entries Report when tab is clicked
+    useEffect(() => {
+        if (activeReport === 'late_report') {
+            const fetchLateReportData = async () => {
+                try {
+                    setLoading(true);
+                    const response = await api.getLateEntriesReport();
+                    if (response && response.classlist) {
+                        setClassList(response.classlist);
+                    }
+                } catch (error) {
+                    console.error('Error fetching late report classlist:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchLateReportData();
+        }
+    }, [activeReport]);
+
+    // Fetch student list for Late Entry when class and section are selected
+    useEffect(() => {
+        if (activeReport === 'late_report' && classId && sectionId) {
+            const fetchStudents = async () => {
+                try {
+                    const response = await api.getStudentsByClassAndSection(classId, sectionId);
+                    if (Array.isArray(response)) {
+                        setStudentList(response);
+                        setStudentId(''); // Added reset
+                    }
+                } catch (error) {
+                    console.error('Error fetching student list for late entry:', error);
+                }
+            };
+            fetchStudents();
+        } else if (activeReport === 'late_report' && (!classId || !sectionId)) {
+            setStudentList([]);
+            setStudentId(''); // Added reset
+        }
+    }, [activeReport, classId, sectionId]);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -152,6 +279,8 @@ const AttendanceReport = () => {
         setSearched(false);
         setSearchTerm('');
         setReportData(null);
+        console.log('handleSearch triggered. activeReport:', activeReport);
+
 
 
 
@@ -319,14 +448,29 @@ const AttendanceReport = () => {
             return;
         }
         if (activeReport === 'daily_report') {
+            let dateStr = date;
+            // Convert YYYY-MM-DD to DD/MM/YYYY for API
+            if (date) {
+                const [y, m, d] = date.split('-');
+                dateStr = `${d}/${m}/${y}`;
+            }
+            console.log('Fetching Daily Attendance Report for date:', dateStr);
             try {
+                const response = await api.searchDailyAttendanceReport({ date: dateStr });
+                console.log('Daily Attendance Report Response:', response);
 
-
-                // Determine date format. Input is YYYY-MM-DD. API likely expects that or DD/MM/YYYY.
-                // User response had "17/02/2026" (DD/MM/YYYY). Let's try sending as is (YYYY-MM-DD) first.
-
-                const response = await api.getDailyAttendanceReport(date);
                 if (response) {
+                    // Update date from response if available (convert DD/MM/YYYY to YYYY-MM-DD)
+                    if (response.date) {
+                        let dateStr = String(response.date).replace(/\\/g, '');
+                        const parts = dateStr.split('/');
+                        if (parts.length === 3) {
+                            const newDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                            console.log('Setting date from API response (Search):', newDate);
+                            setDate(newDate);
+                        }
+                    }
+
                     setReportData({
                         list: response.resultlist || [],
                         totals: {
@@ -347,24 +491,111 @@ const AttendanceReport = () => {
             }
             return;
         }
+        if (activeReport === 'staff_report') {
+            try {
+                const payload = {
+                    month: month,
+                    year: year,
+                    role: role
+                };
+                const response = await api.searchStaffAttendanceReport(payload);
+                if (response) {
+                    const staffMap = {};
+                    const safeStr = (val) => val || '';
+
+                    // Extract staff from any available source in response
+                    const firstDayKey = response.resultlist ? Object.keys(response.resultlist).find(k => Array.isArray(response.resultlist[k]) && response.resultlist[k].length > 0) : null;
+                    const referenceList = firstDayKey ? response.resultlist[firstDayKey] : (response.staff_array || response.student_array || []);
+
+                    if (Array.isArray(referenceList)) {
+                        referenceList.forEach(staff => {
+                            const sId = staff.staff_id || staff.id;
+                            staffMap[sId] = {
+                                id: sId,
+                                name: `${safeStr(staff.name)} ${safeStr(staff.surname)}`.trim(),
+                                employee_id: staff.employee_id,
+                                percentage: 0,
+                                counts: { P: 0, L: 0, A: 0, H: 0, F: 0 },
+                                daily: {}
+                            };
+                        });
+                    }
+
+                    // Fill daily attendance
+                    if (response.resultlist) {
+                        Object.entries(response.resultlist).forEach(([dateStr, staffDayData]) => {
+                            const day = parseInt(dateStr.split('-')[2], 10);
+                            if (Array.isArray(staffDayData)) {
+                                staffDayData.forEach(sData => {
+                                    const sId = sData.staff_id || sData.id;
+                                    if (staffMap[sId]) {
+                                        staffMap[sId].daily[day] = sData.key || '-';
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    // Fill counts
+                    if (response.monthAttendance && Array.isArray(response.monthAttendance)) {
+                        response.monthAttendance.forEach(record => {
+                            const staffId = Object.keys(record)[0];
+                            const stats = record[staffId];
+                            if (staffMap[staffId]) {
+                                staffMap[staffId].counts = {
+                                    P: parseInt(stats.present) || 0,
+                                    L: parseInt(stats.late) || 0,
+                                    A: parseInt(stats.absent) || 0,
+                                    H: parseInt(stats.holiday) || 0,
+                                    F: parseInt(stats.half_day) || 0
+                                };
+                                const totalWorking = staffMap[staffId].counts.P + staffMap[staffId].counts.L + staffMap[staffId].counts.A + staffMap[staffId].counts.F;
+                                const presentEquivalent = staffMap[staffId].counts.P + staffMap[staffId].counts.L + (staffMap[staffId].counts.F * 0.5);
+                                staffMap[staffId].percentage = totalWorking > 0 ? ((presentEquivalent / totalWorking) * 100).toFixed(2) : '0.00';
+                            }
+                        });
+                    }
+
+                    setReportData({
+                        month: response.month_selected || month,
+                        year: response.year_selected || year,
+                        staff: Object.values(staffMap)
+                    });
+                }
+                setSearched(true);
+            } catch (error) {
+                console.error('Error searching staff attendance:', error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
+        if (activeReport === 'late_report') {
+            try {
+                const payload = {
+                    date_from: dateFrom,
+                    date_to: dateTo,
+                    class_id: classId,
+                    section_id: sectionId,
+                    student_id: studentId
+                };
+                const response = await api.searchLateEntriesReport(payload);
+                if (response) {
+                    setReportData(Array.isArray(response) ? response : (response.data || []));
+                }
+                setSearched(true);
+            } catch (error) {
+                console.error('Error searching late entries report:', error);
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
 
         setTimeout(() => {
             let data = {};
-            if (activeReport === 'staff_report') {
-                data = {
-                    month: month,
-                    year: year,
-                    staff: [
-                        { id: 1, name: 'Teacher Alex', employee_id: 'SH101', percentage: 98, counts: { P: 22, L: 1, A: 0, F: 0, H: 4 }, daily: { 1: 'P', 2: 'P', 3: 'P', 4: 'P', 5: 'H' } }
-                    ]
-                };
-            } else if (activeReport === 'late_report') {
-                data = [
-                    { id: 1, name: 'John Doe', admission_no: '1001', class: 'Class 10', section: 'A', date: '2025-01-05', time: '08:15:00', roll_no: '10' },
-                    { id: 2, name: 'Emily Smith', admission_no: '1005', class: 'Class 10', section: 'A', date: '2025-01-07', time: '08:20:00', roll_no: '15' }
-                ];
-            }
-            if (activeReport !== 'class_attendance' && activeReport !== 'type_report' && activeReport !== 'daily_report') {
+            if (activeReport !== 'class_attendance' && activeReport !== 'type_report' && activeReport !== 'daily_report' && activeReport !== 'late_report' && activeReport !== 'staff_report') {
                 setReportData(data);
                 setSearched(true);
                 setLoading(false);
@@ -590,8 +821,7 @@ const AttendanceReport = () => {
                                                             <label>Role <span className="req">*</span></label>
                                                             <select className="form-control" value={role} onChange={(e) => setRole(e.target.value)} required>
                                                                 <option value="">Select</option>
-                                                                {/* roles mock data was used here, keep checking if api provides roles in future */}
-                                                                {["Admin", "Teacher", "Accountant", "Librarian"].map(r => <option key={r} value={r}>{r}</option>)}
+                                                                {roleList.map(r => <option key={r.id} value={r.id}>{r.type}</option>)}
                                                             </select>
                                                         </div>
                                                     </div>
@@ -667,22 +897,11 @@ const AttendanceReport = () => {
                                             <>
                                                 <div className="col-md-2">
                                                     <div className="form-group">
-                                                        <label>Search Type <span className="req">*</span></label>
-                                                        <select className="form-control" value={searchType} onChange={(e) => setSearchType(e.target.value)} required>
-                                                            <option value="today">Today</option>
-                                                            <option value="this_week">This Week</option>
-                                                            <option value="this_month">This Month</option>
-                                                            <option value="period">Period</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
                                                         <label>Date From <span className="req">*</span></label>
                                                         <input type="date" className="form-control" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} required />
                                                     </div>
                                                 </div>
-                                                <div className="col-md-3">
+                                                <div className="col-md-2">
                                                     <div className="form-group">
                                                         <label>Date To <span className="req">*</span></label>
                                                         <input type="date" className="form-control" value={dateTo} onChange={(e) => setDateTo(e.target.value)} required />
@@ -691,18 +910,27 @@ const AttendanceReport = () => {
                                                 <div className="col-md-2">
                                                     <div className="form-group">
                                                         <label>Class</label>
-                                                        <select className="form-control" value={classId} onChange={(e) => setClassId(e.target.value)}>
+                                                        <select className="form-control" value={classId} onChange={handleClassChange}>
                                                             <option value="">Select</option>
                                                             {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
                                                         </select>
                                                     </div>
                                                 </div>
-                                                <div className="col-md-2">
+                                                <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Section</label>
                                                         <select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
                                                             <option value="">Select</option>
                                                             {sectionList.map(s => <option key={s.id} value={s.section_id}>{s.section}</option>)}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-3">
+                                                    <div className="form-group">
+                                                        <label>Student</label>
+                                                        <select className="form-control" value={studentId} onChange={(e) => setStudentId(e.target.value)}>
+                                                            <option value="">Select</option>
+                                                            {studentList.map(s => <option key={s.id} value={s.id}>{s.firstname} {s.lastname}</option>)}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -904,7 +1132,7 @@ const AttendanceReport = () => {
                                                 <div className="lateday-stack">
                                                     <div className="lateday">
                                                         {attTypes.map(t => <b key={t.key}>{t.type}: {t.key}</b>)}
-                                                        <b>Holyday: H</b>
+                                                        <b>Holiday: H</b>
                                                     </div>
                                                     <div className="dt-buttons">
                                                         <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
@@ -922,10 +1150,10 @@ const AttendanceReport = () => {
                                                     <tr>{attTypes.concat([{ key: 'H', type: 'Holiday' }]).map(t => <th key={t.key}>{t.key}</th>)}</tr>
                                                 </thead>
                                                 <tbody>
-                                                    {reportData.staff
+                                                    {(reportData.staff || [])
                                                         .filter(s =>
-                                                            s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                            s.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
+                                                            (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                            (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
                                                         )
                                                         .map(s => (
                                                             <tr key={s.id}><td style={{ textAlign: 'left' }}>{s.name} (ID: {s.employee_id})</td><td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td><td>{s.counts.P}</td><td>{s.counts.L}</td><td>{s.counts.A}</td><td>{s.counts.H}</td><td>{s.counts.F}</td>{days.map(d => <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{s.daily[d.getDate()] || '-'}</td>)}</tr>
@@ -966,14 +1194,22 @@ const AttendanceReport = () => {
                                             </div>
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>S.No</th><th>Name</th><th>Admission No</th><th>Class (Section)</th><th>Date</th><th>Time</th><th>Roll No</th></tr></thead>
-                                                <tbody>{reportData
+                                                <tbody>{Array.isArray(reportData) && reportData
                                                     .filter(r =>
-                                                        r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        r.admission_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        r.class.toLowerCase().includes(searchTerm.toLowerCase())
+                                                        `${r.firstname || ''} ${r.lastname || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                        (r.admission_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                        (r.class || '').toLowerCase().includes(searchTerm.toLowerCase())
                                                     )
                                                     .map((r, i) => (
-                                                        <tr key={r.id}><td>{i + 1}</td><td>{r.name}</td><td>{r.admission_no}</td><td>{r.class} ({r.section})</td><td>{r.date}</td><td>{r.time}</td><td>{r.roll_no}</td></tr>
+                                                        <tr key={r.id || i}>
+                                                            <td>{i + 1}</td>
+                                                            <td>{r.firstname} {r.lastname}</td>
+                                                            <td>{r.admission_no}</td>
+                                                            <td>{r.class} ({r.section})</td>
+                                                            <td>{r.date}</td>
+                                                            <td>{r.time}</td>
+                                                            <td>{r.roll_no}</td>
+                                                        </tr>
                                                     ))}</tbody>
                                             </table>
                                             <div className="dt-footer">

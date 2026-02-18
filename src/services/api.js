@@ -141,6 +141,243 @@ export const api = {
         }
     },
 
+    getStudentInformationReport: async () => {
+        console.log('API Request: Get Student Information Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/studentinformation`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Student Information Report Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to check student information report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Student Information Report API Error:', error);
+            throw error;
+        }
+    },
+
+    getStudentMasterReport: async () => {
+        console.log('API Request: Get Student Master Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/studentmasterreport`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Student Master Report Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch student master report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Student Master Report API Error:', error);
+            throw error;
+        }
+    },
+
+    getClassSectionReport: async () => {
+        console.log('API Request: Get Class Section Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/classsectionreport`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Class Section Report Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch class section report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Class Section Report API Error:', error);
+            throw error;
+        }
+    },
+
+
+    getGuardianReport: async () => {
+        console.log('API Request: Get Guardian Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/get_guardianreport`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Guardian Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch guardian report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Guardian Report API Error:', error);
+            throw error;
+        }
+    },
+
+
+    searchGuardianReport: async (payload) => {
+        console.log('API Request: Search Guardian Report', payload);
+        try {
+            const response = await fetch(`${API_BASE}/report/guardianreport`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Search Guardian Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to search guardian report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Guardian Report API Error:', error);
+            throw error;
+        }
+    },
+
+
+    getStudentLoginDetailReport: async () => {
+        console.log('API Request: Get Student Login Detail Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/logindetailreport`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Student Login Detail Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch student login detail report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Student Login Detail Report API Error:', error);
+            throw error;
+        }
+    },
+
+
+    getParentLoginDetailReport: async () => {
+        console.log('API Request: Get Parent Login Detail Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/parentlogindetailreport`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Parent Login Detail Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch parent login detail report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Parent Login Detail Report API Error:', error);
+            throw error;
+        }
+    },
+
+    searchLoginValidation: async (payload) => {
+        console.log('API Request: Search Login Validation', payload);
+        try {
+            const response = await fetch(`${API_BASE}/report/searchloginvalidation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Search Login Validation Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Search Login Validation API Error:', error);
+            throw error;
+        }
+    },
+
+    getCredentialReportList: async (payload) => {
+        console.log('API Request: Get Credential Report List', payload);
+        try {
+            const response = await fetch(`${API_BASE}/report/dtcredentialreportlist`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Get Credential Report List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Credential Report List API Error:', error);
+            throw error;
+        }
+    },
+
+    getParentCredentialReportList: async (payload) => {
+        console.log('API Request: Get Parent Credential Report List', payload);
+        try {
+            const response = await fetch(`${API_BASE}/report/dtparentcredentialreportlist`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Get Parent Credential Report List Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Parent Credential Report List API Error:', error);
+            throw error;
+        }
+    },
+
+    getStudentsByClassSection: async (cls_section_id) => {
+        console.log('API Request: Get Students By Class Section', cls_section_id);
+        try {
+            const response = await fetch(`${API_BASE}/student/getStudentByClassSection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ cls_section_id }),
+            });
+            const data = await response.json();
+            console.log('Get Students By Class Section Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch students by class section');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Students By Class Section API Error:', error);
+            throw error;
+        }
+    },
+
     viewStudentIdCard: async (id) => {
         console.log('API Request: View Student ID Card', id);
         try {
@@ -5815,12 +6052,10 @@ export const api = {
     },
 
     // Get Daily Attendance Report (GET)
-    getDailyAttendanceReport: async (date) => {
+    // Get Daily Attendance Report (GET)
+    getDailyAttendanceReport: async () => {
         try {
-            let url = appendSessionToUrl(`${API_BASE}/attendencereports/daily_attendance_report`);
-            if (date) {
-                url += `&date=${date}`;
-            }
+            const url = appendSessionToUrl(`${API_BASE}/attendencereports/daily_attendance_report`);
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
@@ -5833,6 +6068,114 @@ export const api = {
             return await response.json();
         } catch (error) {
             console.error('Error fetching daily attendance report:', error);
+            throw error;
+        }
+    },
+
+    // Search Daily Attendance Report (POST)
+    searchDailyAttendanceReport: async (payload) => {
+        try {
+            const options = createFetchOptions('POST', payload);
+            const response = await fetch(`${API_BASE}/attendencereports/daily_attendance_report`, options);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error searching daily attendance report:', error);
+            throw error;
+        }
+    },
+
+    // Get Staff Attendance Report (GET)
+    getStaffAttendanceReport: async () => {
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/attendencereports/staffattendancereport`);
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching staff attendance report:', error);
+            throw error;
+        }
+    },
+
+    // Search Staff Attendance Report (POST)
+    searchStaffAttendanceReport: async (payload) => {
+        try {
+            const options = createFetchOptions('POST', payload);
+            const response = await fetch(`${API_BASE}/attendencereports/staffattendancereport`, options);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error searching staff attendance report:', error);
+            throw error;
+        }
+    },
+
+    // Get Late Entries Report (GET)
+    getLateEntriesReport: async () => {
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/attendencereports/late_entries_report`);
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching late entries report:', error);
+            throw error;
+        }
+    },
+
+    // Get Students by Class and Section (GET)
+    getStudentsByClassAndSection: async (classId, sectionId) => {
+        try {
+            const url = appendSessionToUrl(`${API_BASE}/student/getByClassAndSection?class_id=${classId}&section_id=${sectionId}`);
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching students by class and section:', error);
+            throw error;
+        }
+    },
+
+    // Search Late Entries Report (POST)
+    searchLateEntriesReport: async (payload) => {
+        try {
+            const options = createFetchOptions('POST', payload);
+            const url = appendSessionToUrl(`${API_BASE}/attendencereports/late_entries_report`);
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error searching late entries report:', error);
             throw error;
         }
     },
