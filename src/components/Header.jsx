@@ -206,7 +206,7 @@ const Header = ({
                                                                 <h5>{user.role}</h5>
                                                             </div>
                                                             <div className="divider"></div>
-                                                            <div className="sspass" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                                                            <div className="sspass">
                                                                 <Link to="/admin/staff/profile/1" data-toggle="tooltip" title="My Profile">
                                                                     <i className="fa fa-user"></i> Profile
                                                                 </Link>

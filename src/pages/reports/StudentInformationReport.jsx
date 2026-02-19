@@ -520,7 +520,6 @@ const StudentInformationReport = () => {
     const renderRow = (row, index) => {
         switch (activeReport) {
             case 'Student Report':
-            case 'student_all_data_report':
                 return (
                     <>
                         <td>{index + 1}</td>
