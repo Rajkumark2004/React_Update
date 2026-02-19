@@ -21,7 +21,7 @@ const ReportsSidebar = ({ activeGroup }) => {
 
     const routeMap = {
         'SIS': '/admin/reports/student_information',
-        'Finance': '/admin/reports/payroll',
+        'Finance': '/admin/reports/finance',
         'Attendance': '/admin/reports/attendance',
         'Examinations': '/admin/reports/rank',
         'Lesson Plans': '/admin/reports/lesson_plan',

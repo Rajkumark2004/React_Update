@@ -118,6 +118,52 @@ const StudentInformationReport = () => {
                 } finally {
                     setLoading(false);
                 }
+            } else if (activeReport === 'Sibling Report') {
+                try {
+                    setLoading(true);
+                    const response = await api.getSiblingReport();
+                    if (response.status && response.data && response.data.classlist) {
+                        setClasses(response.data.classlist);
+                        setStudentData([]);
+                    } else {
+                        toast.error(response.message || 'Failed to load sibling report configuration');
+                    }
+                } catch (error) {
+                    console.error('Error fetching sibling report:', error);
+                    toast.error('Error fetching sibling report');
+                } finally {
+                    setLoading(false);
+                }
+            } else if (activeReport === 'student_all_data_report') {
+                try {
+                    setLoading(true);
+                    const response = await api.getStudentAllDataReport();
+                    if (response.status && response.data && response.data.student_data) {
+                        setStudentData(response.data.student_data);
+                    } else {
+                        toast.error(response.message || 'Failed to load student all data report');
+                    }
+                } catch (error) {
+                    console.error('Error fetching student all data report:', error);
+                    toast.error('Error fetching student all data report');
+                } finally {
+                    setLoading(false);
+                }
+            } else if (activeReport === 'App Install Users Report') {
+                try {
+                    setLoading(true);
+                    const response = await api.getAppInstallUsersReport();
+                    if (response.status && response.data && response.data.resultlist) {
+                        setStudentData(response.data.resultlist);
+                    } else {
+                        toast.error(response.message || 'Failed to load app install users report');
+                    }
+                } catch (error) {
+                    console.error('Error fetching app install users report:', error);
+                    toast.error('Error fetching app install users report');
+                } finally {
+                    setLoading(false);
+                }
             } else {
                 // Reset data or handle other reports if needed
                 // setStudentData([]); 
@@ -137,7 +183,7 @@ const StudentInformationReport = () => {
 
     useEffect(() => {
         const fetchSections = async () => {
-            if ((activeReport === 'Guardian Report' || activeReport === 'Student Login Credential' || activeReport === 'Parent Login Credential') && classId) {
+            if ((activeReport === 'Guardian Report' || activeReport === 'Student Login Credential' || activeReport === 'Parent Login Credential' || activeReport === 'Sibling Report') && classId) {
                 try {
                     const response = await api.getSectionsByClass(classId);
                     if (response.status && response.data) {
@@ -284,6 +330,16 @@ const StudentInformationReport = () => {
                     admissionNo.includes(searchStr) ||
                     name.includes(searchStr) ||
                     username.includes(searchStr)
+                );
+            }
+            if (activeReport === 'Sibling Report') {
+                return (
+                    (row.firstname && row.firstname.toLowerCase().includes(searchStr)) ||
+                    (row.lastname && row.lastname.toLowerCase().includes(searchStr)) ||
+                    (row.father_name && row.father_name.toLowerCase().includes(searchStr)) ||
+                    (row.mother_name && row.mother_name.toLowerCase().includes(searchStr)) ||
+                    (row.guardian_name && row.guardian_name.toLowerCase().includes(searchStr)) ||
+                    (row.guardian_phone && row.guardian_phone.toLowerCase().includes(searchStr))
                 );
             }
             return (
@@ -435,6 +491,28 @@ const StudentInformationReport = () => {
             } finally {
                 setLoading(false);
             }
+        } else if (activeReport === 'Sibling Report') {
+            try {
+                setLoading(true);
+                const payload = {
+                    class_id: classId,
+                    section_id: sectionId
+                };
+                const response = await api.searchSiblingReport(payload);
+                if (response.status && response.data && response.data.resultlist) {
+                    // Flatten the grouped resultlist
+                    const flatList = Object.values(response.data.resultlist).flat();
+                    setStudentData(flatList);
+                } else {
+                    toast.error(response.message || 'No siblings found');
+                    setStudentData([]);
+                }
+            } catch (error) {
+                console.error('Error searching sibling report:', error);
+                toast.error('Error searching sibling report');
+            } finally {
+                setLoading(false);
+            }
         }
         // Add other report search logic here if needed
     };
@@ -450,7 +528,6 @@ const StudentInformationReport = () => {
                         <td>{row.roll_no}</td>
                         <td><span className="student-link">{row.firstname} {row.lastname}</span></td>
                         <td>{row.mobileno}</td>
-                        <td>{row.mobileno}</td>
                         <td>{row.gender}</td>
                         {activeReport === 'Student Report' && (
                             <>
@@ -459,21 +536,37 @@ const StudentInformationReport = () => {
                                 <td>{row.cast}</td>
                             </>
                         )}
-                        {activeReport === 'Guardian Report' && (
-                            <>
-                                <td>{row.guardian_name}</td>
-                                <td>{row.guardian_relation}</td>
-                                <td>{row.guardian_phone}</td>
-                                <td>{row.father_name}</td>
-                                <td>{row.father_phone}</td>
-                                <td>{row.mother_name}</td>
-                                <td>{row.mother_phone}</td>
-                            </>
-                        )}
+                        {/* Remove redundant Student All Data Report logic from here if any */}
                         <td>{row.adhar_no}</td>
                         <td>{row.dob}</td>
                         <td>{row.father_name}</td>
                         <td>{row.mother_name}</td>
+                        <td>{row.current_address}</td>
+                        <td>{row.child_id}</td>
+                    </>
+                );
+            case 'student_all_data_report':
+                return (
+                    <>
+                        <td>{index + 1}</td>
+                        <td>{row.class} ({row.section})</td>
+                        <td>{row.roll_no}</td>
+                        <td><span className="student-link">{row.firstname} {row.lastname}</span></td>
+                        <td>{row.mobileno}</td>
+                        <td>{row.gender}</td>
+                        <td>{row.admission_no}</td>
+                        <td>{row.admission_date}</td>
+                        <td>{row.category_id}</td>
+                        <td>{row.religion}</td>
+                        <td>{row.cast}</td>
+                        <td>{row.blood_group}</td>
+                        <td>{row.height}</td>
+                        <td>{row.weight}</td>
+                        <td>{row.adhar_no}</td>
+                        <td>{row.dob}</td>
+                        <td>{row.father_name}</td>
+                        <td>{row.mother_name}</td>
+                        <td>{row.guardian_name}</td>
                         <td>{row.current_address}</td>
                         <td>{row.child_id}</td>
                     </>
@@ -531,6 +624,19 @@ const StudentInformationReport = () => {
                         <td>{row[3]}</td>
                     </>
                 );
+            case 'Sibling Report':
+                return (
+                    <>
+                        <td>{row.father_name}</td>
+                        <td>{row.mother_name}</td>
+                        <td>{row.guardian_name}</td>
+                        <td>{row.guardian_phone}</td>
+                        <td>{row.firstname} {row.lastname}</td>
+                        <td>{row.class} ({row.section})</td>
+                        <td>{row.admission_date}</td>
+                        <td>{row.gender}</td>
+                    </>
+                );
             case 'Class Subject Report':
                 return <><td>{index + 1}</td><td>{row.class}</td><td>-</td><td>-</td><td>-</td><td>-</td></>;
             case 'Student Gender Ratio Report':
@@ -540,7 +646,17 @@ const StudentInformationReport = () => {
             case 'Online Admission Report':
                 return <><td>-</td><td>{row.admission_no}</td><td>{row.firstname}</td><td>{row.class}</td><td>{row.mobileno}</td><td>{row.dob}</td><td>{row.gender}</td><td>-</td><td>-</td><td>-</td><td>-</td></>;
             case 'App Install Users Report':
-                return <><td>{row.firstname}</td><td>{row.class}</td><td>{row.admission_no}</td><td>{row.father_name}</td><td>{row.mobileno}</td><td>Student</td><td>-</td></>;
+                return (
+                    <>
+                        <td>{row.firstname} {row.lastname}</td>
+                        <td>{row.class} ({row.section})</td>
+                        <td>{row.admission_no}</td>
+                        <td>{row.father_name || row.guardian_name || '-'}</td>
+                        <td>{row.mobileno || row.guardian_phone || '-'}</td>
+                        <td>{row.role}</td>
+                        <td>{row.created_date}</td>
+                    </>
+                );
             case 'Audit Trail Log':
                 return <><td>-</td><td>{row.firstname}</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></>;
             case 'Student Profile':

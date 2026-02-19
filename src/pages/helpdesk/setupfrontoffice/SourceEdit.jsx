@@ -6,6 +6,8 @@ import Sidebar from '../../../components/Sidebar';
 import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
+import { sanitizeAlphaWithSpaces, validateSource } from '../../../utils/validation';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 
 const SourceEdit = () => {
     const navigate = useNavigate();
@@ -35,6 +37,34 @@ const SourceEdit = () => {
             console.error('Fetch Error:', error);
             setMessage({ type: 'danger', text: 'Failed to fetch source list' });
         }
+    };
+
+    // Search & Pagination
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+
+    // Column visibility
+    const sourceColumns = [
+        { key: 'source', label: 'Source' },
+        { key: 'description', label: 'Description' }
+    ];
+    const [sourceVisibleCols, setSourceVisibleCols] = useState(new Set(sourceColumns.map(c => c.key)));
+    const [showSourceColsDd, setShowSourceColsDd] = useState(false);
+
+    const filteredResults = source_list.filter(item =>
+        item.source?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
+
+    const changePage = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
+        setCurrentPage(pageNumber);
     };
 
     useEffect(() => {
@@ -81,12 +111,21 @@ const SourceEdit = () => {
     // Handlers
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        let sanitized = value;
+        if (name === 'source') sanitized = sanitizeAlphaWithSpaces(value);
+        setFormData({ ...formData, [name]: sanitized });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessage({ type: '', text: '' });
+
+        const sourceErr = validateSource(formData.source);
+        if (sourceErr) {
+            setMessage({ type: 'danger', text: sourceErr });
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -99,7 +138,7 @@ const SourceEdit = () => {
             console.error('Update Error:', error);
             setMessage({ type: 'danger', text: error.message || 'An error occurred' });
         } finally {
-            setLoading(false);
+            setTimeout(() => setLoading(false), 5000);
         }
     };
 
@@ -189,6 +228,7 @@ const SourceEdit = () => {
                                                 className="form-control"
                                                 id="description"
                                                 name="source"
+                                                maxLength={100}
                                                 value={formData.source}
                                                 onChange={handleInputChange}
                                                 required
@@ -228,53 +268,132 @@ const SourceEdit = () => {
                                     <h3 className="box-title titlefix">Source List</h3>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-controls">
-                                        <div className="pull-left">
-                                            Records: 1 to {source_list.length} of {source_list.length}
+                                    {/* Controls */}
+                                    <div className="row" style={{ marginBottom: '10px' }}>
+                                        <div className="col-md-6">
+                                            <div className="dt-buttons btn-group">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => {
+                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    copyToClipboard(headers, rows);
+                                                }}>
+                                                    <i className="fa fa-files-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => {
+                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    downloadCSV(headers, rows, 'source_list.csv');
+                                                }}>
+                                                    <i className="fa fa-file-text-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => {
+                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    downloadExcel(headers, rows, 'source_list.xls');
+                                                }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => {
+                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    printTable(headers, rows, 'Source List');
+                                                }}>
+                                                    <i className="fa fa-print"></i>
+                                                </button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowSourceColsDd(!showSourceColsDd)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showSourceColsDd && (
+                                                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '160px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {sourceColumns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                    <input type="checkbox" checked={sourceVisibleCols.has(col.key)} onChange={() => {
+                                                                        setSourceVisibleCols(prev => {
+                                                                            const next = new Set(prev);
+                                                                            if (next.has(col.key)) { next.delete(col.key); } else { next.add(col.key); }
+                                                                            return next;
+                                                                        });
+                                                                    }} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="pull-right">
-                                            <div className="btn-group">
-                                                <button type="button" className="btn btn-default btn-sm" title="Previous"><i className="fa fa-chevron-left"></i></button>
-                                                <button type="button" className="btn btn-default btn-sm" title="Next"><i className="fa fa-chevron-right"></i></button>
+                                        <div className="col-md-6">
+                                            <div className="input-group input-group-sm">
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="Search..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="download_label">Source List</div>
-                                    <div className="table-responsive mailbox-messages overflow-visible">
-                                        <table className="table table-hover table-striped table-bordered example">
-                                            <thead>
-                                                <tr>
-                                                    <th>Source</th>
-                                                    <th>Description</th>
-                                                    <th className="text-right noExport">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {source_list.map((value, key) => (
-                                                    <tr key={key}>
-                                                        <td className="mailbox-name">{value.source}</td>
-                                                        <td className="mailbox-name">{value.description}</td>
-                                                        <td className="mailbox-date pull-right">
-                                                            <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                                <i className="fa fa-pencil"></i>
-                                                            </Link>
-                                                            <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
-                                                                <i className="fa fa-remove"></i>
-                                                            </Link>
-                                                        </td>
-                                                    </tr>
+                                </div>
+                                <div className="download_label">Source List</div>
+                                <div className="table-responsive mailbox-messages overflow-visible">
+                                    <table className="table table-hover table-striped table-bordered example">
+                                        <thead>
+                                            <tr>
+                                                {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
+                                                    <th key={col.key}>{col.label}</th>
                                                 ))}
-                                            </tbody>
-                                        </table>
+                                                <th className="text-right noExport">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {currentItems.map((value, key) => (
+                                                <tr key={key}>
+                                                    {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
+                                                        <td key={col.key} className="mailbox-name">{value[col.key]}</td>
+                                                    ))}
+                                                    <td className="mailbox-date pull-right">
+                                                        <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                            <i className="fa fa-pencil"></i>
+                                                        </Link>
+                                                        <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                            <i className="fa fa-remove"></i>
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-5">
+                                        <div className="dataTables_info">
+                                            Records: {filteredResults.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredResults.length)} of {filteredResults.length}
+                                        </div>
+                                    </div>
+                                    <div className="col-md-7">
+                                        <div className="dataTables_paginate paging_simple_numbers">
+                                            <ul className="pagination">
+                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}>Previous</a>
+                                                </li>
+                                                {[...Array(totalPages)].map((_, i) => (
+                                                    <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(i + 1); }}>{i + 1}</a>
+                                                    </li>
+                                                ))}
+                                                <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}>Next</a>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
-            </div>
+            </div >
             <Footer />
-        </div>
+        </div >
     );
 };
 

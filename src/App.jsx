@@ -166,6 +166,7 @@ import AlumniReport from './pages/reports/AlumniReport';
 // AttendanceReport moved to top
 import AuditTrail from './pages/reports/AuditTrail';
 import LessonPlanReport from './pages/reports/LessonPlanReport';
+import FinanceReport from './pages/reports/FinanceReport';
 import PayrollReport from './pages/reports/PayrollReport';
 import RankReport from './pages/reports/RankReport';
 import StaffReport from './pages/reports/StaffReport';
@@ -764,6 +765,7 @@ function App() {
             <Route path="/admin/reports/alumni" element={<ProtectedRoute><AlumniReport /></ProtectedRoute>} />
             <Route path="/admin/reports/audit_trail" element={<ProtectedRoute><AuditTrail /></ProtectedRoute>} />
             <Route path="/admin/reports/lesson_plan" element={<ProtectedRoute><LessonPlanReport /></ProtectedRoute>} />
+            <Route path="/admin/reports/finance" element={<ProtectedRoute><FinanceReport /></ProtectedRoute>} />
             <Route path="/admin/reports/payroll" element={<ProtectedRoute><PayrollReport /></ProtectedRoute>} />
             <Route path="/admin/reports/rank" element={<ProtectedRoute><RankReport /></ProtectedRoute>} />
             <Route path="/admin/reports/staff" element={<ProtectedRoute><StaffReport /></ProtectedRoute>} />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { api } from '../../../services/api';
+import { sanitizeName, sanitizePhone, validateName, validatePhone, validateDateRange } from '../../../utils/validation';
 
 const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuccess }) => {
     const [formData, setFormData] = useState({
@@ -166,9 +167,12 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+        let sanitized = value;
+        if (name === 'name') sanitized = sanitizeName(value);
+        if (name === 'contact') sanitized = sanitizePhone(value);
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: sanitized
         }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
@@ -177,10 +181,14 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
 
     const validateForm = () => {
         const newErrors = {};
-        if (!formData.name.trim()) newErrors.name = 'Name is required';
-        if (!formData.contact.trim()) newErrors.contact = 'Phone is required';
+        const nameErr = validateName(formData.name);
+        if (nameErr) newErrors.name = nameErr;
+        const phoneErr = validatePhone(formData.contact);
+        if (phoneErr) newErrors.contact = phoneErr;
         if (!formData.date) newErrors.date = 'Date is required';
         if (!formData.source) newErrors.source = 'Source is required';
+        const dateRangeErr = validateDateRange(formData.date, formData.follow_up_date, 'Enquiry Date', 'Next Follow Up Date');
+        if (dateRangeErr) newErrors.follow_up_date = dateRangeErr;
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -242,12 +250,12 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
             const response = await api.updateEnquiry(formData.id, payload);
             console.log('Update Enquiry API Response:', response);
 
-            setLoading(false);
+            setTimeout(() => setLoading(false), 5000);
             toast.success('Enquiry updated successfully');
             onSuccess();
         } catch (err) {
             console.error('Failed to update enquiry:', err);
-            setLoading(false);
+            setTimeout(() => setLoading(false), 5000);
             toast.error(err.message || 'Error updating enquiry');
         }
     };
@@ -288,6 +296,7 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
                                                         autoComplete="off"
                                                         className="form-control"
                                                         name="name"
+                                                        maxLength={50}
                                                         value={formData.name}
                                                         onChange={handleChange}
                                                     />
@@ -304,6 +313,7 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
                                                         autoComplete="off"
                                                         name="contact"
                                                         className="form-control"
+                                                        maxLength={15}
                                                         value={formData.contact}
                                                         onChange={handleChange}
                                                     />
@@ -392,6 +402,7 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
                                                         onChange={handleChange}
                                                         min={new Date().toISOString().split('T')[0]}
                                                     />
+                                                    {errors.follow_up_date && <span className="text-danger">{errors.follow_up_date}</span>}
                                                 </div>
                                             </div>
 

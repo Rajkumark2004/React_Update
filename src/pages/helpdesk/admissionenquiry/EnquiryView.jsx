@@ -10,6 +10,7 @@ import EditEnquiryModal from './EditEnquiryModal';
 import FollowUpModal from './FollowUpModal';
 import { api } from '../../../services/api';
 import { filterEnquiries } from './enquiryFilterLogic';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 import '../../../utils/include_files';
 import { useTableSort } from '../../../hooks/useTableSort';
 import './EnquiryView.css';
@@ -43,6 +44,37 @@ const EnquiryView = () => {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    const [searchTerm, setSearchTerm] = useState(''); // Global search term
+
+    // Column definitions
+    const columns = [
+        { key: 'name', label: 'Name', sortKey: 'name' },
+        { key: 'contact', label: 'Phone' },
+        { key: 'source', label: 'Source' },
+        { key: 'classname', label: 'Class', sortKey: 'classname' },
+        { key: 'date', label: 'Enquiry Date', sortKey: 'date' },
+        { key: 'followupdate', label: 'Last Follow Up Date', sortKey: 'followupdate' },
+        { key: 'follow_up_date', label: 'Next Follow Up Date', sortKey: 'follow_up_date' },
+        { key: 'status', label: 'Status', sortKey: 'status' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    const formatCell = (row, key) => {
+        if (key === 'date' || key === 'followupdate' || key === 'follow_up_date') return formatDate(row[key]);
+        if (key === 'status') return enquiryStatus[row[key]] || row[key];
+        return row[key];
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, finalFilteredEnquiries, formatCell);
 
     // Status options
     const enquiryStatus = {
@@ -136,7 +168,7 @@ const EnquiryView = () => {
         const results = filterEnquiries(masterEnquiryList, filterForm);
         setEnquiryList(results);
         setCurrentPage(1); // Reset to first page
-        setLoading(false);
+        setTimeout(() => setLoading(false), 5000);
     };
 
     const handleFollowUp = (enquiry) => {
@@ -201,11 +233,26 @@ const EnquiryView = () => {
         return next < today;
     };
 
+    // Combine API filters + Client-side search + Sorting
+    // Note: sortedEnquiries already contains the sorted result of filtered API data
+    // We now further filter `sortedEnquiries` based on `searchTerm`
+    const finalFilteredEnquiries = sortedEnquiries.filter(item => {
+        if (!searchTerm) return true;
+        const lowerTerm = searchTerm.toLowerCase();
+        return (
+            item.name?.toLowerCase().includes(lowerTerm) ||
+            item.contact?.toLowerCase().includes(lowerTerm) ||
+            item.source?.toLowerCase().includes(lowerTerm) ||
+            item.classname?.toLowerCase().includes(lowerTerm) ||
+            item.status?.toLowerCase().includes(lowerTerm)
+        );
+    });
+
     // Calculate pagination
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentEnquiries = sortedEnquiries.slice(indexOfFirstItem, indexOfLastItem);
-    const totalItems = sortedEnquiries.length;
+    const currentEnquiries = finalFilteredEnquiries.slice(indexOfFirstItem, indexOfLastItem);
+    const totalItems = finalFilteredEnquiries.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -436,38 +483,78 @@ const EnquiryView = () => {
                                             </div>
                                             <div className="box-body">
                                                 <div className="download_label">Admission Enquiry List</div>
+
+                                                {/* Controls: Export Buttons + Search */}
+                                                <div className="row" style={{ marginBottom: '10px' }}>
+                                                    <div className="col-md-6">
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                                <i className="fa fa-files-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'enquiry_list.csv'); }}>
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'enquiry_list.xls'); }}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Admission Enquiry List'); }}>
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
+                                                            <div className="btn-group">
+                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showColumnsDropdown && (
+                                                                    <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                        {columns.map(col => (
+                                                                            <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                                <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                                {col.label}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-md-6">
+                                                        <div className="input-group input-group-sm">
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                placeholder="Search..."
+                                                                value={searchTerm}
+                                                                onChange={(e) => {
+                                                                    setSearchTerm(e.target.value);
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                            />
+                                                            <span className="input-group-addon"><i className="fa fa-search"></i></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                                 <div className="mailbox-messages">
                                                     <div className="table-responsive overflow-visible-lg">
                                                         <table className="table table-hover table-striped table-bordered" id="enquirytable">
                                                             <thead>
                                                                 <tr>
-                                                                    <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => handleSort('name')}>
-                                                                        Name {getSortIcon('name')}
-                                                                    </th>
-                                                                    <th>Phone</th>
-                                                                    <th>Source</th>
-                                                                    <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => handleSort('classname')}>
-                                                                        Class {getSortIcon('classname')}
-                                                                    </th>
-                                                                    <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => handleSort('date')}>
-                                                                        Enquiry Date {getSortIcon('date')}
-                                                                    </th>
-                                                                    <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => handleSort('followupdate')}>
-                                                                        Last Follow Up Date {getSortIcon('followupdate')}
-                                                                    </th>
-                                                                    <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => handleSort('follow_up_date')}>
-                                                                        Next Follow Up Date {getSortIcon('follow_up_date')}
-                                                                    </th>
-                                                                    <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => handleSort('status')}>
-                                                                        Status {getSortIcon('status')}
-                                                                    </th>
+                                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                                        <th key={col.key}
+                                                                            className={col.sortKey ? 'sorting' : ''}
+                                                                            style={col.sortKey ? { cursor: 'pointer' } : {}}
+                                                                            onClick={col.sortKey ? () => handleSort(col.sortKey) : undefined}
+                                                                        >
+                                                                            {col.label} {col.sortKey && getSortIcon(col.sortKey)}
+                                                                        </th>
+                                                                    ))}
                                                                     <th className="text-right noExport1">Action</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                {sortedEnquiries.length === 0 ? (
+                                                                {finalFilteredEnquiries.length === 0 ? (
                                                                     <tr>
-                                                                        <td colSpan="8" className="text-center">
+                                                                        <td colSpan={visibleColumns.size + 1} className="text-center">
                                                                             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
                                                                                 <div style={{ color: 'red', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
                                                                                 <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
@@ -478,14 +565,9 @@ const EnquiryView = () => {
                                                                 ) : (
                                                                     currentEnquiries.map((enquiry) => (
                                                                         <tr key={enquiry.id} className={isOverdue(enquiry) ? 'danger' : ''}>
-                                                                            <td className="mailbox-name">{enquiry.name}</td>
-                                                                            <td className="mailbox-name">{enquiry.contact}</td>
-                                                                            <td className="mailbox-name">{enquiry.source}</td>
-                                                                            <td className="mailbox-name">{enquiry.classname}</td>
-                                                                            <td className="mailbox-name">{formatDate(enquiry.date)}</td>
-                                                                            <td className="mailbox-name">{formatDate(enquiry.followupdate)}</td>
-                                                                            <td className="mailbox-name">{formatDate(enquiry.follow_up_date)}</td>
-                                                                            <td>{enquiryStatus[enquiry.status] || enquiry.status}</td>
+                                                                            {columns.map(col => visibleColumns.has(col.key) && (
+                                                                                <td key={col.key} className="mailbox-name">{formatCell(enquiry, col.key)}</td>
+                                                                            ))}
                                                                             <td className="mailbox-date text-right white-space-nowrap">
                                                                                 <a
                                                                                     className="btn btn-default btn-xs"

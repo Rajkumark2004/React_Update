@@ -247,6 +247,291 @@ export const api = {
         }
     },
 
+    getStudentAllDataReport: async () => {
+        console.log('API Request: Get Student All Data Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/student_all_data_report`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Student All Data Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch student all data report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Student All Data Report API Error:', error);
+            throw error;
+        }
+    },
+
+    getAppInstallUsersReport: async () => {
+        console.log('API Request: Get App Install Users Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/app_install_report`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get App Install Users Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch app install users report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get App Install Users Report API Error:', error);
+            throw error;
+        }
+    },
+
+    getFinancePageData: async () => {
+        console.log('API Request: Get Finance Page Data');
+        try {
+            const response = await fetch(`${API_BASE}/financereports/finance`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Finance Page Data Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch finance page data');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Finance Page Data API Error:', error);
+            throw error;
+        }
+    },
+
+    getDailyCollectionReport: async () => {
+        console.log('API Request: Get Daily Collection Report');
+        try {
+            const response = await fetch(`${API_BASE}/financereports/getreportdailycollection`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Daily Collection Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch daily collection report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Daily Collection Report API Error:', error);
+            throw error;
+        }
+    },
+
+    getStudentAcademicReport: async () => {
+        console.log('API Request: Get Student Academic Report (Balance Fees Report)');
+        try {
+            const response = await fetch(`${API_BASE}/financereports/get_studentacademicreport`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Student Academic Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch student academic report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Student Academic Report API Error:', error);
+            throw error;
+        }
+    },
+
+
+    getStudentAcademicFeeReceipt: async () => {
+        console.log('API Request: Get Student Academic Fee Receipt (No Due Certificate)');
+        try {
+            const response = await fetch(`${API_BASE}/financereports/get_studentacademicfeereceipt`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get No Due Certificate Page Data Response:', data);
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    console.error('Unauthorized access - outputting response for debugging');
+                }
+                throw new Error(data.message || 'Failed to fetch No Due Certificate data');
+            }
+            return data;
+        } catch (error) {
+            console.error('Error fetching No Due Certificate data:', error);
+            throw error;
+        }
+    },
+
+    searchStudentAcademicFeeReceipt: async (payload) => {
+        console.log('API Request: Search Student Academic Fee Receipt (No Due Certificate)', payload);
+        try {
+            const response = await fetch(`${API_BASE}/financereports/studentacademicfeereceipt`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            console.log('Search No Due Certificate Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to search No Due Certificate');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search No Due Certificate API Error:', error);
+            throw error;
+        }
+    },
+
+    searchStudentAcademicReport: async (criteria) => {
+        console.log('API Request: Search Student Academic Report', criteria);
+        try {
+            const response = await fetch(`${API_BASE}/financereports/studentacademicreport`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(criteria)
+            });
+            const data = await response.json();
+            console.log('Search Student Academic Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch student academic report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Student Academic Report API Error:', error);
+            throw error;
+        }
+    },
+
+    searchDailyCollectionReport: async (criteria) => {
+        console.log('API Request: Search Daily Collection Report', criteria);
+        try {
+            const response = await fetch(`${API_BASE}/financereports/reportdailycollection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(criteria)
+            });
+            const data = await response.json();
+            console.log('Search Daily Collection Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to search daily collection report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Daily Collection Report API Error:', error);
+            throw error;
+        }
+    },
+
+    getDailyCollectionDetail: async (criteria) => {
+        console.log('API Request: Get Daily Collection Detail', criteria);
+        try {
+            const response = await fetch(`${API_BASE}/financereports/feeCollectionStudentDeposit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(criteria)
+            });
+            const data = await response.json();
+            console.log('Get Daily Collection Detail Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to get daily collection detail');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Daily Collection Detail API Error:', error);
+            throw error;
+        }
+    },
+
+    getSiblingReport: async () => {
+        console.log('API Request: Get Sibling Report');
+        try {
+            const response = await fetch(`${API_BASE}/report/get_sibling_report`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Sibling Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch sibling report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Sibling Report API Error:', error);
+            throw error;
+        }
+    },
+
+    searchSiblingReport: async (payload) => {
+        console.log('API Request: Search Sibling Report', payload);
+        try {
+            const response = await fetch(`${API_BASE}/report/sibling_report`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Search Sibling Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to search sibling report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Sibling Report API Error:', error);
+            throw error;
+        }
+    },
+
 
     getStudentLoginDetailReport: async () => {
         console.log('API Request: Get Student Login Detail Report');
@@ -351,6 +636,141 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Parent Credential Report List API Error:', error);
+            throw error;
+        }
+    },
+
+    getOnlineFeesReport: async () => {
+        console.log('API Request: Get Online Fees Report');
+        try {
+            const response = await fetch(`${API_BASE}/financereports/get_onlinefees_report`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Online Fees Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch online fees report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Online Fees Report API Error:', error);
+            throw error;
+        }
+    },
+
+    searchOnlineFeesReport: async (payload) => {
+        console.log('API Request: Search Online Fees Report', payload);
+        try {
+            const response = await fetch(`${API_BASE}/financereports/onlinefees_report`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Search Online Fees Report Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to search online fees report');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Online Fees Report API Error:', error);
+            throw error;
+        }
+    },
+
+    getReportDayCollection: async () => {
+        console.log('API Request: Get Report Day Collection');
+        try {
+            const response = await fetch(`${API_BASE}/financereports/get_reportdaycollection`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            console.log('Get Report Day Collection Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch report day collection');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Report Day Collection API Error:', error);
+            throw error;
+        }
+    },
+
+    searchReportDayCollection: async (payload) => {
+        console.log('API Request: Search Report Day Collection', payload);
+        try {
+            const response = await fetch(`${API_BASE}/financereports/reportdaycollection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            console.log('Search Report Day Collection Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to search report day collection');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Report Day Collection API Error:', error);
+            throw error;
+        }
+    },
+
+    getStudentDayAcademicReport: async () => {
+        try {
+            const response = await fetch(`${API_BASE}/financereports/get_studentdayacademicreport`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch Student Day Academic Report');
+            }
+            return data;
+        } catch (error) {
+            console.error('getStudentDayAcademicReport API Error:', error);
+            throw error;
+        }
+    },
+
+    searchStudentDayAcademicReport: async (payload) => {
+        try {
+            const response = await fetch(`${API_BASE}/financereports/studentdayacademicreport`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to search Student Day Academic Report');
+            }
+            return data;
+        } catch (error) {
+            console.error('searchStudentDayAcademicReport API Error:', error);
             throw error;
         }
     },

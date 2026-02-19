@@ -7,6 +7,8 @@ import Sidebar from '../../../components/Sidebar';
 import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
+import { sanitizeAlphaWithSpaces, validateReference } from '../../../utils/validation';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 
 const ReferenceEdit = () => {
     const navigate = useNavigate();
@@ -49,6 +51,7 @@ const ReferenceEdit = () => {
         reference: '',
         description: ''
     });
+    const [saving, setSaving] = useState(false);
 
     // List State
     const [reference_list, setReferenceList] = useState([]);
@@ -68,7 +71,33 @@ const ReferenceEdit = () => {
         }
     };
 
+    // Search & Pagination
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
+
+    // Column visibility
+    const refColumns = [
+        { key: 'reference', label: 'Reference' },
+        { key: 'description', label: 'Description' }
+    ];
+    const [refVisibleCols, setRefVisibleCols] = useState(new Set(refColumns.map(c => c.key)));
+    const [showRefColsDd, setShowRefColsDd] = useState(false);
+
+    const filteredResults = reference_list.filter(item =>
+        item.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
+
+    const changePage = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
+        setCurrentPage(pageNumber);
+    };
 
     useEffect(() => {
         if (reference_list.length > 0) {
@@ -85,19 +114,32 @@ const ReferenceEdit = () => {
     // Handlers
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        let sanitized = value;
+        if (name === 'reference') sanitized = sanitizeAlphaWithSpaces(value);
+        setFormData({ ...formData, [name]: sanitized });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const refErr = validateReference(formData.reference);
+        if (refErr) {
+            toast.error(refErr);
+            return;
+        }
+
+        setSaving(true);
         try {
             const response = await api.updateReference(id, formData);
             if (response.status) {
+                toast.success('Reference updated successfully');
                 navigate('/admin/reference');
             }
         } catch (error) {
             console.error('Error updating reference:', error);
-            alert('Failed to update reference');
+            toast.error('Failed to update reference');
+        } finally {
+            setTimeout(() => setSaving(false), 5000);
         }
     };
 
@@ -191,6 +233,7 @@ const ReferenceEdit = () => {
                                                 className="form-control"
                                                 id="description"
                                                 name="reference"
+                                                maxLength={100}
                                                 value={formData.reference}
                                                 onChange={handleInputChange}
                                                 required
@@ -209,7 +252,7 @@ const ReferenceEdit = () => {
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        <button type="submit" className="btn btn-info pull-right" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
                                     </div>
                                 </form>
                             </div>
@@ -222,63 +265,110 @@ const ReferenceEdit = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="download_label">Reference List</div>
-                                    <div className="row">
-                                        <div className="col-md-12">
-                                            <div className="pull-left mb10">
-                                                <div className="input-group">
-                                                    <input
-                                                        type="text"
-                                                        className="form-control input-sm"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                        style={{ width: '200px' }}
-                                                    />
-                                                </div>
+                                    {/* Controls */}
+                                    <div className="row" style={{ marginBottom: '10px' }}>
+                                        <div className="col-md-6">
+                                            <div className="dt-buttons btn-group">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => {
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    copyToClipboard(headers, rows);
+                                                }}>
+                                                    <i className="fa fa-files-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => {
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    downloadCSV(headers, rows, 'reference_list.csv');
+                                                }}>
+                                                    <i className="fa fa-file-text-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => {
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    downloadExcel(headers, rows, 'reference_list.xls');
+                                                }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => {
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    printTable(headers, rows, 'Reference List');
+                                                }}>
+                                                    <i className="fa fa-print"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="table-responsive mailbox-messages overflow-visible">
-                                        <table className="table table-hover table-striped table-bordered example">
-                                            <thead>
-                                                <tr>
-                                                    <th>Reference</th>
-                                                    <th>Description</th>
-                                                    <th className="text-right noExport">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {reference_list
-                                                    .filter(item =>
-                                                        item.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        item.description.toLowerCase().includes(searchTerm.toLowerCase())
-                                                    )
-                                                    .map((value, key) => (
-                                                        <tr key={key}>
-                                                            <td className="mailbox-name">{value.reference}</td>
-                                                            <td className="mailbox-name">{value.description}</td>
-                                                            <td className="mailbox-date pull-right">
-                                                                <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                                    <i className="fa fa-pencil"></i>
-                                                                </Link>
-                                                                <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
-                                                                    <i className="fa fa-remove"></i>
-                                                                </Link>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                            </tbody>
-                                        </table>
+                                </div>
+                                <div className="col-md-6">
+                                    <div className="input-group input-group-sm">
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Search..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                        />
+                                        <span className="input-group-addon"><i className="fa fa-search"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="table-responsive mailbox-messages overflow-visible">
+                                <table className="table table-hover table-striped table-bordered example">
+                                    <thead>
+                                        <tr>
+                                            {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                                <th key={col.key}>{col.label}</th>
+                                            ))}
+                                            <th className="text-right noExport">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {currentItems.map((value, key) => (
+                                            <tr key={key}>
+                                                {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                                    <td key={col.key} className="mailbox-name">{value[col.key]}</td>
+                                                ))}
+                                                <td className="mailbox-date pull-right">
+                                                    <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                        <i className="fa fa-pencil"></i>
+                                                    </Link>
+                                                    <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                        <i className="fa fa-remove"></i>
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="row">
+                                <div className="col-md-5">
+                                    <div className="dataTables_info">
+                                        Records: {filteredResults.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredResults.length)} of {filteredResults.length}
+                                    </div>
+                                </div>
+                                <div className="col-md-7">
+                                    <div className="dataTables_paginate paging_simple_numbers">
+                                        <ul className="pagination">
+                                            <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}>Previous</a>
+                                            </li>
+                                            {[...Array(totalPages)].map((_, i) => (
+                                                <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
+                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(i + 1); }}>{i + 1}</a>
+                                                </li>
+                                            ))}
+                                            <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}>Next</a>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </section>
-            </div>
+            </div >
             <Footer />
-        </div>
+        </div >
     );
 };
 

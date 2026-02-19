@@ -7,6 +7,8 @@ import Sidebar from '../../../components/Sidebar.jsx';
 import Footer from '../../../components/Footer.jsx';
 import { useSession } from '../../../context/SessionContext.jsx';
 import { api } from '../../../services/api';
+import { sanitizeAlphaWithSpaces, validateReference } from '../../../utils/validation';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 
 const ReferenceView = () => {
     const navigate = useNavigate();
@@ -48,6 +50,7 @@ const ReferenceView = () => {
         reference: '',
         description: ''
     });
+    const [saving, setSaving] = useState(false);
 
     // List State
     const [reference_list, setReferenceList] = useState([]);
@@ -56,6 +59,14 @@ const ReferenceView = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+
+    // Column visibility
+    const refColumns = [
+        { key: 'reference', label: 'Reference' },
+        { key: 'description', label: 'Description' }
+    ];
+    const [refVisibleCols, setRefVisibleCols] = useState(new Set(refColumns.map(c => c.key)));
+    const [showRefColsDd, setShowRefColsDd] = useState(false);
 
     const filteredResults = reference_list.filter(item =>
         item.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,11 +103,21 @@ const ReferenceView = () => {
     // Handlers
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        let sanitized = value;
+        if (name === 'reference') sanitized = sanitizeAlphaWithSpaces(value);
+        setFormData({ ...formData, [name]: sanitized });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const refErr = validateReference(formData.reference);
+        if (refErr) {
+            toast.error(refErr);
+            return;
+        }
+
+        setSaving(true);
         try {
             const response = await api.addReference(formData);
             if (response.status) {
@@ -107,6 +128,8 @@ const ReferenceView = () => {
         } catch (error) {
             console.error('Error saving reference:', error);
             toast.error('Failed to save reference');
+        } finally {
+            setTimeout(() => setSaving(false), 5000);
         }
     };
 
@@ -194,6 +217,7 @@ const ReferenceView = () => {
                                                 className="form-control"
                                                 id="description"
                                                 name="reference"
+                                                maxLength={100}
                                                 value={formData.reference}
                                                 onChange={handleInputChange}
                                                 required
@@ -212,7 +236,7 @@ const ReferenceView = () => {
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        <button type="submit" className="btn btn-info pull-right" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
                                     </div>
                                 </form>
                             </div>
@@ -235,46 +259,50 @@ const ReferenceView = () => {
                                         <div className="col-md-6">
                                             <div className="dt-buttons btn-group">
                                                 <button className="btn btn-default btn-sm" title="Copy" onClick={() => {
-                                                    const headers = ['Reference', 'Description'];
-                                                    const data = filteredResults.map(r => [r.reference, r.description]);
-                                                    const content = [headers.join('\t'), ...data.map(r => r.join('\t'))].join('\n');
-                                                    navigator.clipboard.writeText(content);
-                                                    alert('Copied to clipboard');
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    copyToClipboard(headers, rows);
                                                 }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="CSV" onClick={() => {
-                                                    const headers = ['Reference', 'Description'];
-                                                    const data = filteredResults.map(r => `"${r.reference}","${r.description}"`);
-                                                    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...data].join('\n');
-                                                    const encodedUri = encodeURI(csvContent);
-                                                    const link = document.createElement("a");
-                                                    link.setAttribute("href", encodedUri);
-                                                    link.setAttribute("download", "reference_list.csv");
-                                                    document.body.appendChild(link);
-                                                    link.click();
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    downloadCSV(headers, rows, 'reference_list.csv');
                                                 }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="Excel" onClick={() => {
-                                                    const headers = ['Reference', 'Description'];
-                                                    const data = filteredResults.map(r => `"${r.reference}","${r.description}"`);
-                                                    const csvContent = "data:application/vnd.ms-excel;charset=utf-8," + [headers.join(','), ...data].join('\n');
-                                                    const encodedUri = encodeURI(csvContent);
-                                                    const link = document.createElement("a");
-                                                    link.setAttribute("href", encodedUri);
-                                                    link.setAttribute("download", "reference_list.xls");
-                                                    document.body.appendChild(link);
-                                                    link.click();
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    downloadExcel(headers, rows, 'reference_list.xls');
                                                 }}>
                                                     <i className="fa fa-file-excel-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => window.print()}>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => {
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    printTable(headers, rows, 'Reference List');
+                                                }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm" title="Columns">
-                                                    <i className="fa fa-columns"></i>
-                                                </button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowRefColsDd(!showRefColsDd)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showRefColsDd && (
+                                                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '160px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {refColumns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                    <input type="checkbox" checked={refVisibleCols.has(col.key)} onChange={() => {
+                                                                        setRefVisibleCols(prev => {
+                                                                            const next = new Set(prev);
+                                                                            if (next.has(col.key)) { next.delete(col.key); } else { next.add(col.key); }
+                                                                            return next;
+                                                                        });
+                                                                    }} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="col-md-6">
@@ -294,16 +322,18 @@ const ReferenceView = () => {
                                         <table className="table table-hover table-striped table-bordered example">
                                             <thead>
                                                 <tr>
-                                                    <th>Reference</th>
-                                                    <th>Description</th>
+                                                    {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                                        <th key={col.key}>{col.label}</th>
+                                                    ))}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map((value, key) => (
                                                     <tr key={key}>
-                                                        <td className="mailbox-name">{value.reference}</td>
-                                                        <td className="mailbox-name">{value.description}</td>
+                                                        {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                                            <td key={col.key} className="mailbox-name">{value[col.key]}</td>
+                                                        ))}
                                                         <td className="mailbox-date pull-right">
                                                             <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                                 <i className="fa fa-pencil"></i>
@@ -347,10 +377,10 @@ const ReferenceView = () => {
                             </div>
                         </div>
                     </div>
-                </section>
-            </div>
+                </section >
+            </div >
             <Footer />
-        </div>
+        </div >
     );
 };
 

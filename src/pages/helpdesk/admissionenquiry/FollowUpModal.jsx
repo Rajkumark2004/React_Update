@@ -3,6 +3,7 @@ import { api } from '../../../services/api';
 
 const FollowUpModal = ({ show, onClose, enquiry }) => {
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     follow_up_date: '',
@@ -182,7 +183,7 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
                     </div>
 
                     <div className="col-md-12 text-right mt-4">
-                      <button className="btn btn-purple">Save</button>
+                      <button className="btn btn-purple" disabled={saving} onClick={() => { setSaving(true); setTimeout(() => setSaving(false), 5000); }}>{saving ? 'Saving...' : 'Save'}</button>
                     </div>
                   </div>
 
