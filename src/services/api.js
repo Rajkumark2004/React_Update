@@ -4519,6 +4519,26 @@ export const api = {
         }
     },
 
+    deleteBulkAttendance: async (attendanceData) => {
+        console.log('API Request: Delete Bulk Attendance', attendanceData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/stuattendence/delete_bulk_attendence`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(attendanceData)
+            });
+
+            const data = await response.json();
+            console.log('Delete Bulk Attendance API Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Bulk Attendance API Error:', error);
+            throw error;
+        }
+    },
+
     // Approve Leave APIs
     searchApproveLeave: async (classId, sectionId) => {
         return { status: true, data: [] };

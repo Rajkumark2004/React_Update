@@ -16,20 +16,16 @@ const StudentAttendance = () => {
     const [formData, setFormData] = useState({
         class_id: '',
         section_id: '',
-        date: new Date().toLocaleDateString('en-GB') // Default to current date DD/MM/YYYY
+        date: new Date().toISOString().split('T')[0] // Default to current date YYYY-MM-DD for HTML5
     });
     const [attendanceState, setAttendanceState] = useState({});
     const [message, setMessage] = useState({ type: '', text: '' });
+    const [errors, setErrors] = useState({});
     const [isHoliday, setIsHoliday] = useState(false);
-
-    // Hardcoded attendance types based on typical system values
-    const attendanceTypes = [
-        { id: 1, type: 'Present', key_value: 'P', color: 'radio-success' },
-        { id: 2, type: 'Late', key_value: 'L', color: 'radio-warning' },
-        { id: 3, type: 'Absent', key_value: 'A', color: 'radio-danger' },
-        { id: 4, type: 'Half Day', key_value: 'F', color: 'radio-info' }
-        // Holiday is handled separately via button/checkbox
-    ];
+    const [attendanceTypes, setAttendanceTypes] = useState([]);
+    const [holidayId, setHolidayId] = useState(5);
+    const [presentId, setPresentId] = useState(1);
+    const [selectedStudents, setSelectedStudents] = useState([]);
 
     useEffect(() => {
         fetchClasses();
@@ -86,40 +82,61 @@ const StudentAttendance = () => {
     const handleSearch = async (e) => {
         e.preventDefault();
         setMessage({ type: '', text: '' });
+        setErrors({});
 
-        if (!formData.class_id || !formData.section_id || !formData.date) {
-            setMessage({ type: 'error', text: 'Class, Section and Date are required' });
+        let newErrors = {};
+        if (!formData.class_id) newErrors.class_id = "The Class field is required";
+        if (!formData.section_id) newErrors.section_id = "The Section field is required";
+        if (!formData.date) newErrors.date = "The Date field is required";
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
         setLoading(true);
         try {
-            // Ensure date is in DD-MM-YYYY format for the API if not already
-            const formattedDate = formData.date.replace(/\//g, '-');
+            // Ensure date is in DD-MM-YYYY format for the API
+            const formattedDate = formData.date ? formData.date.split('-').reverse().join('-') : '';
             const data = await api.searchAttendance(formData.class_id, formData.section_id, formattedDate);
             console.log('StudentAttendance Search Result:', data);
 
             if (data.status && data.students) {
-                // Initialize attendance state
-                const initialAttendance = {};
+                let dynamicHolidayId = holidayId;
+                let dynamicPresentId = presentId;
                 let isHolidayFound = false;
 
+                if (data.attendencetypeslist) {
+                    setAttendanceTypes(data.attendencetypeslist);
+                    const hType = data.attendencetypeslist.find(t => t.type.toLowerCase() === 'holiday');
+                    if (hType) dynamicHolidayId = parseInt(hType.attendence_type_id);
+
+                    const pType = data.attendencetypeslist.find(t => t.type.toLowerCase() === 'present');
+                    if (pType) dynamicPresentId = parseInt(pType.attendence_type_id);
+
+                    setHolidayId(dynamicHolidayId);
+                    setPresentId(dynamicPresentId);
+                }
+
                 // Check first student for holiday status as per PHP logic (if one is holiday, all are usually holiday for that section/date)
-                if (data.students.length > 0 && data.students[0].attendence_type_id == 5) {
+                if (data.students.length > 0 && data.students[0].attendence_type_id == dynamicHolidayId) {
                     isHolidayFound = true;
                 }
 
+                // Initialize attendance state
+                const initialAttendance = {};
                 data.students.forEach(student => {
                     initialAttendance[student.student_session_id] = {
                         // API returns "attendence_type_id": null if not set, or a value.
-                        // If null, default to Present (1).
-                        attendance_type_id: student.attendence_type_id || 1,
+                        // If null, default to Present.
+                        attendance_type_id: student.attendence_type_id || dynamicPresentId,
                         remark: student.remark || ''
                     };
                 });
                 setAttendanceState(initialAttendance);
                 setStudentList(data.students);
                 setIsHoliday(isHolidayFound);
+                setSelectedStudents([]); // Reset selection on new search
             } else {
                 setStudentList([]);
                 setMessage({ type: 'error', text: data.message || 'Attendance not submitted for this class' });
@@ -160,17 +177,45 @@ const StudentAttendance = () => {
         // We will mimic this: disable radios and conceptually set type to 5 (Holiday) on submit.
     };
 
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedStudents(studentList.map(s => s.student_session_id));
+        } else {
+            setSelectedStudents([]);
+        }
+    };
+
+    const handleSelectStudent = (studentSessionId, checked) => {
+        if (checked) {
+            setSelectedStudents(prev => [...prev, studentSessionId]);
+        } else {
+            setSelectedStudents(prev => prev.filter(id => id !== studentSessionId));
+        }
+    };
+
     const handleSave = async () => {
         setLoading(true);
         try {
             // Format date as DD-MM-YYYY for the API
-            const formattedDate = formData.date.replace(/\//g, '-');
+            const formattedDate = formData.date ? formData.date.split('-').reverse().join('-') : '';
 
-            // Build the students array with correct format
-            const students = Object.keys(attendanceState).map(key => ({
-                student_session_id: parseInt(key),
-                attendance_type_id: isHoliday ? 5 : parseInt(attendanceState[key].attendance_type_id)
-            }));
+            // Build the students array with correct format only for selected students
+            const students = studentList
+                .filter(student => selectedStudents.includes(student.student_session_id))
+                .map(student => {
+                    const sessionId = student.student_session_id;
+                    return {
+                        student_session_id: sessionId,
+                        attendance_type_id: isHoliday ? holidayId : parseInt(attendanceState[sessionId]?.attendance_type_id || presentId),
+                        remark: attendanceState[sessionId]?.remark || ''
+                    };
+                });
+
+            if (students.length === 0) {
+                setMessage({ type: 'error', text: 'Please select at least one student' });
+                setLoading(false);
+                return;
+            }
 
             const attendanceData = {
                 date: formattedDate,
@@ -187,6 +232,50 @@ const StudentAttendance = () => {
             }
         } catch (error) {
             setMessage({ type: 'error', text: error.message || 'Save failed' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        // Collect attendance_ids of selected students
+        const attendanceIds = selectedStudents
+            .map(sessionId => {
+                const student = studentList.find(s => s.student_session_id === sessionId);
+                // Extract attendence_id if correctly defined
+                return student && student.attendence_id && student.attendence_id !== "0" ? parseInt(student.attendence_id) : null;
+            })
+            .filter(id => id !== null);
+
+        if (attendanceIds.length === 0) {
+            setMessage({ type: 'error', text: 'No saved attendance found for the selected students to delete.' });
+            return;
+        }
+
+        if (!window.confirm('Are you sure you want to delete attendance for the selected students?')) {
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const payload = {
+                data: attendanceIds.map(id => ({
+                    attendence_ids: [id]
+                }))
+            };
+
+            const response = await api.deleteBulkAttendance(payload);
+            if (response && response.status) {
+                setMessage({ type: 'success', text: 'Attendance deleted successfully' });
+                // Re-fetch search to update the UI
+                const e = { preventDefault: () => { } };
+                handleSearch(e);
+            } else {
+                setMessage({ type: 'error', text: response.message || 'Failed to delete attendance' });
+            }
+        } catch (error) {
+            console.error('Delete attendance error:', error);
+            setMessage({ type: 'error', text: 'Failed to delete attendance' });
         } finally {
             setLoading(false);
         }
@@ -236,6 +325,7 @@ const StudentAttendance = () => {
                                                                 <option key={cls.id} value={cls.id}>{cls.class}</option>
                                                             ))}
                                                         </select>
+                                                        {errors.class_id && <span className="text-danger">{errors.class_id}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-4">
@@ -251,18 +341,23 @@ const StudentAttendance = () => {
                                                                 <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
                                                             ))}
                                                         </select>
+                                                        {errors.section_id && <span className="text-danger">{errors.section_id}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-4">
                                                     <div className="form-group">
                                                         <label>Attendance Date <small className="req"> *</small></label>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            value={formData.date}
-                                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                                            placeholder="DD/MM/YYYY" // Basic text input for now matching PHP style
-                                                        />
+                                                        <div className="input-group" style={{ position: 'relative', width: '100%', borderBottom: '1px solid #ccc' }}>
+                                                            <input
+                                                                type="date"
+                                                                className="form-control"
+                                                                value={formData.date}
+                                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                                                max={new Date().toISOString().split('T')[0]}
+                                                                style={{ width: '100%', border: 'none', background: 'transparent', boxShadow: 'none', paddingLeft: 0, paddingBottom: '4px' }}
+                                                            />
+                                                        </div>
+                                                        {errors.date && <span className="text-danger">{errors.date}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-12">
@@ -293,7 +388,7 @@ const StudentAttendance = () => {
                                                         </button>
                                                     </span>
                                                     <div className="pull-right">
-                                                        <button type="button" className="btn btn-default btn-sm pull-left checkbox-toggle" style={{ marginRight: '5px' }}>
+                                                        <button type="button" onClick={handleDelete} className="btn btn-default btn-sm pull-left checkbox-toggle" style={{ marginRight: '5px' }}>
                                                             <i className="fa fa-trash"></i> Delete
                                                         </button>
                                                         <button type="button" onClick={handleSave} className="btn btn-primary btn-sm pull-right checkbox-toggle">
@@ -305,7 +400,14 @@ const StudentAttendance = () => {
                                                     <table className="table table-hover table-striped example">
                                                         <thead>
                                                             <tr>
-                                                                <th>#</th>
+                                                                <th>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={studentList.length > 0 && selectedStudents.length === studentList.length}
+                                                                        onChange={handleSelectAll}
+                                                                    />
+                                                                </th>
+                                                                <th>S.No</th>
                                                                 <th>Admission No</th>
                                                                 <th>Roll Number</th>
                                                                 <th>Name</th>
@@ -316,23 +418,30 @@ const StudentAttendance = () => {
                                                         <tbody>
                                                             {studentList.map((student, index) => (
                                                                 <tr key={student.student_session_id}>
+                                                                    <td>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={selectedStudents.includes(student.student_session_id)}
+                                                                            onChange={(e) => handleSelectStudent(student.student_session_id, e.target.checked)}
+                                                                        />
+                                                                    </td>
                                                                     <td>{index + 1}</td>
                                                                     <td>{student.admission_no}</td>
                                                                     <td>{student.roll_no}</td>
                                                                     <td>{student.firstname} {student.lastname}</td>
                                                                     <td>
                                                                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
-                                                                            {!isHoliday && attendanceTypes.map(type => (
-                                                                                <div key={type.id} className="radio radio-info radio-inline" style={{ display: 'inline-flex', alignItems: 'center', margin: '0 10px 0 0' }}>
+                                                                            {!isHoliday && attendanceTypes.filter(type => type.type.toLowerCase() !== 'holiday').map(type => (
+                                                                                <div key={type.attendence_type_id} className="radio radio-info radio-inline" style={{ display: 'inline-flex', alignItems: 'center', margin: '0 10px 0 0' }}>
                                                                                     <input
                                                                                         type="radio"
-                                                                                        id={`attendencetype${student.student_session_id}-${type.id}`}
+                                                                                        id={`attendencetype${student.student_session_id}-${type.attendence_type_id}`}
                                                                                         name={`attendencetype${student.student_session_id}`}
-                                                                                        value={type.id}
-                                                                                        checked={attendanceState[student.student_session_id]?.attendance_type_id == type.id}
-                                                                                        onChange={() => handleAttendanceChange(student.student_session_id, type.id)}
+                                                                                        value={type.attendence_type_id}
+                                                                                        checked={attendanceState[student.student_session_id]?.attendance_type_id == type.attendence_type_id}
+                                                                                        onChange={() => handleAttendanceChange(student.student_session_id, type.attendence_type_id)}
                                                                                     />
-                                                                                    <label htmlFor={`attendencetype${student.student_session_id}-${type.id}`}>
+                                                                                    <label htmlFor={`attendencetype${student.student_session_id}-${type.attendence_type_id}`}>
                                                                                         {type.type}
                                                                                     </label>
                                                                                 </div>

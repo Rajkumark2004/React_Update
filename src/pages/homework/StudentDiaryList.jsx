@@ -33,6 +33,8 @@ const StudentDiaryList = () => {
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
 
+    const [errors, setErrors] = useState({});
+
     // Modal states
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [evaluateModalOpen, setEvaluateModalOpen] = useState(false);
@@ -46,6 +48,7 @@ const StudentDiaryList = () => {
         description: '',
         file: null
     });
+    const [addErrors, setAddErrors] = useState({});
 
     // Edit Modal Form Data
     const [editModalOpen, setEditModalOpen] = useState(false);
@@ -101,6 +104,7 @@ const StudentDiaryList = () => {
         if (name === 'class_id') {
             setSections([]);
             setFormData(prev => ({ ...prev, section_id: '' }));
+            setErrors(prev => ({ ...prev, class_id: '' }));
             if (value) {
                 fetchSections(value);
             }
@@ -120,11 +124,13 @@ const StudentDiaryList = () => {
                 ...prev,
                 [name]: value
             }));
+            setAddErrors(prev => ({ ...prev, [name]: '' }));
         }
 
         if (name === 'class_id') {
             // Logic to populate sections for modal
             setAddFormData(prev => ({ ...prev, section_id: '' }));
+            setAddErrors(prev => ({ ...prev, class_id: '', section_id: '' }));
             if (value) {
                 fetchSections(value);
             }
@@ -155,6 +161,17 @@ const StudentDiaryList = () => {
     // Handle Search Submit
     const handleSearch = async (e) => {
         e.preventDefault();
+
+        let formErrors = {};
+        if (!formData.class_id) {
+            formErrors.class_id = "The Class field is required";
+        }
+        setErrors(formErrors);
+
+        if (Object.keys(formErrors).length > 0) {
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -198,6 +215,25 @@ const StudentDiaryList = () => {
 
     const handleAddSubmit = async (e) => {
         e.preventDefault();
+
+        let newAddErrors = {};
+        if (!addFormData.class_id) {
+            newAddErrors.class_id = "The Class field is required";
+        }
+        if (!addFormData.section_id) {
+            newAddErrors.section_id = "The Section field is required";
+        }
+        if (!addFormData.date) {
+            newAddErrors.date = "The Date field is required";
+        }
+        if (!addFormData.description) {
+            newAddErrors.description = "The Description field is required";
+        }
+        setAddErrors(newAddErrors);
+
+        if (Object.keys(newAddErrors).length > 0) {
+            return;
+        }
 
         try {
             const submitData = new FormData();
@@ -376,7 +412,7 @@ const StudentDiaryList = () => {
                                                                 <option key={cls.id} value={cls.id}>{cls.class}</option>
                                                             ))}
                                                         </select>
-                                                        <span className="text-danger" id="error_class_id"></span>
+                                                        {errors.class_id && <span className="text-danger" id="error_class_id">{errors.class_id}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6 col-lg-6 col-sm-6">
@@ -525,7 +561,7 @@ const StudentDiaryList = () => {
                                                                     <option key={cls.id} value={cls.id}>{cls.class}</option>
                                                                 ))}
                                                             </select>
-                                                            <span id="name_add_error" className="text-danger"></span>
+                                                            {addErrors.class_id && <span id="class_add_error" className="text-danger">{addErrors.class_id}</span>}
                                                         </div>
                                                     </div>
                                                     <div className="col-sm-4">
@@ -543,7 +579,7 @@ const StudentDiaryList = () => {
                                                                     <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
                                                                 ))}
                                                             </select>
-                                                            <span id="name_add_error" className="text-danger"></span>
+                                                            {addErrors.section_id && <span id="section_add_error" className="text-danger">{addErrors.section_id}</span>}
                                                         </div>
                                                     </div>
 
@@ -551,14 +587,15 @@ const StudentDiaryList = () => {
                                                         <div className="form-group">
                                                             <label>Date</label><small className="req"> *</small>
                                                             <input
-                                                                type="date" // Using basic date input for now
+                                                                type="date"
                                                                 name="date"
                                                                 className="form-control"
                                                                 id="date"
                                                                 value={addFormData.date}
-                                                                readOnly
+                                                                onChange={handleAddInputChange}
+                                                                max={new Date().toISOString().split('T')[0]}
                                                             />
-                                                            <span id="date_add_error" className="text-danger"></span>
+                                                            {addErrors.date && <span id="date_add_error" className="text-danger">{addErrors.date}</span>}
                                                         </div>
                                                     </div>
 
@@ -583,6 +620,7 @@ const StudentDiaryList = () => {
                                                                 onChange={handleAddInputChange}
                                                             >
                                                             </textarea>
+                                                            {addErrors.description && <span id="description_add_error" className="text-danger">{addErrors.description}</span>}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -658,7 +696,7 @@ const StudentDiaryList = () => {
                                                                 name="date"
                                                                 className="form-control"
                                                                 value={editFormData.date}
-                                                                onChange={handleEditInputChange}
+                                                                readOnly
                                                             />
                                                         </div>
                                                     </div>

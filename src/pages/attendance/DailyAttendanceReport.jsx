@@ -8,6 +8,7 @@ import '../../utils/include_files';
 const DailyAttendanceReport = () => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
     const [searchTerm, setSearchTerm] = useState('');
+    const [errors, setErrors] = useState({});
 
     // Mock Data
     const initialData = [
@@ -25,6 +26,18 @@ const DailyAttendanceReport = () => {
 
     const handleSearch = (e) => {
         e.preventDefault();
+        setErrors({});
+
+        let newErrors = {};
+        if (!date) {
+            newErrors.date = "The Date field is required";
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
+        }
+
         console.log("Search for date:", date);
         // In a real app, this would fetch data. 
         // For now, we keep the mock data.
@@ -71,14 +84,17 @@ const DailyAttendanceReport = () => {
                                             <div className="col-md-3">
                                                 <div className="form-group">
                                                     <label >Date</label><small className="req"> *</small>
-                                                    <input
-                                                        type="date"
-                                                        name="date"
-                                                        value={date}
-                                                        onChange={(e) => setDate(e.target.value)}
-                                                        className="form-control date"
-                                                    />
-                                                    <span className="text-danger"></span>
+                                                    <div className="input-group" style={{ position: 'relative', width: '100%', borderBottom: '1px solid #ccc' }}>
+                                                        <input
+                                                            type="date"
+                                                            className="form-control"
+                                                            value={date}
+                                                            onChange={(e) => setDate(e.target.value)}
+                                                            max={new Date().toISOString().split('T')[0]}
+                                                            style={{ width: '100%', border: 'none', background: 'transparent', boxShadow: 'none', paddingLeft: 0, paddingBottom: '4px' }}
+                                                        />
+                                                    </div>
+                                                    {errors.date && <span className="text-danger">{errors.date}</span>}
                                                 </div>
                                             </div>
                                             <div className="col-md-12">
