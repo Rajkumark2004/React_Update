@@ -86,8 +86,7 @@ const AssignFeeMaster = () => {
         setFilters(prev => ({ ...prev, class_id: classId, section_id: '' }));
         if (classId) {
             try {
-                // Using exact logic from StudentAttendance.jsx
-                const response = await api.getSections();
+                const response = await api.getSectionsByClass(classId);
 
                 if (response && response.data) {
                     setSectionList(response.data);
@@ -266,7 +265,7 @@ const AssignFeeMaster = () => {
                                                 <label>Section</label>
                                                 <select name="section_id" className="form-control" value={filters.section_id} onChange={handleFilterChange}>
                                                     <option value="">Select</option>
-                                                    {sectionList.map((s, index) => <option key={`${s.id}-${index}`} value={s.id}>{s.section}</option>)}
+                                                    {sectionList.map((s, index) => <option key={`${s.id}-${index}`} value={s.section_id || s.id}>{s.section}</option>)}
                                                 </select>
                                             </div>
                                         </div>

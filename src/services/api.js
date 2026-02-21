@@ -4993,8 +4993,11 @@ export const api = {
     addFeeGroup: async (data) => {
         console.log('API Request: Add Fee Group', data);
         try {
-            const response = await api.postWithSession('/admin/feegroup/add', data);
-            return response;
+            const url = `${API_BASE}/admin/feegroup/add`;
+            const response = await fetch(url, createFetchOptions('POST', data, true));
+            const resData = await response.json();
+            console.log('Add Fee Group Response:', resData);
+            return resData;
         } catch (error) {
             console.error('Add Fee Group Error:', error);
             throw error;
@@ -5014,8 +5017,11 @@ export const api = {
     editFeeGroup: async (id, data) => {
         console.log('API Request: Edit Fee Group', id, data);
         try {
-            const response = await api.postWithSession(`/admin/feegroup/edit/${id}`, data);
-            return response;
+            const url = `${API_BASE}/admin/feegroup/edit/${id}`;
+            const response = await fetch(url, createFetchOptions('POST', data, true));
+            const resData = await response.json();
+            console.log('Edit Fee Group Response:', resData);
+            return resData;
         } catch (error) {
             console.error('Edit Fee Group Error:', error);
             throw error;

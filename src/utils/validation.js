@@ -14,6 +14,10 @@
 export const sanitizeName = (value) =>
     value.replace(/[^a-zA-Z\s.\-]/g, '').slice(0, 50);
 
+/** Letters, numbers, spaces, dots, hyphens only. Max 50 chars. */
+export const sanitizeNameWithNumbers = (value) =>
+    value.replace(/[^a-zA-Z0-9\s.\-]/g, '').slice(0, 50);
+
 /** Digits only. Max 15 chars. */
 export const sanitizePhone = (value) =>
     value.replace(/[^0-9]/g, '').slice(0, 15);

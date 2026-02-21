@@ -6,6 +6,8 @@ import Footer from '../../../components/Footer';
 import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
+import { sanitizeNameWithNumbers } from '../../../utils/validation';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 
 const FeeTypeEdit = () => {
     const { id } = useParams();
@@ -24,6 +26,34 @@ const FeeTypeEdit = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(100);
+
+    // Column definitions
+    const columns = [
+        { key: 'type', label: 'Name' },
+        { key: 'code', label: 'Fees Code' }
+    ];
+
+    // Column visibility state
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    const formatCell = (row, key) => {
+        return row[key];
+    };
+
+    // Export functions
+    const getExportData = () => {
+        const filteredData = feetypeList.filter(f => f.type.toLowerCase().includes(searchTerm.toLowerCase()) || f.code.toLowerCase().includes(searchTerm.toLowerCase()));
+        return buildExportData(columns, visibleColumns, filteredData, formatCell);
+    };
 
     useEffect(() => {
         fetchInitialData();
@@ -73,7 +103,12 @@ const FeeTypeEdit = () => {
     };
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        let { name, value } = e.target;
+        if (name === 'type') {
+            value = sanitizeNameWithNumbers(value);
+        } else if (name === 'code') {
+            value = value.slice(0, 50);
+        }
         setFormData({ ...formData, [name]: value });
     };
 
@@ -141,6 +176,7 @@ const FeeTypeEdit = () => {
                                                 className="form-control"
                                                 value={formData.type}
                                                 onChange={handleInputChange}
+                                                maxLength="50"
                                                 required
                                             />
                                         </div>
@@ -152,6 +188,7 @@ const FeeTypeEdit = () => {
                                                 className="form-control"
                                                 value={formData.code}
                                                 onChange={handleInputChange}
+                                                maxLength="50"
                                                 required
                                             />
                                         </div>
@@ -201,24 +238,62 @@ const FeeTypeEdit = () => {
                                         </div>
                                         <div className="col-sm-6">
                                             <div className="pull-right dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy">
+                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel">
+                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'fees_type.xls'); }}>
                                                     <i className="fa fa-file-excel-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV">
+                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'fees_type.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF">
+                                                <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => {
+                                                    import('jspdf').then(({ default: jsPDF }) => {
+                                                        const { headers, rows } = getExportData();
+                                                        const doc = new jsPDF();
+                                                        doc.text("Fees Type List", 14, 15);
+                                                        let y = 25;
+
+                                                        // Print Headers
+                                                        headers.forEach((header, index) => {
+                                                            doc.text(header, 14 + (index * 60), y);
+                                                        });
+                                                        y += 10;
+
+                                                        // Print Rows
+                                                        rows.forEach(row => {
+                                                            row.forEach((cell, index) => {
+                                                                doc.text((cell || '').toString(), 14 + (index * 60), y);
+                                                            });
+                                                            y += 10;
+                                                            if (y > 280) {
+                                                                doc.addPage();
+                                                                y = 20;
+                                                            }
+                                                        });
+                                                        doc.save("fees_type.pdf");
+                                                    });
+                                                }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-print" onClick={() => window.print()} title="Print">
+                                                <button className="btn btn-default btn-sm buttons-print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Fees Type List'); }} title="Print">
                                                     <i className="fa fa-print"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns">
-                                                    <i className="fa fa-columns"></i>
-                                                </button>
+                                                <div className="btn-group" style={{ position: 'relative', display: 'inline-block' }}>
+                                                    <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showColumnsDropdown && (
+                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {columns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', whiteSpace: 'nowrap' }}>
+                                                                    <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -226,8 +301,9 @@ const FeeTypeEdit = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Name</th>
-                                                    <th>Fees Code</th>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <th key={col.key}>{col.label}</th>
+                                                    ))}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
@@ -243,18 +319,22 @@ const FeeTypeEdit = () => {
                                                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                                                     .map((feetype) => (
                                                         <tr key={feetype.id}>
-                                                            <td className="mailbox-name">
-                                                                <span
-                                                                    data-toggle="tooltip"
-                                                                    title={feetype.description || 'No Description'}
-                                                                    style={{ cursor: 'pointer' }}
-                                                                >
-                                                                    {feetype.type}
-                                                                </span>
-                                                            </td>
-                                                            <td className="mailbox-name">
-                                                                {feetype.code}
-                                                            </td>
+                                                            {visibleColumns.has('type') && (
+                                                                <td className="mailbox-name">
+                                                                    <span
+                                                                        data-toggle="tooltip"
+                                                                        title={feetype.description || 'No Description'}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                    >
+                                                                        {feetype.type}
+                                                                    </span>
+                                                                </td>
+                                                            )}
+                                                            {visibleColumns.has('code') && (
+                                                                <td className="mailbox-name">
+                                                                    {feetype.code}
+                                                                </td>
+                                                            )}
                                                             <td className="mailbox-date pull-right">
                                                                 <Link
                                                                     to={`/admin/feetype/edit/${feetype.id}`}

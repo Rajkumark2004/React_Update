@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../../../utils/include_files.js';
 import Header from '../../../components/Header';
@@ -6,6 +6,7 @@ import Sidebar from '../../../components/Sidebar';
 import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../../utils/tableExport';
 
 const FeesForward = () => {
     const navigate = useNavigate();
@@ -71,6 +72,97 @@ const FeesForward = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [entriesPerPage] = useState(100);
+
+    // Column Visibility State
+    const [visibleColumns, setVisibleColumns] = useState(new Set([
+        'Student Name', 'Admission No', 'Admission Date', 'Roll Number', 'Father Name', 'Balance'
+    ]));
+    const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+    const columnDropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
+                setShowColumnDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const toggleColumnVisibility = (columnName) => {
+        setVisibleColumns(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(columnName)) {
+                newSet.delete(columnName);
+            } else {
+                newSet.add(columnName);
+            }
+            return newSet;
+        });
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (visibleColumns.has('Student Name')) headers.push('Student Name');
+        if (visibleColumns.has('Admission No')) headers.push('Admission No');
+        if (schSetting.admission_date && visibleColumns.has('Admission Date')) headers.push('Admission Date');
+        if (schSetting.roll_no && visibleColumns.has('Roll Number')) headers.push('Roll Number');
+        if (schSetting.father_name && visibleColumns.has('Father Name')) headers.push('Father Name');
+        if (visibleColumns.has('Balance')) headers.push(`Balance`);
+
+        const rows = (currentEntries || []).map(dueFee => {
+            const rowData = [];
+            const originalIndex = studentDueFee.findIndex(s => s.student_session_id === dueFee.student_session_id);
+            const i = originalIndex + 1;
+
+            if (visibleColumns.has('Student Name')) rowData.push(dueFee.name || '');
+            if (visibleColumns.has('Admission No')) rowData.push(dueFee.admission_no || '');
+            if (schSetting.admission_date && visibleColumns.has('Admission Date')) rowData.push(dueFee.admission_date || '');
+            if (schSetting.roll_no && visibleColumns.has('Roll Number')) rowData.push(dueFee.roll_no || '');
+            if (schSetting.father_name && visibleColumns.has('Father Name')) rowData.push(dueFee.father_name || '');
+            if (visibleColumns.has('Balance')) {
+                rowData.push(amounts[i] !== undefined ? amounts[i] : (formatCurrency(dueFee.balance) || ''));
+            }
+            return rowData;
+        });
+
+        return { headers, rows };
+    };
+
+    const handleExport = (type) => {
+        const { headers, rows } = getExportData();
+        if (type === 'copy') {
+            copyToClipboard(headers, rows);
+        } else if (type === 'excel') {
+            downloadExcel(headers, rows, 'fees_carry_forward.xls');
+        } else if (type === 'csv') {
+            downloadCSV(headers, rows, 'fees_carry_forward.csv');
+        } else if (type === 'pdf') {
+            import('jspdf').then(({ default: jsPDF }) => {
+                const doc = new jsPDF();
+                doc.text("Fees Carry Forward List", 14, 15);
+                let y = 25;
+                headers.forEach((header, index) => {
+                    doc.text(header, 14 + (index * 30), y);
+                });
+                y += 10;
+                rows.forEach(row => {
+                    row.forEach((cell, index) => {
+                        doc.text((cell || '').toString(), 14 + (index * 30), y);
+                    });
+                    y += 10;
+                    if (y > 280) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                });
+                doc.save("fees_carry_forward.pdf");
+            });
+        } else if (type === 'print') {
+            printTable(headers, rows, 'Fees Carry Forward List');
+        }
+    };
 
     // Initial Fetch (Classes)
     useEffect(() => {
@@ -397,36 +489,64 @@ const FeesForward = () => {
                                                         </div>
                                                         <div className="col-sm-6">
                                                             <div className="pull-right dt-buttons btn-group">
-                                                                <button type="button" className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy"><i className="fa fa-files-o"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-print" title="Print"><i className="fa fa-print"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns"><i className="fa fa-columns"></i></button>
+                                                                <button type="button" className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-files-o"></i></button>
+                                                                <button type="button" className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                                <button type="button" className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                                                <button type="button" className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
+                                                                <button type="button" className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
+                                                                <div className="btn-group" ref={columnDropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
+                                                                    <button type="button" className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnDropdown(!showColumnDropdown)}>
+                                                                        <i className="fa fa-columns"></i>
+                                                                    </button>
+                                                                    {showColumnDropdown && (
+                                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                            {['Student Name', 'Admission No', 'Admission Date', 'Roll Number', 'Father Name', 'Balance'].map(col => {
+                                                                                // Only show options for schSetting enabled fields
+                                                                                if (col === 'Admission Date' && !schSetting.admission_date) return null;
+                                                                                if (col === 'Roll Number' && !schSetting.roll_no) return null;
+                                                                                if (col === 'Father Name' && !schSetting.father_name) return null;
+
+                                                                                return (
+                                                                                    <label key={col} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', whiteSpace: 'nowrap' }}>
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            checked={visibleColumns.has(col)}
+                                                                                            onChange={(e) => { e.stopPropagation(); toggleColumnVisibility(col); }}
+                                                                                            style={{ marginRight: '6px' }}
+                                                                                        />
+                                                                                        {col}
+                                                                                    </label>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     {studentDueFee.length > 0 ? (
                                                         <>
-                                                            <div className="table-responsive">
-                                                                <table className="table table-striped table-bordered table-hover example">
+                                                            <div className="table-responsive mailbox-messages overflow-visible">
+                                                                <table id="fees-carry-forward-table" className="table table-striped table-bordered table-hover example">
                                                                     <thead>
                                                                         <tr>
-                                                                            <th className="text text-left">Student Name</th>
-                                                                            <th className="text text-left">Admission No</th>
-                                                                            {schSetting.admission_date && (
+                                                                            {visibleColumns.has('Student Name') && <th className="text text-left">Student Name</th>}
+                                                                            {visibleColumns.has('Admission No') && <th className="text text-left">Admission No</th>}
+                                                                            {schSetting.admission_date && visibleColumns.has('Admission Date') && (
                                                                                 <th className="text text-left">Admission Date</th>
                                                                             )}
-                                                                            {schSetting.roll_no && (
+                                                                            {schSetting.roll_no && visibleColumns.has('Roll Number') && (
                                                                                 <th className="text text-left">Roll Number</th>
                                                                             )}
-                                                                            {schSetting.father_name && (
+                                                                            {schSetting.father_name && visibleColumns.has('Father Name') && (
                                                                                 <th className="text text-left">Father Name</th>
                                                                             )}
-                                                                            <th className="text-right">
-                                                                                Balance <span>({currencySymbol})</span>
-                                                                            </th>
+                                                                            {visibleColumns.has('Balance') && (
+                                                                                <th className="text-right">
+                                                                                    Balance <span>({currencySymbol})</span>
+                                                                                </th>
+                                                                            )}
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
@@ -442,42 +562,46 @@ const FeesForward = () => {
 
                                                                                 return (
                                                                                     <tr key={dueFee.student_session_id}>
-                                                                                        <td>
-                                                                                            <input
-                                                                                                type="hidden"
-                                                                                                name="student_counter[]"
-                                                                                                value={i}
-                                                                                            />
-                                                                                            <input
-                                                                                                type="hidden"
-                                                                                                name={`student_sesion[${i}]`}
-                                                                                                value={dueFee.student_session_id}
-                                                                                            />
-                                                                                            {dueFee.name}
-                                                                                        </td>
-                                                                                        <td>{dueFee.admission_no}</td>
-                                                                                        {schSetting.admission_date && (
+                                                                                        {visibleColumns.has('Student Name') && (
+                                                                                            <td>
+                                                                                                <input
+                                                                                                    type="hidden"
+                                                                                                    name="student_counter[]"
+                                                                                                    value={i}
+                                                                                                />
+                                                                                                <input
+                                                                                                    type="hidden"
+                                                                                                    name={`student_sesion[${i}]`}
+                                                                                                    value={dueFee.student_session_id}
+                                                                                                />
+                                                                                                {dueFee.name}
+                                                                                            </td>
+                                                                                        )}
+                                                                                        {visibleColumns.has('Admission No') && <td>{dueFee.admission_no}</td>}
+                                                                                        {schSetting.admission_date && visibleColumns.has('Admission Date') && (
                                                                                             <td>{dueFee.admission_date}</td>
                                                                                         )}
-                                                                                        {schSetting.roll_no && (
+                                                                                        {schSetting.roll_no && visibleColumns.has('Roll Number') && (
                                                                                             <td>{dueFee.roll_no}</td>
                                                                                         )}
-                                                                                        {schSetting.father_name && (
+                                                                                        {schSetting.father_name && visibleColumns.has('Father Name') && (
                                                                                             <td>{dueFee.father_name}</td>
                                                                                         )}
-                                                                                        <td className="text text-right">
-                                                                                            <span className="hidden">
-                                                                                                {formatCurrency(dueFee.balance)}
-                                                                                            </span>
-                                                                                            <input
-                                                                                                type="text"
-                                                                                                name={`amount[${i}]`}
-                                                                                                className="form-control tddm200"
-                                                                                                value={amounts[i] || formatCurrency(dueFee.balance)}
-                                                                                                onChange={(e) => handleAmountChange(i, e.target.value)}
-                                                                                                style={{ width: '200px', display: 'inline-block' }}
-                                                                                            />
-                                                                                        </td>
+                                                                                        {visibleColumns.has('Balance') && (
+                                                                                            <td className="text text-right">
+                                                                                                <span className="hidden">
+                                                                                                    {formatCurrency(dueFee.balance)}
+                                                                                                </span>
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    name={`amount[${i}]`}
+                                                                                                    className="form-control tddm200"
+                                                                                                    value={amounts[i] || formatCurrency(dueFee.balance)}
+                                                                                                    onChange={(e) => handleAmountChange(i, e.target.value)}
+                                                                                                    style={{ width: '200px', display: 'inline-block' }}
+                                                                                                />
+                                                                                            </td>
+                                                                                        )}
                                                                                     </tr>
                                                                                 );
                                                                             })

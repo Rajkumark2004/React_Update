@@ -80,21 +80,26 @@ const FeeMaster = () => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => {
-            const newData = { ...prev, [name]: value };
+            let newData = { ...prev, [name]: value };
 
-            // Handle fine calculations if needed
-            // PHP logic:
-            // if account_type == percentage: fine_amount = (amount * fine_percentage) / 100
-            // if account_type == fix: fine_amount is entered manually
+            // Block negative values for amount fields
+            if ((name === 'amount' || name === 'fine_amount' || name === 'fine_percentage') && value !== '' && parseFloat(value) < 0) {
+                newData[name] = '0';
+            }
 
+            // Handle fine calculations
             if (name === 'amount' || name === 'fine_percentage' || name === 'account_type') {
-                if (newData.account_type === 'percentage' && newData.amount && newData.fine_percentage) {
-                    newData.fine_amount = ((parseFloat(newData.amount) * parseFloat(newData.fine_percentage)) / 100).toFixed(2);
+                if (newData.account_type === 'percentage') {
+                    if (newData.amount && newData.fine_percentage) {
+                        newData.fine_amount = ((parseFloat(newData.amount) * parseFloat(newData.fine_percentage)) / 100).toFixed(2);
+                    } else {
+                        // If percentage or amount is cleared, reset fine_amount
+                        newData.fine_amount = '';
+                    }
                 } else if (newData.account_type === 'none') {
                     newData.fine_amount = '';
                     newData.fine_percentage = '';
                 } else if (newData.account_type === 'fix' && name === 'account_type') {
-                    // If switching to fix, maybe clear percentage?
                     newData.fine_percentage = '';
                 }
             }
@@ -232,6 +237,7 @@ const FeeMaster = () => {
                                                 className="form-control"
                                                 value={formData.amount}
                                                 onChange={handleInputChange}
+                                                min="0"
                                                 required
                                             />
                                         </div>
@@ -279,6 +285,7 @@ const FeeMaster = () => {
                                                         className="form-control"
                                                         value={formData.fine_percentage}
                                                         onChange={handleInputChange}
+                                                        min="0"
                                                         disabled={formData.account_type !== 'percentage'}
                                                         required={formData.account_type === 'percentage'}
                                                     />
@@ -293,8 +300,9 @@ const FeeMaster = () => {
                                                         className="form-control"
                                                         value={formData.fine_amount}
                                                         onChange={handleInputChange}
-                                                        disabled={formData.account_type !== 'fix' && formData.account_type !== 'percentage'} // Readonly if calculated? User can't edit calculated? HTML readonly vs disabled.
-                                                        readOnly={formData.account_type === 'percentage'} // Calculated
+                                                        min="0"
+                                                        disabled={formData.account_type !== 'fix' && formData.account_type !== 'percentage'}
+                                                        readOnly={formData.account_type === 'percentage'}
                                                         required={formData.account_type === 'fix'}
                                                     />
                                                 </div>
