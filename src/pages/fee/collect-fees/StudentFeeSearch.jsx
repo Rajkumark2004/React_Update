@@ -112,8 +112,8 @@ const StudentFeeSearch = () => {
         if (e) e.preventDefault();
 
         // Validation for class_search
-        if (type !== 'keyword' && (!formData.class_id || !formData.section_id)) {
-            toast.error('Class and Section are required');
+        if (type !== 'keyword' && !formData.class_id) {
+            toast.error('Please Select Class');
             return;
         }
 
@@ -366,6 +366,7 @@ const StudentFeeSearch = () => {
                                                         <FileUpload
                                                             label="Select CSV File"
                                                             name="file"
+                                                            accept=".csv"
                                                             selectedFile={csvFile}
                                                             onChange={(e) => setCsvFile(e.target.files[0])}
                                                         />

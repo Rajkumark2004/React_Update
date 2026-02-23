@@ -149,7 +149,7 @@ const StudentCollectFeeModal = ({ show, handleClose, student, feeData, onSuccess
                                 Collect Fees {feeData?.is_batch ? `(${feeData.selectedItems?.length || 0} items)` : `(${feeData?.name || ''})`}
                             </h4>
                         </div>
-                        <div className="modal-body pb0">
+                        <div className="modal-body pb0" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                             <div className="form-horizontal">
                                 {/* Date Field */}
                                 <div className="form-group row">

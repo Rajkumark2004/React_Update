@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -8,9 +8,10 @@ import '../../styles/reports.css';
 
 const AttendanceReport = () => {
     const navigate = useNavigate();
+    const location = useLocation();
 
     // Navigation and visibility state
-    const [activeReport, setActiveReport] = useState('class_attendance');
+    const [activeReport, setActiveReport] = useState(location.state?.activeReport || 'class_attendance');
 
     // Shared Form states
     const [classId, setClassId] = useState('');

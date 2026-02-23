@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -7,7 +7,8 @@ import { api } from '../../services/api';
 
 const FinanceReport = () => {
     const navigate = useNavigate();
-    const [activeReport, setActiveReport] = useState('Balance Fees Statement');
+    const location = useLocation();
+    const [activeReport, setActiveReport] = useState(location.state?.activeReport || 'Balance Fees Statement');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearched, setIsSearched] = useState(false);
     const [dailyCollectionData, setDailyCollectionData] = useState([]);

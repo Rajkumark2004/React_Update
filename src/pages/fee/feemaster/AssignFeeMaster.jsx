@@ -38,7 +38,7 @@ const AssignFeeMaster = () => {
     useEffect(() => {
         const newSelection = {};
         studentList.forEach(student => {
-            if (student.student_fees_master_id != 0 && student.student_fees_master_id != null) {
+            if (student.student_fees_master_id && parseInt(student.student_fees_master_id) !== 0) {
                 newSelection[student.student_session_id] = true;
             }
         });
@@ -190,29 +190,14 @@ const AssignFeeMaster = () => {
 
         setLoading(true);
         try {
-            // Build payload matching PHP form structure from screenshot:
-            // fee_session_groups: 16
-            // student_session_id[]: 11, 58, 61 (array)
-            // student_fees_master_id_11: 49
-            // student_fees_master_id_58: 0
-            // student_fees_master_id_61: 0
-            // student_ids[]: 11, 58, 61 (array)
-
             const payload = {
-                fee_session_groups: id, // The fee group ID from URL params
-                'student_session_id[]': selectedIds.map(sid => parseInt(sid)),
-                'student_ids[]': selectedIds.map(sid => parseInt(sid))
+                fee_session_groups: parseInt(id),
+                student_session_id: selectedIds.map(sid => parseInt(sid)),
+                student_ids: selectedIds.map(sid => {
+                    const student = studentList.find(s => s.student_session_id == sid);
+                    return student && student.id ? parseInt(student.id) : parseInt(sid);
+                })
             };
-
-            // Add the dynamic student_fees_master_id keys for each selected student
-            selectedIds.forEach(sid => {
-                const student = studentList.find(s => s.student_session_id == sid);
-                if (student) {
-                    payload[`student_fees_master_id_${sid}`] = student.student_fees_master_id || 0;
-                } else {
-                    payload[`student_fees_master_id_${sid}`] = 0;
-                }
-            });
 
             console.log('Saving fee assignment payload:', payload);
 

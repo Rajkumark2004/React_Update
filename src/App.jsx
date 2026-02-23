@@ -5,6 +5,7 @@ import LoginPage from './pages/auth/LoginPage';
 import SettingsMenu from './components/SettingsMenu';
 
 import GeneralSettings from './pages/settings/general_settings_options/GeneralSettings';
+import IdAutoGeneration from './pages/settings/general_settings_options/IdAutoGeneration';
 import LogoSettings from './pages/settings/general_settings_options/LogoSettings';
 import LoginPageBackgroundSettings from './pages/settings/general_settings_options/LoginPageBackgroundSettings';
 import MobileAppSettings from './pages/settings/general_settings_options/MobileAppSettings';
@@ -222,6 +223,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <GeneralSettings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings/id-auto-generation"
+              element={
+                <ProtectedRoute>
+                  <IdAutoGeneration />
                 </ProtectedRoute>
               }
             />

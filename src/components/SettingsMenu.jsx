@@ -178,6 +178,7 @@ const SettingsMenu = ({ children, hideSidebars = false }) => {
                                     <ul className="tablists">
                                         {/* Dynamic sub-menu generation could go here, for now static for General */}
                                         <li><Link to="/settings" className={location.pathname === '/settings' ? "active" : ""}>General Setting</Link></li>
+                                        <li><Link to="/settings/id-auto-generation" className={location.pathname.includes('/settings/id-auto-generation') ? "active" : ""}>ID Auto Generation</Link></li>
                                         <li><Link to="/settings/logo" className={location.pathname.includes('/settings/logo') ? "active" : ""}>Logo</Link></li>
                                         <li><Link to="/settings/login-page-background" className={location.pathname.includes('/settings/login-page-background') ? "active" : ""}>Login Page Background</Link></li>
                                         <li><Link to="/settings/mobile-app" className={location.pathname.includes('/settings/mobile-app') ? "active" : ""}>Mobile App</Link></li>

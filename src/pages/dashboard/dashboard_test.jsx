@@ -176,7 +176,7 @@ const DashboardTest = () => {
     // ========== SUB-COMPONENTS ==========
 
     // Progress Card Component
-    const ProgressCard = ({ title, date, progress, current, total, colorClass, expandLink = '#' }) => (
+    const ProgressCard = ({ title, date, progress, current, total, colorClass, expandLink = '#', linkState = {} }) => (
         <div className="col-lg-4 col-md-4 col-sm-12">
             <div className="topprograssstart">
                 <p className="text-blur">{date}</p>
@@ -208,7 +208,7 @@ const DashboardTest = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginTop: '5px'
-                }} to={expandLink} title="View Details">
+                }} to={expandLink} state={linkState} title="View Details">
                     <ArrowRight size={14} />
                 </Link>
                 <div className="mt8">
@@ -345,7 +345,7 @@ const DashboardTest = () => {
                                                     <p>
                                                         Check your daily fee statements
                                                     </p>
-                                                    <a href="#" className="btn-check-now">Check Now</a>
+                                                    <Link to="/admin/reports/finance" state={{ activeReport: 'Daily Collection Report' }} className="btn-check-now">Check Now</Link>
                                                 </div>
                                                 <div className="welcome-image">
                                                     <img
@@ -368,7 +368,8 @@ const DashboardTest = () => {
                                                 current={attendanceData.studentPresent}
                                                 total={attendanceData.totalStudents}
                                                 colorClass="blue"
-                                                expandLink="/daily-attendance-report"
+                                                expandLink="/admin/reports/attendance"
+                                                linkState={{ activeReport: 'class_attendance' }}
                                             />
                                             <ProgressCard
                                                 title="Staff Attendance"
@@ -377,7 +378,8 @@ const DashboardTest = () => {
                                                 current={attendanceData.staffPresent}
                                                 total={attendanceData.totalStaff}
                                                 colorClass="maroon"
-                                                expandLink="/attendance/staff_attendance_report"
+                                                expandLink="/admin/reports/attendance"
+                                                linkState={{ activeReport: 'staff_report' }}
                                             />
                                             <ProgressCard
                                                 title="Fee Collection"

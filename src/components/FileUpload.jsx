@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, FileText, Image as ImageIcon } from 'lucide-react';
 
-const FileUpload = ({ label, onChange, selectedFile, existingFile, name = "file" }) => {
+const FileUpload = ({ label, onChange, selectedFile, existingFile, name = "file", accept }) => {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef(null);
 
@@ -102,6 +102,7 @@ const FileUpload = ({ label, onChange, selectedFile, existingFile, name = "file"
                     type="file"
                     ref={fileInputRef}
                     name={name}
+                    accept={accept}
                     onChange={handleFileSelect}
                     style={{ display: 'none' }}
                 />

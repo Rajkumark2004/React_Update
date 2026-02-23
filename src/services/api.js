@@ -5127,42 +5127,8 @@ export const api = {
     assignFeeMasterSave: async (data) => {
         console.log('API Request: Assign Fee Master Save', data);
         try {
-            // Build FormData to match PHP form submission format
-            const formData = new FormData();
-
-            // Add fee_session_groups
-            formData.append('fee_session_groups', data.fee_session_groups);
-
-            // Add student_session_id[] as multiple entries
-            if (data['student_session_id[]']) {
-                data['student_session_id[]'].forEach(id => {
-                    formData.append('student_session_id[]', id);
-                });
-            }
-
-            // Add student_ids[] as multiple entries
-            if (data['student_ids[]']) {
-                data['student_ids[]'].forEach(id => {
-                    formData.append('student_ids[]', id);
-                });
-            }
-
-            // Add dynamic student_fees_master_id_{id} keys
-            Object.keys(data).forEach(key => {
-                if (key.startsWith('student_fees_master_id_')) {
-                    formData.append(key, data[key]);
-                }
-            });
-
-            // Add session_id
-            formData.append('session_id', getSessionId());
-
-            const response = await fetch(`${API_BASE}/studentfee/addfeegroup`, {
-                method: 'POST',
-                body: formData
-            });
-            const resData = await response.json();
-            return resData;
+            const response = await api.postWithSession('/studentfee/addfeegroup', data);
+            return response;
         } catch (error) {
             console.error('Assign Fee Master Save Error:', error);
             throw error;
@@ -5214,6 +5180,17 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Delete Student Fee Error:', error);
+            throw error;
+        }
+    },
+
+    updateInvoice: async (payload) => {
+        console.log('API Request: Update Invoice (Cancel)', payload);
+        try {
+            const response = await api.postWithSession('/studentfee/update_invoice', payload);
+            return response;
+        } catch (error) {
+            console.error('Update Invoice Error:', error);
             throw error;
         }
     },

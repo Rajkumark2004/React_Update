@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
 import StudentCollectFeeModal from './StudentCollectFeeModal';
 import ApplyDiscountModal from './ApplyDiscountModal';
+import CancelInvoiceModal from './CancelInvoiceModal';
 
 const StudentAddFee = () => {
     const { id } = useParams();
@@ -36,7 +37,9 @@ const StudentAddFee = () => {
     // Modal State
     const [showModal, setShowModal] = useState(false);
     const [showDiscountModal, setShowDiscountModal] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
     const [selectedFee, setSelectedFee] = useState(null);
+    const [selectedPaymentToCancel, setSelectedPaymentToCancel] = useState(null);
     const [discountAmount, setDiscountAmount] = useState('');
     const [schSetting, setSchSetting] = useState(null);
 
@@ -370,7 +373,7 @@ const StudentAddFee = () => {
             const res = await api.deleteStudentFee(payload);
             if (res.status === "success" || res.status === 1 || res.success) { // Flexible check
                 toast.success("Fee payment reverted successfully");
-                fetchStudentFees(id);
+                fetchStudentFees();
             } else {
                 toast.error(res.message || "Failed to revert fee");
             }
@@ -378,6 +381,11 @@ const StudentAddFee = () => {
             console.error(e);
             toast.error("Error reverting fee");
         }
+    };
+
+    const handleCancelInvoiceClick = (payment) => {
+        setSelectedPaymentToCancel(payment);
+        setShowCancelModal(true);
     };
 
     const handlePrintSingle = async (fee) => {
@@ -1207,7 +1215,7 @@ const StudentAddFee = () => {
                                                                     </td>
                                                                     <td>{payment.description}</td>
                                                                     <td className="text-right">
-                                                                        <div className="btn-group pull-right">
+                                                                        <div className="pull-right" style={{ display: 'flex', gap: '5px' }}>
                                                                             <button
                                                                                 className="btn btn-xs btn-default"
                                                                                 onClick={() => handlePrintReceipt(payment)}
@@ -1218,7 +1226,7 @@ const StudentAddFee = () => {
                                                                             {payment.status !== '1' && (
                                                                                 <button
                                                                                     className="btn btn-xs btn-default"
-                                                                                    onClick={() => handleRevert(payment)}
+                                                                                    onClick={() => handleCancelInvoiceClick(payment)}
                                                                                     title="Disable"
                                                                                 >
                                                                                     <i className="fa fa-times"></i>
@@ -1254,6 +1262,12 @@ const StudentAddFee = () => {
                 handleClose={() => setShowDiscountModal(false)}
                 student={student}
                 feeData={selectedFee}
+                onSuccess={fetchStudentFees}
+            />
+            <CancelInvoiceModal
+                show={showCancelModal}
+                handleClose={() => { setShowCancelModal(false); setSelectedPaymentToCancel(null); }}
+                payment={selectedPaymentToCancel}
                 onSuccess={fetchStudentFees}
             />
         </div >
