@@ -112,6 +112,10 @@ const StudentAdmission = () => {
 
     const handleInputChange = async (e) => {
         const { name, value, type, files } = e.target;
+        // Clear error for this field when user types
+        if (formErrors[name]) {
+            setFormErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
+        }
         if (type === 'file') {
             setFormData(prev => ({ ...prev, [name]: files[0] }));
         } else {
@@ -217,15 +221,38 @@ const StudentAdmission = () => {
         }, 500); // 500ms delay to ensure DOM is ready
 
         return () => clearTimeout(timer);
-    }, [showMoreDetails]);
+    }, [showMoreDetails, initialLoading]);
 
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [createdStudent, setCreatedStudent] = useState(null);
+    const [formErrors, setFormErrors] = useState({});
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate mandatory fields
+        const errors = {};
+        if (!formData.admission_no.trim()) errors.admission_no = 'Admission No is required';
+        if (!formData.class_id) errors.class_id = 'Class is required';
+        if (!formData.section_id) errors.section_id = 'Section is required';
+        if (!formData.firstname.trim()) errors.firstname = 'First Name is required';
+        if (!formData.gender) errors.gender = 'Gender is required';
+        if (!formData.dob) errors.dob = 'Date of Birth is required';
+        if (!formData.child_id.trim()) errors.child_id = 'Child ID is required';
+        if (!formData.guardian_name.trim()) errors.guardian_name = 'Guardian Name is required';
+        if (!formData.guardian_phone.trim()) errors.guardian_phone = 'Guardian Phone is required';
+
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            // Scroll to first error
+            const firstErrorField = document.querySelector('.field-error');
+            if (firstErrorField) firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        setFormErrors({});
         setLoading(true);
         setSuccessMessage('');
         setErrorMessage('');
@@ -344,12 +371,17 @@ const StudentAdmission = () => {
                                                 </div>
                                             )}
 
+                                            <p style={{ color: '#f44336', fontSize: '12px', marginBottom: '15px' }}>
+                                                <small className="req"> *</small> Fields marked with (<small className="req">*</small>) are mandatory
+                                            </p>
+
                                             {/* Core Profile */}
                                             <div className="row">
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Admission No <small className="req"> *</small></label>
-                                                        <input autoFocus="" name="admission_no" type="text" className="form-control" value={formData.admission_no} onChange={handleInputChange} />
+                                                        <input autoFocus="" name="admission_no" type="text" className={`form-control ${formErrors.admission_no ? 'border-danger' : ''}`} value={formData.admission_no} onChange={handleInputChange} />
+                                                        {formErrors.admission_no && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.admission_no}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-3">
@@ -361,19 +393,21 @@ const StudentAdmission = () => {
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Class <small className="req"> *</small></label>
-                                                        <select name="class_id" className="form-control" value={formData.class_id} onChange={handleInputChange}>
+                                                        <select name="class_id" className={`form-control ${formErrors.class_id ? 'border-danger' : ''}`} value={formData.class_id} onChange={handleInputChange}>
                                                             <option value="">Select</option>
                                                             {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.class}</option>)}
                                                         </select>
+                                                        {formErrors.class_id && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.class_id}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Section <small className="req"> *</small></label>
-                                                        <select name="section_id" className="form-control" value={formData.section_id} onChange={handleInputChange}>
+                                                        <select name="section_id" className={`form-control ${formErrors.section_id ? 'border-danger' : ''}`} value={formData.section_id} onChange={handleInputChange}>
                                                             <option value="">Select</option>
                                                             {sections.map(sec => <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>)}
                                                         </select>
+                                                        {formErrors.section_id && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.section_id}</span>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -382,7 +416,8 @@ const StudentAdmission = () => {
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>First Name <small className="req"> *</small></label>
-                                                        <input name="firstname" type="text" className="form-control" value={formData.firstname} onChange={handleInputChange} />
+                                                        <input name="firstname" type="text" className={`form-control ${formErrors.firstname ? 'border-danger' : ''}`} value={formData.firstname} onChange={handleInputChange} />
+                                                        {formErrors.firstname && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.firstname}</span>}
                                                     </div>
                                                 </div>
                                                 {/* Middle name removed as per request, but keeping state if needed later or if it was optional in PHP.
@@ -396,17 +431,19 @@ const StudentAdmission = () => {
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Gender <small className="req"> *</small></label>
-                                                        <select className="form-control" name="gender" value={formData.gender} onChange={handleInputChange}>
+                                                        <select className={`form-control ${formErrors.gender ? 'border-danger' : ''}`} name="gender" value={formData.gender} onChange={handleInputChange}>
                                                             <option value="">Select</option>
                                                             <option value="Male">Male</option>
                                                             <option value="Female">Female</option>
                                                         </select>
+                                                        {formErrors.gender && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.gender}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Date Of Birth <small className="req"> *</small></label>
-                                                        <input name="dob" type="date" className="form-control" value={formData.dob} onChange={handleInputChange} />
+                                                        <input name="dob" type="date" className={`form-control ${formErrors.dob ? 'border-danger' : ''}`} value={formData.dob} onChange={handleInputChange} />
+                                                        {formErrors.dob && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.dob}</span>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -519,7 +556,8 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Child ID <small className="req"> *</small></label>
-                                                            <input name="child_id" type="text" className="form-control" value={formData.child_id} onChange={handleInputChange} />
+                                                            <input name="child_id" type="text" className={`form-control ${formErrors.child_id ? 'border-danger' : ''}`} value={formData.child_id} onChange={handleInputChange} />
+                                                            {formErrors.child_id && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.child_id}</span>}
                                                         </div>
                                                     </div>
                                                     <div className="col-md-3 pt25">
@@ -725,7 +763,8 @@ const StudentAdmission = () => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group">
                                                                     <label>Guardian Name <small className="req"> *</small></label>
-                                                                    <input name="guardian_name" type="text" className="form-control" value={formData.guardian_name} onChange={handleInputChange} />
+                                                                    <input name="guardian_name" type="text" className={`form-control ${formErrors.guardian_name ? 'border-danger' : ''}`} value={formData.guardian_name} onChange={handleInputChange} />
+                                                                    {formErrors.guardian_name && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.guardian_name}</span>}
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">
@@ -739,7 +778,8 @@ const StudentAdmission = () => {
                                                             <div className="col-md-6">
                                                                 <div className="form-group">
                                                                     <label>Guardian Phone <small className="req"> *</small></label>
-                                                                    <input name="guardian_phone" type="text" className="form-control" value={formData.guardian_phone} onChange={handleInputChange} />
+                                                                    <input name="guardian_phone" type="text" className={`form-control ${formErrors.guardian_phone ? 'border-danger' : ''}`} value={formData.guardian_phone} onChange={handleInputChange} />
+                                                                    {formErrors.guardian_phone && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.guardian_phone}</span>}
                                                                 </div>
                                                             </div>
                                                             <div className="col-md-6">

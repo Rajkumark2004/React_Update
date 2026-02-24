@@ -211,7 +211,7 @@ const CreateRoute = () => {
                                             <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/5.png" style={{ width: '20px', marginRight: '5px' }} /> Assign Vehicle
                                         </Link>
                                     </li>
-                                    <li>
+                                    {/*<li>
                                         <Link to="/admin/pickuppoint" className={getActiveMenu('/admin/pickuppoint')}>
                                             <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/2.png" style={{ width: '20px', marginRight: '5px' }} /> Pickup Point
                                         </Link>
@@ -230,7 +230,7 @@ const CreateRoute = () => {
                                         <Link to="/admin/studenttransportfee" className={getActiveMenu('/admin/studenttransportfee')}>
                                             <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/transport/7.png" style={{ width: '20px', marginRight: '5px' }} /> Student Transport Fees
                                         </Link>
-                                    </li>
+                                    </li>*/}
                                 </ul>
                             </div>
                         </div>

@@ -114,8 +114,8 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
 
           {/* HEADER */}
           <div className="modal-header">
-            <h4>Follow Up Admission Enquiry</h4>
             <button className="close" onClick={onClose}>×</button>
+            <h4 className="modal-title">Follow Up Admission Enquiry</h4>
           </div>
 
           <div className="modal-body">

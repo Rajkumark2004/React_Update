@@ -18,7 +18,7 @@ const IdAutoGeneration = () => {
     const [originalData, setOriginalData] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [digitList] = useState(Array.from({ length: 10 }, (_, i) => String(i + 1)));
+    const [digitList, setDigitList] = useState([]);
 
     useEffect(() => {
         fetchSettings();
@@ -27,9 +27,9 @@ const IdAutoGeneration = () => {
     const fetchSettings = async () => {
         setIsLoading(true);
         try {
-            const response = await api.getSystemSettings();
-            if (response && response.sch_setting) {
-                const settings = response.sch_setting;
+            const response = await api.getIdAutoGeneration();
+            if (response && response.result) {
+                const settings = response.result;
                 const newFormData = {
                     adm_auto_insert: settings.adm_auto_insert !== null ? String(settings.adm_auto_insert) : '0',
                     adm_prefix: settings.adm_prefix || '',
@@ -42,6 +42,11 @@ const IdAutoGeneration = () => {
                 };
                 setFormData(newFormData);
                 setOriginalData(newFormData);
+            }
+            // Use digits from API response
+            if (response && response.digits) {
+                const digits = Object.values(response.digits).map(String);
+                setDigitList(digits);
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
@@ -77,28 +82,24 @@ const IdAutoGeneration = () => {
             return;
         }
 
-        if (!formData.staffid_prefix) {
-            toast.error("Staff ID Prefix is required");
-            return;
-        }
-        if (!formData.staffid_no_digit) {
-            toast.error("Staff No Digit is required");
-            return;
-        }
-        if (!formData.staffid_start_from) {
-            toast.error("Staff ID Start From is required");
-            return;
-        }
-
         setIsSaving(true);
         try {
-            const payload = { ...formData };
+            const payload = {
+                sch_id: 1,
+                adm_auto_insert: Number(formData.adm_auto_insert),
+                adm_prefix: formData.adm_prefix,
+                adm_start_from: formData.adm_start_from,
+                adm_no_digit: formData.adm_no_digit ? Number(formData.adm_no_digit) : '',
+                staffid_auto_insert: Number(formData.staffid_auto_insert),
+                staffid_prefix: formData.staffid_prefix,
+                staffid_start_from: formData.staffid_start_from,
+                staffid_no_digit: formData.staffid_no_digit ? Number(formData.staffid_no_digit) : '',
+            };
             const response = await api.saveIdAutoGeneration(payload);
-            if (response.status === "success" || response.status === 1 || response.success) {
+            if (response.status) {
                 toast.success(response.message || 'ID Auto Generation Settings saved successfully');
-                await api.getSystemSettings(); // Refresh settings cache if any
+                fetchSettings(); // Refresh data
             } else {
-
                 if (response.error && typeof response.error === 'object') {
                     Object.values(response.error).forEach(err => toast.error(err));
                 } else if (response.error) {

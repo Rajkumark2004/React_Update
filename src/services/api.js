@@ -600,6 +600,29 @@ export const api = {
         }
     },
 
+    searchStudentsGlobal: async (search_text) => {
+        console.log('API Request: Search Students Global', search_text);
+        try {
+            const response = await fetch(`${API_BASE}/admin/admin/search`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ search_text })
+            });
+            const data = await response.json();
+            console.log('Search Students Global Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to search students');
+            }
+            return data;
+        } catch (error) {
+            console.error('Search Students Global API Error:', error);
+            throw error;
+        }
+    },
+
     getCredentialReportList: async (payload) => {
         console.log('API Request: Get Credential Report List', payload);
         try {
@@ -1161,6 +1184,54 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get General Settings API Error:', error);
+            throw error;
+        }
+    },
+
+    getIdAutoGeneration: async () => {
+        console.log('API Request: Get ID Auto Generation');
+        try {
+            const response = await fetch(`${API_BASE}/schsettings/idautogeneration`, {
+                method: 'GET',
+            });
+
+            console.log('Get ID Auto Generation Response Status:', response.status);
+            const data = await response.json();
+            console.log('Get ID Auto Generation Response Data:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch ID Auto Generation settings');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get ID Auto Generation API Error:', error);
+            throw error;
+        }
+    },
+
+    saveIdAutoGeneration: async (payload) => {
+        console.log('API Request: Save ID Auto Generation', payload);
+        try {
+            const response = await fetch(`${API_BASE}/schsettings/saveidautogeneration`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            console.log('Save ID Auto Generation Response Status:', response.status);
+            const data = await response.json();
+            console.log('Save ID Auto Generation Response Data:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to save ID Auto Generation settings');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Save ID Auto Generation API Error:', error);
             throw error;
         }
     },
@@ -7663,6 +7734,177 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Change Parent Status API Error:', error);
+            throw error;
+        }
+    },
+
+    // ==================== CALENDAR & TO-DO API ====================
+
+    getCalendarEvents: async (userId, roleId) => {
+        console.log('API Request: Get Calendar Events', { userId, roleId });
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/events/${userId}/${roleId}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch calendar events');
+            return data;
+        } catch (error) {
+            console.error('Get Calendar Events Error:', error);
+            throw error;
+        }
+    },
+
+    getCalendarBarEvents: async (userId, roleId) => {
+        console.log('API Request: Get Calendar Bar Events', { userId, roleId });
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/getevents`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: Number(userId), role_id: Number(roleId) })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch calendar bar events');
+            return data;
+        } catch (error) {
+            console.error('Get Calendar Bar Events Error:', error);
+            throw error;
+        }
+    },
+
+    addCalendarEvent: async (payload) => {
+        console.log('API Request: Add Calendar Event', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/saveevent`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok || data.status === 'fail') throw new Error(data.message || 'Failed to add event');
+            return data;
+        } catch (error) {
+            console.error('Add Calendar Event Error:', error);
+            throw error;
+        }
+    },
+
+    viewCalendarEvent: async (eventId) => {
+        console.log('API Request: View Calendar Event', eventId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/view_event`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ event_id: Number(eventId) })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch event');
+            return data;
+        } catch (error) {
+            console.error('View Calendar Event Error:', error);
+            throw error;
+        }
+    },
+
+    updateCalendarEvent: async (payload) => {
+        console.log('API Request: Update Calendar Event', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/updateevent`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok || data.status === 'fail') throw new Error(data.message || 'Failed to update event');
+            return data;
+        } catch (error) {
+            console.error('Update Calendar Event Error:', error);
+            throw error;
+        }
+    },
+
+    deleteCalendarEvent: async (id) => {
+        console.log('API Request: Delete Calendar Event', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/delete_event`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: Number(id) })
+            });
+            const data = await response.json();
+            if (!response.ok || data.status === 'fail') throw new Error(data.message || 'Failed to delete event');
+            return data;
+        } catch (error) {
+            console.error('Delete Calendar Event Error:', error);
+            throw error;
+        }
+    },
+
+    addToDo: async (payload) => {
+        console.log('API Request: Add To-Do', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/addtodo`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok || data.status === 'fail') throw new Error(data.message || 'Failed to add task');
+            return data;
+        } catch (error) {
+            console.error('Add To-Do Error:', error);
+            throw error;
+        }
+    },
+
+    getToDoById: async (id) => {
+        console.log('API Request: Get To-Do By ID', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/gettaskbyid`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: String(id) })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Failed to fetch task');
+            return data;
+        } catch (error) {
+            console.error('Get To-Do By ID Error:', error);
+            throw error;
+        }
+    },
+
+    markToDoComplete: async (id, status) => {
+        console.log('API Request: Mark To-Do Complete', id, status);
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/markcomplete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: Number(id), active: status })
+            });
+            const data = await response.json();
+            if (!response.ok || data.status === 'fail') throw new Error(data.message || 'Failed to update task');
+            return data;
+        } catch (error) {
+            console.error('Mark To-Do Complete Error:', error);
+            throw error;
+        }
+    },
+
+    deleteToDoTask: async (id) => {
+        console.log('API Request: Delete To-Do Task', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/calendar/delete_event`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: Number(id) })
+            });
+            const data = await response.json();
+            if (!response.ok || data.status === 'fail') throw new Error(data.message || 'Failed to delete task');
+            return data;
+        } catch (error) {
+            console.error('Delete To-Do Task Error:', error);
             throw error;
         }
     },

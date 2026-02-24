@@ -49,6 +49,16 @@ const DashboardTest = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
+    // ========== SEARCH STATE ==========
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const handleSearchSubmit = (e) => {
+        if (e.key === 'Enter' || e.type === 'click') {
+            if (!searchQuery.trim()) return;
+            navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+        }
+    };
+
     // ========== DROPDOWN STATE ==========
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
     const userDropdownRef = useRef(null);
@@ -327,13 +337,25 @@ const DashboardTest = () => {
 
 
                                     {/* Search Bar (Desktop) - Added as requested */}
-                                    <div className="content-search-bar hide-mobile">
+                                    <div className="content-search-bar hide-mobile" style={{ position: 'relative', overflow: 'hidden' }}>
+                                        {!searchQuery && (
+                                            <span className="search-scroll-placeholder">
+                                                Search students by name
+                                            </span>
+                                        )}
                                         <input
                                             type="text"
                                             className="search-input-large"
-                                            placeholder="Search..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyDown={handleSearchSubmit}
+                                            style={{ background: 'transparent', position: 'relative', zIndex: 1 }}
                                         />
-                                        <i className="fa fa-search search-icon-large"></i>
+                                        <i
+                                            className="fa fa-search search-icon-large"
+                                            style={{ cursor: 'pointer', zIndex: 2, position: 'relative' }}
+                                            onClick={handleSearchSubmit}
+                                        ></i>
                                     </div>
 
                                     {/* Welcome Card */}

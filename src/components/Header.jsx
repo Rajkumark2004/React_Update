@@ -22,16 +22,61 @@ const Header = ({
     const userDropdownRef = useRef(null);
     const navigate = useNavigate();
 
-    // Mock data if not provided
-    const defaultUserData = {
-        name: 'Admin User',
-        role: 'Super Admin',
-        id: 1,
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
-    const user = userData || defaultUserData;
+    // Task/Todo State
+    const [tasks, setTasks] = useState([]);
+    const [isTaskDropdownOpen, setIsTaskDropdownOpen] = useState(false);
+    const taskDropdownRef = useRef(null);
 
-    const tasks = pendingTasks;
+    // Fetch to-do tasks from API
+    useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                let userId = '1';
+                let roleId = '7';
+                try {
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                        const user = JSON.parse(storedUser);
+                        userId = user.id || '1';
+                        const roles = user.roles || {};
+                        roleId = Object.values(roles)[0] || '7';
+                    }
+                } catch (e) { console.error('Failed to parse user:', e); }
+                const res = await api.getCalendarEvents(userId, roleId);
+                const allItems = Array.isArray(res.data) ? res.data : [];
+                const todoList = allItems.filter(item => item.event_type === 'task' && item.is_active !== 'yes');
+                setTasks(todoList);
+            } catch (err) {
+                console.error('Failed to fetch tasks:', err);
+            }
+        };
+        fetchTasks();
+    }, []);
+
+    // Close task dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutsideTask = (event) => {
+            if (taskDropdownRef.current && !taskDropdownRef.current.contains(event.target)) {
+                setIsTaskDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutsideTask);
+        return () => document.removeEventListener('mousedown', handleClickOutsideTask);
+    }, []);
+
+    // Mark task complete and remove from list
+    const handleMarkComplete = async (id, currentStatus) => {
+        const newStatus = currentStatus === 'yes' ? 'no' : 'yes';
+        try {
+            await api.markToDoComplete(id, newStatus);
+            setTasks(prev => prev.filter(t => t.id !== id));
+        } catch (err) {
+            console.error('Failed to mark task:', err);
+        }
+    };
+
+    // User data with defaults
+    const user = userData || { name: 'Admin User', role: 'Super Admin', id: 1, avatar: '/uploads/staff_images/default_male.jpg' };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -44,9 +89,17 @@ const Header = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // ========== SEARCH STATE ==========
+    const [searchQuery, setSearchQuery] = useState('');
+
     const onSearch = (e) => {
         e.preventDefault();
-        console.log('Search submitted');
+
+        if (!searchQuery.trim()) {
+            return;
+        }
+
+        navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
     };
 
     return (
@@ -76,44 +129,49 @@ const Header = ({
                                     <div className="skeleton-search"></div>
                                 </div>
                             ) : (
-                                <form
-                                    id="header_search_form"
-                                    className="navbar-form navbar-left search-form"
-                                    role="search"
-                                    onSubmit={onSearch}
-                                >
-                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                        <input
-                                            type="text"
-                                            name="search_text1"
-                                            id="search_text1"
-                                            className="form-control search-form search-form3"
-                                            placeholder="Search by student name"
-                                            style={{ paddingRight: '35px', borderRadius: '20px', width: '250px' }}
-                                        />
-                                        <button
-                                            type="submit"
-                                            className="btn btn-flat"
-                                            style={{
-                                                position: 'absolute',
-                                                right: '5px',
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                background: 'transparent',
-                                                border: 'none',
-                                                padding: '5px',
-                                                color: '#888',
-                                                minWidth: 'auto',
-                                                height: 'auto',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                        >
-                                            <i className="fa fa-search"></i>
-                                        </button>
-                                    </div>
-                                </form>
+                                <div style={{ position: 'relative' }}>
+                                    <form
+                                        id="header_search_form"
+                                        className="navbar-form navbar-left search-form"
+                                        role="search"
+                                        onSubmit={onSearch}
+                                        style={{ margin: 0, padding: 0 }}
+                                    >
+                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginTop: '7px' }}>
+                                            <input
+                                                type="text"
+                                                name="search_text1"
+                                                id="search_text1"
+                                                className="form-control search-form search-form3"
+                                                placeholder="Search by student name"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                style={{ paddingRight: '35px', borderRadius: '20px', width: '250px' }}
+                                            />
+                                            <button
+                                                type="submit"
+                                                className="btn btn-flat"
+                                                style={{
+                                                    position: 'absolute',
+                                                    right: '5px',
+                                                    top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    padding: '5px',
+                                                    color: '#888',
+                                                    minWidth: 'auto',
+                                                    height: 'auto',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <i className="fa fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             )}
 
                             {/* Navbar Custom Menu */}
@@ -132,37 +190,41 @@ const Header = ({
                                         </>
                                     ) : (
                                         <>
-                                            {/* Calendar - Not implemented yet */}
+                                            {/* Calendar */}
                                             <li className="cal15 d-sm-none">
-                                                <a
-                                                    href="#"
+                                                <Link
+                                                    to="/calendar"
                                                     data-toggle="tooltip"
-                                                    title="Calendar (Coming Soon)"
-                                                    onClick={(e) => e.preventDefault()}
+                                                    title="Calendar"
                                                 >
                                                     <i className="fa fa-calendar"></i>
-                                                </a>
+                                                </Link>
                                             </li>
 
-                                            {/* Tasks Dropdown - Not implemented yet */}
-                                            <li className="dropdown" data-toggle="tooltip" title="Tasks">
-                                                <a href="#" className="dropdown-toggle todoicon" data-toggle="dropdown" onClick={(e) => e.preventDefault()}>
+                                            {/* Tasks Dropdown */}
+                                            <li className={`dropdown ${isTaskDropdownOpen ? 'open' : ''}`} data-toggle="tooltip" title="Tasks" ref={taskDropdownRef}>
+                                                <a href="#" className="dropdown-toggle todoicon" onClick={(e) => { e.preventDefault(); setIsTaskDropdownOpen(!isTaskDropdownOpen); }}>
                                                     <i className="fa fa-check-square-o"></i>
                                                     {tasks.length > 0 && <span className="todo-indicator">{tasks.length}</span>}
                                                 </a>
-                                                <ul className="dropdown-menu menuboxshadow">
+                                                <ul className="dropdown-menu menuboxshadow" style={{ display: isTaskDropdownOpen ? 'block' : 'none' }}>
                                                     <li className="todoview plr10 ssnoti">
-                                                        Today you have {tasks.length} pending tasks
-                                                        <a href="#" className="pull-right pt0" onClick={(e) => e.preventDefault()}>View All</a>
+                                                        You have {tasks.length} tasks
+                                                        <Link to="/calendar" className="pull-right pt0" onClick={() => setIsTaskDropdownOpen(false)}>View All</Link>
                                                     </li>
                                                     <li>
                                                         <ul className="todolist">
                                                             {tasks.map((task) => (
                                                                 <li key={task.id}>
                                                                     <div className="checkbox">
-                                                                        <label>
-                                                                            <input type="checkbox" name="eventcheck" value={task.id} />
-                                                                            {task.title}
+                                                                        <label style={task.is_active === 'yes' ? { textDecoration: 'line-through', color: '#4caf50' } : {}}>
+                                                                            <input type="checkbox"
+                                                                                checked={task.is_active === 'yes'}
+                                                                                onChange={() => handleMarkComplete(task.id, task.is_active)}
+                                                                            />
+                                                                            <span style={{ color: task.event_color || 'inherit' }}>
+                                                                                {task.event_title || task.title}
+                                                                            </span>
                                                                         </label>
                                                                     </div>
                                                                 </li>

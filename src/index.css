@@ -5,6 +5,46 @@ body {
 }
 
 /* ========================================
+   GLOBAL MODAL CLOSE BUTTON IMPROVEMENTS
+   ======================================== */
+.modal .close,
+.modal .close_btn {
+  font-size: 32px !important;
+  /* Make x much larger for mobile tap targets */
+  opacity: 0.8 !important;
+  padding: 10px 15px !important;
+  /* Add generous hit area */
+  margin-top: 15px !important;
+  margin-right: -10px !important;
+  position: relative;
+  z-index: 1050;
+  border: none;
+  background: transparent;
+  color: #fff !important;
+  /* Force white for colored headers */
+}
+
+.modal .close:hover,
+.modal .close_btn:hover {
+  opacity: 1 !important;
+}
+
+/* Helper class for explicitly adding a left-aligned back arrow */
+.modal-header .modal-back-btn {
+  float: left;
+  font-size: 24px !important;
+  cursor: pointer;
+  margin-right: 15px;
+  color: #fff !important;
+  margin-top: -3px;
+  opacity: 0.9;
+}
+
+.modal-header .modal-back-btn:hover {
+  opacity: 1;
+}
+
+/* ========================================
    GLOBAL SIDEBAR FIX - Applied to all pages
    Removes white bar gap on right of sidebar
    ======================================== */

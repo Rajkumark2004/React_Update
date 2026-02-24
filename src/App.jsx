@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import DashboardTest from './pages/dashboard/dashboard_test';
 
 import LoginPage from './pages/auth/LoginPage';
@@ -162,6 +163,8 @@ import CreateContent from './pages/content/CreateContent';
 import EditContent from './pages/content/EditContent';
 import EditPost from './pages/content/EditPost';
 import Search from './pages/content/Search';
+import GlobalSearch from './pages/search/GlobalSearch';
+import CalendarPage from './pages/calendar/CalendarPage';
 import StudentInformationReport from './pages/reports/StudentInformationReport';
 import AlumniReport from './pages/reports/AlumniReport';
 // AttendanceReport moved to top
@@ -190,6 +193,26 @@ function ProtectedRoute({ children }) {
 }
 
 function App() {
+  // Global handler for modal backdrop clicks
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      // If user clicked directly on the backdrop (not on the modal content)
+      if (e.target.classList.contains('modal-backdrop') || e.target.classList.contains('modal')) {
+        // Find the visible close button in the active modal and click it
+        const activeModal = document.querySelector('.modal.in') || document.querySelector('.modal[style*="display: block"]');
+        if (activeModal) {
+          const closeBtn = activeModal.querySelector('.close, .close_btn');
+          if (closeBtn) {
+            closeBtn.click();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleGlobalClick);
+    return () => document.removeEventListener('mousedown', handleGlobalClick);
+  }, []);
+
   return (
     <LogoProvider>
       <SessionProvider>
@@ -375,6 +398,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <StudentSearch />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/search"
+              element={
+                <ProtectedRoute>
+                  <GlobalSearch />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute>
+                  <CalendarPage />
                 </ProtectedRoute>
               }
             />

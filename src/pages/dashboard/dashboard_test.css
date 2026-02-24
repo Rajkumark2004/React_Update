@@ -429,6 +429,40 @@
     color: #444;
 }
 
+/* Scrolling placeholder */
+.search-scroll-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    font-size: 15px;
+    color: #999;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 0;
+    animation: scrollPlaceholder 6s linear infinite;
+}
+
+@keyframes scrollPlaceholder {
+    0% {
+        transform: translateY(-50%) translateX(100%);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-50%) translateX(-100%);
+        opacity: 0;
+    }
+}
+
 
 
 .pl25 {
