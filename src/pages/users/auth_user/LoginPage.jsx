@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.css";
 import { User, Lock } from "lucide-react";
-import api from "../../services/api";
-import { useSession } from "../../context/SessionContext";
+import { api_users } from "../../../services/api_users";
+import { useSession } from "../../../context/SessionContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -21,17 +21,23 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await api.login(username, password);
+      const response = await api_users.userLogin(username, password);
 
       // Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      // The API returns the user details in `data` and the token at the root `token`
+      const sessionData = {
+        ...response.data,
+        token: response.token
+      };
+      localStorage.setItem("user", JSON.stringify(sessionData));
+      localStorage.setItem("token", response.token);
       localStorage.setItem("isLoggedIn", "true");
 
       // Initialize default session from General Settings
       await initDefaultSession();
 
-      // Redirect to dashboard
-      navigate("/dashboard");
+      // Redirect to dashboard (handled by AppUsers sub-router)
+      navigate("/user/dashboard");
     } catch (err) {
       setError(err.message || "Login failed. Please try again.");
     } finally {
@@ -65,7 +71,7 @@ export default function LoginPage() {
           />
         </div>
 
-        <h2>Admin Login</h2>
+        <h2>User Login</h2>
 
         {error && (
           <div style={{ color: "red", marginBottom: "10px", textAlign: "center" }}>
@@ -106,9 +112,17 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
 
-          <a href="/forgot-password" className="forgot-password">
-            Forgot Password?
-          </a>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "15px" }}>
+            <a href="#" className="forgot-password" onClick={(e) => {
+              e.preventDefault();
+              navigate("/user/forgot-password");
+            }}>
+              Forgot Password?
+            </a>
+            <a href="/login" className="forgot-password">
+              Admin Login
+            </a>
+          </div>
         </form>
       </div>
     </div >

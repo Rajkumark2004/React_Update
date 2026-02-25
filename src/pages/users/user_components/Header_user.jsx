@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CircleUser } from 'lucide-react';
-import { api } from '../services/api';
-import { useLogo } from '../context/LogoContext';
+import { api } from '../../../services/api';
+import { useLogo } from '../../../context/LogoContext';
 
 const Header = ({
     appName = 'School Management System',
@@ -77,16 +77,16 @@ const Header = ({
     };
 
     // User data with defaults
-    let defaultUser = { name: 'Admin User', role: 'Super Admin', id: 1, avatar: '/uploads/staff_images/default_male.jpg' };
+    let defaultUser = { name: 'User', role: 'Student', id: 1, avatar: '/uploads/student_images/default.jpg' };
     try {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
             defaultUser = {
-                name: parsedUser.username || parsedUser.name || 'Admin User',
-                role: parsedUser.role || 'Super Admin',
+                name: parsedUser.username || parsedUser.name || 'User',
+                role: parsedUser.role || 'Student',
                 id: parsedUser.id || 1,
-                avatar: parsedUser.image || '/uploads/staff_images/default_male.jpg'
+                avatar: parsedUser.image || '/uploads/student_images/default.jpg'
             };
         }
     } catch (e) {
@@ -105,18 +105,6 @@ const Header = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // ========== SEARCH STATE ==========
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const onSearch = (e) => {
-        e.preventDefault();
-
-        if (!searchQuery.trim()) {
-            return;
-        }
-
-        navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    };
 
     return (
         <>
@@ -124,7 +112,7 @@ const Header = ({
             <header className="main-header hide-mobile" id="alert">
                 {/* Logo - Links to Dashboard */}
                 {/* Logo - Links to Dashboard */}
-                <Link to="/dashboard" className="logo-hide-on-mobile logo">
+                <Link to="/user/dashboard" className="logo-hide-on-mobile logo">
                     <span className="logo-mini">
                         <img src={headerLogoUrl || headerLogo} alt={appName} />
                     </span>
@@ -139,56 +127,82 @@ const Header = ({
 
                     <div className="col-lg-7 col-md-9 col-sm-10 col-xs-8" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                         <div className="pull-right">
-                            {/* Search Form */}
-                            {loading ? (
-                                <div className="navbar-form navbar-left search-form">
-                                    <div className="skeleton-search"></div>
+                            {/* Custom Nav Items CSS */}
+                            <style>{`
+                                .custom-nav-right {
+                                    display: flex;
+                                    align-items: center;
+                                }
+                                
+                                .custom-nav-item {
+                                    padding: 0 12px;
+                                    color: #555;
+                                    font-size: 14px;
+                                    display: flex;
+                                    align-items: center;
+                                    cursor: pointer;
+                                    height: 50px;
+                                    position: relative;
+                                }
+                                
+                                .custom-nav-item:hover {
+                                    background: transparent !important;
+                                }
+                                
+                                .custom-nav-item i {
+                                    font-size: 18px;
+                                }
+                                
+                                .flag-icon {
+                                    width: 22px;
+                                    height: 14px;
+                                    border: 1px solid #eee;
+                                }
+
+                                /* Tooltip */
+                                .custom-nav-item[data-tooltip]::after {
+                                    content: attr(data-tooltip);
+                                    position: absolute;
+                                    bottom: -35px;
+                                    left: 50%;
+                                    transform: translateX(-50%);
+                                    background: rgba(0,0,0,0.8);
+                                    color: #fff;
+                                    padding: 5px 10px;
+                                    border-radius: 4px;
+                                    font-size: 11px;
+                                    white-space: nowrap;
+                                    visibility: hidden;
+                                    opacity: 0;
+                                    z-index: 1100;
+                                    pointer-events: none;
+                                }
+                                .custom-nav-item:hover::after {
+                                    visibility: visible;
+                                    opacity: 1;
+                                }
+                            `}</style>
+                            {/* Custom Nav Items (from UserDashboard) */}
+                            <div className="custom-nav-right hide-mobile" style={{ display: 'flex', alignItems: 'center', height: '50px' }}>
+                                <div className="custom-nav-item" data-tooltip="English">
+                                    <img src="https://flagcdn.com/w20/us.png" className="flag-icon" alt="English" />
                                 </div>
-                            ) : (
-                                <div style={{ position: 'relative' }}>
-                                    <form
-                                        id="header_search_form"
-                                        className="navbar-form navbar-left search-form"
-                                        role="search"
-                                        onSubmit={onSearch}
-                                        style={{ margin: 0, padding: 0 }}
-                                    >
-                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginTop: '7px' }}>
-                                            <input
-                                                type="text"
-                                                name="search_text1"
-                                                id="search_text1"
-                                                className="form-control search-form search-form3"
-                                                placeholder="Search by student name"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                style={{ paddingRight: '35px', borderRadius: '20px', width: '250px' }}
-                                            />
-                                            <button
-                                                type="submit"
-                                                className="btn btn-flat"
-                                                style={{
-                                                    position: 'absolute',
-                                                    right: '5px',
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    background: 'transparent',
-                                                    border: 'none',
-                                                    padding: '5px',
-                                                    color: '#888',
-                                                    minWidth: 'auto',
-                                                    height: 'auto',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}
-                                            >
-                                                <i className="fa fa-search"></i>
-                                            </button>
-                                        </div>
-                                    </form>
+                                <div className="custom-nav-item" data-tooltip="Currency" style={{ fontWeight: 'bold' }}>
+                                    INR
                                 </div>
-                            )}
+                                <div className="custom-nav-item" data-tooltip="Switch Class">
+                                    <i className="fa fa-exchange"></i>
+                                </div>
+                                <div className="custom-nav-item" data-tooltip="Calendar">
+                                    <i className="fa fa-calendar"></i>
+                                </div>
+                                <div className="custom-nav-item" data-tooltip="Task">
+                                    <i className="fa fa-check-square-o"></i>
+                                </div>
+                                <div className="custom-nav-item" data-tooltip="Chat">
+                                    <i className="fa fa-whatsapp"></i>
+                                </div>
+                            </div>
 
                             {/* Navbar Custom Menu */}
                             <div className="navbar-custom-menu">
@@ -273,19 +287,19 @@ const Header = ({
                                                     <li>
                                                         <div className="sstopuser">
                                                             <div className="ssuserleft">
-                                                                <Link to={`/admin/staff/profile/${user.id}`} style={{ display: 'block', height: '100%', width: '100%' }}>
+                                                                <Link to="/user/user/profile" style={{ display: 'block', height: '100%', width: '100%' }}>
                                                                     <CircleUser size={60} color="#FFD700" strokeWidth={1.5} />
                                                                 </Link>
                                                             </div>
                                                             <div className="sstopuser-test">
-                                                                <Link to={`/admin/staff/profile/${user.id}`}>
+                                                                <Link to="/user/user/profile">
                                                                     <h4 className="text-capitalize" style={{ color: '#fff' }}>{user.name}</h4>
                                                                 </Link>
                                                                 <h5>{user.role}</h5>
                                                             </div>
                                                             <div className="divider"></div>
                                                             <div className="sspass">
-                                                                <Link to={`/admin/staff/profile/${user.id}`} data-toggle="tooltip" title="My Profile">
+                                                                <Link to="/user/user/profile" data-toggle="tooltip" title="My Profile">
                                                                     <i className="fa fa-user"></i> Profile
                                                                 </Link>
                                                                 <a href="#" data-toggle="tooltip" title="Change Password (Coming Soon)" onClick={(e) => e.preventDefault()}>
@@ -299,7 +313,7 @@ const Header = ({
                                                                         try { await api.logout(); } catch (e) { }
                                                                         localStorage.removeItem('user');
                                                                         localStorage.removeItem('isLoggedIn');
-                                                                        navigate('/');
+                                                                        navigate('/user/login');
                                                                     }
                                                                 }} style={{ cursor: 'pointer' }}>
                                                                     <i className="fa fa-sign-out fa-fw"></i> Logout
@@ -339,7 +353,7 @@ const Header = ({
 
                     {/* Centered Logo */}
                     <div className="logo-mobile-container" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                        <Link to="/dashboard" className="logo">
+                        <Link to="/user/dashboard" className="logo">
                             <span className="logo-lg">
                                 <img src={headerLogoUrl || headerLogo} alt={appName} style={{ maxHeight: '40px', objectFit: 'contain' }} />
                             </span>

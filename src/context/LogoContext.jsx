@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { api } from '../services/api';
 
 // Default logo paths
 const DEFAULT_LOGOS = {
@@ -31,6 +32,50 @@ export const LogoProvider = ({ children }) => {
         }
         return DEFAULT_LOGOS;
     });
+
+    // Fetch logos from backend on app load if logged in
+    useEffect(() => {
+        const fetchGlobalLogos = async () => {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (isLoggedIn) {
+                try {
+                    const res = await api.getGeneralSettings();
+                    if (res && res.status && res.data) {
+                        const data = res.data;
+                        const baseUrl = data.base_url || 'https://newlayout.wisibles.com/';
+
+                        const adminLogoUrl = data.admin_logo
+                            ? `${baseUrl}uploads/school_content/admin_logo/${data.admin_logo}`
+                            : DEFAULT_LOGOS.admin_logo;
+
+                        const adminSmallLogoUrl = data.admin_small_logo
+                            ? `${baseUrl}uploads/school_content/admin_small_logo/${data.admin_small_logo}`
+                            : DEFAULT_LOGOS.admin_small_logo;
+
+                        const appLogoUrl = data.app_logo
+                            ? `${baseUrl}uploads/school_content/logo/${data.app_logo}`
+                            : DEFAULT_LOGOS.app_logo;
+
+                        const printLogoUrl = data.image
+                            ? `${baseUrl}uploads/school_content/logo/${data.image}`
+                            : DEFAULT_LOGOS.print_logo;
+
+                        setLogos(prev => ({
+                            ...prev,
+                            admin_logo: adminLogoUrl,
+                            admin_small_logo: adminSmallLogoUrl,
+                            app_logo: appLogoUrl,
+                            print_logo: printLogoUrl
+                        }));
+                    }
+                } catch (e) {
+                    console.warn('Failed to fetch global logos on app load:', e);
+                }
+            }
+        };
+
+        fetchGlobalLogos();
+    }, []);
 
     // Persist to localStorage when logos change
     useEffect(() => {

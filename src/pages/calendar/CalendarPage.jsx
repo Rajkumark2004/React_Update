@@ -783,17 +783,15 @@ const CalendarPage = () => {
             <Sidebar />
             <div className="content-wrapper" style={{ minHeight: '828px' }}>
                 <section className="content-header">
-                    <div className="cal-page-header">
-                        <h1><i className="fa fa-calendar"></i> Calendar</h1>
-                    </div>
+                    <h1><i className="fa fa-calendar"></i> Calendar</h1>
                 </section>
 
                 <section className="content">
                     <div className="row">
                         {/* Main Calendar - col-md-9 */}
                         <div className="col-md-9 col-sm-9">
-                            <div className="cal-container">
-                                <div style={{ padding: 0 }}>
+                            <div className="box box-primary">
+                                <div className="box-body" style={{ padding: 0 }}>
                                     {/* Toolbar */}
                                     <div className="cal-toolbar">
                                         <div className="cal-nav-btns">
@@ -825,44 +823,48 @@ const CalendarPage = () => {
 
                         {/* To Do List Sidebar - col-md-3 */}
                         <div className="col-md-3 col-sm-3">
-                            <div className="cal-todo-box">
-                                <div className="cal-todo-header">
-                                    <h3>To Do List</h3>
-                                    <button className="cal-add-btn" onClick={openAddTask}>
-                                        <i className="fa fa-plus"></i>
-                                    </button>
+                            <div className="box box-primary">
+                                <div className="box-header ptbnull">
+                                    <h3 className="box-title">To Do List</h3>
+                                    <div className="box-tools pull-right">
+                                        <button className="btn btn-primary btn-sm pull-right" onClick={openAddTask}>
+                                            <i className="fa fa-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div>
+                                <div className="">
                                     {todos.length === 0 ? (
-                                        <div className="cal-empty">
-                                            <i className="fa fa-check-circle-o"></i>
+                                        <div className="text-center" style={{ padding: '40px 20px', color: '#bbb' }}>
+                                            <i className="fa fa-check-circle-o" style={{ fontSize: '32px', display: 'block', marginBottom: '10px' }}></i>
                                             No tasks found
                                         </div>
                                     ) : (
                                         todos.map((task) => (
-                                            <div key={task.id} className="cal-todo-item">
-                                                <input type="checkbox" className="cal-todo-checkbox"
-                                                    checked={task.is_active === 'yes'}
-                                                    onChange={() => handleMarkComplete(task.id, task.is_active)}
-                                                />
-                                                <div className="cal-todo-body">
-                                                    <p className={`cal-todo-title${task.is_active === 'yes' ? ' completed' : ''}`}
-                                                        style={{ color: task.event_color || '#333' }}
-                                                    >{task.event_title}</p>
-                                                    <span className="cal-todo-date">
-                                                        <i className="fa fa-clock-o"></i>
-                                                        {formatDateDisplay(task.start_date)}
-                                                    </span>
+                                            <React.Fragment key={task.id}>
+                                                <div className="media mt5" style={{ padding: '0 10px' }}>
+                                                    <div className="media-left">
+                                                        <input type="checkbox"
+                                                            checked={task.is_active === 'yes'}
+                                                            onChange={() => handleMarkComplete(task.id, task.is_active)}
+                                                        />
+                                                    </div>
+                                                    <div className="media-body">
+                                                        <p className="tododesc"
+                                                            style={task.is_active === 'yes' ? { textDecoration: 'line-through', color: '#4f881d' } : { color: 'red' }}
+                                                        >{task.event_title}</p>
+                                                        <small className="tododate">
+                                                            {formatDateDisplay(task.start_date)}
+                                                            <a href="#" className="pull-right text-muted" onClick={(e) => { e.preventDefault(); handleDeleteTodo(task.id); }} title="Delete">
+                                                                <i className="fa fa-remove"></i>
+                                                            </a>
+                                                            <a href="#" className="pull-right text-muted mright5" style={{ marginRight: '5px' }} onClick={(e) => { e.preventDefault(); handleEditTodo(task.id); }} title="Edit">
+                                                                <i className="fa fa-pencil"></i>
+                                                            </a>
+                                                        </small>
+                                                    </div>
                                                 </div>
-                                                <div className="cal-todo-actions">
-                                                    <a href="#" onClick={(e) => { e.preventDefault(); handleEditTodo(task.id); }} title="Edit">
-                                                        <i className="fa fa-pencil"></i>
-                                                    </a>
-                                                    <a href="#" className="delete-btn" onClick={(e) => { e.preventDefault(); handleDeleteTodo(task.id); }} title="Delete">
-                                                        <i className="fa fa-trash-o"></i>
-                                                    </a>
-                                                </div>
-                                            </div>
+                                                <div className="todo_divider"></div>
+                                            </React.Fragment>
                                         ))
                                     )}
                                 </div>

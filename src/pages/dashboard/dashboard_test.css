@@ -395,20 +395,35 @@
     color: #9055e8;
 }
 
-/* CONTENT SEARCH BAR - Copied from Dashboard.css */
+/* CONTENT SEARCH BAR - Polished */
 .content-search-bar {
     background: white;
-    padding: 8px 20px;
-    border-radius: 8px;
-    /* Pill shape */
+    padding: 10px 24px;
+    border-radius: 30px;
+    /* Fully rounded pill shape */
     display: flex;
     align-items: center;
-    width: 200px;
-    /* Or fitting width */
+    width: 240px;
     margin-top: 25px;
     margin-left: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    /* card-shadow var replacement */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    /* Softer shadow */
+    border: 1px solid #f0f0f0;
+    /* Subtle border */
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* Smooth easing */
+    position: relative;
+    overflow: hidden;
+}
+
+.content-search-bar:focus-within {
+    width: 380px;
+    /* Expand wider on focus */
+    box-shadow: 0 8px 25px rgba(142, 68, 211, 0.15);
+    /* Purple glow */
+    border-color: rgba(142, 68, 211, 0.4);
+    transform: translateY(-2px);
+    /* Slight lift */
 }
 
 .search-input-large {
@@ -418,48 +433,55 @@
     width: 100%;
     font-size: 15px;
     color: #333;
+    transition: width 0.3s ease;
 }
 
 .search-input-large::placeholder {
-    color: #444;
+    color: transparent;
+    /* Actual placeholder is handled by animated text */
 }
 
 .search-icon-large {
     cursor: pointer;
-    color: #444;
+    color: #888;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.content-search-bar:focus-within .search-icon-large,
+.search-icon-large:hover {
+    color: #8E44D3;
+    /* Primary purple */
+    transform: scale(1.1);
 }
 
 /* Scrolling placeholder */
 .search-scroll-placeholder {
     position: absolute;
     top: 50%;
-    left: 20px;
+    left: 0;
+    display: flex;
     transform: translateY(-50%);
     font-size: 15px;
     color: #999;
     white-space: nowrap;
     pointer-events: none;
     z-index: 0;
-    animation: scrollPlaceholder 6s linear infinite;
+    animation: scrollPlaceholderLTR 12s linear infinite;
+    opacity: 0.8;
 }
 
-@keyframes scrollPlaceholder {
+.search-text-item {
+    margin-right: 35px;
+    /* Space separating the loops */
+}
+
+@keyframes scrollPlaceholderLTR {
     0% {
-        transform: translateY(-50%) translateX(100%);
-        opacity: 0;
-    }
-
-    10% {
-        opacity: 1;
-    }
-
-    90% {
-        opacity: 1;
+        transform: translateY(-50%) translateX(-50%);
     }
 
     100% {
-        transform: translateY(-50%) translateX(-100%);
-        opacity: 0;
+        transform: translateY(-50%) translateX(0%);
     }
 }
 

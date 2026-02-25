@@ -158,6 +158,11 @@ const DashboardTest = () => {
         vacancies: parseInt(item.vacancies || 0) - parseInt(item.intakes || 0)
     }));
 
+    // Extract dynamic logo URL
+    const adminLogoUrl = data.school_setting?.admin_logo && data.school_setting?.base_url
+        ? `${data.school_setting.base_url}uploads/school_content/admin_logo/${data.school_setting.admin_logo}`
+        : "";
+
 
     const pendingTasks = [
         { id: 1, title: 'Review student applications' },
@@ -279,6 +284,7 @@ const DashboardTest = () => {
                     loading={loading}
                     toggleSidebar={toggleSidebar}
                     isSidebarOpen={isSidebarOpen}
+                    headerLogoUrl={adminLogoUrl}
                 />
 
                 <Sidebar
@@ -339,9 +345,14 @@ const DashboardTest = () => {
                                     {/* Search Bar (Desktop) - Added as requested */}
                                     <div className="content-search-bar hide-mobile" style={{ position: 'relative', overflow: 'hidden' }}>
                                         {!searchQuery && (
-                                            <span className="search-scroll-placeholder">
-                                                Search students by name
-                                            </span>
+                                            <div className="search-scroll-placeholder">
+                                                <span className="search-text-item">Search students by name</span>
+                                                <span className="search-text-item">Search students by name</span>
+                                                <span className="search-text-item">Search students by name</span>
+                                                <span className="search-text-item">Search students by name</span>
+                                                <span className="search-text-item">Search students by name</span>
+                                                <span className="search-text-item">Search students by name</span>
+                                            </div>
                                         )}
                                         <input
                                             type="text"

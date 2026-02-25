@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import DashboardTest from './pages/dashboard/dashboard_test';
 
 import LoginPage from './pages/auth/LoginPage';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import AppUsers from './App_users';
 import SettingsMenu from './components/SettingsMenu';
 
 import GeneralSettings from './pages/settings/general_settings_options/GeneralSettings';
@@ -233,6 +235,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+
+            {/* ----------------Delegate user routes to the AppUsers sub-router. USER-->App_users.jsx-------------- */}
+            <Route path="/user/*" element={<AppUsers />} />
+
             <Route
               path="/dashboard"
               element={
