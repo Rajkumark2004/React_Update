@@ -84,6 +84,7 @@ const Sidebar = ({
         { id: 1, icon: 'helpdesk.png', label: 'Dashboard', url: '/user/dashboard' },
         { id: 2, icon: 'certificate.png', label: 'Gallery', url: '/user/content/list' },
         { id: 3, icon: 'student.png', label: 'My Profile', url: '/user/profile' },
+        { id: 15, icon: 'attendance.png', label: 'Attendance', url: '/user/attendance' },
         { id: 4, icon: 'Fees.png', label: 'Fees', url: '/user/getfees' },
         { id: 5, icon: 'messages.png', label: 'Circular', url: '/user/notification' },
         { id: 6, icon: 'homework.png', label: 'Student Assessment', url: '#' },
@@ -95,7 +96,6 @@ const Sidebar = ({
         { id: 12, icon: 'applyleave.png', label: 'Apply Leave', url: '#' },
         { id: 13, icon: 'visitorbook.png', label: 'Visitor Book', url: '#' },
         { id: 14, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
-        { id: 15, icon: 'attendance.png', label: 'Attendance', url: '#' },
         { id: 16, icon: 'helpdesk.png', label: 'State Examination', url: '#' },
         { id: 17, icon: 'messages.png', label: 'Notice Board', url: '#' },
         { id: 18, icon: 'teachersrating.png', label: 'Teachers Reviews', url: '#' },
@@ -112,8 +112,8 @@ const Sidebar = ({
     // Default mobile nav items
     const defaultMobileNavItems = [
         { id: 1, icon: 'sis.png', label: 'SIS', url: '#' },
-        { id: 2, icon: 'Fees.png', label: 'Fees', url: '#' },
-        { id: 3, icon: 'attendance.png', label: 'Attendance', url: '#' },
+        { id: 2, icon: 'Fees.png', label: 'Fees', url: '/user/getfees' },
+        { id: 3, icon: 'attendance.png', label: 'Attendance', url: '/user/attendance' },
         { id: 4, icon: 'settings.png', label: 'More', url: '#', isMore: true },
         { id: 5, icon: 'logout', label: 'Logout', url: '#', isLogout: true }
     ];

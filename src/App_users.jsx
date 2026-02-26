@@ -4,6 +4,8 @@ import UserLoginPage from './pages/users/auth_user/LoginPage';
 import UserDashboard from './pages/users/UserDashboard';
 import UserProfile from './pages/users/UserProfile';
 import ForgotPassword from './pages/users/auth_user/ForgotPassword';
+import GetFees from './pages/users/GetFees';
+import AttendanceUser from './pages/users/attendance_user';
 
 // A separate ProtectedRoute for users
 function UserProtectedRoute({ children }) {
@@ -40,6 +42,26 @@ export default function AppUsers() {
                 element={
                     <UserProtectedRoute>
                         <UserProfile />
+                    </UserProtectedRoute>
+                }
+            />
+
+            {/* User Fees: /user/getfees */}
+            <Route
+                path="getfees"
+                element={
+                    <UserProtectedRoute>
+                        <GetFees />
+                    </UserProtectedRoute>
+                }
+            />
+
+            {/* User Attendance: /user/attendance */}
+            <Route
+                path="attendance"
+                element={
+                    <UserProtectedRoute>
+                        <AttendanceUser />
                     </UserProtectedRoute>
                 }
             />

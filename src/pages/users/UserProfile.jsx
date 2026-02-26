@@ -68,19 +68,167 @@ const Profile = () => {
         fetchProfileData();
     }, []);
 
-
+    const parseAmountDetail = (detailStr) => {
+        let paid = 0;
+        let mode = '';
+        let date = '';
+        let discount = 0;
+        let fine = 0;
+        let paymentId = '';
+        try {
+            if (detailStr && detailStr !== "0" && typeof detailStr === 'string') {
+                const details = JSON.parse(detailStr);
+                Object.values(details).forEach((entry) => {
+                    paid += parseFloat(entry.amount || 0);
+                    discount += parseFloat(entry.amount_discount || 0);
+                    fine += parseFloat(entry.amount_fine || 0);
+                    mode = mode ? `${mode}, ${entry.payment_mode}` : entry.payment_mode;
+                    date = date ? `${date}, ${entry.date}` : entry.date;
+                    paymentId = paymentId ? `${paymentId}, ${entry.inv_no}` : (entry.inv_no || '');
+                });
+            }
+        } catch (e) {
+            console.error('Error parsing fee details', e);
+        }
+        return {
+            paid: paid.toFixed(2),
+            mode,
+            date,
+            discount: discount.toFixed(2),
+            fine: fine.toFixed(2),
+            paymentId
+        };
+    };
 
     const themeColor = "#9c68e4";
 
     const studentObj = profileData?.student || {};
+    const feesData = profileData?.student_due_fee || [];
+    const attendanceTypes = profileData?.attendance_types || [];
+    const timelineData = profileData?.timeline || [];
+    const documentsData = profileData?.student_docs || [];
+    const behaviouralNotes = profileData?.behavioural_notes || [];
+
+    // Calculate Grand Totals for Fees
+    let grandTotalAmount = 0;
+    let grandTotalPaid = 0;
+    let grandTotalDiscount = 0;
+    let grandTotalFine = 0;
+    let grandTotalBalance = 0;
+
+    feesData.forEach(group => {
+        if (group.fees && group.fees.length > 0) {
+            group.fees.forEach(fee => {
+                const amt = parseFloat(fee.amount || 0);
+                const { paid, discount, fine } = parseAmountDetail(fee.amount_detail);
+                const feePaid = parseFloat(paid);
+                const feeDiscount = parseFloat(discount);
+                const feeFine = parseFloat(fine);
+
+                grandTotalAmount += amt;
+                grandTotalPaid += feePaid;
+                grandTotalDiscount += feeDiscount;
+                grandTotalFine += feeFine;
+                grandTotalBalance += (amt + feeFine - feeDiscount - feePaid);
+            });
+        }
+    });
+
+    const attendanceData = profileData?.student_attendance || [];
+    let totalPresent = 0;
+    let totalLate = 0;
+    let totalAbsent = 0;
+    let totalHalfDay = 0;
+    let totalHoliday = 0;
+
+    attendanceData.forEach(att => {
+        if (att.type === 'Present') totalPresent++;
+        if (att.type === 'Late') totalLate++;
+        if (att.type === 'Absent') totalAbsent++;
+        if (att.type === 'Half Day') totalHalfDay++;
+        if (att.type === 'Holiday') totalHoliday++;
+    });
 
     return (
         <div className="wrapper">
             <style>{`
-                /* Hide search bars, default nav icons, and sessionul */
-                .search-form, .search-form2, .sessionul, 
+                /* Hide standard search and session UI */
+                .sessionul, .search-form2, .search-form {
+                    display: none !important;
+                }
+
+                /* NAVBAR USER MENU DROPDOWN FIX */
+                .navbar-custom-menu {
+                   overflow: visible !important;
+                }
+                .navbar-custom-menu .nav {
+                   overflow: visible !important;
+                }
                 .navbar-custom-menu .nav > li:not(.user-menu) {
                     display: none !important;
+                }
+                .navbar-custom-menu .nav > li.user-menu {
+                    display: block !important;
+                    overflow: visible !important;
+                }
+                
+                /* Ensure dropdown menu is on top of everything */
+                .dropdown-user {
+                    display: none;
+                    z-index: 9999 !important;
+                    position: absolute !important;
+                    right: 0 !important;
+                    top: 100% !important;
+                }
+                .user-menu.open .dropdown-user {
+                    display: block !important;
+                }
+
+                /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
+                .content-wrapper, .main-footer {
+                    margin-left: 80px !important;
+                }
+
+                .sidebar {
+                    height: calc(100vh - 50px) !important;
+                    overflow-y: auto !important;
+                    overflow-x: hidden !important;
+                    padding-bottom: 20px !important;
+                }
+
+                .sidebar::-webkit-scrollbar {
+                    width: 5px;
+                }
+                .sidebar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .sidebar::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 10px;
+                }
+
+                .sidebar-menu > li > a {
+                    padding: 12px 5px !important;
+                    text-align: center !important;
+                }
+                
+                .sidebar-menu li img {
+                    filter: brightness(0) invert(1) !important;
+                    width: 24px !important;
+                    margin: 0 auto !important;
+                }
+
+                .sidebar-menu > li > a span {
+                    color: #ffffff !important;
+                    font-weight: 500 !important;
+                    margin-top: 5px !important;
+                    display: block !important;
+                    font-size: 10px !important;
+                    line-height: 1.2 !important;
+                }
+
+                .sidebar-menu > li:hover > a, .sidebar-menu > li.active > a {
+                    background: rgba(255, 255, 255, 0.1) !important;
                 }
 
                 /* Notice Bar */
@@ -148,6 +296,7 @@ const Profile = () => {
                 .status-paid { background: #5cb85c; }
                 .sub-row { background: #ffffff !important; font-size: 11px; }
                 .grand-total-row { background: #eee !important; font-weight: bold; }
+                .status-warning { background: #f0ad4e; }
 
                 @media (max-width: 991px) {
                     .main-sidebar { width: 0 !important; }
@@ -324,27 +473,27 @@ const Profile = () => {
                                             <div className="attendance-cards">
                                                 <div className="attendance-card">
                                                     <span className="label">Total Present</span>
-                                                    <span className="count">1</span>
+                                                    <span className="count">{totalPresent}</span>
                                                     <i className="fa fa-check-square status-icon"></i>
                                                 </div>
                                                 <div className="attendance-card">
                                                     <span className="label">Total Late</span>
-                                                    <span className="count">1</span>
+                                                    <span className="count">{totalLate}</span>
                                                     <i className="fa fa-check-square status-icon"></i>
                                                 </div>
                                                 <div className="attendance-card">
                                                     <span className="label">Total Absent</span>
-                                                    <span className="count">1</span>
+                                                    <span className="count">{totalAbsent}</span>
                                                     <i className="fa fa-check-square status-icon"></i>
                                                 </div>
                                                 <div className="attendance-card">
                                                     <span className="label">Total Half Day</span>
-                                                    <span className="count">0</span>
+                                                    <span className="count">{totalHalfDay}</span>
                                                     <i className="fa fa-check-square status-icon"></i>
                                                 </div>
                                                 <div className="attendance-card" style={{ gridColumn: '1 / 2' }}>
                                                     <span className="label">Total Holiday</span>
-                                                    <span className="count">0</span>
+                                                    <span className="count">{totalHoliday}</span>
                                                     <i className="fa fa-check-square status-icon"></i>
                                                 </div>
                                             </div>
@@ -367,7 +516,7 @@ const Profile = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {Array.from({ length: 15 }, (_, i) => i + 1).map(day => (
+                                                        {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
                                                             <tr key={day}>
                                                                 <td style={{ fontWeight: 'bold' }}>{day}</td>
                                                                 {Array.from({ length: 12 }).map((_, mi) => <td key={mi}></td>)}
@@ -399,77 +548,171 @@ const Profile = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr className="fees-summary-row">
-                                                        <td>NURSERY (TEST)</td>
-                                                        <td>TEST</td>
-                                                        <td></td>
-                                                        <td><span className="status-badge status-unpaid">Unpaid</span></td>
-                                                        <td>150,000.00</td>
-                                                        <td></td><td></td><td></td><td>0.00</td><td>0.00</td><td>0.00</td><td>150,000.00</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>NURSERY (TEST)</td>
-                                                        <td>TEST</td>
-                                                        <td></td>
-                                                        <td><span className="status-badge status-paid">Paid</span></td>
-                                                        <td>1.00</td>
-                                                        <td></td><td></td><td></td><td>0.00</td><td>0.00</td><td>1.00</td><td>0.00</td>
-                                                    </tr>
-                                                    <tr className="sub-row">
-                                                        <td colSpan="4"></td>
-                                                        <td style={{ textAlign: 'right' }}><i className="fa fa-level-up fa-rotate-90"></i> 251/1</td>
-                                                        <td></td>
-                                                        <td>Cash</td>
-                                                        <td>23/02/2026</td>
-                                                        <td>0.00</td><td>0.00</td><td>1.00</td><td></td>
-                                                    </tr>
-                                                    <tr className="fees-summary-row">
-                                                        <td>NURSERY (July)</td>
-                                                        <td>JLTF</td>
-                                                        <td></td>
-                                                        <td><span className="status-badge status-unpaid">Unpaid</span></td>
-                                                        <td>15,000.00</td>
-                                                        <td></td><td></td><td></td><td>0.00</td><td>0.00</td><td>0.00</td><td>15,000.00</td>
-                                                    </tr>
-                                                    {['AUG', 'OCT', 'SEP', 'NOV', 'DEC'].map((m) => (
-                                                        <tr key={m} className="fees-summary-row">
-                                                            <td>NURSERY ({m})</td>
-                                                            <td>{m}F</td>
-                                                            <td>10/10/2024</td>
-                                                            <td><span className="status-badge status-unpaid">Unpaid</span></td>
-                                                            <td>1,500.00 + 0.00</td>
-                                                            <td></td><td></td><td></td><td>0.00</td><td>0.00</td><td>0.00</td><td>1,500.00</td>
+                                                    {feesData.length > 0 ? (
+                                                        feesData.map((group, gIdx) => (
+                                                            <React.Fragment key={gIdx}>
+                                                                {group.fees && group.fees.length > 0 ? (
+                                                                    group.fees.map((fee, fIdx) => {
+                                                                        const amt = parseFloat(fee.amount || 0);
+                                                                        const { paid, mode, date, discount, fine, paymentId } = parseAmountDetail(fee.amount_detail);
+
+                                                                        const paidAmt = parseFloat(paid);
+                                                                        const disAmt = parseFloat(discount);
+                                                                        const fineAmt = parseFloat(fine);
+                                                                        const balance = amt + fineAmt - disAmt - paidAmt;
+
+                                                                        const isPaid = balance <= 0 && paidAmt > 0;
+                                                                        const isPartial = balance > 0 && paidAmt > 0;
+                                                                        const isUnpaid = paidAmt === 0;
+
+                                                                        let statusText = "Unpaid";
+                                                                        let statusClass = "status-unpaid";
+                                                                        if (isPaid) {
+                                                                            statusText = "Paid";
+                                                                            statusClass = "status-paid";
+                                                                        } else if (isPartial) {
+                                                                            statusText = "Partial";
+                                                                            statusClass = "status-warning";
+                                                                        }
+
+                                                                        return (
+                                                                            <tr key={`${gIdx}-${fIdx}`} className="fees-summary-row" style={{ background: isPaid ? '#fff' : '#fde8e8' }}>
+                                                                                <td>{group.name} ({fee.type})</td>
+                                                                                <td>{fee.code}</td>
+                                                                                <td>{fee.due_date && fee.due_date !== '0000-00-00' ? fee.due_date : ''}</td>
+                                                                                <td><span className={`status-badge ${statusClass}`}>{statusText}</span></td>
+                                                                                <td>{amt.toFixed(2)}</td>
+                                                                                <td>{paymentId}</td>
+                                                                                <td>{mode}</td>
+                                                                                <td>{date}</td>
+                                                                                <td>{discount}</td>
+                                                                                <td>{fine}</td>
+                                                                                <td>{paid}</td>
+                                                                                <td>{balance.toFixed(2)}</td>
+                                                                            </tr>
+                                                                        );
+                                                                    })
+                                                                ) : null}
+                                                            </React.Fragment>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="12" style={{ textAlign: 'center', padding: '20px' }}>
+                                                                No Fees Record Found
+                                                            </td>
                                                         </tr>
-                                                    ))}
-                                                    <tr className="grand-total-row">
-                                                        <td colSpan="4" style={{ textAlign: 'right' }}>Grand Total</td>
-                                                        <td>₹337,151.00+0.00</td>
-                                                        <td colSpan="3"></td>
-                                                        <td>₹0.00</td>
-                                                        <td>₹0.00</td>
-                                                        <td>₹501.00</td>
-                                                        <td>₹336,650.00</td>
-                                                    </tr>
+                                                    )}
+                                                    {feesData.length > 0 && (
+                                                        <tr className="grand-total-row">
+                                                            <td colSpan="4" style={{ textAlign: 'right' }}>Grand Total</td>
+                                                            <td>₹{grandTotalAmount.toFixed(2)}</td>
+                                                            <td colSpan="3"></td>
+                                                            <td>₹{grandTotalDiscount.toFixed(2)}</td>
+                                                            <td>₹{grandTotalFine.toFixed(2)}</td>
+                                                            <td>₹{grandTotalPaid.toFixed(2)}</td>
+                                                            <td>₹{grandTotalBalance.toFixed(2)}</td>
+                                                        </tr>
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>
                                     )}
 
-                                    {(activeTab === 'documents' || activeTab === 'behavioural' || activeTab === 'timeline') && (
-                                        <div style={{ paddingBottom: '10px', paddingTop: '10px' }}>
-                                            <div
-                                                className="no-record-box"
-                                                style={activeTab === 'documents' ? { background: '#ffd1cc', border: '1px solid #ebccd1', color: '#a94442' } : {}}
-                                            >
-                                                No Record Found
-                                            </div>
+                                    {activeTab === 'documents' && (
+                                        <div className="documents-section" style={{ padding: '15px' }}>
+                                            {documentsData.length > 0 ? (
+                                                <table className="table table-bordered table-striped data-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Title</th>
+                                                            <th>File Name</th>
+                                                            <th style={{ textAlign: 'right' }}>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {documentsData.map((doc, idx) => (
+                                                            <tr key={idx}>
+                                                                <td>{doc.title}</td>
+                                                                <td>{doc.doc}</td>
+                                                                <td style={{ textAlign: 'right' }}>
+                                                                    {doc.file_url ? (
+                                                                        <a href={doc.file_url} target="_blank" rel="noreferrer" className="btn btn-default btn-xs" title="Download">
+                                                                            <i className="fa fa-download"></i> Download
+                                                                        </a>
+                                                                    ) : '-'}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div className="no-record-box" style={{ background: '#ffd1cc', border: '1px solid #ebccd1', color: '#a94442' }}>
+                                                    No Record Found
+                                                </div>
+                                            )}
                                         </div>
                                     )}
-                                    {/* {(activeTab === 'fees' || activeTab === 'attendance') && (
-                                        <div style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
-                                            Content for {activeTab} section...
+
+                                    {activeTab === 'behavioural' && (
+                                        <div className="behavioural-section" style={{ padding: '15px' }}>
+                                            {behaviouralNotes.length > 0 ? (
+                                                <table className="table table-bordered table-striped data-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Title</th>
+                                                            <th>Description</th>
+                                                            <th>Date</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {behaviouralNotes.map((note, idx) => (
+                                                            <tr key={idx}>
+                                                                <td>{note.title}</td>
+                                                                <td>{note.description}</td>
+                                                                <td>{note.created_at}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div className="no-record-box">
+                                                    No Record Found
+                                                </div>
+                                            )}
                                         </div>
-                                    )} */}
+                                    )}
+
+                                    {activeTab === 'timeline' && (
+                                        <div className="timeline-section" style={{ padding: '15px' }}>
+                                            {timelineData.length > 0 ? (
+                                                <div className="timeline" style={{ padding: '10px' }}>
+                                                    {timelineData.map((item, index) => (
+                                                        <div key={index} className="timeline-item" style={{ borderLeft: '2px solid #3c8dbc', paddingLeft: '15px', position: 'relative', marginBottom: '20px' }}>
+                                                            <div style={{ position: 'absolute', left: '-6px', top: '0', bottom: '0', width: '10px', height: '10px', background: '#3c8dbc', borderRadius: '50%' }}></div>
+                                                            <div style={{ fontSize: '12px', color: '#999', marginBottom: '5px' }}>
+                                                                <i className="fa fa-clock-o"></i> {item.timeline_date || item.date}
+                                                            </div>
+                                                            <h3 style={{ fontSize: '15px', marginTop: '0', color: '#333' }}>{item.title}</h3>
+                                                            <div style={{ fontSize: '13px', color: '#666', marginTop: '10px' }}>
+                                                                {item.description}
+                                                            </div>
+                                                            {item.document && (
+                                                                <div style={{ marginTop: '10px' }}>
+                                                                    <a href={`${studentObj.base_url || ''}uploads/student_timeline/${item.document}`} target="_blank" rel="noreferrer" className="btn btn-default btn-xs">
+                                                                        <i className="fa fa-download"></i> Download Document
+                                                                    </a>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="no-record-box">
+                                                    No Record Found
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
