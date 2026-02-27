@@ -183,9 +183,14 @@ const StudentEdit = () => {
                         child_id: data.child_id || '',
                         class_of_admission: data.class_of_admission || '',
 
-                        // Transport & Hostel
+                        // Transport
                         vehroute_id: data.vehroute_id || '',
+                        route_id: data.route_id || '',
+                        vehicle_id: data.vehicle_id || '',
                         route_pickup_point_id: data.route_pickup_point_id || '',
+                        transport_fees: data.transport_fees || '',
+
+                        // Hostel
                         hostel_id: data.hostel_id || '',
                         hostel_room_id: data.hostel_room_id || '',
                     }));
@@ -296,17 +301,7 @@ const StudentEdit = () => {
                     } else if (Array.isArray(formData[key])) {
                         formData[key].forEach(val => dataToSend.append(`${key}[]`, val));
                     } else {
-                        // Handle date formatting if needed, typically API expects YYYY-MM-DD which inputs provide
-                        // But if API expects DD/MM/YYYY, convert here. 
-                        // Previous code converted it, let's keep that pattern if API strictly needs DD/MM/YYYY
-                        if ((key === 'dob' || key === 'admission_date' || key === 'measurement_date') && formData[key]) {
-                            const dateVal = formData[key];
-                            if (dateVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                                const [year, month, day] = dateVal.split('-');
-                                dataToSend.append(key, `${day}/${month}/${year}`);
-                                return;
-                            }
-                        }
+                        // Mapping dates directly without conversion since API expects YYYY-MM-DD now
 
                         // Map back specific fields if needed
                         if (key === 'national_identification_no') {
@@ -845,6 +840,124 @@ const StudentEdit = () => {
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    {/* Transport & Hostel Details */}
+                                                    <h4 className="pagetitleh2">Transport Details</h4>
+                                                    <div className="row">
+                                                        <div className="col-md-4">
+                                                            <div className="form-group">
+                                                                <label>Route List</label>
+                                                                <select className="form-control" name="vehroute_id" value={formData.vehroute_id || formData.route_list} onChange={handleInputChange}>
+                                                                    <option value="">Select</option>
+                                                                    <optgroup label="Route A">
+                                                                        <option value="VH001">Vehicle 1 (VH001)</option>
+                                                                        <option value="VH002">Vehicle 2 (VH002)</option>
+                                                                    </optgroup>
+                                                                    <optgroup label="Route B">
+                                                                        <option value="VH003">Vehicle 3 (VH003)</option>
+                                                                    </optgroup>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group">
+                                                                <label>Pickup Point</label>
+                                                                <select className="form-control" name="route_pickup_point_id" value={formData.route_pickup_point_id || formData.pickup_point} onChange={handleInputChange}>
+                                                                    <option value="">Select</option>
+                                                                    <option value="Point A">Point A</option>
+                                                                    <option value="Point B">Point B</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group">
+                                                                <label>Fees Month</label>
+                                                                <select className="form-control" name="fees_month" value={formData.fees_month} onChange={handleInputChange} multiple={true}>
+                                                                    <option value="January">January</option>
+                                                                    <option value="February">February</option>
+                                                                    <option value="March">March</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <h4 className="pagetitleh2">Hostel Details</h4>
+                                                    <div className="row">
+                                                        <div className="col-md-6">
+                                                            <div className="form-group">
+                                                                <label>Hostel</label>
+                                                                <select className="form-control" name="hostel_id" value={formData.hostel_id || formData.hostel} onChange={handleInputChange}>
+                                                                    <option value="">Select</option>
+                                                                    <option value="Hostel A">Hostel A</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-6">
+                                                            <div className="form-group">
+                                                                <label>Room No</label>
+                                                                <select className="form-control" name="hostel_room_id" value={formData.hostel_room_id || formData.room_no} onChange={handleInputChange}>
+                                                                    <option value="">Select</option>
+                                                                    <option value="101">101 (AC)</option>
+                                                                    <option value="102">102 (Non-AC)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Upload Documents Details */}
+                                                    <h4 className="pagetitleh2">Upload Documents</h4>
+                                                    <div className="row">
+                                                        <div className="col-md-3">
+                                                            <div className="form-group">
+                                                                <label>Title</label>
+                                                                <input type="text" className="form-control" name="first_title" value={formData.first_title} onChange={handleInputChange} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-3">
+                                                            <div className="form-group">
+                                                                <label>Documents</label>
+                                                                <input className="dropify" type="file" name="first_doc" onChange={handleInputChange} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-3">
+                                                            <div className="form-group">
+                                                                <label>Title</label>
+                                                                <input type="text" className="form-control" name="second_title" value={formData.second_title} onChange={handleInputChange} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-3">
+                                                            <div className="form-group">
+                                                                <label>Documents</label>
+                                                                <input className="dropify" type="file" name="second_doc" onChange={handleInputChange} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="row">
+                                                        <div className="col-md-3">
+                                                            <div className="form-group">
+                                                                <label>Title</label>
+                                                                <input type="text" className="form-control" name="third_title" value={formData.third_title} onChange={handleInputChange} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-3">
+                                                            <div className="form-group">
+                                                                <label>Documents</label>
+                                                                <input className="dropify" type="file" name="third_doc" onChange={handleInputChange} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-3">
+                                                            <div className="form-group">
+                                                                <label>Title</label>
+                                                                <input type="text" className="form-control" name="fourth_title" value={formData.fourth_title} onChange={handleInputChange} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-3">
+                                                            <div className="form-group">
+                                                                <label>Documents</label>
+                                                                <input className="dropify" type="file" name="fourth_doc" onChange={handleInputChange} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -859,7 +972,7 @@ const StudentEdit = () => {
                 </section>
             </div>
             <Footer />
-            {isSiblingModalOpen && <SiblingModal onClose={() => setIsSiblingModalOpen(false)} onAddSibling={handleAddSibling} />}
+            {isSiblingModalOpen && <SiblingModal isOpen={isSiblingModalOpen} onClose={() => setIsSiblingModalOpen(false)} onAddSibling={handleAddSibling} />}
         </div>
     );
 };

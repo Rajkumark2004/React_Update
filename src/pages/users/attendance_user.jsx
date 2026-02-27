@@ -84,29 +84,7 @@ const AttendanceUser = () => {
         });
     };
 
-    // Get attendance status color
-    const getAttendanceColor = (record) => {
-        if (!record) return null;
-        const status = (record.status || record.attendence_type || record.type || '').toString().toLowerCase();
-        if (status === 'present' || status === '1' || status === 'p') return '#4CAF50'; // Green
-        if (status === 'absent' || status === '0' || status === 'a') return '#f44336'; // Red
-        if (status === 'late' || status === '2' || status === 'l') return '#FF9800'; // Orange
-        if (status === 'half day' || status === 'halfday' || status === '3' || status === 'h') return '#2196F3'; // Blue
-        if (status === 'holiday' || status === '4') return '#9C27B0'; // Purple
-        return '#9e9e9e'; // Grey for unknown
-    };
 
-    // Get attendance status label
-    const getAttendanceLabel = (record) => {
-        if (!record) return '';
-        const status = (record.status || record.attendence_type || record.type || '').toString().toLowerCase();
-        if (status === 'present' || status === '1' || status === 'p') return 'Present';
-        if (status === 'absent' || status === '0' || status === 'a') return 'Absent';
-        if (status === 'late' || status === '2' || status === 'l') return 'Late';
-        if (status === 'half day' || status === 'halfday' || status === '3' || status === 'h') return 'Half Day';
-        if (status === 'holiday' || status === '4') return 'Holiday';
-        return record.status || record.attendence_type || '';
-    };
 
     // ========== Navigation ==========
     const handlePrev = () => {
@@ -395,26 +373,15 @@ const AttendanceUser = () => {
                         </div>
                     )}
 
-                    {/* Legend */}
-                    <div className="row" style={{ marginBottom: '15px' }}>
-                        <div className="col-md-12">
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', fontSize: '12px' }}>
-                                <span><span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#4CAF50', marginRight: '5px' }}></span> Present</span>
-                                <span><span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#f44336', marginRight: '5px' }}></span> Absent</span>
-                                <span><span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#FF9800', marginRight: '5px' }}></span> Late</span>
-                                <span><span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#2196F3', marginRight: '5px' }}></span> Half Day</span>
-                                <span><span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '2px', backgroundColor: '#9C27B0', marginRight: '5px' }}></span> Holiday</span>
-                            </div>
-                        </div>
-                    </div>
+
 
                     <div className="row">
                         <div className="col-md-12 col-sm-12">
                             <div className="box box-primary">
                                 <div className="box-body" style={{ padding: 0 }}>
                                     {/* Toolbar */}
-                                    <div className="cal-toolbar">
-                                        <div className="cal-nav-btns">
+                                    <div className="cal-toolbar" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', padding: '15px 10px' }}>
+                                        <div className="cal-nav-btns" style={{ position: 'absolute', left: '10px' }}>
                                             <button className="btn btn-sm" onClick={handlePrev}>
                                                 <i className="fa fa-chevron-left"></i>
                                             </button>
@@ -423,15 +390,9 @@ const AttendanceUser = () => {
                                             </button>
                                             <button className="btn btn-sm" onClick={handleToday}>Today</button>
                                         </div>
-                                        <h3 className="cal-title">
+                                        <h3 className="cal-title" style={{ margin: 0, textAlign: 'center' }}>
                                             {`${MONTH_LABELS[month]} ${year}`}
                                         </h3>
-                                        <div className="cal-view-btns btn-group">
-                                            <button className={`btn btn-sm ${attendanceView === 'daily' || attendanceView === 'month' ? '' : ''} active`}
-                                                style={{ cursor: 'default' }}>
-                                                <i className="fa fa-calendar"></i> Calendar View
-                                            </button>
-                                        </div>
                                     </div>
 
                                     {/* Loading State */}

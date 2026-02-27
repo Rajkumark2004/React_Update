@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -114,12 +115,12 @@ const VehicleRoute = () => {
         e.preventDefault();
 
         if (!selectedRoute) {
-            alert('The Route field is required.');
+            toast.error('The Route field is required.');
             return;
         }
 
         if (selectedVehicles.length === 0) {
-            alert('At least one vehicle must be selected.');
+            toast.error('At least one vehicle must be selected.');
             return;
         }
 
@@ -145,9 +146,9 @@ const VehicleRoute = () => {
             }
 
             if (response.status === 'success' || response.status === true) {
-                alert(response.message || 'Record Saved Successfully');
+                toast.success(response.message || 'Record Saved Successfully');
                 if (isEditMode) {
-                    // Wait for alert to be dismissed (if browser sync) or just navigate
+                    // Wait for toast to be dismissed (if browser sync) or just navigate
                     // Better to refetch list IF staying on same page, but we navigate
                     navigate('/admin/vehroute');
                 } else {
@@ -155,11 +156,11 @@ const VehicleRoute = () => {
                     resetForm();
                 }
             } else {
-                alert(response.message || 'Failed to save record');
+                toast.error(response.message || 'Failed to save record');
             }
         } catch (error) {
             console.error('Error saving vehicle route:', error);
-            alert('An error occurred while saving the record');
+            toast.error('An error occurred while saving the record');
         }
     };
 
@@ -168,14 +169,14 @@ const VehicleRoute = () => {
             try {
                 const response = await api.deleteAssignVehicleRouteList(deleteId);
                 if (response.status === 'success' || response.status === true) {
-                    alert(response.message || 'Record Deleted Successfully');
+                    toast.success(response.message || 'Record Deleted Successfully');
                     fetchData(); // Refresh list
                 } else {
-                    alert(response.message || 'Failed to delete record');
+                    toast.error(response.message || 'Failed to delete record');
                 }
             } catch (error) {
                 console.error('Error deleting vehicle route:', error);
-                alert('An error occurred while deleting the record');
+                toast.error('An error occurred while deleting the record');
             }
         }
     };
@@ -198,7 +199,7 @@ const VehicleRoute = () => {
         <div className="wrapper">
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '17px' }}>
+            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-credit-card"></i> Transport

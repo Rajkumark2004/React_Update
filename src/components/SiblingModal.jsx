@@ -9,35 +9,65 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
     });
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
+    const [students, setStudents] = useState([]);
 
-    // Fetch classes and sections when modal opens
+    // Fetch classes when modal opens
     useEffect(() => {
         if (isOpen) {
             const fetchDropdownData = async () => {
                 try {
-                    const classesRes = await api.getClasses();
-                    if (classesRes && classesRes.status && classesRes.data) {
-                        // Classes are in data.class_sections
-                        if (classesRes.data.class_sections && Array.isArray(classesRes.data.class_sections)) {
-                            setClasses(classesRes.data.class_sections);
-                        }
+                    const response = await api.getStudentCreatePreData();
+                    if (response && response.status === 'success' && response.data && Array.isArray(response.data.classlist)) {
+                        setClasses(response.data.classlist);
                     }
                 } catch (err) {
                     console.warn('Failed to fetch classes:', err);
-                }
-
-                try {
-                    const sectionsRes = await api.getSections();
-                    if (sectionsRes && sectionsRes.status && sectionsRes.data) {
-                        setSections(sectionsRes.data);
-                    }
-                } catch (err) {
-                    console.warn('Failed to fetch sections:', err);
                 }
             };
             fetchDropdownData();
         }
     }, [isOpen]);
+
+    const handleClassChange = async (e) => {
+        const value = e.target.value;
+        setSearchParams(prev => ({ ...prev, class_id: value, section_id: '' }));
+        setSections([]);
+
+        if (value) {
+            try {
+                const response = await api.getSectionsByClass(value);
+                if (response && response.data) {
+                    setSections(response.data);
+                } else if (response && Array.isArray(response)) {
+                    setSections(response);
+                }
+            } catch (error) {
+                console.error('Error fetching sections by class:', error);
+            }
+        }
+    };
+
+    const handleSectionChange = async (e) => {
+        const value = e.target.value;
+        setSearchParams(prev => ({ ...prev, section_id: value, student_id: '' }));
+        setStudents([]);
+
+        if (value) {
+            try {
+                const response = await api.getStudentsByClassSection(value);
+                if (response && response.data && response.data.student_list) {
+                    setStudents(response.data.student_list);
+                } else if (response && response.data && Array.isArray(response.data)) {
+                    setStudents(response.data);
+                } else {
+                    setStudents([]);
+                }
+            } catch (error) {
+                console.error('Error fetching students by class section:', error);
+                setStudents([]);
+            }
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -62,7 +92,7 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
                                 <div className="col-md-4">
                                     <div className="form-group">
                                         <label>Class</label>
-                                        <select className="form-control" value={searchParams.class_id} onChange={(e) => setSearchParams({ ...searchParams, class_id: e.target.value })}>
+                                        <select className="form-control" value={searchParams.class_id} onChange={handleClassChange}>
                                             <option value="">Select</option>
                                             {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.class}</option>)}
                                         </select>
@@ -71,9 +101,9 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
                                 <div className="col-md-4">
                                     <div className="form-group">
                                         <label>Section</label>
-                                        <select className="form-control" value={searchParams.section_id} onChange={(e) => setSearchParams({ ...searchParams, section_id: e.target.value })}>
+                                        <select className="form-control" value={searchParams.section_id} onChange={handleSectionChange}>
                                             <option value="">Select</option>
-                                            {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.section}</option>)}
+                                            {sections.map(sec => <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>)}
                                         </select>
                                     </div>
                                 </div>
@@ -82,8 +112,11 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
                                         <label>Student</label>
                                         <select className="form-control" value={searchParams.student_id} onChange={(e) => setSearchParams({ ...searchParams, student_id: e.target.value })}>
                                             <option value="">Select</option>
-                                            <option value="1">John Doe</option>
-                                            <option value="2">Jane Smith</option>
+                                            {students.map(student => (
+                                                <option key={student.id} value={student.id}>
+                                                    {student.firstname} {student.lastname}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>

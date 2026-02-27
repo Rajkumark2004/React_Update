@@ -288,8 +288,80 @@ const StudentAdmission = () => {
             // Scroll to top
             window.scrollTo(0, 0);
 
-            // Optional: Reset form or redirect
-            // setFormData(initialState); 
+            // Reset form
+            setFormData({
+                admission_no: '',
+                roll_no: '',
+                class_id: '',
+                section_id: '',
+                firstname: '',
+                middlename: '',
+                lastname: '',
+                gender: '',
+                dob: '',
+                category_id: '',
+                religion: '',
+                cast: '',
+                mobileno: '',
+                email: '',
+                admission_date: '',
+                student_photo: null,
+                blood_group: '',
+                house: '',
+                height: '',
+                weight: '',
+                measurement_date: '',
+                class_of_admission: '',
+                father_name: '',
+                father_phone: '',
+                father_occupation: '',
+                father_pic: null,
+                mother_name: '',
+                mother_phone: '',
+                mother_occupation: '',
+                mother_pic: null,
+                guardian_is: 'father',
+                guardian_name: '',
+                guardian_relation: '',
+                guardian_phone: '',
+                guardian_occupation: '',
+                guardian_email: '',
+                guardian_address: '',
+                guardian_pic: null,
+                current_address: '',
+                permanent_address: '',
+                bank_account_no: '',
+                bank_name: '',
+                ifsc_code: '',
+                national_identification_no: '',
+                local_identification_no: '',
+                rte: 'No',
+                previous_school: '',
+                note: '',
+                route_list: '',
+                pickup_point: '',
+                fees_month: [],
+                hostel: '',
+                room_no: '',
+                child_id: '',
+                first_title: '', first_doc: null,
+                second_title: '', second_doc: null,
+                third_title: '', third_doc: null,
+                fourth_title: '', fourth_doc: null
+            });
+            setAutofillCurrent(false);
+            setAutofillPermanent(false);
+            const $ = window.jQuery;
+            if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                const dropifyElements = $('.dropify');
+                dropifyElements.each(function () {
+                    const dropify = $(this).data('dropify');
+                    if (dropify) {
+                        dropify.resetPreview();
+                        dropify.clearElement();
+                    }
+                });
+            }
 
         } catch (error) {
             console.error('Submission Error:', error);
@@ -346,17 +418,10 @@ const StudentAdmission = () => {
                                                     {createdStudent && (
                                                         <div style={{ marginTop: '10px' }}>
                                                             <p>
+                                                                <strong>Name:</strong> {createdStudent.firstname} {createdStudent.lastname}
+                                                            </p>
+                                                            <p>
                                                                 <strong>Admission No:</strong> {createdStudent.admission_no}
-                                                            </p>
-                                                            <p>
-                                                                <strong>Student Login:</strong>{' '}
-                                                                {createdStudent.login_credentials?.student?.username} /{' '}
-                                                                {createdStudent.login_credentials?.student?.password}
-                                                            </p>
-                                                            <p>
-                                                                <strong>Parent Login:</strong>{' '}
-                                                                {createdStudent.login_credentials?.parent?.username} /{' '}
-                                                                {createdStudent.login_credentials?.parent?.password}
                                                             </p>
                                                         </div>
                                                     )}

@@ -69,7 +69,7 @@ const StudentDiaryList = () => {
                 setInitialLoading(true);
                 const response = await api.getClasses();
                 if (response && response.status === 'success' && response.classsectionlist) {
-                    setClasses(response.classsectionlist);
+                    setClasses([...response.classsectionlist].reverse());
                 }
             } catch (error) {
                 console.error("Failed to fetch classes", error);

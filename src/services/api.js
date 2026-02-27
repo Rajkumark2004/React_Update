@@ -6107,7 +6107,7 @@ export const api = {
     getCBSETemplates: async (classId = null, sectionId = null) => {
         try {
             let options = { method: 'GET' };
-            let url = appendSessionToUrl(`${API_BASE}/cbseexam/Template/index`);
+            let url = `${API_BASE}/cbseexam/Template/index`; // Removed appendSessionToUrl
 
             if (classId && sectionId) {
                 const formData = new FormData();
@@ -6119,7 +6119,6 @@ export const api = {
                     method: 'POST',
                     body: formData
                 };
-                url = `${API_BASE}/cbseexam/Template/index`; // session_id is in formData
             }
 
             const response = await fetch(url, options);

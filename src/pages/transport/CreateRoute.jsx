@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import '../../utils/include_files.js';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
@@ -92,7 +93,7 @@ const CreateRoute = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.route_title.trim()) {
-            alert('Route Title is required');
+            toast.error('Route Title is required');
             return;
         }
 
@@ -100,31 +101,31 @@ const CreateRoute = () => {
             try {
                 const response = await api.updateRoute(editId, { route_title: formData.route_title });
                 if (response.status === 'success' || response.status === true) {
-                    alert('Record Updated Successfully');
+                    toast.success('Record Updated Successfully');
                     fetchRoutes(); // Refresh the list
                     setFormData({ route_title: '' });
                     setIsEditing(false);
                     setEditId(null);
                 } else {
-                    alert(response.message || 'Failed to update route');
+                    toast.error(response.message || 'Failed to update route');
                 }
             } catch (error) {
                 console.error('Error updating route:', error);
-                alert('An error occurred while updating route');
+                toast.error('An error occurred while updating route');
             }
         } else {
             try {
                 const response = await api.createRoute({ route_title: formData.route_title });
                 if (response.status === 'success' || response.status === true) {
-                    alert('Record Saved Successfully');
+                    toast.success('Record Saved Successfully');
                     fetchRoutes(); // Refresh the list
                     setFormData({ route_title: '' });
                 } else {
-                    alert(response.message || 'Failed to create route');
+                    toast.error(response.message || 'Failed to create route');
                 }
             } catch (error) {
                 console.error('Error creating route:', error);
-                alert('An error occurred while creating route');
+                toast.error('An error occurred while creating route');
             }
         }
     };
@@ -137,11 +138,11 @@ const CreateRoute = () => {
                 setIsEditing(true);
                 setEditId(route.id);
             } else {
-                alert('Failed to fetch route details');
+                toast.error('Failed to fetch route details');
             }
         } catch (error) {
             console.error('Error fetching route details:', error);
-            alert('An error occurred while fetching route details');
+            toast.error('An error occurred while fetching route details');
         }
     };
 
@@ -150,14 +151,14 @@ const CreateRoute = () => {
             try {
                 const response = await api.deleteRoute(id);
                 if (response.status === 'success' || response.status === true) {
-                    alert('Record Deleted Successfully');
+                    toast.success('Record Deleted Successfully');
                     fetchRoutes(); // Refresh the list
                 } else {
-                    alert(response.message || 'Failed to delete route');
+                    toast.error(response.message || 'Failed to delete route');
                 }
             } catch (error) {
                 console.error('Error deleting route:', error);
-                alert('An error occurred while deleting route');
+                toast.error('An error occurred while deleting route');
             }
         }
     };
@@ -188,7 +189,7 @@ const CreateRoute = () => {
                     <h1><i className="fa fa-bus"></i> Transport</h1>
                 </section>
                 <section className="content">
-                    <div className="row" style={{ marginTop: '20px' }}>
+                    <div className="row" style={{ marginTop: '0px' }}>
                         {/* Sub-Sidebar */}
                         <div className="col-md-2">
                             <div className="box border0">

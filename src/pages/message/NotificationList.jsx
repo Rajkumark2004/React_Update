@@ -86,7 +86,7 @@ const NotificationList = () => {
         <div className="wrapper">
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '16px' }}>
+            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-bullhorn"></i> Communicate
@@ -94,7 +94,7 @@ const NotificationList = () => {
                 </section>
                 <section className="content">
                     <div className="row">
-                        <div className="col-md-12" style={{ marginTop: '10px' }}>
+                        <div className="col-md-12" style={{ marginTop: '0px' }}>
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">

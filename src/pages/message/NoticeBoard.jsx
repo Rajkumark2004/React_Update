@@ -90,7 +90,7 @@ const NoticeBoard = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '946px', marginTop: '16px' }}>
+            <div className="content-wrapper" style={{ minHeight: '946px', marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-bullhorn"></i> Communicate <small>1.0.0</small>
@@ -98,7 +98,7 @@ const NoticeBoard = () => {
                 </section>
 
                 <section className="content">
-                    <div className="row mt-20">
+                    <div className="row" style={{ marginTop: '0px' }}>
                         {/* Left Sidebar (Submenu) */}
                         <div className="col-md-2 hide-mobile">
                             <div className="box border0">

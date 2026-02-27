@@ -28,43 +28,97 @@ const NotificationAddEdit = () => {
     const [sections, setSections] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Mock data initialization
+    // Initialize data
     useEffect(() => {
-        setClasses([
-            { id: 1, class: 'Nursery' },
-            { id: 2, class: 'L.K.G' },
-            { id: 3, class: 'U.K.G' },
-            { id: 4, class: 'Class 1' },
-            { id: 5, class: 'Class 2' }
-        ]);
+        const initializeData = async () => {
+            setLoading(true);
+            try {
+                // Fetch Classes
+                const classResponse = await api.getClasses();
+                if (classResponse && (classResponse.classsectionlist || classResponse.data)) {
+                    const classesData = classResponse.classsectionlist || classResponse.data || [];
+                    setClasses(Array.isArray(classesData) ? classesData : []);
+                }
 
-        if (isEditMode) {
-            // Mock fetching existing notification
-            setFormData({
-                title: 'Summer Vacation Start',
-                date: '2026-05-20',
-                publish_date: '2026-05-20',
-                class_id: '4',
-                section_id: '1',
-                message: 'The summer vacation will start from 1st June 2026. The school will reopen on 1st July 2026.',
-                file: null
-            });
-            setSections([{ id: 1, section: 'A' }, { id: 2, section: 'B' }]);
-        }
+                if (isEditMode) {
+                    // Extract role ID from user login response to fetch the notice board list
+                    const userStr = localStorage.getItem('user');
+                    let roleId = '7'; // Default
+                    if (userStr) {
+                        const user = JSON.parse(userStr);
+                        const roles = user.roles || {};
+                        const extractedRoleId = Object.values(roles)[0];
+                        if (extractedRoleId) roleId = extractedRoleId;
+                    }
+
+                    // Fetch the List and find the notification by ID
+                    const response = await api.getNoticeBoardList(roleId);
+                    if (response && response.status && response.data) {
+                        const list = response.data.notification_list || response.data.notificationlist || [];
+                        const notification = list.find(n => n.id === id);
+
+                        if (notification) {
+                            // Strip HTML tags if message contains <p> but we might be rendering raw, wait, we are using textarea, so basic clean up
+                            // or just assign as is if wait, 'message' textarea might show <p> tags. We'll assign directly as in response for now
+                            setFormData({
+                                title: notification.title || '',
+                                date: notification.date || new Date().toISOString().split('T')[0],
+                                publish_date: notification.publish_date || new Date().toISOString().split('T')[0],
+                                class_id: notification.class_id || '',
+                                section_id: notification.section_id || '',
+                                message: notification.message || '',
+                                file: null // We do not set the file object from an existing URL natively with <input type="file">
+                            });
+
+                            // Pre-fetch sections if class is set
+                            if (notification.class_id) {
+                                const sectionRes = await api.getSectionsByClass(notification.class_id);
+                                if (sectionRes && sectionRes.status === 'success' && sectionRes.data) {
+                                    setSections(sectionRes.data);
+                                } else if (Array.isArray(sectionRes)) {
+                                    setSections(sectionRes);
+                                } else if (sectionRes && sectionRes.sections) {
+                                    setSections(sectionRes.sections);
+                                } else {
+                                    setSections(sectionRes.data || []);
+                                }
+                            }
+                        } else {
+                            toast.error('Notification not found!');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+                toast.error('Failed to load edit information');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        initializeData();
     }, [id, isEditMode]);
 
-    const handleClassChange = (e) => {
+    const handleClassChange = async (e) => {
         const classId = e.target.value;
         setFormData({ ...formData, class_id: classId, section_id: '' });
-        // Mock fetching sections
+        setSections([]);
+
         if (classId) {
-            setSections([
-                { id: 1, section: 'A' },
-                { id: 2, section: 'B' },
-                { id: 3, section: 'C' }
-            ]);
-        } else {
-            setSections([]);
+            try {
+                const response = await api.getSectionsByClass(classId);
+                if (response && response.status === 'success' && response.data) {
+                    setSections(response.data);
+                } else if (Array.isArray(response)) {
+                    setSections(response);
+                } else if (response && response.sections) {
+                    setSections(response.sections);
+                } else {
+                    setSections(response.data || []);
+                }
+            } catch (error) {
+                console.error('Error fetching sections:', error);
+            }
         }
     };
 
@@ -111,7 +165,7 @@ const NotificationAddEdit = () => {
         <div className="wrapper">
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '16px' }}>
+            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '0px' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">
@@ -206,7 +260,7 @@ const NotificationAddEdit = () => {
                                                         >
                                                             <option value="">Select</option>
                                                             {sections.map(s => (
-                                                                <option key={s.id} value={s.id}>{s.section}</option>
+                                                                <option key={s.section_id || s.id} value={s.section_id || s.id}>{s.section}</option>
                                                             ))}
                                                         </select>
                                                     </div>

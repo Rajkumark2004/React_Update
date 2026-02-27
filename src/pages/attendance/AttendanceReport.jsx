@@ -65,7 +65,7 @@ const AttendanceReport = () => {
             if (response && (response.classsectionlist || response.data)) {
                 const classesData = response.classsectionlist || response.data || [];
                 if (Array.isArray(classesData)) {
-                    setClassList(classesData);
+                    setClassList([...classesData].reverse());
                 } else {
                     setClassList([]);
                 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import '../../utils/include_files.js';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
@@ -14,6 +15,8 @@ const VehicleList = () => {
     // State for mock data (replicating listVehicle)
     const [vehicles, setVehicles] = useState([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewVehicleData, setViewVehicleData] = useState(null);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
         vehicle_no: '',
@@ -26,6 +29,7 @@ const VehicleList = () => {
         driver_licence: '',
         driver_contact: '',
         vehicle_photo: null,
+        existing_photo: '',
         note: ''
     });
 
@@ -111,22 +115,25 @@ const VehicleList = () => {
         e.preventDefault();
         try {
             let response;
+            const submitData = { ...formData };
+            delete submitData.existing_photo;
+
             if (editingId) {
-                response = await api.updateVehicle(editingId, formData);
+                response = await api.updateVehicle(editingId, submitData);
             } else {
-                response = await api.addVehicle(formData);
+                response = await api.addVehicle(submitData);
             }
 
             if (response.status) {
-                alert(editingId ? 'Vehicle Updated Successfully' : 'Vehicle Added Successfully');
+                toast.success(editingId ? 'Vehicle Updated Successfully' : 'Vehicle Added Successfully');
                 handleCloseModal();
                 fetchVehicleList(); // Refresh list
             } else {
-                alert(response.message || 'Failed to save vehicle');
+                toast.error(response.message || 'Failed to save vehicle');
             }
         } catch (error) {
             console.error('Error saving vehicle:', error);
-            alert('Error saving vehicle');
+            toast.error('Error saving vehicle');
         }
     };
 
@@ -144,6 +151,7 @@ const VehicleList = () => {
             driver_licence: '',
             driver_contact: '',
             vehicle_photo: null,
+            existing_photo: '',
             note: ''
         });
     };
@@ -165,17 +173,33 @@ const VehicleList = () => {
                     driver_licence: data.driver_licence || '',
                     driver_contact: data.driver_contact || '',
                     vehicle_photo: null,
+                    existing_photo: data.vehicle_photo || '',
                     note: data.note || ''
                 });
                 setIsAddModalOpen(true);
             } else {
-                alert('Failed to fetch vehicle details');
+                toast.error('Failed to fetch vehicle details');
                 setEditingId(null);
             }
         } catch (error) {
             console.error('Error fetching vehicle details:', error);
-            alert('Error fetching vehicle details');
+            toast.error('Error fetching vehicle details');
             setEditingId(null);
+        }
+    };
+
+    const handleView = async (id) => {
+        try {
+            const response = await api.getVehicleDetails(id);
+            if (response && response.status && response.data) {
+                setViewVehicleData(response.data);
+                setIsViewModalOpen(true);
+            } else {
+                toast.error('Failed to fetch vehicle details');
+            }
+        } catch (error) {
+            console.error('Error fetching vehicle details:', error);
+            toast.error('Error fetching vehicle details');
         }
     };
 
@@ -184,14 +208,14 @@ const VehicleList = () => {
             try {
                 const response = await api.deleteVehicle(id);
                 if (response.status) {
-                    alert('Vehicle Deleted Successfully');
+                    toast.success('Vehicle Deleted Successfully');
                     fetchVehicleList();
                 } else {
-                    alert(response.message || 'Failed to delete vehicle');
+                    toast.error(response.message || 'Failed to delete vehicle');
                 }
             } catch (error) {
                 console.error('Error deleting vehicle:', error);
-                alert('Error deleting vehicle');
+                toast.error('Error deleting vehicle');
             }
         }
     };
@@ -214,7 +238,7 @@ const VehicleList = () => {
 
             <div className="content-wrapper">
                 <section className="content">
-                    <div className="row" style={{ marginTop: '20px' }}>
+                    <div className="row" style={{ marginTop: '0px' }}>
                         <div className="col-md-12">
                             <div className="box box-info">
                                 <div className="box-header ptbnull">
@@ -278,7 +302,7 @@ const VehicleList = () => {
                                                         <td className="mailbox-name"> {data.driver_licence}</td>
                                                         <td className="mailbox-name"> {data.driver_contact}</td>
                                                         <td className="mailbox-date pull-right no-print white-space-nowrap">
-                                                            <a className="btn btn-default btn-xs vehicledetails" data-toggle="tooltip" title="View"><i className="fa fa-reorder"></i></a>
+                                                            <a className="btn btn-default btn-xs vehicledetails" data-toggle="tooltip" title="View" onClick={() => handleView(data.id)}><i className="fa fa-reorder"></i></a>
                                                             <a className="btn btn-default btn-xs editvehicle" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data.id)}><i className="fa fa-pencil"></i></a>
                                                             <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete" onClick={() => handleDelete(data.id)}><i className="fa fa-remove"></i></a>
                                                         </td>
@@ -391,10 +415,64 @@ const VehicleList = () => {
                                                 </div>
 
                                                 <div className="row">
-                                                    <div className="col-sm-4">
+                                                    <div className="col-sm-12">
                                                         <div className="form-group">
-                                                            <label >Vehicle Photo</label>
-                                                            <input name="vehicle_photo" placeholder="" type="file" className="filestyle form-control" data-height="30" onChange={handleInputChange} />
+                                                            <label>Vehicle Photo</label>
+                                                            <div
+                                                                style={{
+                                                                    border: '2px dashed #d1d5db',
+                                                                    borderRadius: '8px',
+                                                                    padding: '20px',
+                                                                    textAlign: 'center',
+                                                                    backgroundColor: '#f9fafb',
+                                                                    cursor: 'pointer',
+                                                                    position: 'relative'
+                                                                }}
+                                                                onClick={() => document.getElementById('vehicle_photo_input').click()}
+                                                                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                                                onDrop={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                                                        handleInputChange({ target: { name: 'vehicle_photo', type: 'file', files: e.dataTransfer.files } });
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <input
+                                                                    id="vehicle_photo_input"
+                                                                    name="vehicle_photo"
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    style={{ display: 'none' }}
+                                                                    onChange={handleInputChange}
+                                                                />
+
+                                                                {formData.vehicle_photo ? (
+                                                                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                                        <img
+                                                                            src={URL.createObjectURL(formData.vehicle_photo)}
+                                                                            alt="Preview"
+                                                                            style={{ maxHeight: '150px', maxWidth: '100%', borderRadius: '4px' }}
+                                                                        />
+                                                                        <div style={{ marginTop: '10px', color: '#4f46e5', fontWeight: '500' }}>{formData.vehicle_photo.name}</div>
+                                                                    </div>
+                                                                ) : formData.existing_photo ? (
+                                                                    <div>
+                                                                        <img
+                                                                            src={formData.existing_photo.includes('http') ? formData.existing_photo : `https://newlayout.wisibles.com//uploads/vehicle_photo/${formData.existing_photo}?${new Date().getTime()}`}
+                                                                            alt="Current Photo"
+                                                                            style={{ maxHeight: '150px', maxWidth: '100%', borderRadius: '4px', marginBottom: '10px' }}
+                                                                        />
+                                                                        <div style={{ color: '#6b7280' }}>Click or drag a new image to replace</div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div style={{ padding: '20px 0' }}>
+                                                                        <i className="fa fa-cloud-upload" style={{ fontSize: '48px', color: '#9ca3af', marginBottom: '10px' }}></i>
+                                                                        <div style={{ color: '#4b5563', fontSize: '16px', fontWeight: '500' }}>Drop a file here or click to upload</div>
+                                                                        <div style={{ color: '#9ca3af', fontSize: '14px', marginTop: '5px' }}>Allowed formats: JPG, PNG, JPEG</div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                             <span className="text-danger"></span>
                                                         </div>
                                                     </div>
@@ -426,7 +504,69 @@ const VehicleList = () => {
                     <div className="modal-backdrop fade in"></div>
                 </>
             )}
-        </div>
+
+            {/* Modal for View Vehicle */}
+            {isViewModalOpen && viewVehicleData && (
+                <>
+                    <div className="modal fade in" role="dialog" style={{ display: 'block', paddingRight: '17px' }}>
+                        <div className="modal-dialog modal-lg" role="document">
+                            <div className="modal-content modal-media-content">
+                                <div className="modal-header modal-media-header">
+                                    <button type="button" className="close" onClick={() => setIsViewModalOpen(false)}>&times;</button>
+                                    <h4 className="box-title">Vehicle Details</h4>
+                                </div>
+                                <div className="modal-body pt0 pb0">
+                                    <div className="row" style={{ padding: '15px' }}>
+                                        <div className="col-md-3 col-sm-6" style={{ marginBottom: '15px' }}>
+                                            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Vehicle Photo</div>
+                                            <div style={{ border: '1px solid #e3e3e3', padding: '5px', borderRadius: '4px', textAlign: 'center', backgroundColor: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                                {viewVehicleData.vehicle_photo ? (
+                                                    <img
+                                                        src={viewVehicleData.vehicle_photo.includes('http') ? viewVehicleData.vehicle_photo : `https://newlayout.wisibles.com//uploads/vehicle_photo/${viewVehicleData.vehicle_photo}?${new Date().getTime()}`}
+                                                        alt="Vehicle"
+                                                        style={{ maxWidth: '100%', height: 'auto', maxHeight: '100px' }}
+                                                    />
+                                                ) : (
+                                                    <i className="fa fa-bus" style={{ fontSize: '60px', color: '#666', padding: '20px 0' }}></i>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="col-md-3 col-sm-6">
+                                            <div style={{ marginBottom: '8px' }}><b>Vehicle Number:</b> {viewVehicleData.vehicle_no || ''}</div>
+                                            <div style={{ marginBottom: '8px' }}><b>Registration Number:</b> {viewVehicleData.registration_number || ''}</div>
+                                            <div style={{ marginBottom: '8px' }}><b>Driver Name:</b> {viewVehicleData.driver_name || ''}</div>
+                                        </div>
+
+                                        <div className="col-md-3 col-sm-6">
+                                            <div style={{ marginBottom: '8px' }}><b>Vehicle Model:</b> {viewVehicleData.vehicle_model || ''}</div>
+                                            <div style={{ marginBottom: '8px' }}><b>Chassis Number:</b> {viewVehicleData.chasis_number || ''}</div>
+                                            <div style={{ marginBottom: '8px' }}><b>Driver License:</b> {viewVehicleData.driver_licence || ''}</div>
+                                        </div>
+
+                                        <div className="col-md-3 col-sm-6">
+                                            <div style={{ marginBottom: '8px' }}><b>Year Made:</b> {viewVehicleData.manufacture_year || ''}</div>
+                                            <div style={{ marginBottom: '8px' }}><b>Max Seating Capacity:</b> {viewVehicleData.max_seating_capacity || ''}</div>
+                                            <div style={{ marginBottom: '8px' }}><b>Driver Contact:</b> {viewVehicleData.driver_contact || ''}</div>
+                                        </div>
+                                    </div>
+                                    <div className="row" style={{ padding: '0 15px 15px 15px' }}>
+                                        <div className="col-md-12">
+                                            <div><b>Note:</b> {viewVehicleData.note || ''}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="box-footer">
+                                    <button type="button" className="btn btn-default pull-right" onClick={() => setIsViewModalOpen(false)}>Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade in"></div>
+                </>
+            )
+            }
+        </div >
     );
 };
 
