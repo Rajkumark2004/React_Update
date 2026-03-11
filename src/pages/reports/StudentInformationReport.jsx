@@ -7,12 +7,21 @@ import ReportsSidebar from '../../components/ReportsSidebar';
 import '../../styles/reports.css';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
 const StudentInformationReport = () => {
     const navigate = useNavigate();
     const [activeReport, setActiveReport] = useState('');
     const [subView, setSubView] = useState(null); // { type, data, title }
     const [searchTerm, setSearchTerm] = useState('');
+    const [visibleColumns, setVisibleColumns] = useState(new Set());
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const [errors, setErrors] = useState({});
+
+    // Modal Specific State
+    const [subSearchTerm, setSubSearchTerm] = useState('');
+    const [subVisibleColumns, setSubVisibleColumns] = useState(new Set());
+    const [showSubColumnsDropdown, setShowSubColumnsDropdown] = useState(false);
 
     const [studentData, setStudentData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,18 +29,25 @@ const StudentInformationReport = () => {
     const [sections, setSections] = useState([]);
 
     useEffect(() => {
-        const fetchReportStatus = async () => {
+        const fetchInitialData = async () => {
             try {
-                const response = await api.getStudentInformationReport();
-                if (response.status) {
-                    toast.success(response.message);
+                // Fetch report status (original logic)
+                const statusRes = await api.getStudentInformationReport();
+                if (statusRes.status) {
+                    toast.success(statusRes.message);
+                }
+
+                // Fetch classes once on mount for all reports
+                const classesRes = await api.getGuardianReport(); // Any report that returns classlist
+                if (classesRes.status && classesRes.data && classesRes.data.classlist) {
+                    setClasses(classesRes.data.classlist);
                 }
             } catch (error) {
-                console.error('Error checking report status:', error);
+                console.error('Error fetching initial data:', error);
             }
         };
 
-        fetchReportStatus();
+        fetchInitialData();
     }, []);
 
     useEffect(() => {
@@ -70,71 +86,14 @@ const StudentInformationReport = () => {
                     setLoading(false);
                 }
             } else if (activeReport === 'Guardian Report') {
-                try {
-                    setLoading(true);
-                    const response = await api.getGuardianReport();
-                    if (response.status && response.data && response.data.classlist) {
-                        setClasses(response.data.classlist);
-                        setStudentData([]); // Reset student data as this report requires filter selection first
-                        // toast.success('Guardian report configuration loaded');
-                    } else {
-                        toast.error(response.message || 'Failed to load guardian report configuration');
-                    }
-                } catch (error) {
-                    console.error('Error fetching guardian report:', error);
-                    toast.error('Error fetching guardian report');
-                } finally {
-                    setLoading(false);
-                }
+                setStudentData([]); // Data loaded via Search button
             } else if (activeReport === 'Student Login Credential') {
-                try {
-                    setLoading(true);
-                    const response = await api.getStudentLoginDetailReport();
-                    if (response.status && response.data && response.data.classlist) {
-                        setClasses(response.data.classlist);
-                        setStudentData([]);
-                    } else {
-                        toast.error(response.message || 'Failed to load login credential report configuration');
-                    }
-                } catch (error) {
-                    console.error('Error fetching login credential report:', error);
-                    toast.error('Error fetching login credential report');
-                } finally {
-                    setLoading(false);
-                }
+                setStudentData([]);
             } else if (activeReport === 'Parent Login Credential') {
-                try {
-                    setLoading(true);
-                    const response = await api.getParentLoginDetailReport();
-                    if (response.status && response.data && response.data.classlist) {
-                        setClasses(response.data.classlist);
-                        setStudentData([]);
-                    } else {
-                        toast.error(response.message || 'Failed to load parent login credential report configuration');
-                    }
-                } catch (error) {
-                    console.error('Error fetching parent login credential report:', error);
-                    toast.error('Error fetching parent login credential report');
-                } finally {
-                    setLoading(false);
-                }
+                setStudentData([]);
             } else if (activeReport === 'Sibling Report') {
-                try {
-                    setLoading(true);
-                    const response = await api.getSiblingReport();
-                    if (response.status && response.data && response.data.classlist) {
-                        setClasses(response.data.classlist);
-                        setStudentData([]);
-                    } else {
-                        toast.error(response.message || 'Failed to load sibling report configuration');
-                    }
-                } catch (error) {
-                    console.error('Error fetching sibling report:', error);
-                    toast.error('Error fetching sibling report');
-                } finally {
-                    setLoading(false);
-                }
-            } else if (activeReport === 'student_all_data_report') {
+                setStudentData([]);
+            } else if (activeReport === 'Student All Data Report') {
                 try {
                     setLoading(true);
                     const response = await api.getStudentAllDataReport();
@@ -183,7 +142,7 @@ const StudentInformationReport = () => {
 
     useEffect(() => {
         const fetchSections = async () => {
-            if ((activeReport === 'Guardian Report' || activeReport === 'Student Login Credential' || activeReport === 'Parent Login Credential' || activeReport === 'Sibling Report') && classId) {
+            if (currentConfig.filters.includes('section') && classId) {
                 try {
                     const response = await api.getSectionsByClass(classId);
                     if (response.status && response.data) {
@@ -205,15 +164,15 @@ const StudentInformationReport = () => {
 
     const sisReports = [
         ["Student Report", "Class & Section Report", "Guardian Report"],
-        ["Student History", "Student Login Credential", "Parent Login Credential"],
-        ["Class Subject Report", "Admission Report", "Sibling Report"],
-        ["Student Profile", "Student Gender Ratio Report", "Student Teacher Ratio Report"],
-        ["Online Admission Report", "student_all_data_report", "App Install Users Report"]
+        [/* "Student History", */ "Student Login Credential", "Parent Login Credential"],
+        [/* "Class Subject Report", "Admission Report", */ "Sibling Report"],
+        [/* "Student Profile", "Student Gender Ratio Report", "Student Teacher Ratio Report" */],
+        [/* "Online Admission Report", */ "Student All Data Report", "App Install Users Report"]
     ];
 
     const reportConfigs = {
         'Student Report': {
-            filters: [],
+            filters: ['class', 'section'],
             headers: ["SNO", "Class", "Roll No.", "Student Name", "Mobile Number", "Gender", "Admission No", "Admission Date", "Caste", "Aadhar Number", "Date of Birth", "Father Name", "Mother Name", "Current Address", "Child ID"]
         },
         'Class & Section Report': {
@@ -264,8 +223,8 @@ const StudentInformationReport = () => {
             filters: ['class', 'section', 'status'],
             headers: ["Reference No", "Admission No", "Student Name", "Class", "Mobile No", "Date of Birth", "Gender", "Form Status", "Payment Status", "Enrolled", "Amount"]
         },
-        'student_all_data_report': {
-            filters: [],
+        'Student All Data Report': {
+            filters: ['class', 'section'],
             headers: ["SNO", "Class", "Roll No.", "Student Name", "Mobile Number", "Gender", "Admission No", "Admission Date", "Category", "Religion", "Caste", "Blood Group", "Height", "Weight", "Aadhar Number", "Date of Birth", "Father Name", "Mother Name", "Guardian Name", "Current Address", "Child ID"]
         },
         'App Install Users Report': {
@@ -282,6 +241,12 @@ const StudentInformationReport = () => {
         return reportConfigs[activeReport] || { filters: ['class', 'section'], headers: ["SNO", "Name", "Details"] };
     }, [activeReport]);
 
+    // Sync visible columns when report changes
+    useEffect(() => {
+        setVisibleColumns(new Set(currentConfig.headers));
+        setShowColumnsDropdown(false);
+    }, [activeReport]);
+
 
 
 
@@ -291,7 +256,30 @@ const StudentInformationReport = () => {
 
     const filteredData = useMemo(() => {
         if (!studentData) return [];
-        return studentData.filter(row => {
+        // Sibling Report uses grouped data structure
+        if (activeReport === 'Sibling Report') {
+            if (!searchTerm) return studentData;
+            const searchStr = searchTerm.toLowerCase();
+            return studentData.filter(group => {
+                return group.some(student =>
+                    (student.firstname && student.firstname.toLowerCase().includes(searchStr)) ||
+                    (student.lastname && student.lastname.toLowerCase().includes(searchStr)) ||
+                    (student.father_name && student.father_name.toLowerCase().includes(searchStr)) ||
+                    (student.mother_name && student.mother_name.toLowerCase().includes(searchStr)) ||
+                    (student.guardian_name && student.guardian_name.toLowerCase().includes(searchStr)) ||
+                    (student.guardian_phone && student.guardian_phone.toLowerCase().includes(searchStr))
+                );
+            });
+        }
+        return studentData.filter((row) => {
+            // Filter by Class/Section if applicable and selected (client-side for all-data reports)
+            if (currentConfig.filters.includes('class') && classId && row.class_id && String(row.class_id) !== String(classId)) {
+                return false;
+            }
+            if (currentConfig.filters.includes('section') && sectionId && row.section_id && String(row.section_id) !== String(sectionId)) {
+                return false;
+            }
+
             const searchStr = searchTerm.toLowerCase();
             if (activeReport === 'Class & Section Report') {
                 return (
@@ -332,16 +320,6 @@ const StudentInformationReport = () => {
                     username.includes(searchStr)
                 );
             }
-            if (activeReport === 'Sibling Report') {
-                return (
-                    (row.firstname && row.firstname.toLowerCase().includes(searchStr)) ||
-                    (row.lastname && row.lastname.toLowerCase().includes(searchStr)) ||
-                    (row.father_name && row.father_name.toLowerCase().includes(searchStr)) ||
-                    (row.mother_name && row.mother_name.toLowerCase().includes(searchStr)) ||
-                    (row.guardian_name && row.guardian_name.toLowerCase().includes(searchStr)) ||
-                    (row.guardian_phone && row.guardian_phone.toLowerCase().includes(searchStr))
-                );
-            }
             return (
                 (row.firstname && row.firstname.toLowerCase().includes(searchStr)) ||
                 (row.lastname && row.lastname.toLowerCase().includes(searchStr)) ||
@@ -366,18 +344,238 @@ const StudentInformationReport = () => {
         setActiveReport(report);
         setSubView(null);
         setSearchTerm('');
+
+        // Clear all filter selections per user request
+        setClassId('');
+        setSectionId('');
+        setAdmissionDate('');
+        setSearchType('today');
+        setStatus('');
+        setAdmissionYear('');
+        setStudentData([]); // Also clear search results
+        setErrors({});
     };
+
+    // Export helpers
+    const getRowValue = (header, row, index) => {
+        const maps = {
+            'Student Report': {
+                'SNO': (r, i) => i + 1,
+                'Class': (r) => `${r.class} (${r.section})`,
+                'Roll No.': (r) => r.roll_no,
+                'Student Name': (r) => `${r.firstname} ${r.lastname}`,
+                'Mobile Number': (r) => r.mobileno,
+                'Gender': (r) => r.gender,
+                'Admission No': (r) => r.admission_no,
+                'Admission Date': (r) => r.admission_date,
+                'Caste': (r) => r.cast,
+                'Aadhar Number': (r) => r.adhar_no,
+                'Date of Birth': (r) => r.dob,
+                'Father Name': (r) => r.father_name,
+                'Mother Name': (r) => r.mother_name,
+                'Current Address': (r) => r.current_address,
+                'Child ID': (r) => r.child_id
+            },
+            'Student All Data Report': {
+                'SNO': (r, i) => i + 1,
+                'Class': (r) => `${r.class} (${r.section})`,
+                'Roll No.': (r) => r.roll_no,
+                'Student Name': (r) => `${r.firstname} ${r.lastname}`,
+                'Mobile Number': (r) => r.mobileno,
+                'Gender': (r) => r.gender,
+                'Admission No': (r) => r.admission_no,
+                'Admission Date': (r) => r.admission_date,
+                'Category': (r) => r.category || r.category_id,
+                'Religion': (r) => r.religion,
+                'Caste': (r) => r.cast,
+                'Blood Group': (r) => r.blood_group,
+                'Height': (r) => r.height,
+                'Weight': (r) => r.weight,
+                'Aadhar Number': (r) => r.adhar_no,
+                'Date of Birth': (r) => r.dob,
+                'Father Name': (r) => r.father_name,
+                'Mother Name': (r) => r.mother_name,
+                'Guardian Name': (r) => r.guardian_name,
+                'Current Address': (r) => r.current_address,
+                'Child ID': (r) => r.child_id
+            },
+            'Guardian Report': {
+                'Class (Section)': (r) => `${r.class} (${r.section})`,
+                'Admission No': (r) => r.admission_no,
+                'Student Name': (r) => `${r.firstname} ${r.lastname}`,
+                'Mobile Number': (r) => r.mobileno,
+                'Guardian Name': (r) => r.guardian_name,
+                'Guardian Relation': (r) => r.guardian_relation,
+                'Guardian Phone': (r) => r.guardian_phone,
+                'Father Name': (r) => r.father_name,
+                'Father Phone': (r) => r.father_phone,
+                'Mother Name': (r) => r.mother_name,
+                'Mother Phone': (r) => r.mother_phone
+            },
+            'Student Login Credential': {
+                'Admission No': (r) => r[0],
+                'Student Name': (r) => r[1]?.name,
+                'Username': (r) => r[2],
+                'Password': (r) => r[3]
+            },
+            'Parent Login Credential': {
+                'Admission No': (r) => r[0],
+                'Student Name': (r) => {
+                    let name = r[1] ? String(r[1]) : '';
+                    const match = name.match(/>([^<]+)</);
+                    return match ? match[1] : name;
+                },
+                'Parent Username': (r) => r[2],
+                'Parent Password': (r) => r[3]
+            },
+            'Sibling Report': {
+                'Father Name': (r) => r.father_name,
+                'Mother Name': (r) => r.mother_name,
+                'Guardian Name': (r) => r.guardian_name,
+                'Guardian Phone': (r) => r.guardian_phone,
+                'Student Name (Sibling)': (r) => `${r.firstname} ${r.lastname}`,
+                'Class': (r) => `${r.class} (${r.section})`,
+                'Admission Date': (r) => r.admission_date,
+                'Gender': (r) => r.gender
+            },
+            'App Install Users Report': {
+                'Student Name': (r) => `${r.firstname} ${r.lastname}`,
+                'Class(Section)': (r) => `${r.class} (${r.section})`,
+                'Admission No': (r) => r.admission_no,
+                'Father Name': (r) => r.father_name || r.guardian_name || '-',
+                'Mobile No': (r) => r.mobileno || r.guardian_phone || '-',
+                'Role': (r) => r.role,
+                'Date': (r) => r.created_date
+            },
+            'Class & Section Report': {
+                'S.No': (r, i) => i + 1,
+                'Class (Section)': (r) => `${r.class} (${r.section})`,
+                'Students': (r) => r.student_count
+            },
+            'Student Profile': {
+                'Roll Number': (r) => r.roll_no,
+                'Class': (r) => r.class,
+                'Section': (r) => r.section,
+                'First Name': (r) => r.firstname,
+                'Last Name': (r) => r.lastname,
+                'Gender': (r) => r.gender,
+                'Date of Birth': (r) => r.dob,
+                'Category': (r) => r.category || r.category_id,
+                'Religion': (r) => r.religion,
+                'Caste': (r) => r.cast,
+                'Mobile Number': (r) => r.mobileno,
+                'Email': (r) => r.email,
+                'Admission Date': (r) => r.admission_date,
+                'Blood Group': (r) => r.blood_group,
+                'House': (r) => r.house_name || '-',
+                'Height': (r) => r.height,
+                'Weight': (r) => r.weight,
+                'Measurement Date': (r) => r.measurement_date,
+                'Fees Discount': (r) => r.fees_discount,
+                'Father Name': (r) => r.father_name,
+                'Father Phone': (r) => r.father_phone,
+                'Father Occupation': (r) => r.father_occupation,
+                'Mother Name': (r) => r.mother_name,
+                'Mother Phone': (r) => r.mother_phone,
+                'Mother Occupation': (r) => r.mother_occupation,
+                'If Guardian Is': (r) => r.guardian_is,
+                'Guardian Name': (r) => r.guardian_name,
+                'Guardian Relation': (r) => r.guardian_relation,
+                'Guardian Phone': (r) => r.guardian_phone,
+                'Guardian Occupation': (r) => r.guardian_occupation,
+                'Guardian Email': (r) => r.guardian_email,
+                'Guardian Address': (r) => r.guardian_address,
+                'Current Address': (r) => r.current_address,
+                'Permanent Address': (r) => r.permanent_address,
+                'Route List': (r) => r.route_list || '-',
+                'Hostel Details': (r) => r.hostel_name || '-',
+                'Room No.': (r) => r.room_no,
+                'Bank Account Number': (r) => r.bank_account_no,
+                'Bank Name': (r) => r.bank_name,
+                'IFSC Code': (r) => r.ifsc_code,
+                'National Identification Number': (r) => r.adhar_no,
+                'Local Identification Number': (r) => r.samagra_id,
+                'RTE': (r) => r.rte,
+                'Previous School Details': (r) => r.previous_school,
+                'Note': (r) => r.note
+            }
+        };
+
+        const reportMap = maps[activeReport];
+        if (reportMap && reportMap[header]) {
+            return reportMap[header](row, index);
+        }
+        return row[header] || '-';
+    };
+
+    const getVisibleHeaders = () => currentConfig.headers.filter(h => visibleColumns.has(h));
+    const getExportRows = () => {
+        if (activeReport === 'Sibling Report') {
+            // Flatten grouped sibling data for export
+            const rows = [];
+            filteredData.forEach(group => {
+                group.forEach(student => {
+                    rows.push(getVisibleHeaders().map(h => String(getRowValue(h, student, 0) ?? '')));
+                });
+            });
+            return rows;
+        }
+        return filteredData.map((row, index) => getVisibleHeaders().map(h => String(getRowValue(h, row, index) ?? '')));
+    };
+    const handleCopy = () => copyToClipboard(getVisibleHeaders(), getExportRows());
+    const handleExcel = () => downloadExcel(getVisibleHeaders(), getExportRows(), `${activeReport}.xls`);
+    const handleCSV = () => downloadCSV(getVisibleHeaders(), getExportRows(), `${activeReport}.csv`);
+    const handlePDF = () => downloadPDF(getVisibleHeaders(), getExportRows(), `${activeReport}.pdf`, activeReport);
+    const handlePrint = () => printTable(getVisibleHeaders(), getExportRows(), activeReport);
+    const toggleColumn = (h) => setVisibleColumns(prev => { const n = new Set(prev); n.has(h) ? n.delete(h) : n.add(h); return n; });
+
+    // Modal Export Helpers
+    const getSubVisibleHeaders = () => studentListConfig.headers.filter(h => subVisibleColumns.has(h));
+    const filteredModalData = useMemo(() => {
+        if (!subView || !subView.data) return [];
+        const searchStr = subSearchTerm.toLowerCase();
+        return subView.data.filter(row =>
+            String(row.admission_no || '').toLowerCase().includes(searchStr) ||
+            String(row.firstname || '').toLowerCase().includes(searchStr) ||
+            String(row.lastname || '').toLowerCase().includes(searchStr) ||
+            String(row.father_name || '').toLowerCase().includes(searchStr) ||
+            String(row.mobileno || '').toLowerCase().includes(searchStr)
+        );
+    }, [subView, subSearchTerm]);
+
+    const getSubExportRows = () => filteredModalData.map(row => {
+        const rowData = {
+            "Admission No": row.admission_no,
+            "Student Name": `${row.firstname} ${row.lastname}`,
+            "Class": `${row.class} (${row.section})`,
+            "Father Name": row.father_name,
+            "Date of Birth": row.dob,
+            "Gender": row.gender,
+            "Category": row.category,
+            "Mobile Number": row.mobileno
+        };
+        return getSubVisibleHeaders().map(h => String(rowData[h] ?? ''));
+    });
+
+    const handleSubCopy = () => copyToClipboard(getSubVisibleHeaders(), getSubExportRows());
+    const handleSubExcel = () => downloadExcel(getSubVisibleHeaders(), getSubExportRows(), `${subView?.title}.xls`);
+    const handleSubCSV = () => downloadCSV(getSubVisibleHeaders(), getSubExportRows(), `${subView?.title}.csv`);
+    const handleSubPDF = () => downloadPDF(getSubVisibleHeaders(), getSubExportRows(), `${subView?.title}.pdf`, subView?.title);
+    const handleSubPrint = () => printTable(getSubVisibleHeaders(), getSubExportRows(), subView?.title);
+    const toggleSubColumn = (h) => setSubVisibleColumns(prev => { const n = new Set(prev); n.has(h) ? n.delete(h) : n.add(h); return n; });
 
     const handleViewStudentList = async (class_section_id, className, sectionName) => {
         try {
             setLoading(true);
-            const response = await api.getStudentsByClassSection(class_section_id);
+            const response = await api.getStudentByClassSectionNew(class_section_id);
             if (response.status && response.data && response.data.student_list) {
                 setSubView({
                     type: 'student_list',
                     data: response.data.student_list,
                     title: `Student List - ${className} (${sectionName})`
                 });
+                setSubVisibleColumns(new Set(studentListConfig.headers));
+                setSubSearchTerm('');
             } else {
                 toast.error(response.message || 'Failed to load student list');
             }
@@ -411,10 +609,22 @@ const StudentInformationReport = () => {
     };
 
     const handleSearch = async () => {
-        if (!classId && currentConfig.filters.includes('class')) {
-            toast.error('Please select a class');
+        const newErrors = {};
+        if (currentConfig.filters.includes('class') && !classId) {
+            newErrors.class = 'Please select a class';
+        }
+        if (currentConfig.filters.includes('section') && !sectionId) {
+            newErrors.section = 'section is required';
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            // Optionally keep toasts for backward compatibility with current style
+            if (newErrors.class) toast.error(newErrors.class);
+            if (newErrors.section) toast.error(newErrors.section);
             return;
         }
+        setErrors({});
 
         if (activeReport === 'Guardian Report') {
             try {
@@ -500,9 +710,9 @@ const StudentInformationReport = () => {
                 };
                 const response = await api.searchSiblingReport(payload);
                 if (response.status && response.data && response.data.resultlist) {
-                    // Flatten the grouped resultlist
-                    const flatList = Object.values(response.data.resultlist).flat();
-                    setStudentData(flatList);
+                    // Keep only parent groups with 2+ children (actual siblings)
+                    const grouped = Object.values(response.data.resultlist).filter(group => group.length >= 2);
+                    setStudentData(grouped);
                 } else {
                     toast.error(response.message || 'No siblings found');
                     setStudentData([]);
@@ -544,7 +754,7 @@ const StudentInformationReport = () => {
                         <td>{row.child_id}</td>
                     </>
                 );
-            case 'student_all_data_report':
+            case 'Student All Data Report':
                 return (
                     <>
                         <td>{index + 1}</td>
@@ -555,7 +765,7 @@ const StudentInformationReport = () => {
                         <td>{row.gender}</td>
                         <td>{row.admission_no}</td>
                         <td>{row.admission_date}</td>
-                        <td>{row.category_id}</td>
+                        <td>{row.category}</td>
                         <td>{row.religion}</td>
                         <td>{row.cast}</td>
                         <td>{row.blood_group}</td>
@@ -624,18 +834,8 @@ const StudentInformationReport = () => {
                     </>
                 );
             case 'Sibling Report':
-                return (
-                    <>
-                        <td>{row.father_name}</td>
-                        <td>{row.mother_name}</td>
-                        <td>{row.guardian_name}</td>
-                        <td>{row.guardian_phone}</td>
-                        <td>{row.firstname} {row.lastname}</td>
-                        <td>{row.class} ({row.section})</td>
-                        <td>{row.admission_date}</td>
-                        <td>{row.gender}</td>
-                    </>
-                );
+                // Sibling report uses grouped rendering, handled separately in the table body
+                return null;
             case 'Class Subject Report':
                 return <><td>{index + 1}</td><td>{row.class}</td><td>-</td><td>-</td><td>-</td><td>-</td></>;
             case 'Student Gender Ratio Report':
@@ -890,13 +1090,14 @@ const StudentInformationReport = () => {
                                                                     ))}
                                                                     {classes.length === 0 && <option value="1">Class 1</option>}
                                                                 </select>
+                                                                {errors.class && <span className="text-danger" style={{ fontSize: '11px', display: 'block', marginTop: '2px' }}>{errors.class}</span>}
                                                             </div>
                                                         </div>
                                                     )}
                                                     {currentConfig.filters.includes('section') && (
                                                         <div className="col-md-3">
                                                             <div className="form-group">
-                                                                <label>Section</label>
+                                                                <label>Section <span className="req">*</span></label>
                                                                 <select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
                                                                     <option value="">Select</option>
                                                                     {sections.map((sec) => (
@@ -904,6 +1105,7 @@ const StudentInformationReport = () => {
                                                                     ))}
                                                                     {sections.length === 0 && <option value="1">Section A</option>}
                                                                 </select>
+                                                                {errors.section && <span className="text-danger" style={{ fontSize: '11px', display: 'block', marginTop: '2px' }}>{errors.section}</span>}
                                                             </div>
                                                         </div>
                                                     )}
@@ -935,13 +1137,25 @@ const StudentInformationReport = () => {
                                         <div className="dt-search">
                                             <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                                         </div>
-                                        <div className="dt-buttons">
-                                            <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
-                                            <button className="dt-button" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                            <button className="dt-button" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                            <button className="dt-button" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                            <button className="dt-button" title="Print"><i className="fa fa-print"></i></button>
-                                            <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
+                                        <div className="dt-buttons" style={{ position: 'relative' }}>
+                                            <button className="dt-button" title="Copy" onClick={handleCopy}><i className="fa fa-copy"></i></button>
+                                            <button className="dt-button" title="Excel" onClick={handleExcel}><i className="fa fa-file-excel-o"></i></button>
+                                            <button className="dt-button" title="CSV" onClick={handleCSV}><i className="fa fa-file-text-o"></i></button>
+                                            <button className="dt-button" title="PDF" onClick={handlePDF}><i className="fa fa-file-pdf-o"></i></button>
+                                            <button className="dt-button" title="Print" onClick={handlePrint}><i className="fa fa-print"></i></button>
+                                            <button className="dt-button" title="Columns" onClick={() => setShowColumnsDropdown(v => !v)}>
+                                                <i className="fa fa-columns"></i>
+                                            </button>
+                                            {showColumnsDropdown && (
+                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '200px', maxHeight: '300px', overflowY: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                    {currentConfig.headers.map(h => (
+                                                        <label key={h} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                            <input type="checkbox" checked={visibleColumns.has(h)} onChange={() => toggleColumn(h)} style={{ marginRight: '6px' }} />
+                                                            {h}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -957,6 +1171,35 @@ const StudentInformationReport = () => {
                                             <tbody>
                                                 {loading ? (
                                                     <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>Loading...</td></tr>
+                                                ) : activeReport === 'Sibling Report' ? (
+                                                    <>
+                                                        {filteredData.map((group, gIdx) => {
+                                                            const firstStudent = group[0];
+                                                            return (
+                                                                <React.Fragment key={gIdx}>
+                                                                    {/* Parent info header row */}
+                                                                    <tr style={{ backgroundColor: '#f5f5f5', borderTop: '2px solid #ddd' }}>
+                                                                        <td><strong>{firstStudent.father_name || '-'}</strong></td>
+                                                                        <td><strong>{firstStudent.mother_name || '-'}</strong></td>
+                                                                        <td><strong>{firstStudent.guardian_name || '-'}</strong></td>
+                                                                        <td><strong>{firstStudent.guardian_phone || '-'}</strong></td>
+                                                                        <td colSpan="4"></td>
+                                                                    </tr>
+                                                                    {/* Individual student rows */}
+                                                                    {group.map((student, sIdx) => (
+                                                                        <tr key={`${gIdx}-${sIdx}`}>
+                                                                            <td colSpan="4"></td>
+                                                                            <td>{student.firstname} {student.lastname || ''}</td>
+                                                                            <td>{student.class} ({student.section})</td>
+                                                                            <td>{student.admission_date || '-'}</td>
+                                                                            <td>{student.gender}</td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </React.Fragment>
+                                                            );
+                                                        })}
+                                                        {filteredData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>No record found</td></tr>}
+                                                    </>
                                                 ) : (
                                                     <>
                                                         {filteredData.map((row, index) => (
@@ -992,40 +1235,52 @@ const StudentInformationReport = () => {
                                         <div className="modal-body">
                                             <div className="dt-header">
                                                 <div className="dt-search">
-                                                    <input type="text" placeholder="Search..." />
+                                                    <input type="text" placeholder="Search..." value={subSearchTerm} onChange={(e) => setSubSearchTerm(e.target.value)} />
                                                 </div>
-                                                <div className="dt-buttons">
-                                                    <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
-                                                    <button className="dt-button" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="dt-button" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="dt-button" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="dt-button" title="Print"><i className="fa fa-print"></i></button>
-                                                    <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
+                                                <div className="dt-buttons" style={{ position: 'relative' }}>
+                                                    <button className="dt-button" title="Copy" onClick={handleSubCopy}><i className="fa fa-copy"></i></button>
+                                                    <button className="dt-button" title="Excel" onClick={handleSubExcel}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="dt-button" title="CSV" onClick={handleSubCSV}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="dt-button" title="PDF" onClick={handleSubPDF}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="dt-button" title="Print" onClick={handleSubPrint}><i className="fa fa-print"></i></button>
+                                                    <button className="dt-button" title="Columns" onClick={() => setShowSubColumnsDropdown(v => !v)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showSubColumnsDropdown && (
+                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '200px', maxHeight: '300px', overflowY: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {studentListConfig.headers.map(h => (
+                                                                <label key={h} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                    <input type="checkbox" checked={subVisibleColumns.has(h)} onChange={() => toggleSubColumn(h)} style={{ marginRight: '6px' }} />
+                                                                    {h}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="table-responsive">
                                                 <table className="table-custom">
                                                     <thead>
                                                         <tr>
-                                                            {studentListConfig.headers.map((header, idx) => (
+                                                            {studentListConfig.headers.filter(h => subVisibleColumns.has(h)).map((header, idx) => (
                                                                 <th key={idx}>{header} <i className="fa fa-sort"></i></th>
                                                             ))}
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {subView.data.map((row, index) => (
+                                                        {filteredModalData.map((row, index) => (
                                                             <tr key={index}>
-                                                                <td>{row.admission_no}</td>
-                                                                <td><span className="student-link">{row.firstname} {row.lastname}</span></td>
-                                                                <td>{row.class} ({row.section})</td>
-                                                                <td>{row.father_name}</td>
-                                                                <td>{row.dob}</td>
-                                                                <td>{row.gender}</td>
-                                                                <td>{row.category}</td>
-                                                                <td>{row.mobileno}</td>
+                                                                {subVisibleColumns.has("Admission No") && <td>{row.admission_no}</td>}
+                                                                {subVisibleColumns.has("Student Name") && <td><span className="student-link">{row.firstname} {row.lastname}</span></td>}
+                                                                {subVisibleColumns.has("Class") && <td>{row.class} ({row.section})</td>}
+                                                                {subVisibleColumns.has("Father Name") && <td>{row.father_name}</td>}
+                                                                {subVisibleColumns.has("Date of Birth") && <td>{row.dob}</td>}
+                                                                {subVisibleColumns.has("Gender") && <td>{row.gender}</td>}
+                                                                {subVisibleColumns.has("Category") && <td>{row.category}</td>}
+                                                                {subVisibleColumns.has("Mobile Number") && <td>{row.mobileno}</td>}
                                                             </tr>
                                                         ))}
-                                                        {subView.data.length === 0 && (
+                                                        {filteredModalData.length === 0 && (
                                                             <tr><td colSpan={studentListConfig.headers.length} style={{ textAlign: 'center' }}>No students found</td></tr>
                                                         )}
                                                     </tbody>

@@ -21,6 +21,11 @@ const AttendanceSidebar = () => {
                         <i className="fa fa-calendar" style={{ marginRight: '5px' }}></i> Attendance By Date
                     </Link>
                 </li>
+                <li className={currentPath === '/approve_leave' ? 'active' : ''}>
+                    <Link to="/approve_leave" className={currentPath === '/approve_leave' ? 'active' : ''}>
+                        <img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/attendance/3.png" style={{ width: '15px', marginRight: '5px' }} alt="" /> Approve Leave
+                    </Link>
+                </li>
                 {/* Add other links as per PHP if needed, e.g. Late Entries */}
                 {/* Replaced images with Icons as per original images not found */}
             </ul>

@@ -7,13 +7,43 @@ import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
-import FileUpload from '../../../components/FileUpload';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 
 const StudentFeeSearch = () => {
     // Session from context
     const { currentSession } = useSession();
     const sessionYear = currentSession?.session || '2024-25';
     const appName = 'School Management System';
+
+    // Column definitions
+    const columns = [
+        { key: 'class', label: 'Class' },
+        { key: 'section', label: 'Section' },
+        { key: 'admission_no', label: 'Admission No' },
+        { key: 'student_name', label: 'Student Name' },
+        { key: 'father_name', label: 'Father Name' },
+        { key: 'dob', label: 'Date Of Birth' },
+        { key: 'mobileno', label: 'Phone' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    const formatCell = (row, key) => {
+        if (key === 'class') return row.class_section || row.class;
+        if (key === 'student_name') return row.full_name || `${row.firstname || ''} ${row.lastname || ''}`.trim();
+        if (key === 'mobileno') return row.mobileno || row.mobile_no;
+        return row[key];
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, students, formatCell);
 
     // Stats State (Mock Data based on PHP logic)
     const [stats, setStats] = useState({
@@ -35,7 +65,10 @@ const StudentFeeSearch = () => {
     // Student List State
     const [students, setStudents] = useState([]);
     const [csvFile, setCsvFile] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [downloading, setDownloading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
 
     // Fetch Classes and Stats on Mount
@@ -167,27 +200,40 @@ const StudentFeeSearch = () => {
 
     const handleImport = async () => {
         if (!csvFile) {
-            toast.error("Please select a file first");
+            toast.error('Please select a CSV file first');
             return;
         }
 
         try {
-            setLoading(true);
-            const formData = new FormData();
-            formData.append('file', csvFile);
+            setImporting(true);
+            const fd = new FormData();
+            fd.append('file', csvFile);
 
-            const response = await api.importStudentFeePayments(formData);
+            const response = await api.importStudentFeePayments(fd);
             if (response.status === true || response.status === 'success') {
-                toast.success(response.message || "Import Successful");
-                setCsvFile(null); // Clear file after success
+                toast.success(response.message || 'Payments imported successfully');
+                setCsvFile(null);
             } else {
-                toast.error(response.message || "Import Failed");
+                toast.error(response.message || 'Import failed. Please check the file format.');
             }
         } catch (error) {
             console.error(error);
-            toast.error("Import Error");
+            toast.error('Import error. Please try again.');
         } finally {
-            setLoading(false);
+            setImporting(false);
+        }
+    };
+
+    const handleDownloadSample = async () => {
+        try {
+            setDownloading(true);
+            await api.exportPaymentSample();
+            toast.success('Sample file downloaded');
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to download sample file');
+        } finally {
+            setDownloading(false);
         }
     };
 
@@ -349,34 +395,96 @@ const StudentFeeSearch = () => {
                                         </div>
                                     </div>
 
-                                    {/* Bulk Upload Section - Mocked as privileged */}
+                                    {/* Bulk Upload Section - Import payments from CSV */}
                                     <div className="box box-info" style={{ padding: '5px' }}>
                                         <div className="box-header with-border">
                                             <div className="pull-right box-tools">
-                                                <button onClick={() => api.exportPaymentSample()} className="btn btn-primary btn-sm">
-                                                    <i className="fa fa-download"></i> Import Payment Sample File
+                                                <button
+                                                    onClick={handleDownloadSample}
+                                                    className="btn btn-primary btn-sm"
+                                                    disabled={downloading}
+                                                >
+                                                    <i className={`fa ${downloading ? 'fa-spinner fa-spin' : 'fa-download'}`}></i>
+                                                    {downloading ? ' Downloading...' : ' Download Payment Import File'}
                                                 </button>
                                             </div>
                                         </div>
                                         <hr />
-                                        <form method="post" encType="multipart/form-data">
-                                            <div className="box-body">
-                                                <div className="row">
-                                                    <div className="col-md-6">
-                                                        <FileUpload
-                                                            label="Select CSV File"
-                                                            name="file"
-                                                            accept=".csv"
-                                                            selectedFile={csvFile}
-                                                            onChange={(e) => setCsvFile(e.target.files[0])}
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-6 pt20">
-                                                        <button type="button" className="btn btn-info pull-right" onClick={handleImport}>Import Payments</button>
+                                        <div className="box-body">
+                                            <div className="row">
+                                                <div className="col-md-6">
+                                                    <div className="form-group">
+                                                        <label htmlFor="csvFileInput">
+                                                            Select CSV File <small className="req">*</small>
+                                                        </label>
+                                                        <div
+                                                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                                            onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                                            onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
+                                                            onDrop={(e) => {
+                                                                e.preventDefault();
+                                                                setIsDragging(false);
+                                                                const file = e.dataTransfer.files[0];
+                                                                if (file && file.name.endsWith('.csv')) {
+                                                                    setCsvFile(file);
+                                                                } else {
+                                                                    toast.error('Please drop a valid .csv file');
+                                                                }
+                                                            }}
+                                                            onClick={() => document.getElementById('csvFileInput').click()}
+                                                            style={{
+                                                                border: `2px dashed ${isDragging ? '#3c8dbc' : (csvFile ? '#00a65a' : '#ccc')}`,
+                                                                borderRadius: '8px',
+                                                                padding: '10px 15px',
+                                                                textAlign: 'center',
+                                                                cursor: 'pointer',
+                                                                background: isDragging ? 'rgba(60,141,188,0.06)' : (csvFile ? 'rgba(0,166,90,0.04)' : '#fafafa'),
+                                                                transition: 'all 0.25s ease'
+                                                            }}
+                                                        >
+                                                            <input
+                                                                id="csvFileInput"
+                                                                type="file"
+                                                                name="file"
+                                                                accept=".csv"
+                                                                style={{ display: 'none' }}
+                                                                onChange={(e) => setCsvFile(e.target.files[0] || null)}
+                                                            />
+                                                            {csvFile ? (
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                                                                    <i className="fa fa-file-text-o" style={{ fontSize: 20, color: '#00a65a' }}></i>
+                                                                    <span style={{ fontWeight: 600, color: '#333' }}>{csvFile.name}</span>
+                                                                    <small className="text-muted">({(csvFile.size / 1024).toFixed(1)} KB)</small>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-xs btn-danger"
+                                                                        onClick={(e) => { e.stopPropagation(); setCsvFile(null); document.getElementById('csvFileInput').value = ''; }}
+                                                                    >
+                                                                        <i className="fa fa-times"></i> Remove
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                                                    <i className="fa fa-cloud-upload" style={{ fontSize: 20, color: isDragging ? '#3c8dbc' : '#aaa', transition: 'color 0.25s' }}></i>
+                                                                    <span style={{ color: '#666', fontSize: '13px' }}>Drag & drop your CSV file here or <span style={{ color: '#3c8dbc', textDecoration: 'underline' }}>browse</span></span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <div className="col-md-6 pt20">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-info pull-right"
+                                                        onClick={handleImport}
+                                                        disabled={importing || !csvFile}
+                                                    >
+                                                        <i className={`fa ${importing ? 'fa-spinner fa-spin' : 'fa-upload'}`}></i>
+                                                        {importing ? ' Importing...' : ' Import Payments'}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </form>
+                                        </div>
                                     </div>
 
                                     {/* Select Criteria / Search Section */}
@@ -476,41 +584,79 @@ const StudentFeeSearch = () => {
                                                 </h3>
                                             </div>
                                             <div className="box-body">
+                                                <div className="download_label">Student List</div>
+
+                                                {/* Controls: Export Buttons + Global Search (if needed) */}
+                                                <div className="row" style={{ marginBottom: '10px' }}>
+                                                    <div className="col-md-12">
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                                <i className="fa fa-files-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_list.csv'); }}>
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_list.xls'); }}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}>
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
+                                                            <div className="btn-group">
+                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showColumnsDropdown && (
+                                                                    <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                        {columns.map(col => (
+                                                                            <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                                <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                                {col.label}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
 
                                                 <div className="table-responsive">
                                                     <table className="table table-striped table-bordered table-hover student-list">
                                                         <thead>
                                                             <tr>
-                                                                <th>Class</th>
-                                                                <th>Section</th>
-                                                                <th>Admission No</th>
-                                                                <th>Student Name</th>
-                                                                <th>Father Name</th>
-                                                                <th>Date Of Birth</th>
-                                                                <th>Phone</th>
+                                                                {columns.map(col => visibleColumns.has(col.key) && (
+                                                                    <th key={col.key}>{col.label}</th>
+                                                                ))}
                                                                 <th className="text-right noExport">Action</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             {students.length === 0 ? (
-                                                                <tr><td colSpan="8" className="text-center">No Result Found</td></tr>
+                                                                <tr>
+                                                                    <td colSpan={visibleColumns.size + 1} className="text-center">
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                                                                            <div style={{ color: 'red', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
+                                                                            <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
+                                                                            <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Search with different criteria</div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
                                                             ) : (
                                                                 students.map((student, index) => (
                                                                     <tr key={`${student.id}-${index}`}>
-                                                                        <td>{student.class_section || student.class}</td>
-                                                                        <td>{student.section}</td>
-                                                                        <td>{student.admission_no}</td>
-                                                                        <td>
-                                                                            <Link to={`/student/view/${student.id}`}>
-                                                                                {student.full_name || `${student.firstname || ''} ${student.lastname || ''}`.trim()}
-                                                                            </Link>
-                                                                        </td>
-                                                                        <td>{student.father_name}</td>
-                                                                        <td>{student.dob}</td>
-                                                                        <td>{student.mobileno || student.mobile_no}</td>
+                                                                        {columns.map(col => visibleColumns.has(col.key) && (
+                                                                            <td key={col.key}>
+                                                                                {col.key === 'student_name' ? (
+                                                                                    <Link to={`/student/view/${student.id}`}>
+                                                                                        {formatCell(student, col.key)}
+                                                                                    </Link>
+                                                                                ) : formatCell(student, col.key)}
+                                                                            </td>
+                                                                        ))}
                                                                         <td className="text-right">
                                                                             {/* Action Buttons */}
-                                                                            <Link to={`/studentfee/addfee/${student.id}`} className="btn btn-info btn-xs" title="Collect Fees">
+                                                                            <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-info btn-xs" title="Collect Fees">
                                                                                 Collect Fees
                                                                             </Link>
                                                                         </td>

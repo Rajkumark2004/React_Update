@@ -8,6 +8,7 @@ import FollowUpModal from '../../components/FollowUpModal';
 
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const OnlineStudentList = () => {
     // State
@@ -17,8 +18,6 @@ const OnlineStudentList = () => {
     const [showFollowUpModal, setShowFollowUpModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [printModalOpen, setPrintModalOpen] = useState(false);
-    const [reviewData, setReviewData] = useState(null);
     const [printLoading, setPrintLoading] = useState(false);
 
     // Mock settings (replace with actual context/API later)
@@ -85,8 +84,7 @@ const OnlineStudentList = () => {
         try {
             const response = await api.getOnlineAdmissionReview(refNo);
             if (response && response.status) {
-                setReviewData(response);
-                setPrintModalOpen(true);
+                await printAdmission(response);
             } else {
                 toast.error('Failed to fetch admission review');
             }
@@ -98,6 +96,224 @@ const OnlineStudentList = () => {
         }
     };
 
+    const printAdmission = async (d) => {
+        try {
+            // Fetch header/footer settings for online_admission
+            let headerImgUrl = '';
+            let footerText = '';
+            try {
+                const settingsRes = await api.getPrintHeaderFooterSettings();
+                if (settingsRes?.status === 'success' && settingsRes?.result) {
+                    const baseUrl = 'https://newlayout.wisibles.com/uploads/print_headerfooter';
+                    const admissionItem = settingsRes.result.find(i => i.print_type === 'online_admission_receipt');
+                    if (admissionItem) {
+                        if (admissionItem.header_image)
+                            headerImgUrl = `${baseUrl}/online_admission_receipt/${admissionItem.header_image}`;
+                        footerText = admissionItem.footer_content || '';
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not load print header/footer settings', e);
+            }
+
+
+            const studentName = [d.student?.firstname, d.student?.middlename, d.student?.lastname].filter(Boolean).join(' ');
+            const refNo = d.reference_no || '-';
+            const appDate = d.student?.application_date || d.created_at || '-';
+            const formStatus = d.form_status === '1' ? 'Submitted' : 'Not Submitted';
+            const formStatusColor = d.form_status === '1' ? '#3c763d' : '#a94442';
+
+            const printHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Online Admission - ${refNo}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #333; }
+    .print-header img { width: 100%; height: auto; display: block; max-height: 80px; object-fit: cover; }
+    .print-body { padding: 8px 18px; }
+    .meta-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .meta-badges { display: flex; gap: 6px; }
+    .badge-box { border: 1px solid #ddd; border-radius: 4px; padding: 3px 10px; text-align: center; font-size: 10px; }
+    .badge-box .label { font-size: 9px; color: #777; display: block; }
+    .badge-box .value { font-weight: bold; }
+    .form-status-val { color: ${formStatusColor}; font-weight: bold; }
+    .guardian-avatar { text-align: center; }
+    .guardian-avatar .icon { width: 36px; height: 36px; background: #f0ad4e; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2px; }
+    .guardian-avatar span { font-size: 9px; color: #555; }
+    .section-card { border: 1px solid #ddd; border-radius: 4px; margin-bottom: 7px; overflow: hidden; }
+    .section-title { background: #f5f5f5; padding: 4px 12px; font-weight: bold; font-size: 11px; border-bottom: 1px solid #ddd; }
+    .section-body { padding: 5px 12px; }
+    .field-row { display: flex; flex-wrap: wrap; margin-bottom: 4px; }
+    .field-col { flex: 1 1 25%; min-width: 100px; }
+    .field-col .field-label { font-size: 9px; color: #777; }
+    .field-col .field-value { font-size: 11px; color: #333; margin-top: 1px; }
+    .print-footer { margin-top: 8px; padding: 6px 18px; border-top: 1px solid #ddd; font-size: 10px; color: #555; }
+    .no-print { }
+    @media print {
+      @page { margin: 6mm; size: A4; }
+      body { margin: 0; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-header">
+    ${headerImgUrl ? `<img src="${headerImgUrl}" alt="Header" />` : ''}
+  </div>
+  <div class="print-body">
+    <div class="meta-row">
+      <div class="meta-badges">
+        <div class="badge-box"><span class="label">Reference No</span><span class="value">${refNo}</span></div>
+        <div class="badge-box"><span class="label">Form Status</span><span class="value form-status-val">${formStatus}</span></div>
+        <div class="badge-box"><span class="label">Application Date</span><span class="value">${appDate}</span></div>
+      </div>
+      <div class="guardian-avatar">
+        <div class="icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        </div>
+        <span>Guardian</span>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Basic Details</div>
+      <div class="section-body">
+        <div class="field-row">
+          <div class="field-col"><div class="field-label">Class</div><div class="field-value">${d.class?.class_name || '-'}</div></div>
+          <div class="field-col"><div class="field-label">First Name</div><div class="field-value">${d.student?.firstname || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Last Name</div><div class="field-value">${d.student?.lastname || '-'}</div></div>
+          <div class="field-col"></div>
+        </div>
+        <div class="field-row">
+          <div class="field-col"><div class="field-label">Gender</div><div class="field-value">${d.student?.gender || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Date of Birth</div><div class="field-value">${d.student?.dob || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Mobile Number</div><div class="field-value">${d.contact?.mobile || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Email</div><div class="field-value">${d.contact?.email || '-'}</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-title">Guardian Details</div>
+      <div class="section-body">
+        <div class="field-row">
+          <div class="field-col"><div class="field-label">If Guardian Is</div><div class="field-value">${d.guardian?.relation || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Guardian Name</div><div class="field-value">${d.guardian?.name || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Guardian Relation</div><div class="field-value">${d.guardian?.relation || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Guardian Email</div><div class="field-value">${d.guardian?.email || '-'}</div></div>
+        </div>
+        <div class="field-row">
+          <div class="field-col"><div class="field-label">Guardian Phone</div><div class="field-value">${d.guardian?.phone || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Guardian Occupation</div><div class="field-value">${d.guardian?.occupation || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Guardian Address</div><div class="field-value">${d.guardian?.address || '-'}</div></div>
+          <div class="field-col"></div>
+        </div>
+      </div>
+    </div>
+
+    ${d.father ? `
+    <div class="section-card">
+      <div class="section-title">Father Details</div>
+      <div class="section-body">
+        <div class="field-row">
+          <div class="field-col"><div class="field-label">Name</div><div class="field-value">${d.father?.name || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Phone</div><div class="field-value">${d.father?.phone || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Occupation</div><div class="field-value">${d.father?.occupation || '-'}</div></div>
+          <div class="field-col"></div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    ${d.mother ? `
+    <div class="section-card">
+      <div class="section-title">Mother Details</div>
+      <div class="section-body">
+        <div class="field-row">
+          <div class="field-col"><div class="field-label">Name</div><div class="field-value">${d.mother?.name || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Phone</div><div class="field-value">${d.mother?.phone || '-'}</div></div>
+          <div class="field-col"><div class="field-label">Occupation</div><div class="field-value">${d.mother?.occupation || '-'}</div></div>
+          <div class="field-col"></div>
+        </div>
+      </div>
+    </div>` : ''}
+  </div>
+
+  <div style="text-align:center; margin-top: 10px; margin-bottom: 10px;" class="no-print">
+    <button onclick="doPrint()" style="padding: 7px 28px; background: #337ab7; color: #fff; border: none; border-radius: 4px; font-size: 13px; cursor: pointer;">
+      &#128438;&nbsp; Print
+    </button>
+  </div>
+
+  ${footerText ? `<div class="print-footer">${footerText}</div>` : ''}
+
+  <script>
+    function doPrint() {
+      window.focus();
+      window.print();
+    }
+  <\/script>
+</body>
+</html>`;
+
+            const printWin = window.open('', '_blank', 'width=900,height=700');
+            printWin.document.open();
+            printWin.document.write(printHtml);
+            printWin.document.close();
+        } catch (error) {
+            console.error('Print error:', error);
+            toast.error('Failed to print');
+        }
+    };
+
+    const handleListPrint = () => {
+        const element = document.getElementById('printable-list-container');
+        if (!element) return;
+
+        const printWin = window.open('', '_blank', 'width=1000,height=800');
+        printWin.document.open();
+        printWin.document.write(`
+            <html>
+                <head>
+                    <title>Student List - Print</title>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+                    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+                    <style>
+                        body { padding: 20px; font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+                        .no-print, .dt-buttons, .box-tools, .btn-group, .noExport, .text-right.white-space-nowrap { display: none !important; }
+                        .box { border: none !important; box-shadow: none !important; }
+                        .box-header { margin-bottom: 15px; border-bottom: 1px solid #f4f4f4; padding-bottom: 10px; }
+                        .box-title { font-size: 18px; font-weight: bold; margin: 0; }
+                        .table-responsive { overflow: visible !important; }
+                        table { width: 100% !important; border-collapse: collapse !important; margin-bottom: 20px; }
+                        th, td { border: 1px solid #f4f4f4 !important; padding: 8px !important; text-align: left !important; }
+                        .label { padding: 2px 6px; font-size: 75%; font-weight: 700; border-radius: .25em; color: #fff; }
+                        .label-success { background-color: #5cb85c; }
+                        .label-danger { background-color: #d9534f; }
+                        @media print {
+                            body { padding: 0; }
+                            .no-print { display: none !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="box box-primary">
+                        ${element.innerHTML}
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            window.focus();
+                            window.print();
+                        };
+                    </script>
+                </body>
+            </html>
+        `);
+        printWin.document.close();
+    };
+
     const handleOpenFollowUp = (student) => {
         setSelectedStudent(student);
         setShowFollowUpModal(true);
@@ -106,6 +322,46 @@ const OnlineStudentList = () => {
     const handleCloseFollowUp = () => {
         setShowFollowUpModal(false);
         setSelectedStudent(null);
+    };
+
+    // Export helpers
+    const getExportData = () => {
+        const headers = ['Reference No', 'Student Name', 'Class'];
+        if (sch_setting.father_name) headers.push('Father Name');
+        headers.push('Date Of Birth', 'Gender', 'Category');
+        if (sch_setting.mobile_no) headers.push('Mobile Number');
+        headers.push('Form Status', 'Enrolled', 'Created At');
+
+        const rows = filteredStudents.map(s => {
+            const row = [s.ref_no, s.name, s.class_name];
+            if (sch_setting.father_name) row.push(s.father_name);
+            row.push(s.dob, s.gender, s.category);
+            if (sch_setting.mobile_no) row.push(s.mobile);
+            row.push(s.form_status || '', s.enrolled, s.created_at);
+            return row.map(v => String(v ?? ''));
+        });
+
+        return { headers, rows };
+    };
+
+    const handleCopy = () => {
+        const { headers, rows } = getExportData();
+        copyToClipboard(headers, rows);
+    };
+
+    const handleDownloadCSV = () => {
+        const { headers, rows } = getExportData();
+        downloadCSV(headers, rows, 'online_student_list.csv');
+    };
+
+    const handleDownloadExcel = () => {
+        const { headers, rows } = getExportData();
+        downloadExcel(headers, rows, 'online_student_list.xls');
+    };
+
+    const handleDownloadPDF = () => {
+        const { headers, rows } = getExportData();
+        printTable(headers, rows, 'Online Student List');
     };
 
     // Sorting Logic
@@ -160,7 +416,7 @@ const OnlineStudentList = () => {
                     ) : (
                         <div className="row">
                             <div className="col-md-12">
-                                <div className="box box-primary">
+                                <div className="box box-primary" id="printable-list-container">
                                     <div className="box-header with-border">
                                         <h3 className="box-title">Student List</h3>
                                         <div className="box-tools pull-right"></div>
@@ -191,19 +447,19 @@ const OnlineStudentList = () => {
                                                             </label>
                                                         </div>
                                                         <div className="dt-buttons btn-group pull-right">
-                                                            <button className="btn btn-default btn-xs" title="Copy">
+                                                            <button className="btn btn-default btn-xs" title="Copy" onClick={handleCopy}>
                                                                 <i className="fa fa-files-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="Excel">
+                                                            <button className="btn btn-default btn-xs" title="Excel" onClick={handleDownloadExcel}>
                                                                 <i className="fa fa-file-excel-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="CSV">
+                                                            <button className="btn btn-default btn-xs" title="CSV" onClick={handleDownloadCSV}>
                                                                 <i className="fa fa-file-text-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="PDF">
+                                                            <button className="btn btn-default btn-xs" title="PDF" onClick={handleDownloadPDF}>
                                                                 <i className="fa fa-file-pdf-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="Print">
+                                                            <button className="btn btn-default btn-xs" title="Print" onClick={handleListPrint}>
                                                                 <i className="fa fa-print"></i>
                                                             </button>
                                                         </div>
@@ -313,123 +569,6 @@ const OnlineStudentList = () => {
                     )}
                 </section>
 
-                {/* Print/Admission Review Modal */}
-                {printModalOpen && reviewData && (
-                    <div className="modal show" style={{ display: 'block', paddingRight: '15px' }}>
-                        <div className="modal-dialog modal-lg">
-                            <div className="modal-content">
-                                <div className="modal-header">
-                                    <button type="button" className="close" onClick={() => setPrintModalOpen(false)}>&times;</button>
-                                    <h4 className="modal-title">Online Admission Review</h4>
-                                </div>
-                                <div className="modal-body" id="print-content">
-                                    <div className="text-center mb-3">
-                                        <h4><strong>{reviewData.student?.firstname} {reviewData.student?.middlename || ''} {reviewData.student?.lastname || ''}</strong></h4>
-                                        <p>Reference No: <strong>{reviewData.reference_no}</strong></p>
-                                    </div>
-
-                                    <table className="table table-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <td><strong>Class</strong></td>
-                                                <td>{reviewData.class?.class_name || '-'}</td>
-                                                <td><strong>Gender</strong></td>
-                                                <td>{reviewData.student?.gender || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Date of Birth</strong></td>
-                                                <td>{reviewData.student?.dob || '-'}</td>
-                                                <td><strong>Blood Group</strong></td>
-                                                <td>{reviewData.student?.blood_group || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Mobile</strong></td>
-                                                <td>{reviewData.contact?.mobile || '-'}</td>
-                                                <td><strong>Email</strong></td>
-                                                <td>{reviewData.contact?.email || '-'}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h5 className="mt-3"><strong>Guardian Details</strong></h5>
-                                    <table className="table table-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <td><strong>Name</strong></td>
-                                                <td>{reviewData.guardian?.name || '-'}</td>
-                                                <td><strong>Relation</strong></td>
-                                                <td>{reviewData.guardian?.relation || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Phone</strong></td>
-                                                <td>{reviewData.guardian?.phone || '-'}</td>
-                                                <td><strong>Email</strong></td>
-                                                <td>{reviewData.guardian?.email || '-'}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h5 className="mt-3"><strong>Father Details</strong></h5>
-                                    <table className="table table-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <td><strong>Name</strong></td>
-                                                <td>{reviewData.father?.name || '-'}</td>
-                                                <td><strong>Phone</strong></td>
-                                                <td>{reviewData.father?.phone || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Occupation</strong></td>
-                                                <td colSpan="3">{reviewData.father?.occupation || '-'}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h5 className="mt-3"><strong>Mother Details</strong></h5>
-                                    <table className="table table-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <td><strong>Name</strong></td>
-                                                <td>{reviewData.mother?.name || '-'}</td>
-                                                <td><strong>Phone</strong></td>
-                                                <td>{reviewData.mother?.phone || '-'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Occupation</strong></td>
-                                                <td colSpan="3">{reviewData.mother?.occupation || '-'}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <h5 className="mt-3"><strong>Transaction Details</strong></h5>
-                                    <table className="table table-bordered">
-                                        <tbody>
-                                            <tr>
-                                                <td><strong>Transaction ID</strong></td>
-                                                <td>{reviewData.transaction?.transaction_id || '-'}</td>
-                                                <td><strong>Paid Amount</strong></td>
-                                                <td>{reviewData.transaction?.paid_amount || '0'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Form Status</strong></td>
-                                                <td><span className={`label ${reviewData.form_status === '1' ? 'label-success' : 'label-danger'}`}>{reviewData.form_status === '1' ? 'Submitted' : 'Not Submitted'}</span></td>
-                                                <td><strong>Payment Status</strong></td>
-                                                <td><span className={`label ${reviewData.paid_status === '1' ? 'label-success' : 'label-warning'}`}>{reviewData.paid_status === '1' ? 'Paid' : 'Unpaid'}</span></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-primary" onClick={() => window.print()}>
-                                        <i className="fa fa-print"></i> Print
-                                    </button>
-                                    <button type="button" className="btn btn-default" onClick={() => setPrintModalOpen(false)}>Close</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="modal-backdrop fade in" style={{ zIndex: -1 }} onClick={() => setPrintModalOpen(false)}></div>
-                    </div>
-                )}
 
                 <FollowUpModal
                     isOpen={showFollowUpModal}

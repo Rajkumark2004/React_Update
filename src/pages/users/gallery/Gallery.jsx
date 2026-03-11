@@ -5,6 +5,7 @@ import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
+import { api_users } from '../../../services/api_users';
 import '../../../utils/include_files.js';
 
 const Gallery = () => {
@@ -37,11 +38,18 @@ const Gallery = () => {
 
     const sessionYear = currentSession?.session || '2024-25';
 
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            await api_users.userLogout();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            clearSession();
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('token');
+            navigate('/user/login');
+        }
     };
 
     // Close dropdown when clicking outside

@@ -7,6 +7,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const CreateRoute = () => {
     const navigate = useNavigate();
@@ -77,7 +78,27 @@ const CreateRoute = () => {
         console.log('Search');
     };
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Route Title");
+
+        const rows = filteredRoutes.map(data => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(data.route_title);
+            return row;
+        });
+
+        return { headers, rows };
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -288,24 +309,23 @@ const CreateRoute = () => {
                                             </div>
                                             <div className="col-sm-6">
                                                 <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-xs" title="Copy" style={{ border: '0', background: 'transparent' }}>
-                                                        <i className="fa fa-file-text-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-xs" title="CSV" style={{ border: '0', background: 'transparent' }}>
-                                                        <i className="fa fa-file-text-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-xs" title="Excel" style={{ border: '0', background: 'transparent' }}>
-                                                        <i className="fa fa-file-excel-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-xs" title="Print" style={{ border: '0', background: 'transparent' }}>
-                                                        <i className="fa fa-print"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-xs" title="PDF" style={{ border: '0', background: 'transparent' }}>
-                                                        <i className="fa fa-file-pdf-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-xs" title="Columns" style={{ border: '0', background: 'transparent' }}>
-                                                        <i className="fa fa-columns"></i>
-                                                    </button>
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Route_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Route_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Route List'); }}><i className="fa fa-print"></i></button>
+
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i>
+                                                        </button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Route Title</label>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -313,7 +333,7 @@ const CreateRoute = () => {
                                             <table className="table table-striped table-bordered table-hover example">
                                                 <thead>
                                                     <tr>
-                                                        <th>Route Title</th>
+                                                        {!hiddenColumns.includes(0) && <th>Route Title</th>}
                                                         <th className="text-right noExport">Action</th>
                                                     </tr>
                                                 </thead>
@@ -323,7 +343,7 @@ const CreateRoute = () => {
                                                     ) : (
                                                         filteredRoutes.map((data) => (
                                                             <tr key={data.id}>
-                                                                <td className="mailbox-name"> {data.route_title}</td>
+                                                                {!hiddenColumns.includes(0) && <td className="mailbox-name"> {data.route_title}</td>}
                                                                 <td className="mailbox-date pull-right no-print">
                                                                     <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data)}>
                                                                         <i className="fa fa-pencil"></i>

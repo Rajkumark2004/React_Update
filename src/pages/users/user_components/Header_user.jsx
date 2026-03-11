@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CircleUser } from 'lucide-react';
+import { CircleUser, X, Loader2, GraduationCap, ChevronRight } from 'lucide-react';
 import { api } from '../../../services/api';
+import { api_users } from '../../../services/api_users';
 import { useLogo } from '../../../context/LogoContext';
 
 const Header = ({
@@ -27,6 +28,12 @@ const Header = ({
     const [tasks, setTasks] = useState([]);
     const [isTaskDropdownOpen, setIsTaskDropdownOpen] = useState(false);
     const taskDropdownRef = useRef(null);
+
+    // Switch Class Modal State
+    const [isSwitchClassModalOpen, setIsSwitchClassModalOpen] = useState(false);
+    const [availableClasses, setAvailableClasses] = useState([]);
+    const [selectedClassId, setSelectedClassId] = useState('');
+    const [isSwitchingClass, setIsSwitchingClass] = useState(false);
 
     // Fetch to-do tasks from API
     useEffect(() => {
@@ -105,6 +112,40 @@ const Header = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Switch Class Handlers
+    const handleSwitchClassClick = async () => {
+        try {
+            const res = await api_users.getStudentSessionClasses();
+            if (res.status && res.data && res.data.studentclasses) {
+                setAvailableClasses(res.data.studentclasses);
+                if (res.data.studentclasses.length > 0) {
+                    const active = res.data.studentclasses.find(c => c.is_active === 'yes');
+                    setSelectedClassId(active ? active.student_session_id : res.data.studentclasses[0].student_session_id);
+                }
+                setIsSwitchClassModalOpen(true);
+            }
+        } catch (error) {
+            console.error('Failed to fetch class options:', error);
+            alert('Could not load class options. Please try again.');
+        }
+    };
+
+    const handleUpdateClass = async () => {
+        if (!selectedClassId) return;
+        const selectedClass = availableClasses.find(c => String(c.student_session_id) === String(selectedClassId));
+        if (!selectedClass) return;
+
+        setIsSwitchingClass(true);
+        try {
+            await api_users.updateStudentClass(selectedClass.student_session_id, selectedClass.student_id);
+            setIsSwitchClassModalOpen(false);
+            window.location.reload(); // Refresh page to reflect new class context
+        } catch (error) {
+            console.error('Failed to update class:', error);
+            alert('Failed to switch class. Please try again.');
+            setIsSwitchingClass(false);
+        }
+    };
 
     return (
         <>
@@ -181,6 +222,214 @@ const Header = ({
                                     visibility: visible;
                                     opacity: 1;
                                 }
+
+                                /* CHILD SELECTION MODAL SYSTEM - Migrated from LoginPage */
+                                .child-modal-overlay {
+                                    position: fixed;
+                                    top: 0;
+                                    left: 0;
+                                    width: 100vw;
+                                    height: 100vh;
+                                    background: rgba(0, 0, 0, 0.45);
+                                    backdrop-filter: blur(8px);
+                                    z-index: 2000;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    animation: fadeIn 0.3s ease-out;
+                                }
+
+                                @keyframes fadeIn {
+                                    from { opacity: 0; }
+                                    to { opacity: 1; }
+                                }
+
+                                .child-modal-card {
+                                    background: white;
+                                    width: 90%;
+                                    max-width: 460px;
+                                    border-radius: 20px;
+                                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                                    display: flex;
+                                    flex-direction: column;
+                                    overflow: hidden;
+                                    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                                }
+
+                                @keyframes slideUp {
+                                    from { transform: translateY(20px); opacity: 0; }
+                                    to { transform: translateY(0); opacity: 1; }
+                                }
+
+                                .child-modal-header {
+                                    padding: 30px 30px 20px;
+                                    text-align: center;
+                                    background: linear-gradient(to bottom, #fcfaff, #ffffff);
+                                }
+
+                                .child-modal-header h3 {
+                                    margin: 0 0 8px 0;
+                                    font-size: 24px;
+                                    font-weight: 700;
+                                    color: #1a1a1a;
+                                    line-height: 1.2;
+                                }
+
+                                .child-modal-header p {
+                                    margin: 0;
+                                    font-size: 15px;
+                                    color: #6b7280;
+                                }
+
+                                .child-list {
+                                    padding: 10px 20px;
+                                    max-height: 400px;
+                                    overflow-y: auto;
+                                }
+
+                                .child-list::-webkit-scrollbar {
+                                    width: 6px;
+                                }
+                                .child-list::-webkit-scrollbar-thumb {
+                                    background: #e5e7eb;
+                                    border-radius: 10px;
+                                }
+
+                                .child-item {
+                                    display: flex;
+                                    align-items: center;
+                                    padding: 16px;
+                                    margin-bottom: 12px;
+                                    border: 2px solid #f3f4f6;
+                                    border-radius: 16px;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease;
+                                    position: relative;
+                                    text-align: left;
+                                }
+
+                                .child-item:hover {
+                                    border-color: #8f46d8;
+                                    background: #f9f5ff;
+                                    transform: translateY(-1px);
+                                }
+
+                                .child-item.active {
+                                    border-color: #8f46d8;
+                                    background: #f9f5ff;
+                                    box-shadow: 0 4px 12px rgba(143, 70, 216, 0.1);
+                                }
+
+                                .child-avatar {
+                                    width: 50px;
+                                    height: 50px;
+                                    background: #f3e8ff;
+                                    color: #8f46d8;
+                                    border-radius: 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    margin-right: 16px;
+                                    flex-shrink: 0;
+                                }
+
+                                .child-info {
+                                    flex: 1;
+                                    display: flex;
+                                    flex-direction: column;
+                                }
+
+                                .child-name {
+                                    font-weight: 600;
+                                    font-size: 17px;
+                                    color: #111827;
+                                }
+
+                                .child-class {
+                                    font-size: 14px;
+                                    color: #6b7280;
+                                }
+
+                                .current-badge {
+                                    position: absolute;
+                                    top: 12px;
+                                    right: 40px;
+                                    background: #ecfdf5;
+                                    color: #059669;
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    padding: 2px 8px;
+                                    border-radius: 20px;
+                                }
+
+                                .child-select-indicator {
+                                    color: #d1d5db;
+                                    transition: transform 0.2s ease;
+                                }
+
+                                .child-item.active .child-select-indicator {
+                                    color: #8f46d8;
+                                    transform: translateX(3px);
+                                }
+
+                                .child-modal-footer {
+                                    padding: 24px 30px 30px;
+                                    display: flex;
+                                    gap: 12px;
+                                }
+
+                                .modal-submit-btn {
+                                    flex: 2;
+                                    padding: 14px;
+                                    background: #8f46d8;
+                                    color: white;
+                                    border: none;
+                                    border-radius: 14px;
+                                    font-size: 16px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 8px;
+                                    transition: all 0.2s ease;
+                                }
+
+                                .modal-cancel-btn {
+                                    flex: 1;
+                                    padding: 14px;
+                                    background: #f3f4f6;
+                                    color: #4b5563;
+                                    border: none;
+                                    border-radius: 14px;
+                                    font-size: 16px;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease;
+                                }
+
+                                .modal-cancel-btn:hover {
+                                    background: #e5e7eb;
+                                }
+
+                                .modal-submit-btn:hover:not(:disabled) {
+                                    background: #7b3fe4;
+                                    box-shadow: 0 10px 15px -3px rgba(143, 70, 216, 0.3);
+                                }
+
+                                .modal-submit-btn:disabled {
+                                    opacity: 0.6;
+                                    cursor: not-allowed;
+                                }
+
+                                .animate-spin {
+                                    animation: spin 1s linear infinite;
+                                }
+
+                                @keyframes spin {
+                                    from { transform: rotate(0deg); }
+                                    to { transform: rotate(360deg); }
+                                }
                             `}</style>
                             {/* Custom Nav Items (from UserDashboard) */}
                             <div className="custom-nav-right hide-mobile" style={{ display: 'flex', alignItems: 'center', height: '50px' }}>
@@ -190,7 +439,7 @@ const Header = ({
                                 <div className="custom-nav-item" data-tooltip="Currency" style={{ fontWeight: 'bold' }}>
                                     INR
                                 </div>
-                                <div className="custom-nav-item" data-tooltip="Switch Class">
+                                <div className="custom-nav-item" data-tooltip="Switch Class" onClick={handleSwitchClassClick} style={{ color: '#4CAF50' }}>
                                     <i className="fa fa-exchange"></i>
                                 </div>
                                 <div className="custom-nav-item" data-tooltip="Calendar">
@@ -198,9 +447,6 @@ const Header = ({
                                 </div>
                                 <div className="custom-nav-item" data-tooltip="Task">
                                     <i className="fa fa-check-square-o"></i>
-                                </div>
-                                <div className="custom-nav-item" data-tooltip="Chat">
-                                    <i className="fa fa-whatsapp"></i>
                                 </div>
                             </div>
 
@@ -264,12 +510,6 @@ const Header = ({
                                                 </ul>
                                             </li>
 
-                                            {/* Chat - Not implemented yet */}
-                                            <li className="cal15 d-sm-none">
-                                                <a href="#" data-toggle="tooltip" title="Chat (Coming Soon)" onClick={(e) => e.preventDefault()}>
-                                                    <i className="fa fa-whatsapp"></i>
-                                                </a>
-                                            </li>
 
                                             {/* User Menu Dropdown */}
                                             <li className={`dropdown user-menu ${isUserDropdownOpen ? 'open' : ''}`} ref={userDropdownRef}>
@@ -293,7 +533,7 @@ const Header = ({
                                                             </div>
                                                             <div className="sstopuser-test">
                                                                 <Link to="/user/user/profile">
-                                                                    <h4 className="text-capitalize" style={{ color: '#fff' }}>{user.name}</h4>
+                                                                    <h4 className="text-capitalize">{user.name}</h4>
                                                                 </Link>
                                                                 <h5>{user.role}</h5>
                                                             </div>
@@ -364,6 +604,72 @@ const Header = ({
                     <div style={{ width: '44px' }}></div>
                 </nav>
             </header>
+
+            {/* ==================== SWITCH CLASS MODAL ==================== */}
+            {isSwitchClassModalOpen && (
+                <div className="child-modal-overlay">
+                    <div className="child-modal-card">
+                        <div className="child-modal-header">
+                            <h3>Switch Class</h3>
+                            <p>Please select a student profile to continue</p>
+                        </div>
+
+                        <div className="child-list">
+                            {availableClasses.length === 0 ? (
+                                <p style={{ textAlign: 'center', padding: '40px 0', color: '#6b7280' }}>
+                                    No other classes available for this session.
+                                </p>
+                            ) : (
+                                availableClasses.map((cls) => (
+                                    <div
+                                        key={cls.student_session_id}
+                                        className={`child-item ${selectedClassId === cls.student_session_id ? 'active' : ''}`}
+                                        onClick={() => setSelectedClassId(cls.student_session_id)}
+                                    >
+                                        <div className="child-avatar">
+                                            <GraduationCap size={24} />
+                                        </div>
+                                        <div className="child-info">
+                                            <span className="child-name">
+                                                {cls.firstname} {cls.lastname}
+                                            </span>
+                                            <span className="child-class">
+                                                {cls.class} ({cls.section})
+                                            </span>
+                                            {cls.is_active === 'yes' && (
+                                                <span className="current-badge">Default</span>
+                                            )}
+                                        </div>
+                                        <div className="child-select-indicator">
+                                            <ChevronRight size={20} />
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="child-modal-footer">
+                            <button
+                                className="modal-cancel-btn"
+                                onClick={() => setIsSwitchClassModalOpen(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="modal-submit-btn"
+                                onClick={handleUpdateClass}
+                                disabled={isSwitchingClass || !selectedClassId || availableClasses.length === 0}
+                            >
+                                {isSwitchingClass ? (
+                                    <><Loader2 size={18} className="animate-spin" /> Updating...</>
+                                ) : (
+                                    "Update"
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

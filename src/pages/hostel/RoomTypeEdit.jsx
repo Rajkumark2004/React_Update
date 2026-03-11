@@ -104,7 +104,7 @@ const RoomTypeEdit = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '16px' }}>
+            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-building-o"></i> Hostel

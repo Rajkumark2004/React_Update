@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useSession } from '../context/SessionContext';
+import { useSession } from '../../../context/SessionContext';
 
 // ============================================================================
 // FOOTER COMPONENT

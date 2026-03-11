@@ -6,6 +6,7 @@ import { useSession } from '../../context/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import '../../utils/include_files';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const CBSEGradeList = () => {
     const { sessionYear } = useSession();
@@ -180,7 +181,15 @@ const CBSEGradeList = () => {
     const handleRangeChange = (index, field, value) => {
         const newRanges = [...formData.ranges];
         if (newRanges[index]) {
-            newRanges[index][field] = value;
+            let val = value;
+            if (field === 'maximum_percentage' || field === 'minimum_percentage') {
+                if (value !== '') {
+                    const num = parseFloat(value);
+                    if (num > 100) val = "100";
+                    if (num < 0) val = "0";
+                }
+            }
+            newRanges[index][field] = val;
             setFormData({ ...formData, ranges: newRanges });
         }
     };
@@ -267,6 +276,39 @@ const CBSEGradeList = () => {
         (grade.description && grade.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Grade Title");
+        if (!hiddenColumns.includes(1)) headers.push("Description");
+        if (!hiddenColumns.includes(2)) headers.push("Grade");
+
+        const rows = filteredGradeList.map(grade => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(grade.name);
+            if (!hiddenColumns.includes(1)) row.push(grade.description);
+            if (!hiddenColumns.includes(2)) {
+                if (grade.data && grade.data.length > 0) {
+                    const gradeStr = grade.data.map(r => `${r.name} (${r.minimum_percentage}-${r.maximum_percentage})`).join(', ');
+                    row.push(gradeStr);
+                } else {
+                    row.push("");
+                }
+            }
+            return row;
+        });
+
+        return { headers, rows };
+    };
+
     return (
         <div className="wrapper theme-white-skin">
             <Header appName={appName} userData={userData} handleLogout={handleLogout} />
@@ -323,12 +365,26 @@ const CBSEGradeList = () => {
                                         </div>
                                         <div className="col-md-6">
                                             <div className="dt-buttons btn-group pull-right">
-                                                <button className="btn btn-default btn-sm" title="Copy"><i className="fa fa-files-o"></i></button>
-                                                <button className="btn btn-default btn-sm" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                <button className="btn btn-default btn-sm" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                <button className="btn btn-default btn-sm" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                <button className="btn btn-default btn-sm" title="Print"><i className="fa fa-print"></i></button>
-                                                <button className="btn btn-default btn-sm" title="Columns"><i className="fa fa-columns"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Exam_Grade_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Exam_Grade_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Exam Grade List'); }}><i className="fa fa-print"></i></button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
+                                                    {showColumnsDropdown && (
+                                                        <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                            <li>
+                                                                <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Grade Title</label>
+                                                            </li>
+                                                            <li>
+                                                                <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Description</label>
+                                                            </li>
+                                                            <li>
+                                                                <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Grade</label>
+                                                            </li>
+                                                        </ul>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -336,18 +392,18 @@ const CBSEGradeList = () => {
                                         <table className="table table-striped table-bordered table-hover example" style={{ fontSize: '13px' }}>
                                             <thead>
                                                 <tr>
-                                                    <th width="10%">Grade Title</th>
-                                                    <th width="20%">Description</th>
-                                                    <th width="65%">Grade</th>
+                                                    {!hiddenColumns.includes(0) && <th width="10%">Grade Title</th>}
+                                                    {!hiddenColumns.includes(1) && <th width="20%">Description</th>}
+                                                    {!hiddenColumns.includes(2) && <th width="65%">Grade</th>}
                                                     <th width="5%" className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {filteredGradeList.map((grade) => (
                                                     <tr key={grade.id}>
-                                                        <td>{grade.name}</td>
-                                                        <td>{grade.description}</td>
-                                                        <td className="mailbox-name">
+                                                        {!hiddenColumns.includes(0) && <td>{grade.name}</td>}
+                                                        {!hiddenColumns.includes(1) && <td>{grade.description}</td>}
+                                                        {!hiddenColumns.includes(2) && <td className="mailbox-name">
                                                             <table className="table table-bordered table-hover table-last-right" style={{ fontSize: '13px', marginBottom: '0' }}>
                                                                 <thead>
                                                                     <tr>
@@ -372,7 +428,7 @@ const CBSEGradeList = () => {
                                                                     )}
                                                                 </tbody>
                                                             </table>
-                                                        </td>
+                                                        </td>}
                                                         <td className="white-space-nowrap text-right">
                                                             <button
                                                                 onClick={() => handleEditOpen(grade)}
@@ -509,6 +565,8 @@ const CBSEGradeList = () => {
                                                                         value={range.maximum_percentage}
                                                                         onChange={(e) => handleRangeChange(index, 'maximum_percentage', e.target.value)}
                                                                         required
+                                                                        min="0"
+                                                                        max="100"
                                                                     />
                                                                 </div>
                                                             </div>
@@ -520,6 +578,8 @@ const CBSEGradeList = () => {
                                                                         value={range.minimum_percentage}
                                                                         onChange={(e) => handleRangeChange(index, 'minimum_percentage', e.target.value)}
                                                                         required
+                                                                        min="0"
+                                                                        max="100"
                                                                     />
                                                                 </div>
                                                             </div>

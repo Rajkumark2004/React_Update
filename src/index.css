@@ -2,6 +2,7 @@
 body {
   margin: 0;
   padding: 0;
+  font-family: 'Roboto', sans-serif !important;
 }
 
 /* ========================================
@@ -403,56 +404,189 @@ body {
 
 }
 
-/* Make sidebar text pronounced */
-.sidebar-small-text {
-  color: #fff !important;
-  font-weight: 700 !important;
-  opacity: 1 !important;
-  text-shadow: 0px 0px 1px rgba(0, 0, 0, 0.2);
-}
-
-.material-switch {
+/* ========================================
+   ATTENDANCE TAB & STAFF PROFILE CARDS
+   ======================================== */
+.col20per {
+  width: 20% !important;
+  float: left;
   position: relative;
-  width: 80px;
-  /* ⬅ longer bar */
-  height: 30px;
-  display: inline-block;
+  min-height: 1px;
+  padding-right: 5px;
+  padding-left: 5px;
 }
 
-.material-switch input {
-  display: none;
+@media (max-width: 991px) {
+  .col20per {
+    width: 33.33% !important;
+  }
 }
 
-.material-switch label {
+@media (max-width: 767px) {
+  .col20per {
+    width: 50% !important;
+  }
+}
+
+.staffprofile {
+  background: #fff;
+  border: 1px solid #e7ebf3;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  min-height: 90px;
+}
+
+.staffprofile h5 {
+  margin: 0 0 5px 0;
+  font-size: 10px;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 24px;
+  /* Space for 2 lines */
+}
+
+.staffprofile h4 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+  font-weight: 700;
+}
+
+.staffprofile .icon {
   position: absolute;
-  cursor: pointer;
-  background: #bdbdbd;
-  border-radius: 50px;
+  top: 15px;
+  right: 10px;
+  z-index: 0;
+  font-size: 40px;
+  color: rgb(169, 166, 166);
+  opacity: 0.2;
+}
+
+.staffprofile:hover {
+  border-color: #9854cb;
+}
+
+.staffprofile:hover .icon {
+  color: #9854cb;
+  opacity: 0.2;
+}
+
+/* ========================================
+   CUSTOM CLOCK INPUT STYLING
+   ======================================== */
+.clock-input-wrapper {
+  position: relative;
   width: 100%;
+}
+
+.clock-dropdown {
+  z-index: 1060;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+/* Three columns side by side */
+.clock-columns {
+  display: flex;
+  width: 200px;
+}
+
+.clock-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #eee;
+}
+
+.clock-col:last-child {
+  border-right: none;
+}
+
+.clock-col-header {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  padding: 8px 0 4px;
+  letter-spacing: 0.5px;
+  background: #fafafa;
+  border-bottom: 1px solid #eee;
+}
+
+.clock-col-scroll {
+  max-height: 180px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Webkit scrollbar styling */
+.clock-col-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.clock-col-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.clock-col-scroll::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+}
+
+.clock-col-scroll::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+/* Each selectable item */
+.clock-col-item {
+  text-align: center;
+  padding: 8px 4px;
+  font-size: 14px;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+}
+
+.clock-col-item:hover {
+  background: #f0e6f6;
+  color: #9854cb;
+}
+
+.clock-col-item.active {
+  background: #9854cb;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* AM/PM column — narrower */
+.clock-col-period {
+  flex: 0 0 50px;
+}
+
+.clock-col-period .clock-col-scroll {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   height: 100%;
-  transition: background 0.3s ease;
+  max-height: 180px;
 }
 
-/* Knob */
-.material-switch label::after {
-  content: "";
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  top: 2px;
-  left: 2px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  transition: transform 0.3s ease;
-}
-
-/* Checked state */
-.material-switch input:checked+label {
-  background: #7cb342;
-}
-
-/* Slide distance = width - knob - padding */
-.material-switch input:checked+label::after {
-  transform: translateX(50px);
+.period-item {
+  padding: 14px 4px;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }

@@ -9,14 +9,14 @@ const ReportsSidebar = ({ activeGroup }) => {
         { name: 'SIS', label: 'SIS', img: '1.png' },
         { name: 'Finance', label: 'Finance', img: '2.png' },
         { name: 'Attendance', label: 'Attendance', img: '3.png' },
-        { name: 'Examinations', label: 'Examinations', img: '4.png' },
-        { name: 'Lesson Plans', label: 'Lesson Plan', img: '6.png' },
-        { name: 'Human Resource', label: 'Human Resource', img: '7.png' },
-        { name: 'Transport', label: 'Transport', img: '11.png' },
-        { name: 'Hostel', label: 'Hostel', img: '12.png' },
-        { name: 'Alumni', label: 'Alumni', img: '13.png' },
+        //{ name: 'Examinations', label: 'Examinations', img: '4.png' },
+        // { name: 'Lesson Plans', label: 'Lesson Plan', img: '6.png' },
+        // { name: 'Human Resource', label: 'Human Resource', img: '7.png' },
+        // { name: 'Transport', label: 'Transport', img: '11.png' },
+        // { name: 'Hostel', label: 'Hostel', img: '12.png' },
+        // { name: 'Alumni', label: 'Alumni', img: '13.png' },
         { name: 'User Log', label: 'User Log', img: '14.png' },
-        { name: 'Audit Trail Log', label: 'Audit Trail Log', img: '15.png' },
+        // { name: 'Audit Trail Log', label: 'Audit Trail Log', img: '15.png' },
     ];
 
     const routeMap = {

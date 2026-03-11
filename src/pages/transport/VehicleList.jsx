@@ -7,6 +7,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const VehicleList = () => {
     const navigate = useNavigate();
@@ -101,7 +102,43 @@ const VehicleList = () => {
         console.log('Search');
     };
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Vehicle Number");
+        if (!hiddenColumns.includes(1)) headers.push("Vehicle Model");
+        if (!hiddenColumns.includes(2)) headers.push("Year Made");
+        if (!hiddenColumns.includes(3)) headers.push("Registration Number");
+        if (!hiddenColumns.includes(4)) headers.push("Chasis Number");
+        if (!hiddenColumns.includes(5)) headers.push("Max Seating Capacity");
+        if (!hiddenColumns.includes(6)) headers.push("Driver Name");
+        if (!hiddenColumns.includes(7)) headers.push("Driver License");
+        if (!hiddenColumns.includes(8)) headers.push("Driver Contact");
+
+        const rows = filteredVehicles.map(data => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(data.vehicle_no);
+            if (!hiddenColumns.includes(1)) row.push(data.vehicle_model);
+            if (!hiddenColumns.includes(2)) row.push(data.manufacture_year);
+            if (!hiddenColumns.includes(3)) row.push(data.registration_number);
+            if (!hiddenColumns.includes(4)) row.push(data.chasis_number);
+            if (!hiddenColumns.includes(5)) row.push(data.max_seating_capacity);
+            if (!hiddenColumns.includes(6)) row.push(data.driver_name);
+            if (!hiddenColumns.includes(7)) row.push(data.driver_licence);
+            if (!hiddenColumns.includes(8)) row.push(data.driver_contact);
+            return row;
+        });
+
+        return { headers, rows };
+    };
 
     const handleInputChange = (e) => {
         const { name, value, type, files } = e.target;
@@ -256,7 +293,7 @@ const VehicleList = () => {
                                     <div >
                                         <div className="download_label">Vehicle List</div>
                                         <div className="row" style={{ marginBottom: '10px' }}>
-                                            <div className="col-sm-12">
+                                            <div className="col-sm-6">
                                                 <div className="pull-left">
                                                     <label>Search:
                                                         <input
@@ -271,36 +308,65 @@ const VehicleList = () => {
                                                     </label>
                                                 </div>
                                             </div>
+                                            <div className="col-sm-6">
+                                                <div className="dt-buttons btn-group pull-right">
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle List'); }}><i className="fa fa-print"></i></button>
+
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i>
+                                                        </button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Vehicle Number</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Vehicle Model</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Year Made</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(3)} onChange={() => toggleColumnVisibility(3)} /> Registration Number</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(4)} onChange={() => toggleColumnVisibility(4)} /> Chasis Number</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(5)} onChange={() => toggleColumnVisibility(5)} /> Max Seating Capacity</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(6)} onChange={() => toggleColumnVisibility(6)} /> Driver Name</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(7)} onChange={() => toggleColumnVisibility(7)} /> Driver License</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(8)} onChange={() => toggleColumnVisibility(8)} /> Driver Contact</label></li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <table className="table table-hover table-striped table-bordered example">
                                             <thead>
                                                 <tr>
-                                                    <th>Vehicle Number</th>
-                                                    <th>Vehicle Model</th>
-                                                    <th>Year Made</th>
-                                                    <th>Registration Number</th>
-                                                    <th>Chasis Number</th>
-                                                    <th>Max Seating Capacity</th>
-                                                    <th>Driver Name</th>
-                                                    <th>Driver License</th>
-                                                    <th>Driver Contact</th>
+                                                    {!hiddenColumns.includes(0) && <th>Vehicle Number</th>}
+                                                    {!hiddenColumns.includes(1) && <th>Vehicle Model</th>}
+                                                    {!hiddenColumns.includes(2) && <th>Year Made</th>}
+                                                    {!hiddenColumns.includes(3) && <th>Registration Number</th>}
+                                                    {!hiddenColumns.includes(4) && <th>Chasis Number</th>}
+                                                    {!hiddenColumns.includes(5) && <th>Max Seating Capacity</th>}
+                                                    {!hiddenColumns.includes(6) && <th>Driver Name</th>}
+                                                    {!hiddenColumns.includes(7) && <th>Driver License</th>}
+                                                    {!hiddenColumns.includes(8) && <th>Driver Contact</th>}
                                                     <th className="text-right noExport" width="10%">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {filteredVehicles.map((data) => (
                                                     <tr key={data.id}>
-                                                        <td className="mailbox-name">
-                                                            <a href="#" data-toggle="popover" className="detail_popover" >{data.vehicle_no}</a>
-                                                        </td>
-                                                        <td className="mailbox-name"> {data.vehicle_model}</td>
-                                                        <td className="mailbox-name"> {data.manufacture_year}</td>
-                                                        <td className="mailbox-name"> {data.registration_number}</td>
-                                                        <td className="mailbox-name"> {data.chasis_number}</td>
-                                                        <td className="mailbox-name"> {data.max_seating_capacity}</td>
-                                                        <td className="mailbox-name"> {data.driver_name}</td>
-                                                        <td className="mailbox-name"> {data.driver_licence}</td>
-                                                        <td className="mailbox-name"> {data.driver_contact}</td>
+                                                        {!hiddenColumns.includes(0) && (
+                                                            <td className="mailbox-name">
+                                                                <a href="#" data-toggle="popover" className="detail_popover" >{data.vehicle_no}</a>
+                                                            </td>
+                                                        )}
+                                                        {!hiddenColumns.includes(1) && <td className="mailbox-name"> {data.vehicle_model}</td>}
+                                                        {!hiddenColumns.includes(2) && <td className="mailbox-name"> {data.manufacture_year}</td>}
+                                                        {!hiddenColumns.includes(3) && <td className="mailbox-name"> {data.registration_number}</td>}
+                                                        {!hiddenColumns.includes(4) && <td className="mailbox-name"> {data.chasis_number}</td>}
+                                                        {!hiddenColumns.includes(5) && <td className="mailbox-name"> {data.max_seating_capacity}</td>}
+                                                        {!hiddenColumns.includes(6) && <td className="mailbox-name"> {data.driver_name}</td>}
+                                                        {!hiddenColumns.includes(7) && <td className="mailbox-name"> {data.driver_licence}</td>}
+                                                        {!hiddenColumns.includes(8) && <td className="mailbox-name"> {data.driver_contact}</td>}
                                                         <td className="mailbox-date pull-right no-print white-space-nowrap">
                                                             <a className="btn btn-default btn-xs vehicledetails" data-toggle="tooltip" title="View" onClick={() => handleView(data.id)}><i className="fa fa-reorder"></i></a>
                                                             <a className="btn btn-default btn-xs editvehicle" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data.id)}><i className="fa fa-pencil"></i></a>

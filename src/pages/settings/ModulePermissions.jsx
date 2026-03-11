@@ -5,9 +5,11 @@ import { api } from "../../services/api";
 import "../../index.css";
 import '../../utils/include_files';
 import toast from 'react-hot-toast';
+import { usePermissions } from '../../context/PermissionContext';
 
 const ModulePermissions = () => {
     const navigate = useNavigate();
+    const { refreshPermissions } = usePermissions();
     const [activeTab, setActiveTab] = useState("system");
     const [loading, setLoading] = useState(true);
 
@@ -24,9 +26,12 @@ const ModulePermissions = () => {
         setLoading(true);
         try {
             const data = await api.getModulePermissions();
-            setPermissionList(data.permissionList || []);
+            const list = data.permissionList || [];
+            setPermissionList(list);
             setStudentPermissionList(data.studentpermissionList || []);
             setParentPermissionList(data.parentpermissionList || []);
+            // Refresh the context so sidebar reflects latest permissions
+            refreshPermissions();
         } catch (error) {
             console.error("Failed to fetch permissions:", error);
             toast.error("Failed to load module permissions");
@@ -161,7 +166,7 @@ const ModulePermissions = () => {
                         </tbody>
                     </table>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', color: '#666', fontSize: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0px', color: '#666', fontSize: '12px' }}>
                     <div>Records: 1 to {filtered.length} of {list.length}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ cursor: 'pointer' }}>&lt;</span>
@@ -175,7 +180,7 @@ const ModulePermissions = () => {
 
     return (
         <SettingsMenu hideSidebars={true}>
-            <div style={{ width: "100%", marginTop: "20px" }}>
+            <div style={{ width: "100%", marginTop: "0px" }}>
                 <div className="nav-tabs-custom theme-shadow">
                     <div className="row">
                         <div className="col-md-12">

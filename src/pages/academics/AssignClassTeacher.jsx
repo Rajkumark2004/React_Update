@@ -5,9 +5,11 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 import '../../utils/include_files';
 
 const AssignClassTeacher = () => {
+    const navigate = useNavigate();
     // Form States
     const [classId, setClassId] = useState('');
     const [sectionId, setSectionId] = useState('');
@@ -21,6 +23,14 @@ const AssignClassTeacher = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Edit tracking states
+    const [prevIds, setPrevIds] = useState([]);
+    const [existingAssignments, setExistingAssignments] = useState([]);
+    const [originalClassId, setOriginalClassId] = useState('');
+    const [originalSectionId, setOriginalSectionId] = useState('');
+
+    const { class_id: editClassId, section_id: editSectionId } = useParams();
+
     // Fetch Initial Data
     const fetchData = async () => {
         setLoading(true);
@@ -29,7 +39,10 @@ const AssignClassTeacher = () => {
             if (response && response.status === true && response.data) {
                 const data = response.data;
                 setClassList(data.classes || []);
-                setTeacherList(data.teachers || []);
+                // Only set teacherList from listing API if NOT in edit mode
+                if (!editClassId) {
+                    setTeacherList(data.teachers || []);
+                }
                 setAssignTeacherList(data.assigned_teachers || []);
             } else {
                 toast.error(response.message || 'Failed to load data');
@@ -46,42 +59,114 @@ const AssignClassTeacher = () => {
         fetchData();
     }, []);
 
-    const { class_id: editClassId, section_id: editSectionId } = useParams();
-
     // Fetch Details if in Edit Mode
     useEffect(() => {
         const fetchDetails = async () => {
             if (editClassId && editSectionId) {
+                console.log('[DEBUG] fetchDetails called with editClassId:', editClassId, 'editSectionId:', editSectionId);
                 try {
                     const response = await api.getClassTeacherDetails(editClassId, editSectionId);
+                    console.log('[DEBUG] getClassTeacherDetails response:', response);
+                    console.log('[DEBUG] response.status:', response?.status, 'typeof:', typeof response?.status);
+                    console.log('[DEBUG] response.data:', response?.data ? 'exists' : 'missing');
+
                     if (response && response.status === true && response.data) {
                         const data = response.data;
-                        setClassId(data.class_id);
-                        setSectionId(data.section_id);
 
-                        // Populate teacher list from all_teachers if provided
-                        if (data.all_teachers) {
-                            setTeacherList(data.all_teachers);
+                        // Populate classList from the edit response
+                        if (data.classes && data.classes.length > 0) {
+                            setClassList(data.classes);
                         }
 
-                        // Extract teacher IDs from assigned_teachers
-                        const assignedIds = (data.assigned_teachers || []).map(t => parseInt(t.id));
+                        // Populate sections from the edit response
+                        if (data.sections && data.sections.length > 0) {
+                            const mappedSections = data.sections.map(s => ({
+                                section_id: s.id,
+                                section: s.section
+                            }));
+                            console.log('[DEBUG] Mapped sections:', mappedSections);
+                            setSectionOptions(mappedSections);
+                        }
+
+                        // Set class and section AFTER options are loaded
+                        setClassId(editClassId);
+                        setSectionId(editSectionId);
+
+                        // Populate teacher list from the edit response
+                        if (data.teachers) {
+                            console.log('[DEBUG] Setting teacherList from data.teachers, count:', data.teachers.length);
+                            console.log('[DEBUG] Teacher IDs:', data.teachers.map(t => t.id));
+                            setTeacherList(data.teachers);
+                        } else if (data.all_teachers) {
+                            console.log('[DEBUG] Setting teacherList from data.all_teachers');
+                            setTeacherList(data.all_teachers);
+                        } else {
+                            console.log('[DEBUG] No teachers found in response data');
+                        }
+
+                        // Extract assigned teachers
+                        let assignedGroup = [];
+                        console.log('[DEBUG] data.assigned_teachers:', data.assigned_teachers);
+                        console.log('[DEBUG] Is array:', Array.isArray(data.assigned_teachers));
+
+                        if (data.assigned_teachers && Array.isArray(data.assigned_teachers) && data.assigned_teachers.length > 0) {
+                            const firstItem = data.assigned_teachers[0];
+
+                            if (firstItem.teachers && Array.isArray(firstItem.teachers)) {
+                                // Grouped format: [{class_id, section_id, teachers: [...]}]
+                                const group = data.assigned_teachers.find(g => String(g.class_id) === String(editClassId) && String(g.section_id) === String(editSectionId)) || data.assigned_teachers[0];
+                                console.log('[DEBUG] Grouped format - Found group:', group?.class_id, group?.section_id);
+                                assignedGroup = group?.teachers || [];
+                            } else if (firstItem.id && (firstItem.ctid || firstItem.class_id)) {
+                                // Flat format: [{id, ctid, class_id, section_id, name, ...}, ...]
+                                // Each item IS a teacher object directly
+                                console.log('[DEBUG] Flat format - treating assigned_teachers as direct teacher list');
+                                assignedGroup = data.assigned_teachers;
+                            }
+                        } else if (data.assigned_teachers && !Array.isArray(data.assigned_teachers) && data.assigned_teachers.teachers) {
+                            assignedGroup = data.assigned_teachers.teachers;
+                        }
+
+                        console.log('[DEBUG] assignedGroup length:', assignedGroup.length);
+                        console.log('[DEBUG] assignedGroup IDs:', assignedGroup.map(t => t.id));
+
+                        const assignedIds = assignedGroup.map(t => String(t.id));
+                        console.log('[DEBUG] Setting selectedTeachers to:', assignedIds);
                         setSelectedTeachers(assignedIds);
+
+                        // Store original values for payload
+                        setOriginalClassId(editClassId);
+                        setOriginalSectionId(editSectionId);
+
+                        const assignData = assignedGroup.map(t => ({
+                            id: String(t.id),
+                            ctid: parseInt(t.ctid || t.class_teacher_id || t.id)
+                        }));
+                        console.log('[DEBUG] existingAssignments:', assignData);
+                        setExistingAssignments(assignData);
+
+                        const pIds = assignData.map(a => a.ctid);
+                        setPrevIds(pIds);
                     } else {
+                        console.log('[DEBUG] Response check failed. status:', response?.status, 'data:', response?.data);
                         toast.error(response.message || 'Failed to fetch assignment details');
                     }
                 } catch (error) {
-                    console.error('Error fetching details:', error);
+                    console.error('[DEBUG] Error fetching details:', error);
                     toast.error('Failed to load assignment details');
                 }
+            } else {
+                console.log('[DEBUG] fetchDetails skipped - editClassId:', editClassId, 'editSectionId:', editSectionId);
             }
         };
 
         fetchDetails();
     }, [editClassId, editSectionId]);
 
-    // Fetch Sections when Class Changes
+    // Fetch Sections when Class Changes (skip in edit mode - fetchDetails handles it)
     useEffect(() => {
+        if (editClassId) return; // In edit mode, sections come from fetchDetails
+
         const fetchSections = async () => {
             if (classId) {
                 try {
@@ -110,11 +195,12 @@ const AssignClassTeacher = () => {
 
     // Handlers
     const handleTeacherToggle = (teacherId) => {
+        const tId = String(teacherId); // Normalize to string just in case
         setSelectedTeachers(prev => {
-            if (prev.includes(teacherId)) {
-                return prev.filter(id => id !== teacherId);
+            if (prev.includes(tId)) {
+                return prev.filter(id => id !== tId);
             } else {
-                return [...prev, teacherId];
+                return [...prev, tId];
             }
         });
     };
@@ -126,11 +212,24 @@ const AssignClassTeacher = () => {
             return;
         }
 
-        const payload = {
-            class_id: parseInt(classId),
-            section_id: parseInt(sectionId),
-            teachers: selectedTeachers.map(id => parseInt(id))
-        };
+        let payload;
+        if (editClassId) {
+            payload = {
+                class: parseInt(classId),
+                section: parseInt(sectionId),
+                teachers: selectedTeachers.map(id => parseInt(id)),
+                classteacherid: existingAssignments.map(ea => parseInt(ea.id)),
+                prev_class_id: parseInt(originalClassId),
+                prev_section_id: parseInt(originalSectionId),
+                previd: existingAssignments.map(ea => parseInt(ea.ctid))
+            };
+        } else {
+            payload = {
+                class_id: parseInt(classId),
+                section_id: parseInt(sectionId),
+                teachers: selectedTeachers.map(id => parseInt(id))
+            };
+        }
 
         try {
             const response = editClassId
@@ -192,6 +291,27 @@ const AssignClassTeacher = () => {
         return classMatch || sectionMatch || teacherMatch;
     });
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(col => col !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const headers = ['Class', 'Section', 'Class Teacher'];
+
+    const getExportData = () => {
+        return filteredList.map(item => {
+            const firstTeacher = item.teachers?.[0] || {};
+            const classVal = item.class || firstTeacher.class || "";
+            const sectionVal = item.section || firstTeacher.section || "";
+            const teachersList = item.teachers ? item.teachers.map(t => `${t.name} ${t.surname} (${t.employee_id})`).join(', ') : '';
+            return [classVal, sectionVal, teachersList];
+        });
+    };
+
     return (
         <div className="wrapper">
             <Header />
@@ -204,7 +324,7 @@ const AssignClassTeacher = () => {
                     </h1>
                 </section>
 
-                <section className="content" style={{ marginTop: '18px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         {/* Left Column - Form */}
                         <div className="col-md-4">
@@ -243,8 +363,8 @@ const AssignClassTeacher = () => {
                                                     <label>
                                                         <input
                                                             type="checkbox"
-                                                            checked={selectedTeachers.includes(parseInt(teacher.id))}
-                                                            onChange={() => handleTeacherToggle(parseInt(teacher.id))}
+                                                            checked={selectedTeachers.includes(String(teacher.id))}
+                                                            onChange={() => handleTeacherToggle(teacher.id)}
                                                         />
                                                         {teacher.name} {teacher.surname} ({teacher.employee_id})
                                                     </label>
@@ -298,12 +418,27 @@ const AssignClassTeacher = () => {
 
                                                 {/* Export Icons Right */}
                                                 <div className="dt-buttons btn-group">
-                                                    <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy"><span><i className="fa fa-files-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV"><span><i className="fa fa-file-text-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel"><span><i className="fa fa-file-excel-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-pdf buttons-html5 btn-sm" title="PDF"><span><i className="fa fa-file-pdf-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-print btn-sm" title="Print"><span><i className="fa fa-print"></i></span></a>
-                                                    <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns"><span><i className="fa fa-columns"></i></span></a>
+                                                    <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Assign_Class_Teacher.csv'); }}><span><i className="fa fa-file-text-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Assign_Class_Teacher.xls'); }}><span><i className="fa fa-file-excel-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-pdf buttons-html5 btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Assign_Class_Teacher.pdf'); }}><span><i className="fa fa-file-pdf-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-print btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Assign Class Teacher'); }}><span><i className="fa fa-print"></i></span></a>
+                                                    <div className="btn-group">
+                                                        <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Class</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Section</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Class Teacher</label>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
@@ -311,28 +446,34 @@ const AssignClassTeacher = () => {
                                             <table className="table table-striped table-bordered table-hover example" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info">
                                                 <thead>
                                                     <tr role="row">
-                                                        <th>Class</th>
-                                                        <th>Section</th>
-                                                        <th>Class Teacher</th>
+                                                        {!hiddenColumns.includes(0) && <th>Class</th>}
+                                                        {!hiddenColumns.includes(1) && <th>Section</th>}
+                                                        {!hiddenColumns.includes(2) && <th>Class Teacher</th>}
                                                         <th className="text-right">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {filteredList.map((item, index) => (
                                                         <tr key={index} role="row" className={index % 2 === 0 ? "odd" : "even"}>
-                                                            <td className="mailbox-name">
-                                                                {item.class || item.teachers?.[0]?.class}
-                                                            </td>
-                                                            <td>
-                                                                {item.section || item.teachers?.[0]?.section}
-                                                            </td>
-                                                            <td>
-                                                                {(item.teachers || []).map((t, idx) => (
-                                                                    <div key={idx}>
-                                                                        {t.name} {t.surname} ({t.employee_id})<br />
-                                                                    </div>
-                                                                ))}
-                                                            </td>
+                                                            {!hiddenColumns.includes(0) && (
+                                                                <td className="mailbox-name">
+                                                                    {item.class || item.teachers?.[0]?.class}
+                                                                </td>
+                                                            )}
+                                                            {!hiddenColumns.includes(1) && (
+                                                                <td>
+                                                                    {item.section || item.teachers?.[0]?.section}
+                                                                </td>
+                                                            )}
+                                                            {!hiddenColumns.includes(2) && (
+                                                                <td>
+                                                                    {(item.teachers || []).map((t, idx) => (
+                                                                        <div key={idx}>
+                                                                            {t.name} {t.surname} ({t.employee_id})<br />
+                                                                        </div>
+                                                                    ))}
+                                                                </td>
+                                                            )}
                                                             <td className="mailbox-date pull-right">
                                                                 <Link
                                                                     to={`/admin/teacher/update_class_teacher/${item.class_id}/${item.section_id}`}

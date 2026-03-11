@@ -32,31 +32,56 @@ const GeneralSettings = () => {
     const [message, setMessage] = useState({ type: '', text: '' });
     const [isLoading, setIsLoading] = useState(true);
 
-    // Load saved settings from localStorage on mount
+    // Load saved settings from API on mount
     useEffect(() => {
-        const loadSavedSettings = () => {
-            // Load each setting from localStorage if it exists
-            const savedSettings = localStorage.getItem('generalSettings');
-            if (savedSettings) {
-                try {
-                    const parsed = JSON.parse(savedSettings);
-                    setFormData(prev => ({ ...prev, ...parsed }));
-                    console.log('Loaded settings from localStorage:', parsed);
-                } catch (e) {
-                    console.error('Failed to parse saved settings:', e);
+        const loadSettings = async () => {
+            setIsLoading(true);
+            try {
+                const response = await api.getGeneralSettings();
+                if (response && response.status && response.result) {
+                    const data = response.result;
+                    setFormData({
+                        sch_id: data.id || '1',
+                        sch_session_id: data.session_id || '9',
+                        sch_name: data.name || '',
+                        sch_dise_code: data.dise_code || '',
+                        sch_address: data.address || '',
+                        sch_phone: data.phone || '',
+                        sch_email: data.email || '',
+                        sch_start_month: data.start_month || '4',
+                        sch_date_format: data.date_format || 'd/m/Y',
+                        sch_timezone: data.timezone || 'Asia/Kolkata',
+                        sch_start_week: data.start_week || 'Monday',
+                        currency_format: data.currency_format || '#,###.##',
+                        currency_place: data.currency_place || 'after_number',
+                        base_url: data.base_url || 'https://newlayout.wisibles.com/',
+                        folder_path: data.folder_path || '/home/hostsbds/public_html/newlayout.wisibles.com/'
+                    });
+
+                    // Also sync to localStorage for consistency with other parts of the app
+                    localStorage.setItem('generalSettings', JSON.stringify(data));
+                    localStorage.setItem('defaultSessionId', data.session_id);
+                    console.log('Loaded settings from API:', data);
+                } else {
+                    // Fallback to localStorage if API fails or returns no data
+                    const savedSettings = localStorage.getItem('generalSettings');
+                    if (savedSettings) {
+                        setFormData(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
+                    }
                 }
-            } else {
-                // At minimum, load the default session ID if available
-                const savedSessionId = localStorage.getItem('defaultSessionId');
-                if (savedSessionId) {
-                    setFormData(prev => ({ ...prev, sch_session_id: savedSessionId }));
-                    console.log('Loaded default session ID:', savedSessionId);
+            } catch (e) {
+                console.error('Failed to load settings from API:', e);
+                // Fallback to localStorage
+                const savedSettings = localStorage.getItem('generalSettings');
+                if (savedSettings) {
+                    setFormData(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
                 }
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
 
-        loadSavedSettings();
+        loadSettings();
     }, []);
 
     const handleChange = (e) => {

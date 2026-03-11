@@ -7,6 +7,7 @@ import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../../utils/tableExport';
+import toast from 'react-hot-toast';
 
 const FeesForward = () => {
     const navigate = useNavigate();
@@ -64,7 +65,6 @@ const FeesForward = () => {
     const [isUpdate, setIsUpdate] = useState(false);
     const [dueDateFormatted, setDueDateFormatted] = useState('');
     const [amounts, setAmounts] = useState({});
-    const [flashMessage, setFlashMessage] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -212,12 +212,12 @@ const FeesForward = () => {
         e.preventDefault();
 
         if (!classId) {
-            setFlashMessage({ type: 'danger', message: 'Please select a class.' });
+            toast.error('Please select a class.');
             return;
         }
 
         if (!sectionId) {
-            setFlashMessage({ type: 'danger', message: 'Please select a section.' });
+            toast.error('Please select a section.');
             return;
         }
 
@@ -242,14 +242,13 @@ const FeesForward = () => {
                     });
                 }
                 setAmounts(initialAmounts);
-                setFlashMessage(null);
             } else {
-                setFlashMessage({ type: 'danger', message: response.message || 'No records found or error occurred.' });
+                toast.error(response.message || 'No records found or error occurred.');
                 setStudentDueFee([]);
             }
         } catch (error) {
             console.error("Search error:", error);
-            setFlashMessage({ type: 'danger', message: 'Failed to fetch fees data.' });
+            toast.error('Failed to fetch fees data.');
         } finally {
             setIsLoading(false);
         }
@@ -263,26 +262,18 @@ const FeesForward = () => {
         }));
     };
 
+
+
     // Handle save
     const handleSave = async (e) => {
         e.preventDefault();
 
         if (!dueDateFormatted) {
-            setFlashMessage({ type: 'danger', message: 'Due Date is missing.' });
+            toast.error('Due Date is missing.');
             return;
         }
 
-        // map amounts to students
-        // The payload only needs the list of students with their amounts
-        // We should iterate over ALL loaded students (studentDueFee), not just the filtered ones/current page,
-        // because usually this operation applies to the whole set unless specified otherwise.
-        // However, the user might want to save edits.
-
-        // Construct payload
         const studentsPayload = studentDueFee.map((student, index) => {
-            // Find updated amount if any, otherwise default to current balance
-            // Note: index in studentDueFee is 0-based.
-            // amounts keys were set as index+1 in handleSearchSubmit
             const key = index + 1;
             const amount = amounts[key] !== undefined ? amounts[key] : parseFloat(student.balance).toFixed(2);
 
@@ -293,21 +284,18 @@ const FeesForward = () => {
         });
 
         const payload = {
-            due_date: dueDateFormatted, // Format 'YYYY-MM-DD' is expected? The API response gave '2026-01-24' (DD-MM-YYYY?)
-            // Wait, the API response for search gave "due_date": "2026-01-24".
-            // The API request for save expects "due_date": "2026-03-25".
-            // So if input `dueDateFormatted` is already YYYY-MM-DD, we are good.
+            due_date: dueDateFormatted,
             students: studentsPayload
         };
 
         setIsSaving(true);
         try {
             const response = await api.saveFeeCarryForward(payload);
-            setFlashMessage({ type: 'success', message: response.message || 'Record Saved Successfully' });
+            toast.success(response.message || 'Record Saved Successfully');
             setIsUpdate(true);
         } catch (error) {
             console.error("Save error:", error);
-            setFlashMessage({ type: 'danger', message: error.message || 'Failed to save fees.' });
+            toast.error(error.message || 'Failed to save fees.');
         } finally {
             setIsSaving(false);
         }
@@ -367,7 +355,7 @@ const FeesForward = () => {
                 </section>
 
                 {/* Main content */}
-                <section className="content" style={{ marginTop: '18px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <form id="feesforward" onSubmit={handleSearchSubmit} method="post" acceptCharset="utf-8">
                             <div className="col-md-12">
@@ -383,11 +371,6 @@ const FeesForward = () => {
                                     <div className="box-body">
                                         <div className="row">
                                             <div className="col-md-12">
-                                                {flashMessage && (
-                                                    <div className={`alert alert-${flashMessage.type}`}>
-                                                        {flashMessage.message}
-                                                    </div>
-                                                )}
                                             </div>
                                             <div className="col-md-6">
                                                 <div className="form-group">
@@ -400,7 +383,7 @@ const FeesForward = () => {
                                                         onChange={handleClassChange}
                                                     >
                                                         <option value="">Select</option>
-                                                        {classList.map((cls) => (
+                                                        {[...classList].reverse().map((cls) => (
                                                             <option key={cls.id} value={cls.id}>
                                                                 {cls.class}
                                                             </option>

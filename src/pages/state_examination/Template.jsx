@@ -9,6 +9,7 @@ import { api } from '../../services/api';
 import DragDropFileUpload from '../../components/DragDropFileUpload';
 import toast from 'react-hot-toast';
 import ViewTemplate from './ViewTemplate';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 
 const Template = () => {
@@ -34,6 +35,7 @@ const Template = () => {
     const [currentTemplateId, setCurrentTemplateId] = useState(null);
     const [marksheetType, setMarksheetType] = useState('');
     const [marksheetList, setMarksheetList] = useState([]);
+    const [errors, setErrors] = useState({});
 
     // Dropdown state
     const [isSectionOpen, setIsSectionOpen] = useState(false);
@@ -79,6 +81,9 @@ const Template = () => {
             if (response && response.data) {
                 if (response.data.marksheet) {
                     setMarksheetList(response.data.marksheet);
+                }
+                if (response.data.classlist && Array.isArray(response.data.classlist)) {
+                    setClassList(response.data.classlist);
                 }
                 if (response.data.result && Array.isArray(response.data.result)) {
                     data = response.data.result;
@@ -183,22 +188,28 @@ const Template = () => {
             // Check for status true and data object as per user provided JSON
             if (response.status && response.data && response.data.template) {
                 const tmpl = response.data.template;
+                const classId = response.data.selected_class_id || tmpl.class_id || '';
                 const secs = response.data.selected_section_id || response.data.sections || [];
 
                 // Map sections to IDs (using section_id to match api.getSections generic list)
                 // Handle objects or direct IDs
                 const selectedSecs = secs.map(s => {
-                    if (typeof s === 'object') return s.section_id || s.id || s.class_section_id;
+                    if (typeof s === 'object') return s.id || s.section_id || s.class_section_id;
                     return s;
                 });
 
-                // Ensure section list is loaded.
-                // We use api.getSections() now.
-                if (sectionList.length === 0) {
+                if (response.data.classlist && Array.isArray(response.data.classlist)) {
+                    setClassList(response.data.classlist);
+                }
+
+                // Ensure section list is loaded specifically for this class.
+                if (classId) {
                     try {
-                        const secResponse = await api.getSections();
+                        const secResponse = await api.getSectionsByClass(classId);
                         let sections = [];
-                        if (secResponse && secResponse.data && Array.isArray(secResponse.data)) {
+                        if (secResponse.status && secResponse.data && Array.isArray(secResponse.data)) {
+                            sections = secResponse.data;
+                        } else if (secResponse && secResponse.data && Array.isArray(secResponse.data)) {
                             sections = secResponse.data;
                         } else if (Array.isArray(secResponse)) {
                             sections = secResponse;
@@ -209,10 +220,11 @@ const Template = () => {
                     }
                 }
 
+
                 setFormData({
                     id: tmpl.id,
                     name: tmpl.name || tmpl.template || '',
-                    class_id: tmpl.class_id,
+                    class_id: classId,
                     marksheet_type: tmpl.marksheet_type || 'exam_wise',
                     description: tmpl.description || '',
                     school_name: tmpl.school_name,
@@ -470,57 +482,75 @@ const Template = () => {
         e.preventDefault();
 
         // Validation
-        const missingFields = [];
-        if (!formData.name) missingFields.push("Name");
-        if (!formData.class_id) missingFields.push("Class");
-        if (selectedSections.length === 0) missingFields.push("Sections");
+        const newErrors = {};
+        if (!formData.name) newErrors.name = "The Template Name field is required.";
+        if (!formData.class_id) newErrors.class_id = "The Class field is required.";
+        if (selectedSections.length === 0) newErrors.sections = "The Section field is required.";
 
-        if (missingFields.length > 0) {
-            // User requested to remove the localhost prompt
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        try {
-            const payload = {
-                name: formData.name,
-                class_id: formData.class_id,
-                marksheet_type: formData.marksheet_type,
-                description: formData.description,
-                school_name: formData.school_name,
-                exam_center: formData.exam_center,
-                date: formData.date,
-                orientation: formData.orientation,
-                content: formData.content,
-                content_footer: formData.content_footer,
-                exam_session: formData.exam_session ? 1 : 0,
-                is_name: formData.is_name ? 1 : 0,
-                is_father_name: formData.is_father_name ? 1 : 0,
-                is_mother_name: formData.is_mother_name ? 1 : 0,
-                is_admission_no: formData.is_admission_no ? 1 : 0,
-                is_roll_no: formData.is_roll_no ? 1 : 0,
-                is_photo: formData.is_photo ? 1 : 0,
-                is_class: formData.is_class ? 1 : 0,
-                is_section: formData.is_section ? 1 : 0,
-                is_division: formData.is_division ? 1 : 0,
-                is_dob: formData.is_dob ? 1 : 0,
-                is_remark: formData.remark ? 1 : 0,
-                remark: formData.remark ? 1 : 0,
-                section: selectedSections,
-                header_image: formData.header_image || null,
-                left_sign: formData.left_sign || null,
-                middle_sign: formData.middle_sign || null,
-                right_sign: formData.right_sign || null,
-                background_img: formData.background_img || null
-            };
+        setErrors({});
 
-            console.log("Submitting payload:", payload);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', formData.name);
+            formDataToSend.append('class_id', formData.class_id);
+            formDataToSend.append('marksheet_type', formData.marksheet_type);
+            formDataToSend.append('description', formData.description);
+            formDataToSend.append('school_name', formData.school_name || '');
+            formDataToSend.append('exam_center', formData.exam_center || '');
+            formDataToSend.append('date', formData.date || '');
+            formDataToSend.append('orientation', formData.orientation);
+            formDataToSend.append('content', formData.content || '');
+            formDataToSend.append('content_footer', formData.content_footer || '');
+            formDataToSend.append('exam_session', formData.exam_session ? "1" : "0");
+            formDataToSend.append('is_name', formData.is_name ? "1" : "0");
+            formDataToSend.append('is_father_name', formData.is_father_name ? "1" : "0");
+            formDataToSend.append('is_mother_name', formData.is_mother_name ? "1" : "0");
+            formDataToSend.append('is_admission_no', formData.is_admission_no ? "1" : "0");
+            formDataToSend.append('is_roll_no', formData.is_roll_no ? "1" : "0");
+            formDataToSend.append('is_photo', formData.is_photo ? "1" : "0");
+            formDataToSend.append('is_class', formData.is_class ? "1" : "0");
+            formDataToSend.append('is_section', formData.is_section ? "1" : "0");
+            formDataToSend.append('is_division', formData.is_division ? "1" : "0");
+            formDataToSend.append('is_dob', formData.is_dob ? "1" : "0");
+            formDataToSend.append('is_remark', formData.remark ? "1" : "0");
+            formDataToSend.append('remark', formData.remark ? "1" : "0");
+
+            // Append sections
+            selectedSections.forEach(secId => {
+                formDataToSend.append('section[]', secId);
+            });
+
+            // Append images/files
+            if (formData.header_image instanceof File) {
+                formDataToSend.append('header_image', formData.header_image);
+            }
+            if (formData.left_sign instanceof File) {
+                formDataToSend.append('left_sign', formData.left_sign);
+            }
+            if (formData.middle_sign instanceof File) {
+                formDataToSend.append('middle_sign', formData.middle_sign);
+            }
+            if (formData.right_sign instanceof File) {
+                formDataToSend.append('right_sign', formData.right_sign);
+            }
+            if (formData.background_img instanceof File) {
+                formDataToSend.append('background_img', formData.background_img);
+            }
+
+            console.log("Submitting FormData forTemplate...");
 
             let response;
             if (isEditing) {
-                payload.templateid = formData.id;
-                response = await api.updateCBSETemplate(payload);
+                formDataToSend.append('record_id', formData.id);
+                formDataToSend.append('templateid', formData.id);
+                response = await api.updateCBSETemplate(formDataToSend);
             } else {
-                response = await api.addCBSETemplate(payload);
+                response = await api.addCBSETemplate(formDataToSend);
             }
 
             if (response.status) {
@@ -544,7 +574,7 @@ const Template = () => {
         if (selectedSections.length === sectionList.length) {
             setSelectedSections([]);
         } else {
-            setSelectedSections(sectionList.map(s => s.id || s.section_id));
+            setSelectedSections(sectionList.map(s => s.id));
         }
     };
 
@@ -566,6 +596,7 @@ const Template = () => {
         });
         setSelectedSections([]);
         setIsSectionOpen(false);
+        setErrors({});
     };
 
     const appName = "Smart School";
@@ -601,6 +632,32 @@ const Template = () => {
         (t.name || t.template || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Template");
+        if (!hiddenColumns.includes(1)) headers.push("Class (Sections)");
+        if (!hiddenColumns.includes(2)) headers.push("Template Description");
+
+        const rows = filteredTemplates.map(template => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(template.name);
+            if (!hiddenColumns.includes(1)) row.push(template.class_sections);
+            if (!hiddenColumns.includes(2)) row.push(template.description);
+            return row;
+        });
+
+        return { headers, rows };
+    };
+
     return (
         <div className="wrapper theme-white-skin">
             <Header appName={appName} userData={userData} handleLogout={() => { }} />
@@ -611,7 +668,7 @@ const Template = () => {
                     <h1><i className="fa fa-money"></i> State Examination</h1>
                 </section>
                 <section className="content">
-                    <div className="row" style={{ marginTop: '18px' }}>
+                    <div className="row" style={{ marginTop: '0px' }}>
                         <div className="col-md-12">
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
@@ -645,12 +702,26 @@ const Template = () => {
                                         </div>
                                         <div className="col-md-6">
                                             <div className="pull-right dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy"><i className="fa fa-files-o"></i></button>
-                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                <button className="btn btn-default btn-sm buttons-print" title="Print"><i className="fa fa-print"></i></button>
-                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns"><i className="fa fa-columns"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Template_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Template_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Template List'); }}><i className="fa fa-print"></i></button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
+                                                    {showColumnsDropdown && (
+                                                        <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                            <li>
+                                                                <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Template</label>
+                                                            </li>
+                                                            <li>
+                                                                <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Class (Sections)</label>
+                                                            </li>
+                                                            <li>
+                                                                <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Template Description</label>
+                                                            </li>
+                                                        </ul>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -658,18 +729,18 @@ const Template = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Template</th>
-                                                    <th>Class (Sections)</th>
-                                                    <th width="60%">Template Description</th>
+                                                    {!hiddenColumns.includes(0) && <th>Template</th>}
+                                                    {!hiddenColumns.includes(1) && <th>Class (Sections)</th>}
+                                                    {!hiddenColumns.includes(2) && <th width="60%">Template Description</th>}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {filteredTemplates.map(template => (
                                                     <tr key={template.id}>
-                                                        <td>{template.name}</td>
-                                                        <td>{template.class_sections}</td>
-                                                        <td>{template.description}</td>
+                                                        {!hiddenColumns.includes(0) && <td>{template.name}</td>}
+                                                        {!hiddenColumns.includes(1) && <td>{template.class_sections}</td>}
+                                                        {!hiddenColumns.includes(2) && <td>{template.description}</td>}
                                                         <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                                                             <button type="button" className="btn btn-default btn-xs view_template" id="load" data-toggle="tooltip" data-recordid={template.id} data-temp_name={template.name} title="View" data-loading-text="<i class='fa fa-spinner fa-spin'></i>" onClick={() => handleView(template.id)}>
                                                                 <i className="fa fa-reorder"></i>
@@ -725,13 +796,14 @@ const Template = () => {
                             <form role="form" id="form1" onSubmit={handleSubmit} method="post" encType="multipart/form-data">
                                 <div className="modal-body">
                                     {isEditing && <div id="templatedata"></div>}
-                                    <div className="form-group">
+                                    <div className={`form-group ${errors.name ? 'has-error' : ''}`}>
                                         <label>Template</label><small className="req"> *</small>
                                         <input type="text" id="name" name="name" className="form-control" value={formData.name} onChange={handleInputChange} />
+                                        {errors.name && <span className="text-danger">{errors.name}</span>}
                                     </div>
                                     <div className="row">
                                         <div className="col-md-4">
-                                            <div className="form-group">
+                                            <div className={`form-group ${errors.class_id ? 'has-error' : ''}`}>
                                                 <label>Class</label><small className="req"> *</small>
                                                 <select autoFocus id="searchclassid" name="class_id" className="form-control" value={formData.class_id} onChange={handleClassChange}>
                                                     <option value="">Select</option>
@@ -739,36 +811,34 @@ const Template = () => {
                                                         <option key={cls.id} value={cls.id}>{cls.class}</option>
                                                     ))}
                                                 </select>
-                                                <span className="text-danger" id="error_class_id"></span>
+                                                {errors.class_id && <span className="text-danger">{errors.class_id}</span>}
                                             </div>
                                         </div>
                                         <div className="col-md-4">
-                                            <div className="form-group relative z-index-6">
+                                            <div className={`form-group relative z-index-6 ${errors.sections ? 'has-error' : ''}`}>
                                                 <label>Section</label><small className="req"> *</small>
                                                 <div id="checkbox-dropdown-container">
-                                                    <div>
-                                                        <div className="custom-select" id="custom-select" onClick={() => setIsSectionOpen(!isSectionOpen)}>
-                                                            {selectedSections.length > 0 ? `${selectedSections.length} Selected` : "Select"}
-                                                        </div>
-                                                        {isSectionOpen && (
-                                                            <div className="custom-select-option-box" id="custom-select-option-box" style={{ display: 'block' }}>
-                                                                <div className="custom-select-option checkbox">
+                                                    <div className="custom-select" id="custom-select" onClick={() => setIsSectionOpen(!isSectionOpen)}>
+                                                        {selectedSections.length > 0 ? `${selectedSections.length} Selected` : "Select"}
+                                                    </div>
+                                                    {isSectionOpen && (
+                                                        <div className="custom-select-option-box" id="custom-select-option-box" style={{ display: 'block' }}>
+                                                            <div className="custom-select-option checkbox">
+                                                                <label className="vertical-middle line-h-18">
+                                                                    <input className="custom-select-option-checkbox select_all" type="checkbox" name="select_all" id="select_all" checked={sectionList.length > 0 && selectedSections.length === sectionList.length} onChange={toggleSelectAll} /> Select All
+                                                                </label>
+                                                            </div>
+                                                            {sectionList.map(s => (
+                                                                <div key={s.id} className="custom-select-option checkbox">
                                                                     <label className="vertical-middle line-h-18">
-                                                                        <input className="custom-select-option-checkbox select_all" type="checkbox" name="select_all" id="select_all" checked={sectionList.length > 0 && selectedSections.length === sectionList.length} onChange={toggleSelectAll} /> Select All
+                                                                        <input className="custom-select-option-checkbox" type="checkbox" name="section[]" checked={selectedSections.includes(s.id)} onChange={() => toggleSection(s.id)} /> {s.section}
                                                                     </label>
                                                                 </div>
-                                                                {sectionList.map(s => (
-                                                                    <div key={s.id || s.section_id} className="custom-select-option checkbox">
-                                                                        <label className="vertical-middle line-h-18">
-                                                                            <input className="custom-select-option-checkbox" type="checkbox" name="section[]" checked={selectedSections.includes(s.id || s.section_id)} onChange={() => toggleSection(s.id || s.section_id)} /> {s.section}
-                                                                        </label>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <span className="text-danger" id="error_class_id"></span>
+                                                {errors.sections && <span className="text-danger">{errors.sections}</span>}
                                             </div>
                                         </div>
                                         <div className="col-md-4">

@@ -7,6 +7,7 @@ import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../../utils/tableExport';
 
 const FeeMaster = () => {
     const { currentSession } = useSession();
@@ -21,6 +22,50 @@ const FeeMaster = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(100);
     const navigate = useNavigate();
+
+    // Column definitions for export
+    const columns = [
+        { key: 'group_name', label: 'Fees Group' },
+        { key: 'fee_code', label: 'Fees Code' },
+        { key: 'amount', label: 'Amount' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    // Flatten nested fee master list for export
+    const getFlatExportRows = () => {
+        const filteredGroups = feeMasterList.filter(group =>
+            group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
+        );
+        const visibleCols = columns.filter(col => visibleColumns.has(col.key));
+        const headers = visibleCols.map(col => col.label);
+        const rows = [];
+        filteredGroups.forEach(group => {
+            if (group.feetypes && group.feetypes.length > 0) {
+                group.feetypes.forEach(ft => {
+                    const rowData = {
+                        group_name: group.group_name,
+                        fee_code: `${ft.type} (${ft.code})`,
+                        amount: `₹${ft.amount}`
+                    };
+                    rows.push(visibleCols.map(col => rowData[col.key] || ''));
+                });
+            } else {
+                const rowData = { group_name: group.group_name, fee_code: '', amount: '' };
+                rows.push(visibleCols.map(col => rowData[col.key] || ''));
+            }
+        });
+        return { headers, rows };
+    };
 
     const [formData, setFormData] = useState({
         fee_groups_id: '',
@@ -345,24 +390,36 @@ const FeeMaster = () => {
                                         </div>
                                         <div className="col-sm-6">
                                             <div className="pull-right dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getFlatExportRows(); copyToClipboard(headers, rows); }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel">
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getFlatExportRows(); downloadExcel(headers, rows, 'fees_master.xls'); }}>
                                                     <i className="fa fa-file-excel-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV">
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getFlatExportRows(); downloadCSV(headers, rows, 'fees_master.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF">
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getFlatExportRows(); printTable(headers, rows, 'Fees Master List'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-print" onClick={() => window.print()} title="Print">
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getFlatExportRows(); printTable(headers, rows, 'Fees Master List'); }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns">
-                                                    <i className="fa fa-columns"></i>
-                                                </button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showColumnsDropdown && (
+                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {columns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                    <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

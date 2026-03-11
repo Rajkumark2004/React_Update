@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const SubjectTeacher = () => {
     const navigate = useNavigate();
@@ -23,6 +24,30 @@ const SubjectTeacher = () => {
     const [assignmentList, setAssignmentList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const headers = ['Class', 'Section', 'Staff Name', 'Subject'];
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(col => col !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const exportHeaders = headers.filter((_, i) => !hiddenColumns.includes(i));
+        const exportRows = filteredList.map(item => {
+            const rowData = [];
+            if (!hiddenColumns.includes(0)) rowData.push(item.class);
+            if (!hiddenColumns.includes(1)) rowData.push(item.section);
+            if (!hiddenColumns.includes(2)) rowData.push(`${item.name} ${item.surname} (${item.employee_id})`);
+            if (!hiddenColumns.includes(3)) rowData.push(item.subject_name);
+            return rowData;
+        });
+        return { headers: exportHeaders, rows: exportRows };
+    };
 
     // Fetch Initial Data
     const fetchData = async () => {
@@ -136,7 +161,7 @@ const SubjectTeacher = () => {
         <div className="wrapper">
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '18px' }}>
+            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-mortar-board"></i> Academics
@@ -239,32 +264,49 @@ const SubjectTeacher = () => {
                                                     </label>
                                                 </div>
                                                 <div className="dt-buttons btn-group">
-                                                    <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy"><span><i className="fa fa-files-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV"><span><i className="fa fa-file-text-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel"><span><i className="fa fa-file-excel-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-pdf buttons-html5 btn-sm" title="PDF"><span><i className="fa fa-file-pdf-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-print btn-sm" title="Print"><span><i className="fa fa-print"></i></span></a>
-                                                    <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns"><span><i className="fa fa-columns"></i></span></a>
+                                                    <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Subject_Teacher.csv'); }}><span><i className="fa fa-file-text-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Subject_Teacher.xls'); }}><span><i className="fa fa-file-excel-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-print btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Subject Teacher'); }}><span><i className="fa fa-print"></i></span></a>
+                                                    <div className="btn-group">
+                                                        <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Class</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Section</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Staff Name</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(3)} onChange={() => toggleColumnVisibility(3)} /> Subject</label>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             <table className="table table-striped table-bordered table-hover example">
                                                 <thead>
                                                     <tr>
-                                                        <th>Class</th>
-                                                        <th>Section</th>
-                                                        <th>Staff Name</th>
-                                                        <th>Subject</th>
+                                                        {!hiddenColumns.includes(0) && <th>Class</th>}
+                                                        {!hiddenColumns.includes(1) && <th>Section</th>}
+                                                        {!hiddenColumns.includes(2) && <th>Staff Name</th>}
+                                                        {!hiddenColumns.includes(3) && <th>Subject</th>}
                                                         <th className="text-right noExport">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {filteredList.map(item => (
                                                         <tr key={item.stid}>
-                                                            <td className="mailbox-name">{item.class}</td>
-                                                            <td>{item.section}</td>
-                                                            <td>{item.name} {item.surname} ({item.employee_id})</td>
-                                                            <td>{item.subject_name}</td>
+                                                            {!hiddenColumns.includes(0) && <td className="mailbox-name">{item.class}</td>}
+                                                            {!hiddenColumns.includes(1) && <td>{item.section}</td>}
+                                                            {!hiddenColumns.includes(2) && <td>{item.name} {item.surname} ({item.employee_id})</td>}
+                                                            {!hiddenColumns.includes(3) && <td>{item.subject_name}</td>}
                                                             <td className="mailbox-date pull-right">
                                                                 <a
                                                                     href="#"

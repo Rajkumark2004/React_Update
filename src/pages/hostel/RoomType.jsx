@@ -6,6 +6,8 @@ import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { useTableSort } from '../../hooks/useTableSort';
 
 const RoomType = () => {
     const navigate = useNavigate();
@@ -14,9 +16,39 @@ const RoomType = () => {
         room_type: '',
         description: ''
     });
-
     const [roomtypelist, setRoomTypeList] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
+    // Columns
+    const columns = [
+        { key: 'room_type', label: 'Room Type', sortKey: 'room_type' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) newVisible.delete(key);
+        else newVisible.add(key);
+        setVisibleColumns(newVisible);
+    };
+
+    const { sortedData, requestSort, sortConfig, getSortIcon } = useTableSort(roomtypelist);
+
+    const filteredRoomTypeList = sortedData.filter(roomtype =>
+        Object.values(roomtype).some(value =>
+            String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    );
+
+    // Export Data formatting
+    const formatCell = (row, key) => {
+        return row[key] || '';
+    };
+
+    const getExportData = () => {
+        return buildExportData(columns, visibleColumns, filteredRoomTypeList, formatCell);
+    };
     useEffect(() => {
         fetchData();
     }, []);
@@ -96,7 +128,7 @@ const RoomType = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '16px' }}>
+            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-building-o"></i> Hostel
@@ -159,59 +191,113 @@ const RoomType = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-messages">
-                                        <div className="download_label">Room Type List</div>
-                                        <div className="table-responsive overflow-visible">
-                                            <table className="table table-striped table-bordered table-hover example">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Room Type</th>
-                                                        <th className="text-right noExport">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {roomtypelist.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan="2" className="text-center">No Record Found</td>
-                                                        </tr>
-                                                    ) : (
-                                                        roomtypelist.map(roomtype => (
-                                                            <tr key={roomtype.id}>
-                                                                <td className="mailbox-name">
-                                                                    <a
-                                                                        href="#"
-                                                                        data-toggle="tooltip"
-                                                                        title={roomtype.description || 'No description'}
-                                                                        onClick={(e) => e.preventDefault()}
-                                                                    >
-                                                                        {roomtype.room_type}
-                                                                    </a>
-                                                                </td>
-                                                                <td className="mailbox-date pull-right no-print">
-                                                                    <Link
-                                                                        to={`/admin/roomtype/edit/${roomtype.id}`}
-                                                                        className="btn btn-default btn-xs"
-                                                                        data-toggle="tooltip"
-                                                                        title="Edit"
-                                                                    >
-                                                                        <i className="fa fa-pencil"></i>
-                                                                    </Link>
-                                                                    <button
-                                                                        onClick={() => handleDelete(roomtype.id)}
-                                                                        className="btn btn-default btn-xs"
-                                                                        data-toggle="tooltip"
-                                                                        title="Delete"
-                                                                        style={{ marginLeft: '5px' }}
-                                                                    >
-                                                                        <i className="fa fa-remove"></i>
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                    <div className="mailbox-controls">
+                                        <div className="pull-left">
+                                            <div className="btn-group">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                    <i className="fa fa-files-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'room_type_list.csv'); }}>
+                                                    <i className="fa fa-file-text-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'room_type_list.xls'); }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'room_type_list.pdf', 'Room Type List'); }}>
+                                                    <i className="fa fa-file-pdf-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Room Type List'); }}>
+                                                    <i className="fa fa-print"></i>
+                                                </button>
+                                                <div className="btn-group">
+                                                    <button type="button" className="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Columns">
+                                                        <i className="fa fa-columns"></i> <span className="caret"></span>
+                                                    </button>
+                                                    <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
+                                                        {columns.map(col => (
+                                                            <li key={col.key} style={{ padding: '0px' }}>
+                                                                <label style={{ display: 'block', margin: '0', fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={visibleColumns.has(col.key)}
+                                                                        onChange={() => toggleColumn(col.key)}
+                                                                        style={{ marginRight: '8px' }}
+                                                                    />
+                                                                    {col.label}
+                                                                </label>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
                                         </div>
+                                        <div className="pull-right">
+                                            <div className="has-feedback">
+                                                <input
+                                                    type="text"
+                                                    className="form-control input-sm"
+                                                    placeholder="Search..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                                <span className="glyphicon glyphicon-search form-control-feedback"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mailbox-messages table-responsive overflow-visible">
+                                        <table className="table table-striped table-bordered table-hover example">
+                                            <thead>
+                                                <tr>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <th key={col.key} onClick={() => requestSort(col.sortKey)} style={{ cursor: 'pointer' }}>
+                                                            {col.label} {getSortIcon(col.sortKey)}
+                                                        </th>
+                                                    ))}
+                                                    <th className="text-right noExport">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredRoomTypeList.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center">No Record Found</td>
+                                                    </tr>
+                                                ) : (
+                                                    filteredRoomTypeList.map(roomtype => (
+                                                        <tr key={roomtype.id}>
+                                                            {visibleColumns.has('room_type') && <td className="mailbox-name">
+                                                                <a
+                                                                    href="#"
+                                                                    data-toggle="tooltip"
+                                                                    title={roomtype.description || 'No description'}
+                                                                    onClick={(e) => e.preventDefault()}
+                                                                >
+                                                                    {roomtype.room_type}
+                                                                </a>
+                                                            </td>}
+                                                            <td className="mailbox-date pull-right no-print">
+                                                                <Link
+                                                                    to={`/admin/roomtype/edit/${roomtype.id}`}
+                                                                    className="btn btn-default btn-xs"
+                                                                    data-toggle="tooltip"
+                                                                    title="Edit"
+                                                                >
+                                                                    <i className="fa fa-pencil"></i>
+                                                                </Link>
+                                                                <button
+                                                                    onClick={() => handleDelete(roomtype.id)}
+                                                                    className="btn btn-default btn-xs"
+                                                                    data-toggle="tooltip"
+                                                                    title="Delete"
+                                                                    style={{ marginLeft: '5px' }}
+                                                                >
+                                                                    <i className="fa fa-remove"></i>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>

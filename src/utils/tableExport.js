@@ -1,7 +1,10 @@
 /**
  * Table Export Utilities
- * Reusable functions for Copy, CSV, Excel, and Print.
+ * Reusable functions for Copy, CSV, Excel, PDF, and Print.
  */
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
 
 /**
  * Copy table data to clipboard as tab-separated values.
@@ -42,6 +45,33 @@ export const downloadExcel = (headers, rows, filename = 'export.xls') => {
     const csvContent = [headers.join(','), ...csvRows].join('\n');
     const blob = new Blob([csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     triggerDownload(blob, filename);
+};
+
+/**
+ * Download table data as a PDF file.
+ * @param {string[]} headers
+ * @param {string[][]} rows
+ * @param {string} filename
+ * @param {string} title
+ */
+export const downloadPDF = (headers, rows, filename = 'export.pdf', title = 'Export') => {
+    const doc = new jsPDF();
+
+    // Add Title
+    doc.setFontSize(14);
+    doc.text(title, 14, 15);
+
+    // Add Table
+    autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: 20,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [200, 200, 200], textColor: 20 },
+        theme: 'grid'
+    });
+
+    doc.save(filename);
 };
 
 /**

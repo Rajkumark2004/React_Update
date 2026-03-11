@@ -103,6 +103,9 @@ const DashboardTest = () => {
         }
     }, []);
 
+    // Check if the user is a Teacher
+    const isTeacher = loggedInUser?.roles ? Object.hasOwnProperty.call(loggedInUser.roles, 'Teacher') : false;
+
     // Fallback to static data if not logged in
     const userData = loggedInUser ? {
         name: loggedInUser.username,
@@ -310,16 +313,16 @@ const DashboardTest = () => {
                                     <div className="hide-on-mobile border-radius-20 div-user-infomain mt-15 box box-primary">
                                         <div className="widget-user-2 mb0">
                                             <div className="text-right admin-edit">
-                                                <a href="#" className="btn">
+                                                <Link to={`/admin/staff/edit/${userData.id}`} className="btn">
                                                     <span>✏️</span>
-                                                </a>
+                                                </Link>
                                             </div>
                                             <div className="widget-user-header overflow-hidden">
                                                 <div className="div-user-info">
                                                     <h5 className="ml-0 widget-user-desc mb5">{userData.role}</h5>
                                                     <h3 className="ml-0 widget-user-username">{userData.name}</h3>
                                                     <h5 className="ml-0 mt-20 view-profile widget-user-desc">
-                                                        <Link to="/admin/staff/profile/1">View Profile ✓</Link>
+                                                        <Link to={`/admin/staff/profile/${userData.id}`}>View Profile ✓</Link>
                                                     </h5>
                                                 </div>
                                                 <div className="widget-user-image">
@@ -329,13 +332,15 @@ const DashboardTest = () => {
                                         </div>
                                     </div>
 
-                                    {/* Fee Summary Card */}
-                                    <div className="border-radius-20 box box-primary ptb-20">
-                                        <h4 className="fee-summary-title">Fee Summary</h4>
-                                        <InfoBox icon={<img src="/images/total_fee.png" alt="Total Fees" style={{ width: '45px' }} />} label="Total Students Fees" value={feeSummary.totalFees} />
-                                        <InfoBox icon={<img src="/images/total_paid_fees.png" alt="Paid Fees" style={{ width: '45px' }} />} label="Total Paid Fees" value={feeSummary.paidFees} />
-                                        <InfoBox icon={<img src="/images/total_balance_fee.png" alt="Balance Fees" style={{ width: '45px' }} />} label="Total Balance Fees" value={feeSummary.balanceFees} />
-                                    </div>
+                                    {/* Fee Summary Card - Hidden for Teachers */}
+                                    {!isTeacher && (
+                                        <div className="border-radius-20 box box-primary ptb-20">
+                                            <h4 className="fee-summary-title">Fee Summary</h4>
+                                            <InfoBox icon={<img src="/images/total_fee.png" alt="Total Fees" style={{ width: '45px' }} />} label="Total Students Fees" value={feeSummary.totalFees} />
+                                            <InfoBox icon={<img src="/images/total_paid_fees.png" alt="Paid Fees" style={{ width: '45px' }} />} label="Total Paid Fees" value={feeSummary.paidFees} />
+                                            <InfoBox icon={<img src="/images/total_balance_fee.png" alt="Balance Fees" style={{ width: '45px' }} />} label="Total Balance Fees" value={feeSummary.balanceFees} />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Main Content Section (Pulled left on desktop) */}
@@ -346,11 +351,6 @@ const DashboardTest = () => {
                                     <div className="content-search-bar hide-mobile" style={{ position: 'relative', overflow: 'hidden' }}>
                                         {!searchQuery && (
                                             <div className="search-scroll-placeholder">
-                                                <span className="search-text-item">Search students by name</span>
-                                                <span className="search-text-item">Search students by name</span>
-                                                <span className="search-text-item">Search students by name</span>
-                                                <span className="search-text-item">Search students by name</span>
-                                                <span className="search-text-item">Search students by name</span>
                                                 <span className="search-text-item">Search students by name</span>
                                             </div>
                                         )}
@@ -404,56 +404,63 @@ const DashboardTest = () => {
                                                 expandLink="/admin/reports/attendance"
                                                 linkState={{ activeReport: 'class_attendance' }}
                                             />
-                                            <ProgressCard
-                                                title="Staff Attendance"
-                                                date={currentDate}
-                                                progress={attendanceData.staffProgress}
-                                                current={attendanceData.staffPresent}
-                                                total={attendanceData.totalStaff}
-                                                colorClass="maroon"
-                                                expandLink="/admin/reports/attendance"
-                                                linkState={{ activeReport: 'staff_report' }}
-                                            />
-                                            <ProgressCard
-                                                title="Fee Collection"
-                                                date={currentDate}
-                                                progress={attendanceData.feesProgress}
-                                                current={attendanceData.feesPaid}
-                                                total={attendanceData.totalFees}
-                                                colorClass="orange"
-                                                expandLink="/daily-attendance-report"
-                                            />
+                                            {/* Staff Attendance and Fee Collection - Hidden for Teachers */}
+                                            {!isTeacher && (
+                                                <>
+                                                    <ProgressCard
+                                                        title="Staff Attendance"
+                                                        date={currentDate}
+                                                        progress={attendanceData.staffProgress}
+                                                        current={attendanceData.staffPresent}
+                                                        total={attendanceData.totalStaff}
+                                                        colorClass="maroon"
+                                                        expandLink="/admin/reports/attendance"
+                                                        linkState={{ activeReport: 'staff_report' }}
+                                                    />
+                                                    <ProgressCard
+                                                        title="Fee Collection"
+                                                        date={currentDate}
+                                                        progress={attendanceData.feesProgress}
+                                                        current={attendanceData.feesPaid}
+                                                        total={attendanceData.totalFees}
+                                                        colorClass="orange"
+                                                        expandLink="/studentfee"
+                                                    />
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 
-                                    {/* Admission Intake Table */}
-                                    <div className="col-lg-12 col-md-12 col-sm-12" style={{ padding: 0, marginTop: 20 }}>
-                                        <div className="border-radius-20 box box-primary" style={{ padding: 20 }}>
-                                            <h4 className="fee-summary-title">Admission Intake</h4>
-                                            <table className="table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Class</th>
-                                                        <th>Section</th>
-                                                        <th>Intake</th>
-                                                        <th>Admitted</th>
-                                                        <th>Vacancies</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {vacancies.map((item, index) => (
-                                                        <tr key={index}>
-                                                            <td className="mailbox-name">{item.class}</td>
-                                                            <td className="mailbox-name">{item.section}</td>
-                                                            <td className="mailbox-name">{item.intake}</td>
-                                                            <td className="mailbox-name">{item.admitted}</td>
-                                                            <td className="mailbox-name">{item.vacancies}</td>
+                                    {/* Admission Intake Table - Hidden for Teachers */}
+                                    {!isTeacher && (
+                                        <div className="col-lg-12 col-md-12 col-sm-12" style={{ padding: 0, marginTop: 20 }}>
+                                            <div className="border-radius-20 box box-primary" style={{ padding: 20 }}>
+                                                <h4 className="fee-summary-title">Admission Intake</h4>
+                                                <table className="table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Class</th>
+                                                            <th>Section</th>
+                                                            <th>Intake</th>
+                                                            <th>Admitted</th>
+                                                            <th>Vacancies</th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        {vacancies.map((item, index) => (
+                                                            <tr key={index}>
+                                                                <td className="mailbox-name">{item.class}</td>
+                                                                <td className="mailbox-name">{item.section}</td>
+                                                                <td className="mailbox-name">{item.intake}</td>
+                                                                <td className="mailbox-name">{item.admitted}</td>
+                                                                <td className="mailbox-name">{item.vacancies}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         )}

@@ -207,7 +207,7 @@ const StdTransfer = () => {
                     </h1>
                 </section>
 
-                <section className="content" style={{ marginTop: '18px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-12">
                             <div className="box box-primary">

@@ -6,6 +6,8 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import '../../utils/include_files';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { toast } from 'react-hot-toast';
 
 const DisableReason = () => {
     // Mock Permissions
@@ -33,7 +35,7 @@ const DisableReason = () => {
             }
         } catch (error) {
             console.error('Error fetching disable reasons:', error);
-            // toast.error('Failed to load disable reasons');
+            toast.error('Failed to load disable reasons');
         } finally {
             setLoading(false);
         }
@@ -47,6 +49,21 @@ const DisableReason = () => {
     const filteredResults = results.filter(item =>
         item.reason?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Column visibility (same pattern as EnquiryView)
+    const columns = [
+        { key: 'reason', label: 'Disable Reason' },
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
 
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
@@ -74,14 +91,14 @@ const DisableReason = () => {
             try {
                 const response = await api.deleteDisableReason(id);
                 if (response.status) {
-                    alert(response.message || 'Record Deleted Successfully');
+                    toast.success(response.message || 'Record Deleted Successfully');
                     fetchDisableReasons();
                 } else {
-                    alert(response.error || 'Failed to delete record');
+                    toast.error(response.error || 'Failed to delete record');
                 }
             } catch (error) {
                 console.error('Error deleting disable reason:', error);
-                alert('An error occurred while deleting');
+                toast.error('An error occurred while deleting');
             }
         }
     };
@@ -98,13 +115,13 @@ const DisableReason = () => {
                 // Refresh list
                 fetchDisableReasons();
                 setFormData({ name: '' });
-                alert(response.message || 'Record Saved Successfully');
+                toast.success(response.message || 'Record Saved Successfully');
             } else {
-                alert(response.error || 'Failed to save record');
+                toast.error(response.error || 'Failed to save record');
             }
         } catch (error) {
             console.error('Error saving disable reason:', error);
-            alert('An error occurred while saving');
+            toast.error('An error occurred while saving');
         } finally {
             setLoading(false);
         }
@@ -194,52 +211,55 @@ const DisableReason = () => {
                                                 <div className="col-md-6">
                                                     <div className="dt-buttons btn-group">
                                                         <button className="btn btn-default btn-sm" title="Copy" onClick={() => {
-                                                            const headers = ['Disable Reason'];
-                                                            const data = filteredResults.map(r => [r.reason]);
-                                                            const content = [headers.join('\t'), ...data.map(r => r.join('\t'))].join('\n');
-                                                            navigator.clipboard.writeText(content);
-                                                            alert('Copied to clipboard');
+                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
+                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
+                                                            copyToClipboard(headers, rows);
                                                         }}>
                                                             <i className="fa fa-files-o"></i>
                                                         </button>
                                                         <button className="btn btn-default btn-sm" title="CSV" onClick={() => {
-                                                            const headers = ['Disable Reason'];
-                                                            const data = filteredResults.map(r => `"${r.reason}"`);
-                                                            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...data].join('\n');
-                                                            const encodedUri = encodeURI(csvContent);
-                                                            const link = document.createElement("a");
-                                                            link.setAttribute("href", encodedUri);
-                                                            link.setAttribute("download", "disable_reasons.csv");
-                                                            document.body.appendChild(link);
-                                                            link.click();
+                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
+                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
+                                                            downloadCSV(headers, rows, 'disable_reasons.csv');
                                                         }}>
                                                             <i className="fa fa-file-text-o"></i>
                                                         </button>
                                                         <button className="btn btn-default btn-sm" title="Excel" onClick={() => {
-                                                            const headers = ['Disable Reason'];
-                                                            const data = filteredResults.map(r => `"${r.reason}"`);
-                                                            const csvContent = "data:application/vnd.ms-excel;charset=utf-8," + [headers.join(','), ...data].join('\n');
-                                                            const encodedUri = encodeURI(csvContent);
-                                                            const link = document.createElement("a");
-                                                            link.setAttribute("href", encodedUri);
-                                                            link.setAttribute("download", "disable_reasons.xls");
-                                                            document.body.appendChild(link);
-                                                            link.click();
+                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
+                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
+                                                            downloadExcel(headers, rows, 'disable_reasons.xls');
                                                         }}>
                                                             <i className="fa fa-file-excel-o"></i>
                                                         </button>
-                                                        {/* PDF Export would require jspdf, skipping for now or just Print */}
-                                                        {/* 
-                                                        <button className="btn btn-default btn-sm" title="PDF">
+                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => {
+                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
+                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
+                                                            downloadPDF(headers, rows, 'disable_reasons.pdf', 'Disable Reason List');
+                                                        }}>
                                                             <i className="fa fa-file-pdf-o"></i>
-                                                        </button> 
-                                                        */}
-                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => window.print()}>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => {
+                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
+                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
+                                                            printTable(headers, rows, 'Disable Reason List');
+                                                        }}>
                                                             <i className="fa fa-print"></i>
                                                         </button>
-                                                        <button className="btn btn-default btn-sm" title="Columns">
-                                                            <i className="fa fa-columns"></i>
-                                                        </button>
+                                                        <div className="btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                <i className="fa fa-columns"></i>
+                                                            </button>
+                                                            {showColumnsDropdown && (
+                                                                <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                    {columns.map(col => (
+                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                            <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                            {col.label}
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6">
@@ -264,14 +284,16 @@ const DisableReason = () => {
                                                         <table className="table table-hover table-striped table-bordered example">
                                                             <thead>
                                                                 <tr>
-                                                                    <th>Disable Reason</th>
+                                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                                        <th key={col.key}>{col.label}</th>
+                                                                    ))}
                                                                     <th className="text-right noExport">Action</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 {currentItems.map((value) => (
                                                                     <tr key={value.id}>
-                                                                        <td>{value.reason}</td>
+                                                                        {visibleColumns.has('reason') && <td>{value.reason}</td>}
                                                                         <td className="text-right">
                                                                             {canEdit && (
                                                                                 <Link

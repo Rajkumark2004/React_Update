@@ -223,7 +223,7 @@ const GenerateStaffIdCard = () => {
     };
 
     return (
-        <div className="wrapper" style={{ marginTop: '17px' }}>
+        <div className="wrapper" style={{ marginTop: '0px' }}>
             <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
             <Sidebar sessionYear={sessionYear} currentUrl="/admin/generatestaffidcard" />
 
@@ -240,6 +240,11 @@ const GenerateStaffIdCard = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
+                                    <div className="btn-group pull-right">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="box-body">
                                     <form onSubmit={handleSearch}>

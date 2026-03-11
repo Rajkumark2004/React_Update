@@ -33,59 +33,43 @@ const NotificationAddEdit = () => {
         const initializeData = async () => {
             setLoading(true);
             try {
-                // Fetch Classes
-                const classResponse = await api.getClasses();
-                if (classResponse && (classResponse.classsectionlist || classResponse.data)) {
-                    const classesData = classResponse.classsectionlist || classResponse.data || [];
-                    setClasses(Array.isArray(classesData) ? classesData : []);
+                // Fetch Classes from index API (like NotificationAdd.jsx)
+                const classResponse = await api.getNotifications();
+                if (classResponse && classResponse.status === true && classResponse.data) {
+                    setClasses(classResponse.data.classlist || []);
                 }
 
                 if (isEditMode) {
-                    // Extract role ID from user login response to fetch the notice board list
-                    const userStr = localStorage.getItem('user');
-                    let roleId = '7'; // Default
-                    if (userStr) {
-                        const user = JSON.parse(userStr);
-                        const roles = user.roles || {};
-                        const extractedRoleId = Object.values(roles)[0];
-                        if (extractedRoleId) roleId = extractedRoleId;
-                    }
+                    // Fetch the single notification
+                    const response = await api.getNotificationClass(id);
+                    if (response && response.status === true && response.data) {
+                        const notification = response.data;
 
-                    // Fetch the List and find the notification by ID
-                    const response = await api.getNoticeBoardList(roleId);
-                    if (response && response.status && response.data) {
-                        const list = response.data.notification_list || response.data.notificationlist || [];
-                        const notification = list.find(n => n.id === id);
+                        setFormData({
+                            title: notification.title || '',
+                            date: notification.date || new Date().toISOString().split('T')[0],
+                            publish_date: notification.publish_date || new Date().toISOString().split('T')[0],
+                            class_id: notification.class_id || '',
+                            section_id: notification.section_id || '',
+                            message: notification.message || '',
+                            file: null // File cannot be pre-filled
+                        });
 
-                        if (notification) {
-                            // Strip HTML tags if message contains <p> but we might be rendering raw, wait, we are using textarea, so basic clean up
-                            // or just assign as is if wait, 'message' textarea might show <p> tags. We'll assign directly as in response for now
-                            setFormData({
-                                title: notification.title || '',
-                                date: notification.date || new Date().toISOString().split('T')[0],
-                                publish_date: notification.publish_date || new Date().toISOString().split('T')[0],
-                                class_id: notification.class_id || '',
-                                section_id: notification.section_id || '',
-                                message: notification.message || '',
-                                file: null // We do not set the file object from an existing URL natively with <input type="file">
-                            });
-
-                            // Pre-fetch sections if class is set
-                            if (notification.class_id) {
-                                const sectionRes = await api.getSectionsByClass(notification.class_id);
-                                if (sectionRes && sectionRes.status === 'success' && sectionRes.data) {
-                                    setSections(sectionRes.data);
-                                } else if (Array.isArray(sectionRes)) {
-                                    setSections(sectionRes);
-                                } else if (sectionRes && sectionRes.sections) {
-                                    setSections(sectionRes.sections);
-                                } else {
-                                    setSections(sectionRes.data || []);
-                                }
+                        // Pre-fetch sections if class is set
+                        if (notification.class_id) {
+                            const sectionRes = await api.getSectionsByClass(notification.class_id);
+                            if (sectionRes && sectionRes.status === 'success' && sectionRes.data) {
+                                setSections(sectionRes.data);
+                            } else if (Array.isArray(sectionRes)) {
+                                setSections(sectionRes);
+                            } else if (sectionRes && sectionRes.sections) {
+                                setSections(sectionRes.sections);
+                            } else {
+                                setSections(sectionRes.data || []);
                             }
-                        } else {
-                            toast.error('Notification not found!');
                         }
+                    } else {
+                        toast.error('Notification not found!');
                     }
                 }
             } catch (error) {
@@ -149,16 +133,54 @@ const NotificationAddEdit = () => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Basic validation
+        if (!formData.title || !formData.date || !formData.publish_date || !formData.class_id || !formData.section_id || !formData.message) {
+            toast.error('Please fill all required fields');
+            return;
+        }
+
+        const formatDateToDDMMYYYY = (dateStr) => {
+            if (!dateStr) return '';
+            const [year, month, day] = dateStr.split('-');
+            return `${day}-${month}-${year}`;
+        };
+
+        const payload = new FormData();
+        payload.append('title', formData.title);
+        payload.append('date', formatDateToDDMMYYYY(formData.date));
+        payload.append('publish_date', formatDateToDDMMYYYY(formData.publish_date));
+        payload.append('class_id', formData.class_id);
+        payload.append('section_id', formData.section_id);
+        payload.append('message', formData.message);
+
+        if (formData.file) {
+            payload.append('file', formData.file);
+        }
+
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            console.log('Form Submitted:', formData);
+        try {
+            let response;
+            if (isEditMode) {
+                response = await api.editNotificationClass(id, payload);
+            } else {
+                response = await api.addNotification(payload);
+            }
+
+            if (response.status === true || response.status === 'success' || response.message?.includes('successfully')) {
+                toast.success(response.message || `Circular ${isEditMode ? 'updated' : 'added'} successfully`);
+                navigate('/admin/notification_class/index');
+            } else {
+                toast.error(response.message || `Failed to ${isEditMode ? 'update' : 'add'} circular`);
+            }
+        } catch (error) {
+            console.error(`Error ${isEditMode ? 'updating' : 'adding'} circular:`, error);
+            toast.error(error.message || 'An error occurred while saving');
+        } finally {
             setLoading(false);
-            alert(`Circular ${isEditMode ? 'updated' : 'added'} successfully!`);
-            navigate('/admin/notification');
-        }, 1000);
+        }
     };
 
     return (

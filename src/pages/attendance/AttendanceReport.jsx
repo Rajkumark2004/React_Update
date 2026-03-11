@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
 import AttendanceSidebar from '../../components/AttendanceSidebar';
 import { api } from '../../services/api';
-import '../../utils/include_files';
+import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 
 const AttendanceReport = () => {
     const [loading, setLoading] = useState(false);
@@ -16,43 +17,100 @@ const AttendanceReport = () => {
     const [formData, setFormData] = useState({
         class_id: '',
         section_id: '',
-        date: new Date().toLocaleDateString('en-GB') // Default to current date DD/MM/YYYY
+        date: new Date().toISOString().split('T')[0] // YYYY-MM-DD for date input
     });
-    const [message, setMessage] = useState({ type: '', text: '' });
+    const [errors, setErrors] = useState({});
 
-    // Helper map for attendance badges based on PHP file styles
-    const getAttendanceBadge = (typeId) => {
-        // IDs: 1:Present, 2:Late, 3:Absent, 4:Half Day, 5:Holiday, 6:Half Day? (checking PHP logic)
-        // PHP Logic:
-        // 1 -> success (Present)
-        // 3 -> warning (Absent in PHP logic? Wait, PHP says: 3 -> label-warning. Let's verify text)
-        // 2 -> primary (Late in PHP?)
-        // 6 -> info (Half Day?)
-        // 5 -> default (Holiday?)
-        // else -> danger
+    // New states for search and export
+    const [searchTerm, setSearchTerm] = useState('');
+    const [visibleColumns, setVisibleColumns] = useState(new Set(['sno', 'admission_no', 'roll_no', 'name', 'attendance', 'note']));
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
 
-        // Standard mapping from StudentAttendance to be safe, but taking colors from PHP report:
-        // Type ID 1 (Present) -> label-success
-        // Type ID 3 (Absent) -> label-warning (In PHP code it shows warning for id 3, usually Absent is danger. Let's double check PHP)
-        /* 
-           PHP Code:
-           if ($type['id'] == "1") -> label-success
-           elseif ($type['id'] == "3") -> label-warning
-           elseif ($type['id'] == "2") -> label-primary
-           elseif ($type['id'] == "6") -> label-info
-           elseif ($type['id'] == "5") -> label-default
-           else -> label-danger
-        */
+    const columns = [
+        { key: 'sno', label: 'S.NO' },
+        { key: 'admission_no', label: 'Admission No' },
+        { key: 'roll_no', label: 'Roll Number' },
+        { key: 'name', label: 'Name' },
+        { key: 'attendance', label: 'Attendance' },
+        { key: 'note', label: 'Note' }
+    ];
 
-        switch (parseInt(typeId)) {
-            case 1: return { label: 'Present', className: 'label label-success' };
-            case 2: return { label: 'Late', className: 'label label-primary' };
-            case 3: return { label: 'Absent', className: 'label label-warning' };
-            case 4: return { label: 'Half Day', className: 'label label-info' }; // Assuming 4 or 6 is Half Day. PHP uses 6 for info.
-            case 5: return { label: 'Holiday', className: 'label label-default' };
-            case 6: return { label: 'Half Day', className: 'label label-info' };
-            default: return { label: 'Unspecified', className: 'label label-danger' };
-        }
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const filteredList = studentList.filter(student => {
+        if (!searchTerm) return true;
+        const searchLower = searchTerm.toLowerCase();
+        return (
+            (student.admission_no || '').toLowerCase().includes(searchLower) ||
+            (student.roll_no || '').toLowerCase().includes(searchLower) ||
+            (`${student.firstname || ''} ${student.lastname || ''}`).toLowerCase().includes(searchLower) ||
+            (student.att_type || '').toLowerCase().includes(searchLower) ||
+            (student.remark || '').toLowerCase().includes(searchLower)
+        );
+    });
+
+    const formatCell = (row, key) => {
+        if (key === 'sno') return filteredList.indexOf(row) + 1;
+        if (key === 'admission_no') return row.admission_no || '';
+        if (key === 'roll_no') return row.roll_no || '';
+        if (key === 'name') return `${row.firstname || ''} ${row.lastname || ''}`.trim();
+        if (key === 'attendance') return row.att_type || 'Unknown';
+        if (key === 'note') return row.remark || '';
+        return '';
+    };
+
+    const handleCopy = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        copyToClipboard(headers, rows);
+    };
+
+    const handleCSV = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        downloadCSV(headers, rows, 'attendance_report.csv');
+    };
+
+    const handleExcel = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        downloadExcel(headers, rows, 'attendance_report.xls');
+    };
+
+    const handlePDF = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        downloadPDF(headers, rows, 'attendance_report.pdf', 'Attendance Report');
+    };
+
+    const handlePrint = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        printTable(headers, rows, 'Attendance Report');
+    };
+
+    const toggleColumn = (colKey) => {
+        setVisibleColumns(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(colKey)) newSet.delete(colKey);
+            else newSet.add(colKey);
+            return newSet;
+        });
+    };
+
+    // Derive CSS class from attendance type name
+    const getClassForType = (typeName) => {
+        const name = (typeName || '').toLowerCase();
+        if (name.includes('present')) return 'label label-success';
+        if (name.includes('late')) return 'label label-primary';
+        if (name.includes('absent')) return 'label label-danger';
+        if (name.includes('holiday')) return 'label label-default';
+        if (name.includes('half')) return 'label label-info';
+        return 'label label-warning';
     };
 
     useEffect(() => {
@@ -61,14 +119,12 @@ const AttendanceReport = () => {
 
     const fetchClasses = async () => {
         try {
-            const response = await api.getClasses();
-            if (response && (response.classsectionlist || response.data)) {
-                const classesData = response.classsectionlist || response.data || [];
-                if (Array.isArray(classesData)) {
-                    setClassList([...classesData].reverse());
-                } else {
-                    setClassList([]);
-                }
+            // Use getStudentCreate which returns the classlist reliably
+            const response = await api.getStudentCreate();
+            if (response && response.status === 'success' && response.data && response.data.classlist) {
+                setClassList(response.data.classlist);
+            } else {
+                setClassList([]);
             }
         } catch (error) {
             console.error('Error fetching classes:', error);
@@ -102,27 +158,37 @@ const AttendanceReport = () => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        setMessage({ type: '', text: '' });
         setStudentList([]);
+        setErrors({});
 
-        if (!formData.class_id || !formData.section_id || !formData.date) {
-            setMessage({ type: 'error', text: 'Class, Section and Date are required' });
+        const newErrors = {};
+        if (!formData.class_id) newErrors.class_id = 'The Class field is required';
+        if (!formData.section_id) newErrors.section_id = 'The Section field is required';
+        if (!formData.date) newErrors.date = 'The Date field is required';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
         setLoading(true);
         try {
-            // Ensure date is in DD-MM-YYYY format for the API
-            const formattedDate = formData.date.replace(/\//g, '-');
+            // Convert YYYY-MM-DD → DD-MM-YYYY for the API (same as StudentAttendance)
+            const formattedDate = formData.date ? formData.date.split('-').reverse().join('-') : '';
             const data = await api.searchAttendance(formData.class_id, formData.section_id, formattedDate);
 
             if (data.status && data.students) {
                 setStudentList(data.students);
+                if (data.students.length === 0) {
+                    toast.error('No attendance records found');
+                } else {
+                    toast.success('Attendance records loaded');
+                }
             } else {
-                setMessage({ type: 'error', text: data.message || 'Attendance not submitted for this class' });
+                toast.error(data.message || 'Attendance not submitted for this class');
             }
         } catch (error) {
-            setMessage({ type: 'error', text: error.message || 'Search failed' });
+            toast.error(error.message || 'Search failed');
         } finally {
             setLoading(false);
         }
@@ -143,7 +209,10 @@ const AttendanceReport = () => {
                         <Loader />
                     ) : (
                         <div className="row">
-                            <div className="col-md-12">
+                            <div className="col-md-2">
+                                <AttendanceSidebar />
+                            </div>
+                            <div className="col-md-10">
                                 <div className="box box-primary">
                                     <div className="box-header with-border">
                                         <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
@@ -156,11 +225,6 @@ const AttendanceReport = () => {
                                     <form onSubmit={handleSearch}>
                                         <div className="box-body">
                                             <div className="row">
-                                                {message.text && (
-                                                    <div className={`col-md-12 alert alert-${message.type === 'error' ? 'danger' : 'success'}`}>
-                                                        {message.text}
-                                                    </div>
-                                                )}
                                                 <div className="col-md-4">
                                                     <div className="form-group">
                                                         <label>Class <small className="req"> *</small></label>
@@ -174,6 +238,7 @@ const AttendanceReport = () => {
                                                                 <option key={cls.id} value={cls.id}>{cls.class}</option>
                                                             ))}
                                                         </select>
+                                                        {errors.class_id && <span className="text-danger">{errors.class_id}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-4">
@@ -189,18 +254,23 @@ const AttendanceReport = () => {
                                                                 <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
                                                             ))}
                                                         </select>
+                                                        {errors.section_id && <span className="text-danger">{errors.section_id}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-4">
                                                     <div className="form-group">
-                                                        <label>Attendance Date</label>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            value={formData.date}
-                                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                                            placeholder="DD/MM/YYYY"
-                                                        />
+                                                        <label>Attendance Date <small className="req"> *</small></label>
+                                                        <div className="input-group" style={{ position: 'relative', width: '100%', borderBottom: '1px solid #ccc' }}>
+                                                            <input
+                                                                type="date"
+                                                                className="form-control"
+                                                                value={formData.date}
+                                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                                                max={new Date().toISOString().split('T')[0]}
+                                                                style={{ width: '100%', border: 'none', background: 'transparent', boxShadow: 'none', paddingLeft: 0, paddingBottom: '4px' }}
+                                                            />
+                                                        </div>
+                                                        {errors.date && <span className="text-danger">{errors.date}</span>}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-12">
@@ -221,6 +291,62 @@ const AttendanceReport = () => {
                                                 <h3 className="box-title"><i className="fa fa-users"></i> Attendance List</h3>
                                             </div>
                                             <div className="box-body">
+                                                <div className="row mb-3" style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <div className="col-sm-6">
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            placeholder="Search..."
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                            style={{ maxWidth: '300px' }}
+                                                        />
+                                                    </div>
+                                                    <div className="col-sm-6 text-right">
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy">
+                                                                <i className="fa fa-files-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel">
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV">
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF">
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print">
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
+                                                            <div className="btn-group" ref={dropdownRef}>
+                                                                <button
+                                                                    className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis"
+                                                                    onClick={() => setShowDropdown(!showDropdown)}
+                                                                    title="Columns"
+                                                                >
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showDropdown && (
+                                                                    <ul className="dropdown-menu" style={{ display: 'block', left: 'auto', right: 0, padding: '10px', minWidth: '150px', zIndex: 1000 }}>
+                                                                        {columns.map(col => (
+                                                                            <li key={col.key} style={{ padding: '5px 0' }}>
+                                                                                <label style={{ margin: 0, cursor: 'pointer', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={visibleColumns.has(col.key)}
+                                                                                        onChange={() => toggleColumn(col.key)}
+                                                                                    />
+                                                                                    {col.label}
+                                                                                </label>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div className="mailbox-controls">
                                                     <div className="pull-right"></div>
                                                 </div>
@@ -229,29 +355,29 @@ const AttendanceReport = () => {
                                                     <table className="table table-hover table-striped example">
                                                         <thead>
                                                             <tr>
-                                                                <th>#</th>
-                                                                <th>Admission No</th>
-                                                                <th>Roll Number</th>
-                                                                <th>Name</th>
-                                                                <th>Attendance</th>
-                                                                <th>Note</th>
+                                                                {columns.map(col => (
+                                                                    visibleColumns.has(col.key) && <th key={col.key}>{col.label}</th>
+                                                                ))}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {studentList.map((student, index) => {
-                                                                const badge = getAttendanceBadge(student.attendence_type_id);
+                                                            {filteredList.map((student, index) => {
+                                                                const attLabel = student.att_type || 'Unknown';
+                                                                const attClass = getClassForType(attLabel);
                                                                 return (
                                                                     <tr key={index}>
-                                                                        <td>{index + 1}</td>
-                                                                        <td>{student.admission_no}</td>
-                                                                        <td>{student.roll_no}</td>
-                                                                        <td>{student.firstname} {student.lastname}</td>
-                                                                        <td>
-                                                                            <small className={badge.className}>
-                                                                                {badge.label}
-                                                                            </small>
-                                                                        </td>
-                                                                        <td>{student.remark}</td>
+                                                                        {visibleColumns.has('sno') && <td>{filteredList.indexOf(student) + 1}</td>}
+                                                                        {visibleColumns.has('admission_no') && <td>{student.admission_no}</td>}
+                                                                        {visibleColumns.has('roll_no') && <td>{student.roll_no}</td>}
+                                                                        {visibleColumns.has('name') && <td>{student.firstname} {student.lastname}</td>}
+                                                                        {visibleColumns.has('attendance') && (
+                                                                            <td>
+                                                                                <small className={attClass}>
+                                                                                    {attLabel}
+                                                                                </small>
+                                                                            </td>
+                                                                        )}
+                                                                        {visibleColumns.has('note') && <td>{student.remark}</td>}
                                                                     </tr>
                                                                 );
                                                             })}

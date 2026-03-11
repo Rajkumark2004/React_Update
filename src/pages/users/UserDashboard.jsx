@@ -18,8 +18,19 @@ const UserDashboard = () => {
         id: "",
         admission_no: "",
         avatar: "/uploads/student_images/1.jpg",
-        adminLogoUrl: ""
+        adminLogoUrl: "",
+        baseUrl: ""
     });
+
+    // Comprehensive Dashboard Data State
+    const [dashboardData, setDashboardData] = useState({
+        notifications: [],
+        subjects_progress: [],
+        timetable: {},
+        homework: [],
+        attendance_percentage: 0
+    });
+
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -28,24 +39,41 @@ const UserDashboard = () => {
                 // First try to load initial username from localStorage
                 const storedUser = localStorage.getItem('user');
                 let initialName = "User";
+                let isParent = false;
                 if (storedUser) {
                     const userObj = JSON.parse(storedUser);
+                    isParent = userObj.role === 'parent';
                     initialName = userObj.username || "User";
                     setUserData(prev => ({ ...prev, name: initialName, role: userObj.role || 'student', avatar: userObj.image || "/uploads/student_images/1.jpg" }));
                 }
 
                 // Then fetch real data from dashboard API
                 const res = await api_users.getUserDashboard();
-                if (res && res.status && res.data && res.data.student) {
-                    setUserData(prev => ({
-                        ...prev,
-                        name: res.data.student.name || initialName,
-                        id: res.data.student.id || prev.id,
-                        admission_no: res.data.student.admission_no || "",
-                        adminLogoUrl: res.data.sch_setting?.admin_logo && res.data.sch_setting?.base_url
-                            ? `${res.data.sch_setting.base_url}uploads/school_content/admin_logo/${res.data.sch_setting.admin_logo}`
-                            : ""
-                    }));
+                if (res && res.status && res.data) {
+                    const d = res.data;
+                    if (d.student) {
+                        const studentFullName = `${d.student.firstname || ''} ${d.student.lastname || ''}`.trim();
+                        setUserData(prev => ({
+                            ...prev,
+                            // For parents, keep login_username — don't overwrite with student name
+                            name: isParent ? initialName : (studentFullName || initialName),
+                            id: d.student.id || prev.id,
+                            admission_no: d.student.admission_no || "",
+                            adminLogoUrl: d.sch_setting?.admin_logo && d.sch_setting?.base_url
+                                ? `${d.sch_setting.base_url}uploads/school_content/admin_logo/${d.sch_setting.admin_logo}`
+                                : prev.adminLogoUrl,
+                            baseUrl: d.sch_setting?.base_url || prev.baseUrl
+                        }));
+                    }
+
+                    // Set all dashboard metrics
+                    setDashboardData({
+                        notifications: Array.isArray(d.notifications) ? d.notifications : [],
+                        subjects_progress: Array.isArray(d.subjects_progress) ? d.subjects_progress : [],
+                        timetable: d.timetable || {},
+                        homework: Array.isArray(d.homework) ? d.homework : [],
+                        attendance_percentage: d.attendance_percentage || 0
+                    });
                 }
             } catch (error) {
                 console.error("Failed to load dashboard data:", error);
@@ -59,16 +87,28 @@ const UserDashboard = () => {
 
     const sessionYear = currentSession?.session || '2024-25';
 
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            await api_users.userLogout();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            clearSession();
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('token');
+            navigate('/user/login');
+        }
     };
 
 
 
     const themeColor = "#9c68e4";
+
+    // Get Today's classes
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayName = days[new Date().getDay()];
+    const todayClasses = dashboardData.timetable[todayName] || [];
 
     return (
         <div className="wrapper">
@@ -317,15 +357,21 @@ const UserDashboard = () => {
                         </div>
                         <div className="col-lg-4 col-md-4">
                             <div className="notice-board-container">
-                                <div className="notice-board-card">
-                                    <div className="notice-header">
+                                <div className="notice-board-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <div className="notice-header" style={{ flexShrink: 0 }}>
                                         <h3>Notice Board</h3>
                                     </div>
-                                    <div className="notice-body">
-                                        <div className="notice-item">
-                                            <i className="fa fa-envelope-o"></i>
-                                            <span>Test <span style={{ color: '#3498db' }}>(<i className="fa fa-info-circle"></i> 11/01/2026)</span></span>
-                                        </div>
+                                    <div className="notice-body" style={{ flex: 1, overflowY: 'auto', maxHeight: '180px' }}>
+                                        {dashboardData.notifications.length === 0 ? (
+                                            <p className="text-muted text-center" style={{ marginTop: '20px' }}>No new notifications</p>
+                                        ) : (
+                                            dashboardData.notifications.map((note, idx) => (
+                                                <div className="notice-item" key={idx} style={{ padding: '8px 0', borderBottom: idx !== dashboardData.notifications.length - 1 ? '1px solid #f1f1f1' : 'none' }}>
+                                                    <i className="fa fa-envelope-o"></i>
+                                                    <span style={{ flex: 1 }}>{note.title} <br /><small className="text-muted">{note.date}</small></span>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -334,32 +380,109 @@ const UserDashboard = () => {
 
                     <div className="row">
                         <div className="col-lg-4 col-md-4">
-                            <div className="dashboard-card">
-                                <div className="card-title-bar">
+                            <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div className="card-title-bar" style={{ flexShrink: 0 }}>
                                     <h3>Subject Progress</h3>
                                 </div>
-                                <div className="empty-state">
-                                    <img src="/images/addnewitem.svg" alt="No data" />
+                                <div className="card-body" style={{ flex: 1, overflowY: 'auto', maxHeight: '240px', padding: '15px 20px' }}>
+                                    {dashboardData.subjects_progress.length === 0 ? (
+                                        <div className="empty-state">
+                                            <img src="/images/addnewitem.svg" alt="No data" />
+                                        </div>
+                                    ) : (
+                                        dashboardData.subjects_progress.map((sub, idx) => {
+                                            const complete = parseFloat(sub.complete || 0);
+                                            // Handle "no subject" or missing names gracefully
+                                            if (!sub.subject_name && complete === 0 && dashboardData.subjects_progress.length > 1) return null;
+
+                                            return (
+                                                <div key={idx} className="progress-group mb-4">
+                                                    <div className="d-flex justify-content-between align-items-end mb-1">
+                                                        <span className="progress-text font-weight-bold" style={{ fontSize: '13px', color: '#555' }}>
+                                                            {sub.subject_name || 'Subject'} {sub.code ? `(${sub.code})` : ''}
+                                                        </span>
+                                                        <span className="progress-number" style={{ fontSize: '12px', color: '#888' }}>
+                                                            <b>{complete}%</b> Complete
+                                                        </span>
+                                                    </div>
+                                                    <div className="progress progress-sm" style={{ height: '8px', borderRadius: '4px', backgroundColor: '#f1f1f1' }}>
+                                                        <div className="progress-bar" style={{ width: `${complete}%`, backgroundColor: complete >= 75 ? '#4CAF50' : complete >= 40 ? '#FFC107' : '#F44336' }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
                             </div>
                         </div>
                         <div className="col-lg-4 col-md-4">
-                            <div className="dashboard-card">
-                                <div className="card-title-bar">
-                                    <h3>Upcoming Class</h3>
+                            <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div className="card-title-bar" style={{ flexShrink: 0 }}>
+                                    <h3>Upcoming Classes</h3>
                                 </div>
-                                <div className="empty-state">
-                                    {/* Empty state for upcoming classes */}
+                                <div className="card-body" style={{ flex: 1, overflowY: 'auto', maxHeight: '240px', padding: '15px 20px' }}>
+                                    {Object.keys(dashboardData.timetable).length === 0 ? (
+                                        <div className="empty-state">
+                                            <p className="text-muted">No classes scheduled.</p>
+                                        </div>
+                                    ) : (
+                                        ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => {
+                                            const dayClasses = dashboardData.timetable[day] || [];
+                                            if (dayClasses.length === 0) return null;
+                                            return (
+                                                <div key={day} className="mb-4">
+                                                    <h5 style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, borderLeft: `3px solid ${themeColor}`, paddingLeft: '8px', marginBottom: '12px' }}>{day}</h5>
+                                                    {dayClasses.map((cls, idx) => (
+                                                        <div key={idx} className="timetable-card d-flex align-items-center mb-3 p-2" style={{ backgroundColor: '#fff', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #f1f1f1' }}>
+                                                            {/* Teacher Avatar */}
+                                                            <div style={{ flexShrink: 0, marginRight: '12px' }}>
+                                                                <img
+                                                                    src={cls.image && userData.baseUrl ? `${userData.baseUrl}uploads/staff_images/${cls.image}` : "/images/default_image.jpg"}
+                                                                    alt="Teacher"
+                                                                    style={{ width: '42px', height: '42px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f8f9fa' }}
+                                                                    onError={(e) => { e.target.src = "/images/default_image.jpg"; }}
+                                                                />
+                                                            </div>
+
+                                                            {/* Left Info: Subject & Teacher */}
+                                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                                <h6 className="m-0 font-weight-bold" style={{ color: '#333', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cls.subject_name}</h6>
+                                                                <small className="text-muted" style={{ fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{cls.name} {cls.surname}</small>
+                                                            </div>
+
+                                                            {/* Right Info: Room & Time */}
+                                                            <div style={{ flexShrink: 0, textAlign: 'right', marginLeft: '10px' }}>
+                                                                <div style={{ fontSize: '12px', fontWeight: 'bold', color: themeColor }}>{cls.room_no ? `Room: ${cls.room_no}` : '--'}</div>
+                                                                <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{cls.time_from} - {cls.time_to}</div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
                             </div>
                         </div>
                         <div className="col-lg-4 col-md-4">
-                            <div className="dashboard-card">
-                                <div className="card-title-bar">
-                                    <h3>Homework</h3>
+                            <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                                <div className="card-title-bar" style={{ flexShrink: 0 }}>
+                                    <h3>Pending Homework</h3>
                                 </div>
-                                <div className="empty-state">
-                                    <img src="/images/addnewitem.svg" alt="No data" />
+                                <div className="card-body" style={{ flex: 1, overflowY: 'auto', maxHeight: '240px', padding: '15px 20px' }}>
+                                    {dashboardData.homework.length === 0 ? (
+                                        <div className="empty-state">
+                                            <img src="/images/addnewitem.svg" alt="No data" />
+                                            <p className="text-muted mt-2">No pending homework.</p>
+                                        </div>
+                                    ) : (
+                                        dashboardData.homework.map((hw, idx) => (
+                                            <div key={idx} className="mb-3 border-bottom pb-2">
+                                                <h6 className="font-weight-bold mb-1" style={{ color: '#333' }}>{hw.subject_name}</h6>
+                                                <small className="text-muted d-block"><i className="fa fa-calendar"></i> Due: {hw.homework_date}</small>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </div>

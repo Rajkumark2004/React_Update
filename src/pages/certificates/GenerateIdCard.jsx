@@ -234,7 +234,7 @@ const GenerateIdCard = () => {
     });
 
     return (
-        <div className="wrapper" style={{ marginTop: '17px' }}>
+        <div className="wrapper" style={{ marginTop: '0px' }}>
             <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
             <Sidebar sessionYear={sessionYear} currentUrl="/admin/generateidcard" />
 

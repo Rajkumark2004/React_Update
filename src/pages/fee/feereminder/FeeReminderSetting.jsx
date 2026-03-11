@@ -171,7 +171,7 @@ const FeeReminderSetting = () => {
                     </h1>
                 </section>
 
-                <section className="content" style={{ marginTop: '18px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-12">
                             <form id="form1" onSubmit={handleSubmit} name="feereminder" method="post" acceptCharset="utf-8">

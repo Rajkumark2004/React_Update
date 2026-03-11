@@ -95,6 +95,7 @@ const ReferenceView = () => {
             }
         } catch (error) {
             console.error('Error fetching reference list:', error);
+            toast.error('Failed to fetch reference list');
         }
     };
 

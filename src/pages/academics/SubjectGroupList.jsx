@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const SubjectGroupList = () => {
     const { id } = useParams();
@@ -24,6 +25,29 @@ const SubjectGroupList = () => {
     const [isEditMode, setIsEditMode] = useState(false);
 
     const [loading, setLoading] = useState(false);
+
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const headers = ['Name', 'Class (Section)', 'Subject'];
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(col => col !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const exportHeaders = headers.filter((_, i) => !hiddenColumns.includes(i));
+        const exportRows = filteredList.map(group => {
+            const rowData = [];
+            if (!hiddenColumns.includes(0)) rowData.push(group.name);
+            if (!hiddenColumns.includes(1)) rowData.push(group.sections ? group.sections.map(sec => `${sec.class}(${sec.section})`).join(', ') : '');
+            if (!hiddenColumns.includes(2)) rowData.push(group.group_subject ? group.group_subject.map(subj => subj.name).join(', ') : '');
+            return rowData;
+        });
+        return { headers: exportHeaders, rows: exportRows };
+    };
 
     useEffect(() => {
         fetchInitialData();
@@ -91,26 +115,40 @@ const SubjectGroupList = () => {
             if (groupToEdit) {
                 setIsEditMode(true);
                 setName(groupToEdit.name);
-                setClassId(groupToEdit.class_id);
+
+                // Get class_id from sections if not directly on groupToEdit
+                let parsedClassId = groupToEdit.class_id;
+                if (!parsedClassId && groupToEdit.sections && groupToEdit.sections.length > 0) {
+                    parsedClassId = groupToEdit.sections[0].class_id;
+                }
+                setClassId(parsedClassId);
                 setDescription(groupToEdit.description);
 
                 // Set selections
-                // The API response for details has `sections` array with `section_id`?
-                // Looking at user provided response:
-                // "sections": [ { ..., "class_id": "10", "section_id": "1", ... } ]
-                // So yes, map `section_id`.
+                // Set selections
+                const sectionIds = groupToEdit.sections ? groupToEdit.sections.map(s => {
+                    if (s && typeof s === 'object') {
+                        if (s.class_section_id !== undefined && s.class_section_id !== null) return String(s.class_section_id);
+                        if (s.section_id !== undefined) return String(s.section_id);
+                        if (s.id !== undefined) return String(s.id);
+                    }
+                    return String(s);
+                }).filter(s => s && s !== 'undefined' && s !== '') : [];
 
-                const sectionIds = groupToEdit.sections ? groupToEdit.sections.map(s => String(s.section_id)) : [];
-
-                // "group_subject": [ { ..., "subject_id": "1", ... } ]
-                const subjectIds = groupToEdit.group_subject ? groupToEdit.group_subject.map(s => String(s.subject_id)) : [];
+                const subjectIds = groupToEdit.group_subject ? groupToEdit.group_subject.map(s => {
+                    if (s && typeof s === 'object') {
+                        if (s.subject_id !== undefined) return String(s.subject_id);
+                        if (s.id !== undefined) return String(s.id);
+                    }
+                    return String(s);
+                }).filter(s => s && s !== 'undefined' && s !== '') : [];
 
                 setSelectedSections(sectionIds);
                 setSelectedSubjects(subjectIds);
 
                 // Fetch sections for the selected class to populate checkboxes
-                if (groupToEdit.class_id) {
-                    fetchSectionsForClass(groupToEdit.class_id);
+                if (parsedClassId) {
+                    fetchSectionsForClass(parsedClassId);
                 }
             }
         } else if (!id) {
@@ -178,18 +216,16 @@ const SubjectGroupList = () => {
         if (selectedSubjects.length === 0) { toast.error('The Subject field is required.'); return; }
 
         const payload = {
-            name,
-            class_id: classId,
+            name: name,
             description: description,
-            subject: selectedSubjects,
-            sections: selectedSections
+            class_id: parseInt(classId, 10),
+            subject: selectedSubjects.map(sId => parseInt(sId, 10)).filter(n => !isNaN(n)),
+            sections: selectedSections.map(sId => parseInt(sId, 10)).filter(n => !isNaN(n))
         };
 
         try {
             let response;
             if (isEditMode) {
-                // payload.id = id; // Not needed in body if URL has it, checking requirement
-                // User payload example does NOT have id in body.
                 response = await api.editSubjectGroup(id, payload);
             } else {
                 response = await api.addSubjectGroup(payload);
@@ -243,7 +279,7 @@ const SubjectGroupList = () => {
         <div className="wrapper">
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '655px', marginTop: '18px' }}>
+            <div className="content-wrapper" style={{ minHeight: '655px', marginTop: '0px' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-4">
@@ -351,23 +387,57 @@ const SubjectGroupList = () => {
                                     <div className="table-responsive mailbox-messages">
                                         <div className="download_label">Subject Group List</div>
 
-                                        {/* Matches PHP layout for extra buttons if needed, though hidden for function here we keep structure */}
-                                        <a className="btn btn-default btn-xs pull-right" title="Print" style={{ display: 'block' }}><i className="fa fa-print"></i></a>
-                                        <a className="btn btn-default btn-xs pull-right" title="Export" style={{ display: 'block', marginRight: '5px' }}> <i className="fa fa-file-excel-o"></i> </a>
+                                        <div className="dataTables_wrapper no-footer">
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
+                                                <div className="dataTables_filter" style={{ textAlign: 'left' }}>
+                                                    <label>Search:
+                                                        <input
+                                                            type="search"
+                                                            placeholder=""
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                            style={{ marginLeft: '0.5em', display: 'inline-block', width: 'auto' }}
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div className="dt-buttons btn-group">
+                                                    <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Subject_Group_List.csv'); }}><span><i className="fa fa-file-text-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Subject_Group_List.xls'); }}><span><i className="fa fa-file-excel-o"></i></span></a>
+                                                    <a className="btn btn-default buttons-print btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Subject Group List'); }}><span><i className="fa fa-print"></i></span></a>
+                                                    <div className="btn-group">
+                                                        <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Name</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Class (Section)</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Subject</label>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         <table className="table table-striped table-hover" id="headerTable">
                                             <thead>
                                                 <tr>
-                                                    <th>Name</th>
-                                                    <th className="text-left">Class (Section)</th>
-                                                    <th>Subject</th>
+                                                    {!hiddenColumns.includes(0) && <th>Name</th>}
+                                                    {!hiddenColumns.includes(1) && <th className="text-left">Class (Section)</th>}
+                                                    {!hiddenColumns.includes(2) && <th>Subject</th>}
                                                     <th className="text-right no_print">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {filteredList.map(group => (
                                                     <tr key={group.id}>
-                                                        <td className="mailbox-name">
+                                                        {!hiddenColumns.includes(0) && <td className="mailbox-name">
                                                             <a href="#" className="detail_popover">{group.name}</a>
                                                             <div className="fee_detail_popover" style={{ display: 'none' }}>
                                                                 {group.description ? (
@@ -376,15 +446,15 @@ const SubjectGroupList = () => {
                                                                     <p className="text text-danger">No Description</p>
                                                                 )}
                                                             </div>
-                                                        </td>
-                                                        <td className="text-left">
+                                                        </td>}
+                                                        {!hiddenColumns.includes(1) && <td className="text-left">
                                                             <ol className="p-0" style={{ paddingLeft: '15px' }}>
                                                                 {group.sections && group.sections.map((sec, idx) => (
                                                                     <li key={idx}>{sec.class}({sec.section})</li>
                                                                 ))}
                                                             </ol>
-                                                        </td>
-                                                        <td>
+                                                        </td>}
+                                                        {!hiddenColumns.includes(2) && <td>
                                                             <table width="100%">
                                                                 <tbody>
                                                                     {group.group_subject && group.group_subject.map((subj, idx) => (
@@ -392,7 +462,7 @@ const SubjectGroupList = () => {
                                                                     ))}
                                                                 </tbody>
                                                             </table>
-                                                        </td>
+                                                        </td>}
                                                         <td className="mailbox-date pull-right no_print">
                                                             <Link to={`/admin/subjectgroup/edit/${group.id}`} className="btn btn-default btn-xs no_print displayinline" title="Edit">
                                                                 <i className="fa fa-pencil"></i>

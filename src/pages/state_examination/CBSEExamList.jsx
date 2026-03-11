@@ -10,6 +10,7 @@ import AssignExamStudent from './AssignExamStudent';
 import AssignExamSubjects from './AssignExamSubjects';
 import TeacherRemark from './TeacherRemark';
 import ExamAttendance from './ExamAttendance';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
 
 const CBSEExamList = () => {
     const { currentSession } = useSession();
@@ -114,11 +115,12 @@ const CBSEExamList = () => {
                     let note = '';
                     if (student.marks) {
                         Object.keys(student.marks).forEach(typeId => {
+                            const studentMark = student.marks[typeId];
                             marks[typeId] = {
-                                marks: student.marks[typeId].marks,
-                                is_absent: !!student.marks[typeId].is_absent
+                                marks: studentMark.marks,
+                                is_absent: studentMark.is_absent === "1"
                             };
-                            if (student.marks[typeId].note) note = student.marks[typeId].note;
+                            if (studentMark.note) note = studentMark.note;
                         });
                     }
                     initialMarks[student.exam_student_id] = marks;
@@ -134,14 +136,20 @@ const CBSEExamList = () => {
         }
     };
 
-    const handleMarkChange = (studentId, typeId, value) => {
+    const handleMarkChange = (studentId, typeId, value, maxMarks) => {
+        let numericValue = value;
+        if (value !== '' && maxMarks !== undefined) {
+            const val = parseFloat(value);
+            if (val > maxMarks) numericValue = maxMarks.toString();
+            if (val < 0) numericValue = "0";
+        }
         setEntryMarks(prev => ({
             ...prev,
             [studentId]: {
                 ...(prev[studentId] || {}),
                 [typeId]: {
                     ...(prev[studentId]?.[typeId] || {}),
-                    marks: value
+                    marks: numericValue
                 }
             }
         }));
@@ -171,28 +179,40 @@ const CBSEExamList = () => {
     const handleSaveExamMarks = async () => {
         setEntryLoading(true);
         try {
-            const formData = new FormData();
-            formData.append('cbse_exam_timetable_id', subModalConfig.subject.id);
+            const payload = {
+                cbse_exam_timetable_id: subModalConfig.subject.id,
+                exam_student_id: [],
+                exam_student_note: {},
+                mark: {},
+                absent: {}
+            };
 
             subjectStudentResults.forEach(student => {
                 const studentId = student.exam_student_id;
-                formData.append('exam_student_id[]', studentId);
+                payload.exam_student_id.push(studentId);
+
+                const marksForStudent = {};
+                const absentForStudent = {};
 
                 assessmentTypesForEntry.forEach(type => {
                     const typeId = type.id;
                     const markData = entryMarks[studentId]?.[typeId] || {};
 
                     if (markData.is_absent) {
-                        formData.append(`absent[${studentId}][${typeId}]`, '1');
+                        absentForStudent[typeId] = 1;
                     }
-                    formData.append(`mark[${studentId}][${typeId}]`, markData.marks !== undefined ? markData.marks : '');
+                    marksForStudent[typeId] = markData.marks !== undefined ? markData.marks : '';
                 });
 
-                formData.append(`exam_student_note[${studentId}]`, entryNotes[studentId] || '');
+                payload.mark[studentId] = marksForStudent;
+                if (Object.keys(absentForStudent).length > 0) {
+                    payload.absent[studentId] = absentForStudent;
+                }
+                payload.exam_student_note[studentId] = entryNotes[studentId] || '';
             });
 
-            const response = await api.saveExamMarks(formData);
-            if (response && response.status === 1) {
+            const response = await api.saveExamMarks(payload);
+            if (response && (response.status === 1 || response.status === true)) {
                 alert(response.message || 'Marks Saved Successfully');
                 setSubModalConfig({ show: false, subject: null });
             } else {
@@ -200,7 +220,7 @@ const CBSEExamList = () => {
             }
         } catch (error) {
             console.error("Error saving exam marks:", error);
-            alert("Error occurred while saving marks.");
+            alert('An error occurred while saving marks');
         } finally {
             setEntryLoading(false);
         }
@@ -215,8 +235,9 @@ const CBSEExamList = () => {
         try {
             const formData = new FormData();
             formData.append('file', csvFile);
+            formData.append('cbse_exam_timetable_id', subModalConfig.subject.id);
             const response = await api.importExamMarks(formData);
-            if (response && response.status === "1" || response.status === 1) {
+            if (response && (response.status === "1" || response.status === 1 || response.status === true)) {
                 const importedMarks = response.student_marks || [];
                 const newMarks = { ...entryMarks };
                 const newNotes = { ...entryNotes };
@@ -227,16 +248,28 @@ const CBSEExamList = () => {
                     if (student) {
                         const sid = student.exam_student_id;
                         const marksObj = {};
-                        if (assessmentTypesForEntry[0]) marksObj[assessmentTypesForEntry[0].id] = { marks: data.parameter1 };
-                        if (assessmentTypesForEntry[1]) marksObj[assessmentTypesForEntry[1].id] = { marks: data.parameter2 };
-                        if (assessmentTypesForEntry[2]) marksObj[assessmentTypesForEntry[2].id] = { marks: data.parameter3 };
-                        if (assessmentTypesForEntry[3]) marksObj[assessmentTypesForEntry[3].id] = { marks: data.parameter4 };
+                        assessmentTypesForEntry.forEach((type, idx) => {
+                            const pKey = `parameter${idx + 1}`;
+                            const aKey = `attendance${idx + 1}`;
+                            if (data[pKey] !== undefined) {
+                                let val = data[pKey];
+                                if (val !== '' && type.maximum_marks !== undefined) {
+                                    const numVal = parseFloat(val);
+                                    if (numVal > type.maximum_marks) val = type.maximum_marks.toString();
+                                    if (numVal < 0) val = "0";
+                                }
+                                marksObj[type.id] = {
+                                    marks: val,
+                                    is_absent: data[aKey] === 1 || data[aKey] === "1"
+                                };
+                            }
+                        });
 
                         newMarks[sid] = {
                             ...newMarks[sid],
                             ...marksObj
                         };
-                        newNotes[sid] = data.note;
+                        if (data.note !== undefined) newNotes[sid] = data.note;
                     }
                 });
                 setEntryMarks(newMarks);
@@ -259,6 +292,18 @@ const CBSEExamList = () => {
         } finally {
             setImportLoading(false);
         }
+    };
+
+    const handleDownloadSample = () => {
+        const headers = ['admission_no', 'parameter1', 'parameter2', 'parameter3', 'parameter4', 'note'];
+        const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "import_student_exam_marks_sample.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const closeActionModal = () => {
@@ -507,15 +552,61 @@ const CBSEExamList = () => {
         exam.class_sections.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleExport = (action) => {
+        const headers = [
+            "Exam Name",
+            "Class (Sections)",
+            "Term",
+            "Subjects Included",
+            "Exam Published",
+            "Published Result",
+            "Description",
+            "Created At"
+        ];
+
+        const rows = filteredExams.map(exam => [
+            exam.name,
+            exam.class_sections,
+            exam.term_name,
+            exam.subjectsincluded,
+            Number(exam.is_active) === 1 ? "Yes" : "No",
+            Number(exam.is_publish) === 1 ? "Yes" : "No",
+            exam.description,
+            exam.created_at
+        ].map(v => String(v ?? '')));
+
+        if (action === 'copy') copyToClipboard(headers, rows);
+        if (action === 'excel') downloadExcel(headers, rows, 'Exam_List.xls');
+        if (action === 'csv') downloadCSV(headers, rows, 'Exam_List.csv');
+        if (action === 'pdf') downloadPDF(headers, rows, 'Exam_List.pdf', 'Exam List');
+        if (action === 'print') printTable(headers, rows, 'Exam List');
+    };
+
     return (
         <div className="wrapper theme-white-skin">
+            <style>{`
+                .dt-header { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    align-items: center; 
+                    margin-bottom: 15px; 
+                    border-bottom: 1px solid #e7e7e7;
+                    padding-bottom: 5px;
+                    background: #fafafa;
+                    padding: 5px 10px;
+                }
+                .dt-buttons { display: flex; gap: 2px; }
+                .mb10 { margin-bottom: 10px; }
+                .noExport { }
+                .input-group-sm .form-control { height: 30px; }
+            `}</style>
             <Header appName={appName} userData={userData} handleLogout={handleLogout} />
             <Sidebar
                 sessionYear={currentSession?.session}
                 handleSearch={handleSearch}
             />
 
-            <div className="content-wrapper" style={{ marginTop: '17px' }}>
+            <div className="content-wrapper" style={{ marginTop: '0px' }}>
                 <section className="content">
                     <div className="row">
                         {/* Left Sidebar (CBSE Submenu) */}
@@ -560,7 +651,7 @@ const CBSEExamList = () => {
                                 <div className="box-body">
                                     <div className="row">
                                         <div className="col-md-12">
-                                            <div className="pull-left mb10">
+                                            <div className="dt-header">
                                                 <div className="input-group">
                                                     <input
                                                         type="text"
@@ -570,6 +661,13 @@ const CBSEExamList = () => {
                                                         onChange={(e) => setSearchTerm(e.target.value)}
                                                         style={{ width: '200px' }}
                                                     />
+                                                </div>
+                                                <div className="dt-buttons btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -888,7 +986,7 @@ const CBSEExamList = () => {
 
             {/* Action Modals */}
             {modalConfig.show && modalConfig.type !== 'assign' && modalConfig.type !== 'subjects' && modalConfig.type !== 'remarks' && modalConfig.type !== 'attendance' && (
-                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
+                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px', overflow: 'auto', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
                     <div className="modal-dialog modal-xl">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -959,8 +1057,18 @@ const CBSEExamList = () => {
                                                             type="file"
                                                             className="form-control"
                                                             accept=".csv"
+                                                            id="csv_file"
+                                                            style={{ display: 'none' }}
                                                             onChange={(e) => setCsvFile(e.target.files[0])}
                                                         />
+                                                        <div
+                                                            className="form-control"
+                                                            onClick={() => document.getElementById('csv_file').click()}
+                                                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                                                        >
+                                                            <span>{csvFile ? csvFile.name : 'Select CSV File'}</span>
+                                                            <i className="fa fa-folder-open-o"></i>
+                                                        </div>
                                                         <button
                                                             className="btn btn-primary"
                                                             onClick={handleImportMarks}
@@ -970,13 +1078,19 @@ const CBSEExamList = () => {
                                                             {importLoading ? <i className="fa fa-spinner fa-spin"></i> : 'Submit'}
                                                         </button>
                                                     </div>
-                                                    <small className="text-muted"><i className="fa fa-upload"></i> Drag and drop a file here or click</small>
+                                                    <small className="text-muted">
+                                                        <i className="fa fa-upload"></i> {csvFile ? `Selected: ${csvFile.name}` : 'Drag and drop a file here or click'}
+                                                    </small>
                                                 </div>
                                             </div>
                                             <div className="col-md-4 text-right">
-                                                <a href={`${API_BASE}/student/exportsubjectstudentmarks`} className="btn btn-primary btn-sm" style={{ backgroundColor: '#9b59b6', borderColor: '#8e44ad' }}>
+                                                <button
+                                                    onClick={handleDownloadSample}
+                                                    className="btn btn-primary btn-sm"
+                                                    style={{ backgroundColor: '#9b59b6', borderColor: '#8e44ad' }}
+                                                >
                                                     <i className="fa fa-download"></i> Download Sample Import File
-                                                </a>
+                                                </button>
                                             </div>
                                         </div>
 
@@ -1025,9 +1139,11 @@ const CBSEExamList = () => {
                                                                                 type="number"
                                                                                 className="form-control input-sm"
                                                                                 value={entryMarks[student.exam_student_id]?.[type.id]?.marks !== undefined ? entryMarks[student.exam_student_id][type.id].marks : ''}
-                                                                                onChange={(e) => handleMarkChange(student.exam_student_id, type.id, e.target.value)}
+                                                                                onChange={(e) => handleMarkChange(student.exam_student_id, type.id, e.target.value, type.maximum_marks)}
                                                                                 readOnly={entryMarks[student.exam_student_id]?.[type.id]?.is_absent}
                                                                                 placeholder={`Max Marks: ${type.maximum_marks}`}
+                                                                                min="0"
+                                                                                max={type.maximum_marks}
                                                                             />
                                                                         </td>
                                                                     ))}

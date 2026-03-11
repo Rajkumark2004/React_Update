@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../../services/api';
+import { toast } from 'react-hot-toast';
 
 const FollowUpModal = ({ show, onClose, enquiry }) => {
   const [loading, setLoading] = useState(false);
@@ -105,6 +106,61 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSave = async () => {
+    if (!formData.follow_up_date || !formData.next_follow_up_date || !formData.response) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+      const payload = {
+        enquiry_id: enquiry.id,
+        enquiry_status: formData.status,
+        created_by: user.id || '1',
+        date: formData.follow_up_date.split('-').reverse().join('/'),
+        follow_up_date: formData.next_follow_up_date.split('-').reverse().join('/'),
+        response: formData.response,
+        note: formData.note
+      };
+
+      await api.addFollowUp(payload);
+      toast.success('Follow up saved successfully');
+
+      // Refresh history list
+      const listRes = await api.getFollowUpList(enquiry.id);
+      setHistory(listRes.data?.follow_up_list || []);
+
+      // Clear non-static fields
+      setFormData(prev => ({
+        ...prev,
+        response: '',
+        note: ''
+      }));
+
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Failed to save follow up');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStatusChange = async (e) => {
+    const newStatus = e.target.value;
+    setFormData(prev => ({ ...prev, status: newStatus }));
+
+    try {
+      await api.changeEnquiryStatus(enquiry.id, newStatus);
+      toast.success('Status updated successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Failed to update status');
+    }
+  };
+
   if (!show) return null;
 
   return (
@@ -183,7 +239,9 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
                     </div>
 
                     <div className="col-md-12 text-right mt-4">
-                      <button className="btn btn-purple" disabled={saving} onClick={() => { setSaving(true); setTimeout(() => setSaving(false), 5000); }}>{saving ? 'Saving...' : 'Save'}</button>
+                      <button className="btn btn-purple" disabled={saving} onClick={handleSave}>
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
                     </div>
                   </div>
 
@@ -230,7 +288,7 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
                       className="form-control"
                       name="status"
                       value={formData.status}
-                      onChange={handleChange}
+                      onChange={handleStatusChange}
                     >
                       {Object.entries(statusOptions).map(([k, v]) => (
                         <option key={k} value={k}>{v}</option>

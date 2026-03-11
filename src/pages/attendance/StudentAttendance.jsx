@@ -6,6 +6,7 @@ import Loader from '../../components/Loader';
 import AttendanceSidebar from '../../components/AttendanceSidebar';
 import { api } from '../../services/api';
 import '../../utils/include_files';
+import toast from 'react-hot-toast';
 
 const StudentAttendance = () => {
     const [loading, setLoading] = useState(false);
@@ -19,7 +20,6 @@ const StudentAttendance = () => {
         date: new Date().toISOString().split('T')[0] // Default to current date YYYY-MM-DD for HTML5
     });
     const [attendanceState, setAttendanceState] = useState({});
-    const [message, setMessage] = useState({ type: '', text: '' });
     const [errors, setErrors] = useState({});
     const [isHoliday, setIsHoliday] = useState(false);
     const [attendanceTypes, setAttendanceTypes] = useState([]);
@@ -81,7 +81,6 @@ const StudentAttendance = () => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        setMessage({ type: '', text: '' });
         setErrors({});
 
         let newErrors = {};
@@ -137,12 +136,17 @@ const StudentAttendance = () => {
                 setStudentList(data.students);
                 setIsHoliday(isHolidayFound);
                 setSelectedStudents([]); // Reset selection on new search
+                if (data.students.length === 0) {
+                    toast.error('No attendance records found');
+                } else {
+                    toast.success('Attendance records loaded');
+                }
             } else {
                 setStudentList([]);
-                setMessage({ type: 'error', text: data.message || 'Attendance not submitted for this class' });
+                toast.error(data.message || 'Attendance not submitted for this class');
             }
         } catch (error) {
-            setMessage({ type: 'error', text: error.message || 'Search failed' });
+            toast.error(error.message || 'Search failed');
         } finally {
             setLoading(false);
         }
@@ -206,32 +210,35 @@ const StudentAttendance = () => {
                     const sessionId = student.student_session_id;
                     return {
                         student_session_id: sessionId,
+                        attendance_id: student.attendence_id || "0",
                         attendance_type_id: isHoliday ? holidayId : parseInt(attendanceState[sessionId]?.attendance_type_id || presentId),
                         remark: attendanceState[sessionId]?.remark || ''
                     };
                 });
 
             if (students.length === 0) {
-                setMessage({ type: 'error', text: 'Please select at least one student' });
+                toast.error('Please select at least one student');
                 setLoading(false);
                 return;
             }
 
             const attendanceData = {
                 date: formattedDate,
-                students: students
+                students: students,
+                attendance_id: students.map(s => s.attendance_id)
             };
 
             console.log('Saving attendance:', attendanceData);
             const response = await api.saveAttendance(attendanceData);
 
             if (response.status) {
-                setMessage({ type: 'success', text: response.message || 'Attendance saved successfully' });
+                toast.success(response.message || 'Attendance saved successfully');
+                setStudentList([]); // Close the table after successful save
             } else {
-                setMessage({ type: 'error', text: response.message || 'Failed to save attendance' });
+                toast.error(response.message || 'Failed to save attendance');
             }
         } catch (error) {
-            setMessage({ type: 'error', text: error.message || 'Save failed' });
+            toast.error(error.message || 'Save failed');
         } finally {
             setLoading(false);
         }
@@ -248,7 +255,7 @@ const StudentAttendance = () => {
             .filter(id => id !== null);
 
         if (attendanceIds.length === 0) {
-            setMessage({ type: 'error', text: 'No saved attendance found for the selected students to delete.' });
+            toast.error('No saved attendance found for the selected students to delete.');
             return;
         }
 
@@ -266,16 +273,16 @@ const StudentAttendance = () => {
 
             const response = await api.deleteBulkAttendance(payload);
             if (response && response.status) {
-                setMessage({ type: 'success', text: 'Attendance deleted successfully' });
+                toast.success('Attendance deleted successfully');
                 // Re-fetch search to update the UI
                 const e = { preventDefault: () => { } };
                 handleSearch(e);
             } else {
-                setMessage({ type: 'error', text: response.message || 'Failed to delete attendance' });
+                toast.error(response.message || 'Failed to delete attendance');
             }
         } catch (error) {
             console.error('Delete attendance error:', error);
-            setMessage({ type: 'error', text: 'Failed to delete attendance' });
+            toast.error('Failed to delete attendance');
         } finally {
             setLoading(false);
         }
@@ -307,11 +314,6 @@ const StudentAttendance = () => {
                                     <form onSubmit={handleSearch}>
                                         <div className="box-body">
                                             <div className="row">
-                                                {message.text && (
-                                                    <div className={`col-md-12 alert alert-${message.type === 'error' ? 'danger' : 'success'}`}>
-                                                        {message.text}
-                                                    </div>
-                                                )}
                                                 <div className="col-md-4">
                                                     <div className="form-group">
                                                         <label>Class <small className="req"> *</small></label>

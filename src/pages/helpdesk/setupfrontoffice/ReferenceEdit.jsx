@@ -205,11 +205,9 @@ const ReferenceEdit = () => {
                 </section>
                 <section className="content" style={{ paddingBottom: '80px' }}>
                     <div className="row">
-                        <div className="col-md-2">
+                        <div className="col-md-3">
                             <div className="box border0">
                                 <ul className="tablists">
-                                    <li><Link to="#">Purpose</Link></li>
-                                    <li><Link to="#">Complaint Type</Link></li>
                                     <li><Link to="/admin/source">Source</Link></li>
                                     <li><Link to="/admin/reference" className="active">Reference</Link></li>
                                 </ul>
@@ -257,7 +255,7 @@ const ReferenceEdit = () => {
                                 </form>
                             </div>
                         </div>
-                        <div className="col-md-6">
+                        <div className="col-md-5">
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Reference List</h3>
@@ -265,6 +263,8 @@ const ReferenceEdit = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
+                                    <div className="download_label">Reference List</div>
+
                                     {/* Controls */}
                                     <div className="row" style={{ marginBottom: '10px' }}>
                                         <div className="col-md-6">
@@ -293,79 +293,102 @@ const ReferenceEdit = () => {
                                                 }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowRefColsDd(!showRefColsDd)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showRefColsDd && (
+                                                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '160px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {refColumns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                    <input type="checkbox" checked={refVisibleCols.has(col.key)} onChange={() => {
+                                                                        setRefVisibleCols(prev => {
+                                                                            const next = new Set(prev);
+                                                                            if (next.has(col.key)) { next.delete(col.key); } else { next.add(col.key); }
+                                                                            return next;
+                                                                        });
+                                                                    }} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="input-group input-group-sm">
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="Search..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="col-md-6">
-                                    <div className="input-group input-group-sm">
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            placeholder="Search..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                        />
-                                        <span className="input-group-addon"><i className="fa fa-search"></i></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="table-responsive mailbox-messages overflow-visible">
-                                <table className="table table-hover table-striped table-bordered example">
-                                    <thead>
-                                        <tr>
-                                            {refColumns.map(col => refVisibleCols.has(col.key) && (
-                                                <th key={col.key}>{col.label}</th>
-                                            ))}
-                                            <th className="text-right noExport">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {currentItems.map((value, key) => (
-                                            <tr key={key}>
-                                                {refColumns.map(col => refVisibleCols.has(col.key) && (
-                                                    <td key={col.key} className="mailbox-name">{value[col.key]}</td>
+                                    <div className="table-responsive mailbox-messages overflow-visible">
+                                        <table className="table table-hover table-striped table-bordered example">
+                                            <thead>
+                                                <tr>
+                                                    {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                                        <th key={col.key}>{col.label}</th>
+                                                    ))}
+                                                    <th className="text-right noExport">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {currentItems.map((value, key) => (
+                                                    <tr key={key}>
+                                                        {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                                            <td key={col.key} className="mailbox-name">{value[col.key]}</td>
+                                                        ))}
+                                                        <td className="mailbox-date pull-right">
+                                                            <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                                <i className="fa fa-pencil"></i>
+                                                            </Link>
+                                                            <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                                <i className="fa fa-remove"></i>
+                                                            </Link>
+                                                        </td>
+                                                    </tr>
                                                 ))}
-                                                <td className="mailbox-date pull-right">
-                                                    <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                        <i className="fa fa-pencil"></i>
-                                                    </Link>
-                                                    <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
-                                                        <i className="fa fa-remove"></i>
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div className="row">
-                                <div className="col-md-5">
-                                    <div className="dataTables_info">
-                                        Records: {filteredResults.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredResults.length)} of {filteredResults.length}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </div>
-                                <div className="col-md-7">
-                                    <div className="dataTables_paginate paging_simple_numbers">
-                                        <ul className="pagination">
-                                            <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}>Previous</a>
-                                            </li>
-                                            {[...Array(totalPages)].map((_, i) => (
-                                                <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(i + 1); }}>{i + 1}</a>
-                                                </li>
-                                            ))}
-                                            <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}>Next</a>
-                                            </li>
-                                        </ul>
+
+                                    {/* Pagination Footer */}
+                                    <div className="row">
+                                        <div className="col-md-5">
+                                            <div className="dataTables_info">
+                                                Records: {filteredResults.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredResults.length)} of {filteredResults.length}
+                                            </div>
+                                        </div>
+                                        <div className="col-md-7">
+                                            <div className="dataTables_paginate paging_simple_numbers">
+                                                <ul className="pagination">
+                                                    <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}>Previous</a>
+                                                    </li>
+                                                    {[...Array(totalPages)].map((_, i) => (
+                                                        <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); changePage(i + 1); }}>{i + 1}</a>
+                                                        </li>
+                                                    ))}
+                                                    <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}>Next</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </section >
             </div >
             <Footer />
         </div >

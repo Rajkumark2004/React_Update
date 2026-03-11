@@ -7,6 +7,7 @@ import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const OnlineCourseCategory = () => {
     const navigate = useNavigate();
@@ -86,12 +87,26 @@ const OnlineCourseCategory = () => {
         console.log('Search triggered');
     };
 
-    const handleExport = (type) => {
-        if (type === 'Print') {
-            window.print();
-        } else {
-            toast.success(`${type} export triggered (Simulation)`);
-        }
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Category");
+
+        const rows = filteredCategories.map(cat => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(cat.category_name);
+            return row;
+        });
+
+        return { headers, rows };
     };
 
     const handleAddCategory = async (e) => {
@@ -197,7 +212,7 @@ const OnlineCourseCategory = () => {
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">
-                            <div className="nav-tabs-custom theme-shadow box box-primary" style={{ marginTop: '20px' }}>
+                            <div className="nav-tabs-custom theme-shadow box box-primary" style={{ marginTop: '0px' }}>
                                 <div className="box-header ptbnull" style={{ padding: '10px' }}>
                                     <h3 className="box-title titlefix pt5">Online Course Category</h3>
                                     <div className="box-tools pull-right">
@@ -215,19 +230,22 @@ const OnlineCourseCategory = () => {
                                                 </div>
 
                                                 <div className="dt-buttons btn-group pull-right" style={{ padding: '10px', marginBottom: '10px' }}>
-                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleExport('Copy')}><i className="fa fa-copy"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleExport('Excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleExport('CSV')}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleExport('PDF')}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => handleExport('Print')}><i className="fa fa-print"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Category_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Category_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Category List'); }}><i className="fa fa-print"></i></button>
+
                                                     <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Columns">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
                                                             <i className="fa fa-columns"></i>
                                                         </button>
-                                                        <ul className="dropdown-menu">
-                                                            <li><a href="#">Category</a></li>
-                                                            <li><a href="#">Action</a></li>
-                                                        </ul>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Category</label>
+                                                                </li>
+                                                            </ul>
+                                                        )}
                                                     </div>
                                                 </div>
 
@@ -235,14 +253,14 @@ const OnlineCourseCategory = () => {
                                                     <table className="table table-striped table-bordered table-hover example">
                                                         <thead>
                                                             <tr>
-                                                                <th>Category</th>
+                                                                {!hiddenColumns.includes(0) && <th>Category</th>}
                                                                 <th className="pull-right noExport">Action</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
                                                             {filteredCategories.map((cat) => (
                                                                 <tr key={cat.id}>
-                                                                    <td>{cat.category_name}</td>
+                                                                    {!hiddenColumns.includes(0) && <td>{cat.category_name}</td>}
                                                                     <td className="pull-right noExport">
                                                                         <Link to={`/admin/onlinecourse/list/${cat.id}`} className="btn btn-default btn-xs">
                                                                             <i className="fa fa-list"></i>
@@ -268,8 +286,8 @@ const OnlineCourseCategory = () => {
 
             {/* Modal for Add Category */}
             {showModal && (
-                <div className="modal-overlay" role="dialog">
-                    <div className="modal-dialog modal-md">
+                <div className="modal-overlay" role="dialog" onClick={() => setShowModal(false)}>
+                    <div className="modal-dialog modal-md" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-content">
                             <div className="modal-header">
                                 <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
@@ -295,6 +313,7 @@ const OnlineCourseCategory = () => {
                                     </div>
                                 </div>
                                 <div className="modal-footer">
+                                    <button type="button" className="btn btn-default" onClick={() => setShowModal(false)}>Cancel</button>
                                     <button type="submit" className="btn btn-primary" disabled={loading}>
                                         {loading ? <><i className='fa fa-spinner fa-spin'></i> Saving</> : 'Save'}
                                     </button>

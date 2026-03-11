@@ -6,6 +6,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { api } from '../../services/api.js';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const StaffIdCard = () => {
     const navigate = useNavigate();
@@ -60,9 +61,49 @@ const StaffIdCard = () => {
     const [showViewModal, setShowViewModal] = useState(false);
     const colorPickerRef = useRef(null);
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const filteredIdCards = idCardList.filter(item =>
+        item.title && item.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("ID Card Title");
+        if (!hiddenColumns.includes(1)) headers.push("Background Image");
+        if (!hiddenColumns.includes(2)) headers.push("Design Type");
+
+        const rows = filteredIdCards.map(item => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(item.title);
+            if (!hiddenColumns.includes(1)) row.push(item.background ? "Yes" : "No");
+            if (!hiddenColumns.includes(2)) row.push(item.enable_vertical_card == 1 ? 'Vertical' : 'Horizontal');
+            return row;
+        });
+
+        return { headers, rows };
+    };
+
     useEffect(() => {
         fetchIdCards();
     }, []);
+
+    const getImageUrl = (type, filename) => {
+        if (!filename) {
+            if (type === 'staff') return "https://newlayout.wisibles.com/uploads/staff_images/no_image.png";
+            return "";
+        }
+        if (filename.startsWith('http')) return filename;
+        const uploadPath = `/uploads/staff_id_card/${type}/${filename}`;
+        return `https://newlayout.wisibles.com${uploadPath}`;
+    };
 
     const fetchIdCards = async () => {
         setIsLoading(true);
@@ -239,7 +280,7 @@ const StaffIdCard = () => {
     };
 
     return (
-        <div className="wrapper" style={{ marginTop: '17px' }}>
+        <div className="wrapper" style={{ marginTop: '0px' }}>
             <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
             <Sidebar sessionYear={sessionYear} currentUrl="/admin/staffidcard" />
 
@@ -442,35 +483,44 @@ const StaffIdCard = () => {
                                             </div>
                                             <div className="col-sm-6">
                                                 <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm" title="Copy"><i className="fa fa-copy"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Print"><i className="fa fa-print"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Staff_ID_Cards.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Staff_ID_Cards.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Staff ID Cards'); }}><i className="fa fa-print"></i></button>
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i>
+                                                        </button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> ID Card Title</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Background Image</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Design Type</label></li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="table-responsive">
+                                        <div className="table-responsive overflow-visible">
                                             <table className="table table-striped table-bordered table-hover" style={{ fontSize: '13px' }}>
                                                 <thead>
                                                     <tr>
-                                                        <th>ID Card Title</th>
-                                                        <th>Background Image</th>
-                                                        <th className="text-center">Design Type</th>
-                                                        <th className="text-right">Action</th>
+                                                        {!hiddenColumns.includes(0) && <th>ID Card Title</th>}
+                                                        {!hiddenColumns.includes(1) && <th>Background Image</th>}
+                                                        {!hiddenColumns.includes(2) && <th className="text-center">Design Type</th>}
+                                                        <th className="text-right noExport">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {idCardList.filter(item =>
-                                                        item.title.toLowerCase().includes(searchTerm.toLowerCase())
-                                                    ).map(item => (
+                                                    {filteredIdCards.map(item => (
                                                         <tr key={item.id}>
-                                                            <td><a href="#" onClick={(e) => { e.preventDefault(); setActiveViewItem(item); setShowViewModal(true); }}>{item.title}</a></td>
-                                                            <td>
+                                                            {!hiddenColumns.includes(0) && <td><a href="#" onClick={(e) => { e.preventDefault(); setActiveViewItem(item); setShowViewModal(true); }}>{item.title}</a></td>}
+                                                            {!hiddenColumns.includes(1) && <td>
                                                                 {item.background ? <img src={`https://newlayout.wisibles.com/${item.background}`} width="40" alt="bg" /> : <i className="fa fa-picture-o fa-2x"></i>}
-                                                            </td>
-                                                            <td className="text-center">{item.enable_vertical_card == 1 ? 'Vertical' : 'Horizontal'}</td>
+                                                            </td>}
+                                                            {!hiddenColumns.includes(2) && <td className="text-center">{item.enable_vertical_card == 1 ? 'Vertical' : 'Horizontal'}</td>}
                                                             <td className="text-right">
                                                                 <button className="btn btn-default btn-xs" onClick={() => handleView(item.id)} title="View"><i className="fa fa-reorder"></i></button>
                                                                 <button className="btn btn-default btn-xs" onClick={() => handleEdit(item.id)} title="Edit" style={{ marginLeft: '2px' }}><i className="fa fa-pencil"></i></button>
@@ -484,7 +534,7 @@ const StaffIdCard = () => {
                                         <div className="row mt10">
                                             <div className="col-sm-5">
                                                 <div className="dataTables_info">
-                                                    Records: 1 to {idCardList.filter(item => item.title.toLowerCase().includes(searchTerm.toLowerCase())).length} of {idCardList.filter(item => item.title.toLowerCase().includes(searchTerm.toLowerCase())).length}
+                                                    Records: 1 to {filteredIdCards.length} of {filteredIdCards.length}
                                                 </div>
                                             </div>
                                             <div className="col-sm-7">
@@ -526,7 +576,7 @@ const StaffIdCard = () => {
                                     <div style={{ padding: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                                         {/* Header */}
                                         <div style={{ background: activeViewItem.header_color || '#595959', padding: '10px', color: '#fff', display: 'flex', alignItems: 'center' }}>
-                                            {activeViewItem.logo_img && <img src={`https://newlayout.wisibles.com/${activeViewItem.logo_img}`} alt="Logo" style={{ height: '40px', marginRight: '10px' }} />}
+                                            {activeViewItem.logo_img ? <img src={getImageUrl('logo', activeViewItem.logo_img)} alt="Logo" style={{ height: '40px', marginRight: '10px' }} /> : <img src="/backend/images/s-favican.png" alt="logo" style={{ height: '40px', marginRight: '10px' }} />}
                                             <div style={{ flex: 1 }}>
                                                 <h4 style={{ margin: 0, fontSize: '16px' }}>{activeViewItem.school_name}</h4>
                                                 <p style={{ margin: 0, fontSize: '10px' }}>{activeViewItem.address}</p>
@@ -536,7 +586,7 @@ const StaffIdCard = () => {
                                         {/* Content */}
                                         <div style={{ flex: 1, padding: '10px', display: 'flex', gap: '15px' }}>
                                             <div style={{ width: '100px', height: '120px', border: '1px solid #ddd', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <i className="fa fa-user" style={{ fontSize: '40px', color: '#ccc' }}></i>
+                                                <img src={getImageUrl('staff', null)} style={{ width: '90px', height: '110px', border: '1px solid #ccc', borderRadius: '4px' }} alt="staff" />
                                             </div>
                                             <div style={{ flex: 1, fontSize: '12px' }}>
                                                 <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', color: activeViewItem.header_color }}>{activeViewItem.title}</h3>
@@ -560,7 +610,7 @@ const StaffIdCard = () => {
                                             </div>
                                             {activeViewItem.sign_image && (
                                                 <div style={{ textAlign: 'center' }}>
-                                                    <img src={`https://newlayout.wisibles.com/${activeViewItem.sign_image}`} alt="Signature" style={{ height: '30px' }} />
+                                                    <img src={getImageUrl('signature', activeViewItem.sign_image)} alt="Signature" style={{ height: '30px' }} />
                                                     <p style={{ margin: 0, fontSize: '10px', borderTop: '1px solid #000' }}>Principal Signature</p>
                                                 </div>
                                             )}

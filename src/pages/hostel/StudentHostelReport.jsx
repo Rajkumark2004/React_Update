@@ -6,6 +6,8 @@ import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { useTableSort } from '../../hooks/useTableSort';
 
 const StudentHostelReport = () => {
     const navigate = useNavigate();
@@ -14,12 +16,52 @@ const StudentHostelReport = () => {
     const [sectionlist, setSectionList] = useState([]);
     const [hostellist, setHostelList] = useState([]);
     const [studentData, setStudentData] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [searchForm, setSearchForm] = useState({
         class_id: '',
         section_id: '',
         hostel_name: ''
     });
+
+    // Columns
+    const columns = [
+        { key: 'class_section', label: 'Class Section', sortKey: 'class_section' },
+        { key: 'admission_no', label: 'Admission No', sortKey: 'admission_no' },
+        { key: 'student_name', label: 'Student Name', sortKey: 'student_name' },
+        { key: 'mobile_number', label: 'Mobile Number', sortKey: 'mobile_number' },
+        { key: 'guardian_phone', label: 'Guardian Phone', sortKey: 'guardian_phone' },
+        { key: 'hostel_name', label: 'Hostel Name', sortKey: 'hostel_name' },
+        { key: 'room_no', label: 'Room Number / Name', sortKey: 'room_no' },
+        { key: 'room_type', label: 'Room Type', sortKey: 'room_type' },
+        { key: 'cost_per_bed', label: 'Cost Per Bed', sortKey: 'cost_per_bed' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) newVisible.delete(key);
+        else newVisible.add(key);
+        setVisibleColumns(newVisible);
+    };
+
+    const { sortedData, requestSort, sortConfig, getSortIcon } = useTableSort(studentData);
+
+    const filteredStudentData = sortedData.filter(student =>
+        Object.values(student).some(value =>
+            String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    );
+
+    // Export Data formatting
+    const formatCell = (row, key) => {
+        return row[key] || '';
+    };
+
+    const getExportData = () => {
+        return buildExportData(columns, visibleColumns, filteredStudentData, formatCell);
+    };
 
     useEffect(() => {
         fetchInitialData();
@@ -102,7 +144,7 @@ const StudentHostelReport = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '946px', marginTop: '16px' }}>
+            <div className="content-wrapper" style={{ minHeight: '946px', marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-building-o"></i> Hostel
@@ -209,43 +251,91 @@ const StudentHostelReport = () => {
                                         </h3>
                                     </div>
                                     <div className="box-body table-responsive">
-                                        <div className="download_label">Student Hostel Report</div>
+                                        <div className="mailbox-controls">
+                                            <div className="pull-left">
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                        <i className="fa fa-files-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_hostel_report.csv'); }}>
+                                                        <i className="fa fa-file-text-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_hostel_report.xls'); }}>
+                                                        <i className="fa fa-file-excel-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_hostel_report.pdf', 'Student Hostel Report'); }}>
+                                                        <i className="fa fa-file-pdf-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student Hostel Report'); }}>
+                                                        <i className="fa fa-print"></i>
+                                                    </button>
+                                                    <div className="btn-group">
+                                                        <button type="button" className="btn btn-default btn-sm" data-toggle="dropdown" aria-expanded="false" title="Columns">
+                                                            <i className="fa fa-columns"></i> <span className="caret"></span>
+                                                        </button>
+                                                        <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
+                                                            {columns.map(col => (
+                                                                <li key={col.key} style={{ padding: '0px' }}>
+                                                                    <label style={{ display: 'block', margin: '0', fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={visibleColumns.has(col.key)}
+                                                                            onChange={() => toggleColumn(col.key)}
+                                                                            style={{ marginRight: '8px' }}
+                                                                        />
+                                                                        {col.label}
+                                                                    </label>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="pull-right">
+                                                <div className="has-feedback">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control input-sm"
+                                                        placeholder="Search..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                    />
+                                                    <span className="glyphicon glyphicon-search form-control-feedback"></span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <table
                                             className="table table-striped table-bordered table-hover hostel-list"
                                             data-export-title="Student Hostel Report"
                                         >
                                             <thead>
                                                 <tr>
-                                                    <th>Class Section</th>
-                                                    <th>Admission No</th>
-                                                    <th>Student Name</th>
-                                                    <th>Mobile Number</th>
-                                                    <th>Guardian Phone</th>
-                                                    <th>Hostel Name</th>
-                                                    <th>Room Number / Name</th>
-                                                    <th>Room Type</th>
-                                                    <th className="text-right">Cost Per Bed</th>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <th key={col.key} onClick={() => requestSort(col.sortKey)} style={{ cursor: 'pointer' }} className={col.key === 'cost_per_bed' ? 'text-right' : ''}>
+                                                            {col.label} {getSortIcon(col.sortKey)}
+                                                        </th>
+                                                    ))}
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {studentData.length === 0 ? (
+                                                {filteredStudentData.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan="9" className="text-center">
+                                                        <td colSpan={visibleColumns.size} className="text-center">
                                                             {loading ? 'Loading...' : 'No Record Found'}
                                                         </td>
                                                     </tr>
                                                 ) : (
-                                                    studentData.map((student, index) => (
+                                                    filteredStudentData.map((student, index) => (
                                                         <tr key={index}>
-                                                            <td>{student.class_section}</td>
-                                                            <td>{student.admission_no}</td>
-                                                            <td>{student.student_name}</td>
-                                                            <td>{student.mobile_number}</td>
-                                                            <td>{student.guardian_phone}</td>
-                                                            <td>{student.hostel_name}</td>
-                                                            <td>{student.room_no}</td>
-                                                            <td>{student.room_type}</td>
-                                                            <td className="text-right">{student.cost_per_bed}</td>
+                                                            {visibleColumns.has('class_section') && <td>{student.class_section}</td>}
+                                                            {visibleColumns.has('admission_no') && <td>{student.admission_no}</td>}
+                                                            {visibleColumns.has('student_name') && <td>{student.student_name}</td>}
+                                                            {visibleColumns.has('mobile_number') && <td>{student.mobile_number}</td>}
+                                                            {visibleColumns.has('guardian_phone') && <td>{student.guardian_phone}</td>}
+                                                            {visibleColumns.has('hostel_name') && <td>{student.hostel_name}</td>}
+                                                            {visibleColumns.has('room_no') && <td>{student.room_no}</td>}
+                                                            {visibleColumns.has('room_type') && <td>{student.room_type}</td>}
+                                                            {visibleColumns.has('cost_per_bed') && <td className="text-right">{student.cost_per_bed}</td>}
                                                         </tr>
                                                     ))
                                                 )}

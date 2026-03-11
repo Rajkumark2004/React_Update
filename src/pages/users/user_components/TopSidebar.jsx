@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSession } from '../context/SessionContext';
+import { useSession } from '../../../context/SessionContext';
 
 const TopSidebar = ({ sessionYear: propSessionYear }) => {
     // Get current session from context

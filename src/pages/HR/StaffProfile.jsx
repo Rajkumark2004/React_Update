@@ -152,7 +152,7 @@ const StaffProfile = () => {
                 sessionYear={sessionYear}
             />
 
-            <div className="content-wrapper" style={{ marginTop: '18px' }}>
+            <div className="content-wrapper" style={{ marginTop: '0px' }}>
                 {/* Header */}
                 <section className="content-header">
                     <h1><i className="fa fa-sitemap"></i> Human Resource</h1>

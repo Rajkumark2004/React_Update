@@ -42,10 +42,29 @@ const StudentAddFee = () => {
     const [selectedPaymentToCancel, setSelectedPaymentToCancel] = useState(null);
     const [discountAmount, setDiscountAmount] = useState('');
     const [schSetting, setSchSetting] = useState(null);
+    const [printSettings, setPrintSettings] = useState(null);
 
     useEffect(() => {
         fetchStudentFees();
+        fetchPrintSettings();
     }, [id]);
+
+    const fetchPrintSettings = async () => {
+        try {
+            const res = await api.getPrintHeaderFooterSettings();
+            if (res.status === 'success' && res.result) {
+                const receiptSetting = res.result.find(item => item.print_type === 'student_receipt');
+                if (receiptSetting) {
+                    setPrintSettings({
+                        header_image: receiptSetting.header_image ? `https://newlayout.wisibles.com/uploads/print_headerfooter/student_receipt/${receiptSetting.header_image}` : null,
+                        footer_content: receiptSetting.footer_content || ''
+                    });
+                }
+            }
+        } catch (e) {
+            console.error("Error fetching print settings", e);
+        }
+    };
 
     const fetchStudentFees = async () => {
         try {
@@ -342,7 +361,11 @@ const StudentAddFee = () => {
             const printData = {
                 feearray: feearray,
                 student: student,
-                sch_setting: schSetting
+                sch_setting: {
+                    ...schSetting,
+                    receipt_header_url: printSettings?.header_image || schSetting?.receipt_header_url || '',
+                    receipt_footer_content: printSettings?.footer_content || schSetting?.receipt_footer_content || ''
+                }
             };
 
             localStorage.setItem('printFeesByGroupArrayData', JSON.stringify(printData));
@@ -408,7 +431,11 @@ const StudentAddFee = () => {
             const printData = {
                 feearray: [item],
                 student: student,
-                sch_setting: schSetting
+                sch_setting: {
+                    ...schSetting,
+                    receipt_header_url: printSettings?.header_image || schSetting?.receipt_header_url || '',
+                    receipt_footer_content: printSettings?.footer_content || schSetting?.receipt_footer_content || ''
+                }
             };
 
             localStorage.setItem('printFeesByGroupArrayData', JSON.stringify(printData));
@@ -526,8 +553,13 @@ const StudentAddFee = () => {
             const response = await api.printStudentGroupFees24(payment.id);
             if (response && response.status === 1) {
                 const { student: studentData, sch_setting } = response.data;
+                const enriched_sch_setting = {
+                    ...sch_setting,
+                    receipt_header_url: printSettings?.header_image || sch_setting?.receipt_header_url || '',
+                    receipt_footer_content: printSettings?.footer_content || sch_setting?.receipt_footer_content || ''
+                };
                 const receiptHtml = renderToStaticMarkup(
-                    <ReceiptContent student={studentData} sch_setting={sch_setting} />
+                    <ReceiptContent student={studentData} sch_setting={enriched_sch_setting} />
                 );
 
                 const iframe = document.createElement('iframe');

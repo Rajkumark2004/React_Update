@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import '../../utils/include_files';
 import { useSession } from '../../context/SessionContext';
+import { ClockInput } from '../../utils/clock';
 
 const ExamSubjects = () => {
     const { id: examId } = useParams();
@@ -214,20 +215,11 @@ const ExamSubjects = () => {
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            <div className="input-group">
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    placeholder="09:00 AM"
-                                                                    style={{ minWidth: '200px' }}
-                                                                    value={row.time_from}
-                                                                    onChange={(e) => handleInputChange(row.id, 'time_from', e.target.value)}
-                                                                    required
-                                                                />
-                                                                <span className="input-group-addon">
-                                                                    <i className="fa fa-clock-o"></i>
-                                                                </span>
-                                                            </div>
+                                                            <ClockInput
+                                                                onChange={(val) => handleInputChange(row.id, 'time_from', val)}
+                                                                value={row.time_from}
+                                                                required
+                                                            />
                                                         </td>
                                                         <td>
                                                             <input

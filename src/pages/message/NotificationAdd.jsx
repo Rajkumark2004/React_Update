@@ -21,14 +21,13 @@ const NotificationAdd = () => {
     const [sectionOptions, setSectionOptions] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    // Initial data fetch (Classes)
+    // Initial data fetch (Classes from index API)
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const response = await api.getClasses();
-                if (response && response.status === 'success') {
-                    const classes = [...(response.classsectionlist || [])].reverse();
-                    setClassList(classes);
+                const response = await api.getNotifications();
+                if (response && response.status === true && response.data) {
+                    setClassList(response.data.classlist || []);
                 }
             } catch (error) {
                 console.error('Error fetching classes:', error);

@@ -160,58 +160,85 @@ const NotificationList = () => {
                                     )}
                                 </div>
 
-                                {/* Sidebar Container / Drawer */}
-                                <div className={`sidebar-container ${isSidebarOpen ? 'open' : ''}`}>
-                                    <article className={`email-collection ${isSidebarOpen ? 'open' : ''}`}>
-                                        <a href="#" onClick={closeDetails} className="mail-close-btn">
-                                            <i className="fa fa-times" style={{ fontSize: '20px' }}></i>
-                                        </a>
-                                        {selectedNotification && (
-                                            <div id="notificationdata" style={{ padding: '20px' }}>
-                                                <h3>{selectedNotification.title}</h3>
-                                                <hr />
-                                                <div
-                                                    style={{ color: '#666', lineHeight: '1.6' }}
-                                                    dangerouslySetInnerHTML={{ __html: selectedNotification.message }}
-                                                />
-                                                <div style={{ marginTop: '20px', fontSize: '12px', color: '#999' }}>
-                                                    Published on: {selectedNotification.publish_date || selectedNotification.date}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </article>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
             </div>
+
+            {/* Sidebar Container Overlay */}
+            {isSidebarOpen && <div className="side-panel-overlay" onClick={closeDetails}></div>}
+
+            <div className={`custom-side-panel ${isSidebarOpen ? 'open' : ''}`}>
+                <a href="#" onClick={closeDetails} className="mail-close-btn">
+                    <i className="fa fa-times" style={{ fontSize: '20px' }}></i>
+                </a>
+                {selectedNotification && (
+                    <div id="notificationdata" style={{ padding: '20px', paddingTop: '30px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <i className="fa fa-arrow-left" style={{ cursor: 'pointer', fontSize: '18px', color: '#0084B4' }} onClick={closeDetails}></i>
+                            <h3 style={{ margin: 0, fontSize: '20px', color: '#333', fontWeight: '400' }}>{selectedNotification.title}</h3>
+                        </div>
+                        <hr style={{ margin: '15px 0', borderColor: '#eee' }} />
+
+                        <div style={{ fontSize: '14px', color: '#333', lineHeight: '1.6', marginBottom: '25px' }} dangerouslySetInnerHTML={{ __html: selectedNotification.message }} />
+
+                        {selectedNotification.attachment && (
+                            <div style={{ marginBottom: '15px' }}>
+                                <a href={`https://newlayout.wisibles.com/uploads/school_content/material/${selectedNotification.attachment}`} target="_blank" rel="noreferrer" style={{ color: '#0084B4', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                    <i className="fa fa-download"></i> Download Attachment
+                                </a>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginBottom: '10px', fontSize: '13px', color: '#555' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><i className="fa fa-calendar-check-o"></i> Publish Date: {selectedNotification.publish_date}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><i className="fa fa-calendar"></i> Notice Date: {selectedNotification.date}</div>
+                        </div>
+
+                        {selectedNotification.created_by && (
+                            <div style={{ fontSize: '13px', color: '#555', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <i className="fa fa-user"></i> Created By: {selectedNotification.created_by} {selectedNotification.created_id ? `(${selectedNotification.created_id})` : ''}
+                            </div>
+                        )}
+
+                        <hr style={{ margin: '15px 0', borderColor: '#eee' }} />
+                    </div>
+                )}
+            </div>
+
             <Footer />
             <style>{`
-                .sidebar-container {
+                .custom-side-panel {
                     position: fixed;
                     top: 0;
                     right: -400px;
                     width: 400px;
                     height: 100vh;
                     background: #fff;
-                    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+                    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
                     z-index: 1050;
-                    transition: right 0.3s ease;
+                    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    overflow-y: auto;
                 }
-                .sidebar-container.open {
+                .custom-side-panel.open {
                     right: 0;
                 }
-                .email-collection {
-                    height: 100%;
-                    overflow-y: auto;
-                    position: relative;
+                .side-panel-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    z-index: 1040;
                 }
                 .mail-close-btn {
                     position: absolute;
                     top: 15px;
                     right: 15px;
-                    color: #333;
+                    color: #0084B4;
+                    z-index: 10;
                 }
                 .email-info:hover {
                     background-color: #f9f9f9;

@@ -5,6 +5,7 @@ import Footer from '../../components/Footer';
 import '../../utils/include_files';
 import api from '../../services/api';
 import { useSession } from '../../context/SessionContext';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const Term = () => {
     const { sessionYear } = useSession();
@@ -39,6 +40,32 @@ const Term = () => {
 
         fetchData();
     }, []);
+
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Name");
+        if (!hiddenColumns.includes(1)) headers.push("Code");
+        if (!hiddenColumns.includes(2)) headers.push("Description");
+
+        const rows = filteredTerms.map(term => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(term.name);
+            if (!hiddenColumns.includes(1)) row.push(term.term_code);
+            if (!hiddenColumns.includes(2)) row.push(term.description);
+            return row;
+        });
+
+        return { headers, rows };
+    };
 
     const handleSearch = (term) => {
         setSearchTerm(term);
@@ -136,41 +163,6 @@ const Term = () => {
         role: "Super Admin"
     };
 
-    const sidebarMenus = [
-        { id: 1, icon: 'helpdesk.png', label: 'Help Desk', url: '/admin/enquiry' },
-        { id: 2, icon: 'sis.png', label: 'SIS', url: '/student/search' },
-        { id: 3, icon: 'Fees.png', label: 'Fees', url: '#' },
-        { id: 4, icon: 'attendance.png', label: 'Attendance', url: '/student-attendance' },
-        { id: 5, icon: 'state_examination.png', label: 'State Examinations', url: '/cbseexam/exam' },
-        { id: 6, icon: 'courses.png', label: 'Courses', url: '#' },
-        { id: 7, icon: 'homework.png', label: 'Homework', url: '#' },
-        { id: 8, icon: 'transport.png', label: 'Transport', url: '#' },
-        { id: 9, icon: 'messages.png', label: 'Messages', url: '#' },
-        { id: 10, icon: 'hr.png', label: 'Human Resource', url: '/admin/staff' },
-        { id: 11, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
-        { id: 12, icon: 'certificate.png', label: 'Certificate', url: '#' },
-        { id: 13, icon: 'income.png', label: 'Income', url: '#' },
-        { id: 14, icon: 'expenses.png', label: 'Expenses', url: '#' },
-        { id: 15, icon: 'hostle.png', label: 'Hostel', url: '#' },
-        { id: 16, icon: 'reports.png', label: 'Reports', url: '#' },
-        { id: 17, icon: 'settings.png', label: 'System Settings', url: '/settings' }
-    ];
-
-    const cbseSubmenu = [
-        { label: 'Exam', url: '/cbseexam/exam', active: false, icon: '1.png' },
-        { label: 'Exam Schedule', url: '#', active: false, icon: '2.png' },
-        { label: 'Print Marksheet', url: '#', active: false, icon: '3.png' },
-        { label: 'Exam Grade', url: '#', active: false, icon: '4.png' },
-        { label: 'Assign Observation', url: '#', active: false, icon: '5.png' },
-        { label: 'Observation', url: '#', active: false, icon: '6.png' },
-        { label: 'Observation Parameter', url: '#', active: false, icon: '7.png' },
-        { label: 'Assessment', url: '/cbseexam/assessment', active: false, icon: '8.png' },
-        { label: 'Term', url: '/cbseexam/term', active: true, icon: '9.png' },
-        { label: 'Template', url: '/cbseexam/template', active: false, icon: '4.png' },
-        { label: 'Reports', url: '#', active: false, icon: '10.png' },
-        { label: 'Setting', url: '#', active: false, icon: '11.png' },
-    ];
-
     const filteredTerms = terms.filter(t =>
         t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.term_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -181,14 +173,13 @@ const Term = () => {
         <div className="wrapper">
             <Header appName={appName} userData={userData} handleLogout={() => { }} />
             <Sidebar
-                sidebarMenus={sidebarMenus}
                 sessionYear={sessionYear}
                 currentUrl="/cbseexam/term"
                 handleSearch={handleSearch}
             />
 
             <div className="content-wrapper" style={{ minHeight: '710px' }}>
-                <section className="content" style={{ marginTop: '20px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-12">
                             <div className="box box-primary">
@@ -228,24 +219,36 @@ const Term = () => {
                                             </div>
                                             <div className="col-md-6">
                                                 <div className="pull-right dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy">
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
                                                         <i className="fa fa-files-o"></i>
                                                     </button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel">
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Term_List.xls'); }}>
                                                         <i className="fa fa-file-excel-o"></i>
                                                     </button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV">
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Term_List.csv'); }}>
                                                         <i className="fa fa-file-text-o"></i>
                                                     </button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF">
-                                                        <i className="fa fa-file-pdf-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print">
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Term List'); }}>
                                                         <i className="fa fa-print"></i>
                                                     </button>
-                                                    <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns">
-                                                        <i className="fa fa-columns"></i>
-                                                    </button>
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i>
+                                                        </button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Name</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Code</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Description</label>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -253,18 +256,18 @@ const Term = () => {
                                             <table className="table table-striped table-bordered table-hover term-list">
                                                 <thead>
                                                     <tr>
-                                                        <th>Name</th>
-                                                        <th>Code</th>
-                                                        <th>Description</th>
-                                                        <th className="text-right">Action</th>
+                                                        {!hiddenColumns.includes(0) && <th>Name</th>}
+                                                        {!hiddenColumns.includes(1) && <th>Code</th>}
+                                                        {!hiddenColumns.includes(2) && <th>Description</th>}
+                                                        <th className="text-right noExport">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {filteredTerms.map(term => (
                                                         <tr key={term.id}>
-                                                            <td className="mailbox-name">{term.name}</td>
-                                                            <td className="mailbox-name">{term.term_code}</td>
-                                                            <td className="mailbox-name">{term.description}</td>
+                                                            {!hiddenColumns.includes(0) && <td className="mailbox-name">{term.name}</td>}
+                                                            {!hiddenColumns.includes(1) && <td className="mailbox-name">{term.term_code}</td>}
+                                                            {!hiddenColumns.includes(2) && <td className="mailbox-name">{term.description}</td>}
                                                             <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                                                                 <button
                                                                     className="btn btn-default btn-xs"

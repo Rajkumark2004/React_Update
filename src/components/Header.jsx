@@ -14,9 +14,20 @@ const Header = ({
     isSidebarOpen,
     headerLogoUrl
 }) => {
-    // Get logo URLs from context
-    const { logos } = useLogo();
-    const headerLogo = logos.admin_logo || '/images/wisibles_logo.png';
+    // Get logo URLs from context ensuring priority to global Context
+    const { logos, updateLogo } = useLogo();
+    const headerLogo = headerLogoUrl || logos.admin_logo || '/images/wisibles_logo.png';
+
+    // Global logo fetch interceptor inside Header
+    useEffect(() => {
+        // 1. If a logo prop is passed (e.g. from dashboard), sync it globally
+        if (headerLogoUrl) {
+            updateLogo('admin_logo', headerLogoUrl);
+            return;
+        }
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [headerLogoUrl]);
 
     // Dropdown State
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -123,13 +134,12 @@ const Header = ({
             {/* ==================== DESKTOP HEADER ==================== */}
             <header className="main-header hide-mobile" id="alert">
                 {/* Logo - Links to Dashboard */}
-                {/* Logo - Links to Dashboard */}
                 <Link to="/dashboard" className="logo-hide-on-mobile logo">
                     <span className="logo-mini">
-                        <img src={headerLogoUrl || headerLogo} alt={appName} />
+                        <img src={headerLogo} alt={appName} />
                     </span>
                     <span className="logo-lg">
-                        <img src={headerLogoUrl || headerLogo} alt={appName} style={{ maxHeight: '40px', objectFit: 'contain' }} />
+                        <img src={headerLogo} alt={appName} style={{ maxHeight: '40px', objectFit: 'contain' }} />
                     </span>
                 </Link>
 
@@ -250,12 +260,6 @@ const Header = ({
                                                 </ul>
                                             </li>
 
-                                            {/* Chat - Not implemented yet */}
-                                            <li className="cal15 d-sm-none">
-                                                <a href="#" data-toggle="tooltip" title="Chat (Coming Soon)" onClick={(e) => e.preventDefault()}>
-                                                    <i className="fa fa-whatsapp"></i>
-                                                </a>
-                                            </li>
 
                                             {/* User Menu Dropdown */}
                                             <li className={`dropdown user-menu ${isUserDropdownOpen ? 'open' : ''}`} ref={userDropdownRef}>
@@ -279,7 +283,7 @@ const Header = ({
                                                             </div>
                                                             <div className="sstopuser-test">
                                                                 <Link to={`/admin/staff/profile/${user.id}`}>
-                                                                    <h4 className="text-capitalize" style={{ color: '#fff' }}>{user.name}</h4>
+                                                                    <h4 className="text-capitalize">{user.name}</h4>
                                                                 </Link>
                                                                 <h5>{user.role}</h5>
                                                             </div>
@@ -293,13 +297,14 @@ const Header = ({
                                                                 </a>
                                                                 <a className="" onClick={async () => {
                                                                     setIsUserDropdownOpen(false);
+                                                                    try { await api.logout(); } catch (e) { console.error('Logout error:', e); }
+                                                                    localStorage.removeItem('user');
+                                                                    localStorage.removeItem('isLoggedIn');
+                                                                    localStorage.removeItem('token');
                                                                     if (handleLogout) {
                                                                         handleLogout();
                                                                     } else {
-                                                                        try { await api.logout(); } catch (e) { }
-                                                                        localStorage.removeItem('user');
-                                                                        localStorage.removeItem('isLoggedIn');
-                                                                        navigate('/');
+                                                                        navigate('/login');
                                                                     }
                                                                 }} style={{ cursor: 'pointer' }}>
                                                                     <i className="fa fa-sign-out fa-fw"></i> Logout
@@ -341,7 +346,7 @@ const Header = ({
                     <div className="logo-mobile-container" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
                         <Link to="/dashboard" className="logo">
                             <span className="logo-lg">
-                                <img src={headerLogoUrl || headerLogo} alt={appName} style={{ maxHeight: '40px', objectFit: 'contain' }} />
+                                <img src={headerLogo} alt={appName} style={{ maxHeight: '40px', objectFit: 'contain' }} />
                             </span>
                         </Link>
                     </div>

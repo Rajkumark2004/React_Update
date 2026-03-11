@@ -96,7 +96,7 @@ const ClassTimetable = () => {
                         <i className="fa fa-mortar-board"></i> Academics
                     </h1>
                 </section>
-                <section className="content" style={{ marginTop: '20px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-2">
                             <div className="box border0">

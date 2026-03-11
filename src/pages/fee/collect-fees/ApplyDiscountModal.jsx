@@ -153,7 +153,7 @@ const ApplyDiscountModal = ({ show, handleClose, student, feeData, onSuccess }) 
                                 Apply Discount {feeData?.is_batch ? `(${feeData.selectedItems?.length || 0} items)` : `(${feeData?.name || feeData?.feeTypeName || ''})`}
                             </h4>
                         </div>
-                        <div className="modal-body pb0">
+                        <div className="modal-body pb0" style={{ maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }}>
                             <div className="form-horizontal">
                                 {/* Date Field */}
                                 <div className="form-group row">

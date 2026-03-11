@@ -5,6 +5,7 @@ import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 
 const FeesReceipt = () => {
     const navigate = useNavigate();
@@ -119,6 +120,48 @@ const FeesReceipt = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const receiptPrefix = 23;
 
+    // Column definitions for export
+    const columns = [
+        { key: 'sno', label: 'S.No' },
+        { key: 'receipt_no', label: 'Receipt No' },
+        { key: 'admission_no', label: 'Admission No' },
+        { key: 'name', label: 'Name' },
+        { key: 'class', label: 'Class' },
+        { key: 'payment_date', label: 'Payment Date' },
+        { key: 'amount', label: 'Amount (₹)' },
+        { key: 'fee_type', label: 'Fee Type' },
+        { key: 'status', label: 'Status' },
+        { key: 'description', label: 'Description' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    const formatCellForExport = (row, key) => {
+        switch (key) {
+            case 'sno': return String(feePayments.indexOf(row) + 1);
+            case 'receipt_no': return getReceiptNo(row.id);
+            case 'admission_no': return row.admission_no;
+            case 'name': return `${row.firstname} ${row.middlename ? row.middlename + ' ' : ''}${row.lastname}`.trim();
+            case 'class': return `${row.class} (${row.section})`;
+            case 'payment_date': return formatDate(row.created_at);
+            case 'amount': return '₹' + formatAmount(row.amount);
+            case 'fee_type': return row.fee_types;
+            case 'status': return (row.status === 0 || !row.status) ? 'Active' : 'Cancel';
+            case 'description': return row.description || '';
+            default: return '';
+        }
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredPayments, formatCellForExport);
+
     // Helper function to format amount
     const formatAmount = (amount) => {
         return parseFloat(amount).toFixed(2);
@@ -212,24 +255,36 @@ const FeesReceipt = () => {
                                         </div>
                                         <div className="col-md-6">
                                             <div className="pull-right dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel">
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'fees_receipt.xls'); }}>
                                                     <i className="fa fa-file-excel-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV">
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'fees_receipt.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF">
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Fees Receipt'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-print" title="Print">
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Fees Receipt'); }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns">
-                                                    <i className="fa fa-columns"></i>
-                                                </button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showColumnsDropdown && (
+                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {columns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                    <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

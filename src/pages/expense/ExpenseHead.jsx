@@ -5,6 +5,8 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { useTableSort } from '../../hooks/useTableSort';
 
 const ExpenseHead = () => {
     const navigate = useNavigate();
@@ -17,6 +19,20 @@ const ExpenseHead = () => {
     });
     const [initialLoading, setInitialLoading] = useState(true);
 
+    // Columns Definition
+    const columns = [
+        { key: 'exp_category', label: 'Expense Head', sortKey: 'exp_category' },
+        { key: 'description', label: 'Description', sortKey: 'description' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) newVisible.delete(key);
+        else newVisible.add(key);
+        setVisibleColumns(newVisible);
+    };
     useEffect(() => {
         fetchExpenseHeadList();
     }, []);
@@ -80,14 +96,21 @@ const ExpenseHead = () => {
         }
     };
 
-    const filteredExpenseHeadList = expenseHeadList.filter(head =>
+    const { sortedData, requestSort, sortConfig, getSortIcon } = useTableSort(expenseHeadList);
+
+    const filteredExpenseHeadList = sortedData.filter(head =>
         Object.values(head).some(value =>
             String(value).toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
 
-    const handleExport = (type) => {
-        toast.success(`${type} export triggered (Simulation)`);
+    // Export Helper
+    const formatCell = (row, key) => {
+        return row[key] || '';
+    };
+
+    const getExportData = () => {
+        return buildExportData(columns, visibleColumns, filteredExpenseHeadList, formatCell);
     };
 
     return (
@@ -175,33 +198,55 @@ const ExpenseHead = () => {
                                     <div className="mailbox-controls">
                                         <div className="pull-left">
                                             <div className="btn-group">
-                                                <button type="button" className="btn btn-default btn-xs" title="Copy" onClick={() => handleExport('Copy')}>
-                                                    <i className="fa fa-copy"></i>
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                    <i className="fa fa-files-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="Excel" onClick={() => handleExport('Excel')}>
-                                                    <i className="fa fa-file-excel-o"></i>
-                                                </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="CSV" onClick={() => handleExport('CSV')}>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'expense_head_list.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="PDF" onClick={() => handleExport('PDF')}>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'expense_head_list.xls'); }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'expense_head_list.pdf', 'Expense Head List'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="Print" onClick={() => window.print()}>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Expense Head List'); }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
+                                                <div className="btn-group">
+                                                    <button type="button" className="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Columns">
+                                                        <i className="fa fa-columns"></i> <span className="caret"></span>
+                                                    </button>
+                                                    <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
+                                                        {columns.map(col => (
+                                                            <li key={col.key} style={{ padding: '0px' }}>
+                                                                <label style={{ display: 'block', margin: '0', fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={visibleColumns.has(col.key)}
+                                                                        onChange={() => toggleColumn(col.key)}
+                                                                        style={{ marginRight: '8px' }}
+                                                                    />
+                                                                    {col.label}
+                                                                </label>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="pull-right">
-                                            <div className="has-feedback">
+                                            <div className="input-group input-group-sm" style={{ width: '150px' }}>
                                                 <input
                                                     type="text"
-                                                    className="form-control input-sm"
+                                                    className="form-control"
                                                     placeholder="Search..."
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
                                                 />
-                                                <span className="glyphicon glyphicon-search form-control-feedback"></span>
+                                                <div className="input-group-addon">
+                                                    <i className="fa fa-search"></i>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -209,29 +254,32 @@ const ExpenseHead = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Expense Head</th>
-                                                    <th>Description</th>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <th key={col.key} onClick={() => requestSort(col.sortKey)} style={{ cursor: 'pointer' }}>
+                                                            {col.label} {getSortIcon(col.sortKey)}
+                                                        </th>
+                                                    ))}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {initialLoading ? (
                                                     <tr>
-                                                        <td colSpan="2" className="text-center">Loading...</td>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center">Loading...</td>
                                                     </tr>
                                                 ) : filteredExpenseHeadList.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan="2" className="text-center">No data available</td>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center">No data available</td>
                                                     </tr>
                                                 ) : (
                                                     filteredExpenseHeadList.map((head) => (
                                                         <tr key={head.id}>
-                                                            <td className="mailbox-name">
+                                                            {visibleColumns.has('exp_category') && <td className="mailbox-name">
                                                                 {head.exp_category}
-                                                            </td>
-                                                            <td className="mailbox-name">
+                                                            </td>}
+                                                            {visibleColumns.has('description') && <td className="mailbox-name">
                                                                 {head.description}
-                                                            </td>
+                                                            </td>}
                                                             <td className="mailbox-date pull-right">
                                                                 <Link
                                                                     to={`/admin/expensehead/edit/${head.id}`}

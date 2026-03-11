@@ -51,12 +51,15 @@ const RolePermission = () => {
         setIsLoading(true);
         try {
             const payload = {};
-            const per_cat = [];
+            const per_cat_set = new Set();
 
             rolePermissions.forEach(module => {
                 module.permission_category.forEach(perm => {
                     const pid = perm.id;
-                    per_cat.push(Number(pid));
+                    // Add unique numerical ID to per_cat
+                    per_cat_set.add(Number(pid));
+
+                    // Format payload keys as requested: roles_permissions_id_X and can_X-perm_X
                     payload[`roles_permissions_id_${pid}`] = Number(perm.roles_permissions_id || 0);
                     payload[`can_view-perm_${pid}`] = Number(perm.can_view || 0);
                     payload[`can_add-perm_${pid}`] = Number(perm.can_add || 0);
@@ -65,7 +68,10 @@ const RolePermission = () => {
                 });
             });
 
-            payload.per_cat = per_cat;
+            // Convert set back to array for the payload
+            payload.per_cat = Array.from(per_cat_set);
+
+            console.log('Constructed Roles & Permissions Payload:', payload);
 
             const response = await api.updateRolePermissions(id, payload);
             if (response.status === 'success') {

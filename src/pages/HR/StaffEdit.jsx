@@ -14,6 +14,10 @@ const StaffEdit = () => {
     const { currentSession } = useSession();
     const [loading, setLoading] = useState(true);
 
+    const [roles, setRoles] = useState([]);
+    const [designations, setDesignations] = useState([]);
+    const [departments, setDepartments] = useState([]);
+
     const [staff, setStaff] = useState({
         id: id || '',
         employee_id: '',
@@ -81,7 +85,7 @@ const StaffEdit = () => {
                         firstname: data.name || '',
                         surname: data.surname || '',
                         email: data.email || '',
-                        role: data.role || '',
+                        role: data.role_id || data.role || '',
                         gender: data.gender || '',
                         dob: formatDateForInput(data.dob),
                         contact_no: data.contactno || '',
@@ -108,8 +112,8 @@ const StaffEdit = () => {
                         father_name: data.father_name || '',
                         mother_name: data.mother_name || '',
                         date_of_joining: formatDateForInput(data.date_of_joining),
-                        // department: data.department || '', // Not in sample response, might be needed
-                        // designation: data.designation || '', // Not in sample response
+                        department: data.department_id || data.department || '',
+                        designation: data.designation_id || data.designation || '',
 
                         // Populate if available in response, else keep defaults or potentially empty
                         leave_type_id: data.leave_type_id || [],
@@ -127,7 +131,26 @@ const StaffEdit = () => {
             }
         };
 
-        fetchStaffDetails();
+        const fetchDropdownsAndProfile = async () => {
+            try {
+                // Fetch dynamic data for roles, designations, departments
+                const dropdownRes = await api.getStaffCreateData();
+                let rolesList = [];
+                if (dropdownRes && dropdownRes.status) {
+                    const data = dropdownRes.data || dropdownRes;
+                    rolesList = data.roles || data.staff_role || [];
+                    setRoles(rolesList);
+                    setDesignations(data.designation || data.designations || []);
+                    setDepartments(data.department || data.departments || []);
+                }
+                await fetchStaffDetails(rolesList);
+            } catch (err) {
+                console.error('Error fetching dropdowns:', err);
+                await fetchStaffDetails([]);
+            }
+        };
+
+        fetchDropdownsAndProfile();
     }, [id]);
 
     const handleInputChange = (e) => {
@@ -281,10 +304,10 @@ const StaffEdit = () => {
                                                         <div className="form-group">
                                                             <label>Role</label><small className="req"> *</small>
                                                             <select name="role" className="form-control" value={staff.role} onChange={handleInputChange}>
-                                                                <option value="1">Admin</option>
-                                                                <option value="2">Teacher</option>
-                                                                <option value="3">Accountant</option>
-                                                                <option value="4">Librarian</option>
+                                                                <option value="">Select</option>
+                                                                {roles.map(r => (
+                                                                    <option key={r.id} value={r.id}>{r.name || r.type}</option>
+                                                                ))}
                                                             </select>
                                                         </div>
                                                     </div>
@@ -292,8 +315,10 @@ const StaffEdit = () => {
                                                         <div className="form-group">
                                                             <label>Designation</label>
                                                             <select name="designation" className="form-control" value={staff.designation} onChange={handleInputChange}>
-                                                                <option value="1">Senior Teacher</option>
-                                                                <option value="2">Professor</option>
+                                                                <option value="">Select</option>
+                                                                {designations.map(d => (
+                                                                    <option key={d.id} value={d.id}>{d.designation}</option>
+                                                                ))}
                                                             </select>
                                                         </div>
                                                     </div>
@@ -301,8 +326,10 @@ const StaffEdit = () => {
                                                         <div className="form-group">
                                                             <label>Department</label>
                                                             <select name="department" className="form-control" value={staff.department} onChange={handleInputChange}>
-                                                                <option value="1">Academic</option>
-                                                                <option value="2">Administration</option>
+                                                                <option value="">Select</option>
+                                                                {departments.map(d => (
+                                                                    <option key={d.id} value={d.id}>{d.department_name || d.department}</option>
+                                                                ))}
                                                             </select>
                                                         </div>
                                                     </div>

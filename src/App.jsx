@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { PermissionProvider } from './context/PermissionContext';
 import DashboardTest from './pages/dashboard/dashboard_test';
 
 import LoginPage from './pages/auth/LoginPage';
@@ -29,6 +30,7 @@ import OnlineStudentList from './pages/student/OnlineStudentList';
 import OnlineStudentEdit from './pages/student/OnlineStudentEdit';
 import StudentEdit from './pages/student/StudentEdit';
 import StudentView from './pages/student/StudentView';
+import ImportStudent from './pages/student/ImportStudent';
 import DisabledStudents from './pages/student/DisabledStudents';
 import DisableReason from './pages/student/DisableReason';
 import DisableReasonEdit from './pages/student/DisableReasonEdit';
@@ -51,6 +53,7 @@ import StudentDiaryList from './pages/homework/StudentDiaryList';
 import StaffProfile from './pages/HR/StaffProfile';
 import StaffEdit from './pages/HR/StaffEdit';
 import StaffSearch from './pages/HR/StaffSearch';
+import StaffCreate from './pages/HR/StaffCreate';
 import CBSEExamList from './pages/state_examination/CBSEExamList';
 import CBSEGradeList from './pages/state_examination/CBSEGradeList';
 import CBSESettings from './pages/state_examination/CBSESettings';
@@ -64,6 +67,7 @@ import ExamTimetable from './pages/state_examination/ExamTimetable';
 import ExamSubjects from './pages/state_examination/ExamSubjects';
 import ExamRank from './pages/state_examination/ExamRank';
 import ExamWiseRank from './pages/state_examination/ExamWiseRank';
+import TemplateWiseRank from './pages/state_examination/TemplateWiseRank';
 import GenerateAdmitCard from './pages/state_examination/GenerateAdmitCard';
 import AssignExamStudent from './pages/state_examination/AssignExamStudent';
 import Rank from './pages/state_examination/Rank';
@@ -216,6 +220,7 @@ function App() {
   }, []);
 
   return (
+    <PermissionProvider>
     <LogoProvider>
       <SessionProvider>
         <BrowserRouter>
@@ -449,6 +454,14 @@ function App() {
               }
             />
             <Route
+              path="/student/import"
+              element={
+                <ProtectedRoute>
+                  <ImportStudent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/onlinestudent"
               element={
                 <ProtectedRoute>
@@ -633,6 +646,14 @@ function App() {
               }
             />
             <Route
+              path="/admin/staff/create"
+              element={
+                <ProtectedRoute>
+                  <StaffCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/cbseexam"
               element={
                 <ProtectedRoute>
@@ -662,6 +683,7 @@ function App() {
             <Route path="/cbseexam/settings" element={<ProtectedRoute><CBSESettings /></ProtectedRoute>} />
             <Route path="/cbseexam/exam/subjects/:id" element={<ProtectedRoute><ExamSubjects /></ProtectedRoute>} />
             <Route path="/cbseexam/exam/examwiserank/:id" element={<ProtectedRoute><ExamWiseRank /></ProtectedRoute>} />
+            <Route path="/cbseexam/template/templatewiserank/:id" element={<ProtectedRoute><TemplateWiseRank /></ProtectedRoute>} />
             <Route path="/cbseexam/exam/examwiseadmitcard/:id" element={<ProtectedRoute><GenerateAdmitCard /></ProtectedRoute>} />
             <Route path="/cbseexam/exam/assign/:id" element={<ProtectedRoute><AssignExamStudent /></ProtectedRoute>} />
             <Route path="/cbseexam/examrank" element={<ProtectedRoute><ExamRank /></ProtectedRoute>} />
@@ -832,6 +854,7 @@ function App() {
         </BrowserRouter>
       </SessionProvider>
     </LogoProvider>
+    </PermissionProvider>
   );
 }
 

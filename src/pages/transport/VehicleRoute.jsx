@@ -5,6 +5,7 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import api from '../../services/api';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const VehicleRoute = () => {
     const { id } = useParams();
@@ -194,6 +195,29 @@ const VehicleRoute = () => {
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Route");
+        if (!hiddenColumns.includes(1)) headers.push("Vehicle");
+
+        const rows = filteredList.map(item => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(item.route_title);
+            if (!hiddenColumns.includes(1)) row.push(item.vehicles.map(v => v.vehicle_no).join(', '));
+            return row;
+        });
+
+        return { headers, rows };
+    };
 
     return (
         <div className="wrapper">
@@ -288,34 +312,44 @@ const VehicleRoute = () => {
                                                         </label>
                                                     </div>
                                                     <div className="dt-buttons btn-group">
-                                                        <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy"><span><i className="fa fa-files-o"></i></span></a>
-                                                        <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV"><span><i className="fa fa-file-text-o"></i></span></a>
-                                                        <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel"><span><i className="fa fa-file-excel-o"></i></span></a>
-                                                        <a className="btn btn-default buttons-pdf buttons-html5 btn-sm" title="PDF"><span><i className="fa fa-file-pdf-o"></i></span></a>
-                                                        <a className="btn btn-default buttons-print btn-sm" title="Print"><span><i className="fa fa-print"></i></span></a>
-                                                        <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns"><span><i className="fa fa-columns"></i></span></a>
+                                                        <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                        <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_Route_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                        <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_Route_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                        <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle Route List'); }}><i className="fa fa-print"></i></button>
+
+                                                        <div className="btn-group">
+                                                            <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                <i className="fa fa-columns"></i>
+                                                            </button>
+                                                            {showColumnsDropdown && (
+                                                                <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                    <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Route</label></li>
+                                                                    <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Vehicle</label></li>
+                                                                </ul>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 <table className="table table-striped table-bordered table-hover example">
                                                     <thead>
                                                         <tr>
-                                                            <th>Route</th>
-                                                            <th>Vehicle</th>
+                                                            {!hiddenColumns.includes(0) && <th>Route</th>}
+                                                            {!hiddenColumns.includes(1) && <th>Vehicle</th>}
                                                             <th className="text-right noExport">Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {currentItems.map((item) => (
                                                             <tr key={item.id}>
-                                                                <td className="mailbox-name">{item.route_title}</td>
-                                                                <td>
+                                                                {!hiddenColumns.includes(0) && <td className="mailbox-name">{item.route_title}</td>}
+                                                                {!hiddenColumns.includes(1) && <td>
                                                                     {item.vehicles.map((v) => (
                                                                         <div key={v.id}>
                                                                             <b>{v.vehicle_no}</b>
                                                                         </div>
                                                                     ))}
-                                                                </td>
+                                                                </td>}
                                                                 <td className="mailbox-date pull-right">
                                                                     <Link
                                                                         to={`/admin/vehroute/edit/${item.id}`}

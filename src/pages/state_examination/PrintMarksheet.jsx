@@ -259,7 +259,7 @@ const PrintMarksheet = () => {
                     <h1><i className="fa fa-map-o"></i> Examinations <small>Student Fee1</small></h1>
                 </section>
 
-                <section className="content" style={{ marginTop: '18px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-12">
                             <div className="box box-primary">

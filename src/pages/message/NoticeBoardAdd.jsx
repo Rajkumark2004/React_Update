@@ -10,6 +10,8 @@ import toast from 'react-hot-toast';
 const NoticeBoardAdd = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -20,24 +22,25 @@ const NoticeBoardAdd = () => {
         visible_student: false, // Checkbox state
         visible_parent: false, // Checkbox state
         roles: [], // Array of role IDs for dynamic roles
-        class_id: '',
-        section_id: ''
     });
     const [roles, setRoles] = useState([]); // To store fetched roles
-    const [classList, setClassList] = useState([]);
-    const [sectionList, setSectionList] = useState([]);
 
-    // Fetch roles and classes on mount
+    // Fetch roles on mount
     React.useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const response = await api.getNoticeBoardAdd();
-                if (response && response.status === true) {
-                    const data = response.data || {};
-                    // Set classlist from response
-                    setClassList(data.classlist || []);
-                    // Set roles from response
-                    setRoles(data.roles || []);
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (user.roles && typeof user.roles === 'object') {
+                        const extractedRoleId = Object.values(user.roles)[0];
+                        if (extractedRoleId) {
+                            const response = await api.getNoticeBoardList(extractedRoleId);
+                            if (response && (response.status === true || response.status === 'success')) {
+                                setRoles(response.roles || []);
+                            }
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching initial data:', error);
@@ -46,24 +49,6 @@ const NoticeBoardAdd = () => {
         fetchInitialData();
     }, []);
 
-    const handleClassChange = async (e) => {
-        const classId = e.target.value;
-        setFormData(prev => ({ ...prev, class_id: classId, section_id: '' }));
-        setSectionList([]);
-
-        if (classId) {
-            try {
-                const response = await api.getSectionsByClass(classId);
-                if (response && response.status === 'success') {
-                    const sections = response.data || [];
-                    setSectionList(sections);
-                }
-            } catch (error) {
-                console.error('Error fetching sections:', error);
-                toast.error('Failed to fetch sections');
-            }
-        }
-    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -118,8 +103,7 @@ const NoticeBoardAdd = () => {
             formPayload.append('created_by', createdBy);
             formPayload.append('created_id', createdId);
 
-            if (formData.class_id) formPayload.append('class_id', formData.class_id);
-            if (formData.section_id) formPayload.append('section_id', formData.section_id);
+
 
             // Visibility
             if (formData.visible_student) {
@@ -133,12 +117,9 @@ const NoticeBoardAdd = () => {
                 formPayload.append('visible[]', roleId);
             });
 
-            // File Attachment if any (Assuming input name="file" is ref'd or controlled)
-            // Note: In React controlled components, file input is tricky. 
-            // Better to use a ref or uncontrolled input for file.
-            const fileInput = document.querySelector('input[name="file"]');
-            if (fileInput && fileInput.files[0]) {
-                formPayload.append('file', fileInput.files[0]);
+            // File Attachment
+            if (selectedFile) {
+                formPayload.append('file', selectedFile);
             }
 
             const response = await api.addNoticeBoard(formPayload);
@@ -176,6 +157,11 @@ const NoticeBoardAdd = () => {
                                 <div className="box box-primary">
                                     <div className="box-header with-border">
                                         <h3 className="box-title">Compose New Message</h3>
+                                        <div className="box-tools pull-right">
+                                            <button type="button" onClick={() => navigate(-1)} className="btn btn-primary btn-sm">
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="box-body">
                                         <div className="row">
@@ -224,43 +210,57 @@ const NoticeBoardAdd = () => {
                                                     <div className="col-md-12">
                                                         <div className="form-group">
                                                             <label>Attachment</label>
-                                                            <input type="file" className="form-control" name="file" />
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <div className="form-group">
-                                                            <label>Class <small className="req">*</small></label>
-                                                            <select
-                                                                className="form-control"
-                                                                name="class_id"
-                                                                value={formData.class_id || ''}
-                                                                onChange={handleClassChange}
-                                                                required
+                                                            <div
+                                                                style={{
+                                                                    border: isDragging ? '2px dashed #3c8dbc' : '1px dashed #ccc',
+                                                                    borderRadius: '4px',
+                                                                    padding: '10px 15px',
+                                                                    textAlign: 'center',
+                                                                    cursor: 'pointer',
+                                                                    background: isDragging ? '#f0f8ff' : '#fafafa',
+                                                                    transition: 'all 0.2s',
+                                                                    fontSize: '13px',
+                                                                    color: '#888',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    gap: '8px'
+                                                                }}
+                                                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                                                onDragLeave={() => setIsDragging(false)}
+                                                                onDrop={(e) => {
+                                                                    e.preventDefault();
+                                                                    setIsDragging(false);
+                                                                    if (e.dataTransfer.files[0]) setSelectedFile(e.dataTransfer.files[0]);
+                                                                }}
+                                                                onClick={() => document.getElementById('notice-file-input').click()}
                                                             >
-                                                                <option value="">Select</option>
-                                                                {classList.map(cls => (
-                                                                    <option key={cls.id} value={cls.id}>{cls.class}</option>
-                                                                ))}
-                                                            </select>
+                                                                <input
+                                                                    id="notice-file-input"
+                                                                    type="file"
+                                                                    style={{ display: 'none' }}
+                                                                    onChange={(e) => { if (e.target.files[0]) setSelectedFile(e.target.files[0]); }}
+                                                                />
+                                                                {selectedFile ? (
+                                                                    <>
+                                                                        <i className="fa fa-paperclip" style={{ color: '#3c8dbc' }}></i>
+                                                                        <span style={{ color: '#333' }}>{selectedFile.name}</span>
+                                                                        <i
+                                                                            className="fa fa-times-circle"
+                                                                            style={{ color: '#d9534f', cursor: 'pointer', marginLeft: '4px' }}
+                                                                            onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                                                                        ></i>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <i className="fa fa-cloud-upload"></i>
+                                                                        <span>Drag & drop a file here or click to browse</span>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div className="col-md-6">
-                                                        <div className="form-group">
-                                                            <label>Section <small className="req">*</small></label>
-                                                            <select
-                                                                className="form-control"
-                                                                name="section_id"
-                                                                value={formData.section_id || ''}
-                                                                onChange={handleChange}
-                                                                required
-                                                            >
-                                                                <option value="">Select</option>
-                                                                {sectionList.map(sec => (
-                                                                    <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    </div>
+
                                                     <div className="col-md-12">
                                                         <div className="form-group">
                                                             <label>Message <small className="req">*</small></label>

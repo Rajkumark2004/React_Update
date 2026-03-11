@@ -4,11 +4,12 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
 
 const FinanceReport = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [activeReport, setActiveReport] = useState(location.state?.activeReport || 'Balance Fees Statement');
+    const [activeReport, setActiveReport] = useState(location.state?.activeReport || 'Daily Collection Report');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearched, setIsSearched] = useState(false);
     const [dailyCollectionData, setDailyCollectionData] = useState([]);
@@ -169,11 +170,11 @@ const FinanceReport = () => {
     const [studentDaySheetHeaders, setStudentDaySheetHeaders] = useState([]);
 
     const financeReports = [
-        ["Balance Fees Statement", "Daily Collection Report", "Fees Statement"],
-        ["Balance Fees Report", "No Due Certificate", "Fees Collection Report"],
-        ["Online Fees Collection Report", "Balance Fees Report With Remark", "Income Report"],
-        ["Expense Report", "Payroll Report", "Income Group Report"],
-        ["Expense Group Report", "Online Admission Fees Collection Report", "Day Collection Report"],
+        [/* "Balance Fees Statement", */ "Daily Collection Report" /*, "Fees Statement" */],
+        ["Balance Fees Report", "No Due Certificate" /*, "Fees Collection Report" */],
+        ["Online Fees Collection Report" /*, "Balance Fees Report With Remark", "Income Report" */],
+        [/* "Expense Report", "Payroll Report", "Income Group Report" */],
+        [/* "Expense Group Report", "Online Admission Fees Collection Report", */ "Day Collection Report"],
         ["Student Day Sheet Report"]
     ];
 
@@ -283,39 +284,61 @@ const FinanceReport = () => {
     ], []);
 
     const displayData = useMemo(() => {
+        let currentData = [];
         if (activeReport === 'Daily Collection Report' && isSearched) {
-            return dailyCollectionData;
+            currentData = dailyCollectionData || [];
+        } else if (activeReport === 'Balance Fees Report' && isSearched) {
+            currentData = balanceFeesData || [];
+        } else if (activeReport === 'No Due Certificate' && isSearched) {
+            currentData = noDueData || [];
+        } else if (activeReport === 'Online Fees Collection Report' && isSearched) {
+            currentData = onlineFeesData || [];
+        } else if (activeReport === 'Day Collection Report' && isSearched) {
+            if (dayCollectionData && typeof dayCollectionData === 'object' && !Array.isArray(dayCollectionData)) {
+                currentData = Object.values(dayCollectionData).flat();
+            } else {
+                currentData = dayCollectionData || [];
+            }
+        } else if (activeReport === 'Student Day Sheet Report' && isSearched) {
+            currentData = studentDaySheetData || [];
+        } else {
+            currentData = rawMockData || [];
         }
-        if (activeReport === 'Balance Fees Report' && isSearched) {
-            return balanceFeesData;
-        }
-        if (activeReport === 'No Due Certificate' && isSearched) {
-            return noDueData;
-        }
-        if (activeReport === 'Online Fees Collection Report' && isSearched) {
-            return onlineFeesData;
-        }
-        if (activeReport === 'Day Collection Report' && isSearched) {
-            return []; // data is stored in dayCollectionData as object for custom rendering
-        }
-        if (activeReport === 'Student Day Sheet Report' && isSearched) {
-            return studentDaySheetData;
-        }
-        return rawMockData; // Fallback or other reports' logic
+
+        return Array.isArray(currentData) ? currentData : Object.values(currentData);
     }, [activeReport, isSearched, dailyCollectionData, balanceFeesData, noDueData, onlineFeesData, dayCollectionData, studentDaySheetData, rawMockData]);
 
     const filteredData = useMemo(() => {
         return displayData.filter(row => {
             if (!searchTerm) return true;
             const searchStr = searchTerm.toLowerCase();
+            const fullName = `${row.firstname || ''} ${row.lastname || ''}`.trim();
+            const alternateName = row.name || row.student_name || '';
+
             return (
-                (row.student_name && row.student_name.toLowerCase().includes(searchStr)) ||
+                (alternateName.toLowerCase().includes(searchStr)) ||
+                (fullName.toLowerCase().includes(searchStr)) ||
                 (row.admission_no && row.admission_no.toLowerCase().includes(searchStr)) ||
                 (row.fees_group && row.fees_group.toLowerCase().includes(searchStr)) ||
-                (row.payment_id && row.payment_id.toLowerCase().includes(searchStr))
+                (row.payment_id && row.payment_id.toLowerCase().includes(searchStr)) ||
+                (row.reference_no && row.reference_no.toLowerCase().includes(searchStr)) ||
+                (row.collected_by && row.collected_by.toLowerCase().includes(searchStr)) ||
+                (row.receipt_no && row.receipt_no.toLowerCase().includes(searchStr)) ||
+                (row.id && String(row.id).toLowerCase().includes(searchStr))
             );
         });
     }, [searchTerm, displayData]);
+
+    const filteredDayCollectionGrouped = useMemo(() => {
+        if (activeReport !== 'Day Collection Report') return null;
+        const grouped = {};
+        filteredData.forEach(row => {
+            const mode = row.mode || 'Other';
+            if (!grouped[mode]) grouped[mode] = [];
+            grouped[mode].push(row);
+        });
+        return grouped;
+    }, [filteredData, activeReport]);
 
     const totals = useMemo(() => {
         return filteredData.reduce((acc, curr) => ({
@@ -339,9 +362,281 @@ const FinanceReport = () => {
         setActiveReport(report);
         setSearchTerm('');
         setIsSearched(false);
+
+        // Clear all filter selections per user request
+        setClassId('');
+        setSectionId('');
+        setSearchType('today');
+        setStudentId('');
+        setDateFrom('');
+        setDateTo('');
+        setSearchDuration('today');
+        setCollectBy('');
+        setGroupBy('');
+        setIncomeHead('');
+        setExpenseHead('');
+        setSelectedFeeGroups([]);
+
+        // Clear all data arrays
+        setDailyCollectionData([]);
+        setBalanceFeesData([]);
+        setNoDueData([]);
+        setOnlineFeesData([]);
+        setDayCollectionData([]);
+        setStudentDaySheetData([]);
     };
 
+    // Export helpers for finance reports
+    const getRowValue = (header, row, index) => {
+        const maps = {
+            'Daily Collection Report': {
+                'Date': (r) => r.date_col,
+                'Total Transactions': (r) => r.total_transactions,
+                'Amount': (r) => r.total,
+                'Action': (r) => 'View'
+            },
+            'Balance Fees Report': {
+                'S.No.': (r, i) => i + 1,
+                'Ad no': (r) => r.admission_no,
+                'Student Name': (r) => r.name,
+                'Father Name': (r) => r.father_name,
+                'Father Phone': (r) => r.father_phone,
+                'Total': (r) => r.totalfee,
+                'Deposit': (r) => r.deposit,
+                'Discount': (r) => r.discount,
+                'Fine': (r) => r.fine,
+                'Balance': (r) => r.balance
+            },
+            'No Due Certificate': {
+                'Admission No': (r) => r.admission_no,
+                'Student Name': (r) => r.name,
+                'Class': (r) => r.class,
+                'Section': (r) => r.section,
+                'Balance': (r) => r.balance
+            },
+            'Online Fees Collection Report': {
+                'Payment ID': (r) => r.id,
+                'Date': (r) => r.date,
+                'Admission No': (r) => r.admission_no,
+                'Name': (r) => `${r.firstname} ${r.lastname}`,
+                'Class': (r) => `${r.class} (${r.section})`,
+                'Fee Type': (r) => r.type,
+                'Mode': (r) => r.payment_mode,
+                'Amount (₹)': (r) => r.amount,
+                'Discount (₹)': (r) => r.amount_discount,
+                'Fine (₹)': (r) => r.amount_fine,
+                'Total (₹)': (r) => parseFloat(r.amount || 0) + parseFloat(r.amount_fine || 0)
+            },
+            'Day Collection Report': {
+                'S.No': (r, i) => i + 1,
+                'Admission No': (r) => r.admission_no,
+                'Student Name': (r) => `${r.firstname} ${r.lastname}`,
+                'Class': (r) => `${r.class} (${r.section})`,
+                'Receipt No': (r) => r.id,
+                'Reference No': (r) => r.reference_no,
+                'Mode': (r) => r.mode,
+                'Amount (₹)': (r) => r.amount,
+                'Payment Date': (r) => r.created_at || r.date,
+                'Collected By': (r) => r.collected_by,
+                'Fee Type': (r) => r.fee_types
+            },
+            'Student Day Sheet Report': {
+                'S No': (r, i) => i + 1,
+                'Admission No': (r) => r.admission_no,
+                'Class': (r) => `${r.class} (${r.section})`,
+                'Student Name': (r) => `${r.firstname} ${r.lastname || ''}`.trim(),
+                'Payment ID': (r) => `${r.id}/${r.inv_no}`,
+                'Total Fees': (r) => r.amount,
+                'Mode': (r) => r.payment_mode,
+                'Collected By': (r) => r.received_byname?.name
+            },
+            'Balance Fees Statement': {
+                'Fees Group': (r) => r.fees_group,
+                'Fees Code': (r) => r.fees_code,
+                'Due Date': (r) => r.due_date,
+                'Status': (r) => r.status,
+                'Amount (₹)': (r) => r.amount,
+                'Payment ID': (r) => r.payment_id,
+                'Mode': (r) => r.mode,
+                'Date': (r) => r.date,
+                'Discount (₹)': (r) => r.discount,
+                'Fine (₹)': (r) => r.fine,
+                'Paid (₹)': (r) => r.paid,
+                'Balance (₹)': (r) => r.balance
+            },
+            'Fees Statement': {
+                'Fees Group': (r) => r.fees_group,
+                'Fees Code': (r) => r.fees_code,
+                'Due Date': (r) => r.due_date,
+                'Status': (r) => r.status,
+                'Amount': (r) => r.amount,
+                'Payment ID': (r) => r.payment_id,
+                'Mode': (r) => r.mode,
+                'Date': (r) => r.date,
+                'Discount': (r) => r.discount,
+                'Fine': (r) => r.fine,
+                'Paid': (r) => r.paid,
+                'Balance': (r) => r.balance
+            },
+            'Income Report': {
+                'Name': (r) => r.student_name,
+                'Invoice Number': (r) => r.invoice_no,
+                'Income Head': (r) => r.income_head,
+                'Date': (r) => r.date,
+                'Amount (₹)': (r) => r.amount
+            },
+            'Expense Report': {
+                'Date': (r) => r.date,
+                'Expense Head': (r) => r.fee_type,
+                'Name': (r) => r.student_name,
+                'Invoice Number': (r) => r.invoice_no,
+                'Amount (₹)': (r) => r.amount
+            },
+            'Payroll Report': {
+                'Name': (r) => r.student_name,
+                'Role': (r) => r.role,
+                'Designation': (r) => r.designation,
+                'Month - Year': (r) => r.month_year,
+                'Payslip #': (r) => r.payslip,
+                'Basic Salary (₹)': (r) => r.basic,
+                'Earning (₹)': (r) => r.earning,
+                'Deduction (₹)': (r) => r.deduction,
+                'Gross Salary (₹)': (r) => r.gross,
+                'Tax (₹)': (r) => r.tax,
+                'Net Salary (₹)': (r) => r.net
+            },
+            'Income Group Report': {
+                'Income Head': (r) => r.income_head,
+                'Income ID': (r) => r.income_id,
+                'Name': (r) => r.student_name,
+                'Date': (r) => r.date,
+                'Invoice Number': (r) => r.invoice_no,
+                'Amount (₹)': (r) => r.amount
+            },
+            'Expense Group Report': {
+                'Expense Head': (r) => r.fee_type,
+                'Expense ID': (r) => r.expense_id,
+                'Name': (r) => r.student_name,
+                'Date': (r) => r.date,
+                'Invoice Number': (r) => r.invoice_no,
+                'Amount (₹)': (r) => r.amount
+            }
+        };
 
+        const reportMap = maps[activeReport];
+        if (reportMap && reportMap[header]) {
+            return reportMap[header](row, index);
+        }
+
+        // Fallback for dynamic headers in Student Day Sheet Report
+        if (activeReport === 'Student Day Sheet Report' && row.feetypePaidAmount?.[header] !== undefined) {
+            return row.feetypePaidAmount[header];
+        }
+
+        // Fallback for dynamic headers in Balance Fees Report
+        if (activeReport === 'Balance Fees Report') {
+            return row[header] || row[header.toLowerCase()] || row[header.toUpperCase()] || '0';
+        }
+
+        return row[header] || '-';
+    };
+
+    const getExportData = () => {
+        const headers = currentConfig.headers || [];
+        const rows = filteredData.map((row, index) => headers.map(h => String(getRowValue(h, row, index) ?? '')));
+        return { headers, rows };
+    };
+    const handleExport = (action) => {
+        const { headers, rows } = getExportData();
+        if (action === 'copy') copyToClipboard(headers, rows);
+        if (action === 'excel') downloadExcel(headers, rows, `${activeReport}.xls`);
+        if (action === 'csv') downloadCSV(headers, rows, `${activeReport}.csv`);
+        if (action === 'print') printTable(headers, rows, activeReport);
+    };
+
+    const handleModalExport = (action) => {
+        if (!detailData || detailData.length === 0) return;
+
+        const headers = ['Date', 'Admission No', 'Name', 'Father Name', 'Class', 'Payment Mode', 'Payment ID', 'Collected By', 'Fine', 'Amount', 'Total'];
+
+        const filtered = detailData.filter(student => {
+            if (!modalSearchTerm) return true;
+            const term = modalSearchTerm.toLowerCase();
+            const fullName = `${student.firstname} ${student.lastname}`.toLowerCase();
+            const classSection = `${student.class} (${student.section})`.toLowerCase();
+
+            if (student.admission_no?.toLowerCase().includes(term) ||
+                fullName.includes(term) ||
+                student.father_name?.toLowerCase().includes(term) ||
+                classSection.includes(term)) {
+                return true;
+            }
+
+            try {
+                let amountDetail = typeof student.amount_detail === 'string' ? JSON.parse(student.amount_detail) : student.amount_detail;
+                amountDetail = Object.values(amountDetail)[0] || {};
+
+                if (amountDetail.payment_mode?.toLowerCase().includes(term) ||
+                    amountDetail.hidden_trans_id?.toLowerCase().includes(term) ||
+                    amountDetail.inv_no?.toLowerCase().includes(term) ||
+                    amountDetail.collected_by?.toLowerCase().includes(term)) {
+                    return true;
+                }
+            } catch (e) { }
+            return false;
+        });
+
+        const rows = filtered.map(student => {
+            let amountDetail = {};
+            try {
+                amountDetail = typeof student.amount_detail === 'string' ? JSON.parse(student.amount_detail) : student.amount_detail;
+                amountDetail = Object.values(amountDetail)[0] || {};
+            } catch (e) { }
+
+            const fine = parseFloat(amountDetail.amount_fine || 0);
+            const amount = parseFloat(amountDetail.amount || 0);
+            const total = amount + fine;
+
+            let detailDate = amountDetail.date || '';
+            if (detailDate && detailDate.includes('-')) {
+                const [y, m, d] = detailDate.split('-');
+                detailDate = `${d}/${m}/${y}`;
+            }
+
+            // Explicitly map columns based on headers: ['Date', 'Admission No', 'Name', 'Father Name', 'Class', 'Payment Mode', 'Payment ID', 'Collected By', 'Fine', 'Amount', 'Total']
+            return [
+                detailDate,
+                student.admission_no,
+                `${student.firstname} ${student.lastname}`.trim(),
+                student.father_name,
+                `${student.class} (${student.section})`,
+                amountDetail.payment_mode,
+                `${student.student_fees_deposite_id}/${amountDetail.inv_no}`,
+                amountDetail.collected_by,
+                fine.toFixed(2),
+                amount.toFixed(2),
+                total.toFixed(2)
+            ].map(v => String(v ?? ''));
+        });
+
+        const grandTotal = filtered.reduce((acc, student) => {
+            try {
+                let amountDetail = typeof student.amount_detail === 'string' ? JSON.parse(student.amount_detail) : student.amount_detail;
+                amountDetail = Object.values(amountDetail)[0] || {};
+                return acc + parseFloat(amountDetail.amount || 0) + parseFloat(amountDetail.amount_fine || 0);
+            } catch (e) { return acc; }
+        }, 0);
+
+        rows.push(['', '', '', '', '', '', '', 'Grand Total', '', '', grandTotal.toFixed(2)]);
+
+        const filename = `Collection_List_${selectedDateDetails?.date_col?.replace(/\//g, '_') || 'Details'}`;
+
+        if (action === 'copy') copyToClipboard(headers, rows);
+        if (action === 'excel') downloadExcel(headers, rows, `${filename}.xls`);
+        if (action === 'csv') downloadCSV(headers, rows, `${filename}.csv`);
+        if (action === 'pdf') downloadPDF(headers, rows, `${filename}.pdf`, `Collection List - ${selectedDateDetails?.date_col}`);
+        if (action === 'print') printTable(headers, rows, `Collection List - ${selectedDateDetails?.date_col}`);
+    };
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -481,7 +776,8 @@ const FinanceReport = () => {
                 };
                 const response = await api.searchStudentAcademicFeeReceipt(payload);
                 if (response?.status && response?.result) {
-                    setNoDueData(response.result);
+                    const result = response.result;
+                    setNoDueData(Array.isArray(result) ? result : Object.values(result));
                 } else {
                     setNoDueData([]);
                 }
@@ -498,7 +794,8 @@ const FinanceReport = () => {
                 };
                 const response = await api.searchOnlineFeesReport(payload);
                 if (response?.status && response?.data) {
-                    setOnlineFeesData(response.data);
+                    const data = response.data;
+                    setOnlineFeesData(Array.isArray(data) ? data : Object.values(data));
                 } else {
                     setOnlineFeesData([]);
                 }
@@ -533,8 +830,12 @@ const FinanceReport = () => {
         }
 
         if (activeReport === 'Student Day Sheet Report') {
-            if (!classId || !sectionId || !dateFrom || !dateTo) {
-                alert('Please select Class, Section and Date Range');
+            if (!classId || !dateFrom || !dateTo) {
+                toast.error('Please select Class and Date Range');
+                return;
+            }
+            if (!sectionId) {
+                toast.error('Section is required');
                 return;
             }
 
@@ -1047,12 +1348,11 @@ const FinanceReport = () => {
                                 />
                             </div>
                             <div>
-                                {/* Placeholder Export Buttons */}
-                                <button className="btn btn-default btn-xs" title="Copy" style={{ marginRight: '5px' }}><i className="fa fa-files-o"></i></button>
-                                <button className="btn btn-default btn-xs" title="Excel" style={{ marginRight: '5px' }}><i className="fa fa-file-excel-o"></i></button>
-                                <button className="btn btn-default btn-xs" title="CSV" style={{ marginRight: '5px' }}><i className="fa fa-file-text-o"></i></button>
-                                <button className="btn btn-default btn-xs" title="PDF" style={{ marginRight: '5px' }}><i className="fa fa-file-pdf-o"></i></button>
-                                <button className="btn btn-default btn-xs" title="Print"><i className="fa fa-print"></i></button>
+                                <button className="btn btn-default btn-xs" title="Copy" style={{ marginRight: '5px' }} onClick={() => handleModalExport('copy')}><i className="fa fa-files-o"></i></button>
+                                <button className="btn btn-default btn-xs" title="Excel" style={{ marginRight: '5px' }} onClick={() => handleModalExport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                <button className="btn btn-default btn-xs" title="CSV" style={{ marginRight: '5px' }} onClick={() => handleModalExport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                <button className="btn btn-default btn-xs" title="PDF" style={{ marginRight: '5px' }} onClick={() => handleModalExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
+                                <button className="btn btn-default btn-xs" title="Print" onClick={() => handleModalExport('print')}><i className="fa fa-print"></i></button>
                             </div>
                         </div>
 
@@ -1232,7 +1532,7 @@ const FinanceReport = () => {
                                         <div style={{ flex: activeReport === 'Student Day Sheet Report' ? '1 1 20%' : '1 1 200px' }}><div className="form-group"><label>Class <span className="req">*</span></label><select className="form-control" value={classId} onChange={handleClassChange} required><option value="">Select</option>{classList.length > 0 ? classList.map(cls => (<option key={cls.id} value={cls.id}>{cls.class}</option>)) : (<><option value="1">Class 1</option><option value="2">Class 2</option></>)}</select></div></div>
                                     )}
                                     {currentConfig.filters.includes('section') && (
-                                        <div style={{ flex: activeReport === 'Student Day Sheet Report' ? '1 1 20%' : '1 1 200px' }}><div className="form-group"><label>Section</label><select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)}><option value="">Select</option>{sectionList.map(sec => (<option key={sec.id} value={sec.section_id || sec.id}>{sec.section}</option>))}</select></div></div>
+                                        <div style={{ flex: activeReport === 'Student Day Sheet Report' ? '1 1 20%' : '1 1 200px' }}><div className="form-group"><label>Section {activeReport === 'Student Day Sheet Report' && <span className="req">*</span>}</label><select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)} required={activeReport === 'Student Day Sheet Report'}><option value="">Select</option>{sectionList.map(sec => (<option key={sec.id} value={sec.section_id || sec.id}>{sec.section}</option>))}</select></div></div>
                                     )}
                                     {currentConfig.filters.includes('student') && (
                                         <div style={{ flex: '1 1 200px' }}><div className="form-group"><label>Student <span className="req">*</span></label><select className="form-control" value={studentId} onChange={(e) => setStudentId(e.target.value)} required><option value="">Select</option><option value="1001">SAI (1001)</option><option value="1005">NANDHU (1005)</option></select></div></div>
@@ -1407,17 +1707,16 @@ const FinanceReport = () => {
                                         )}
                                         <div className="dt-buttons">
                                             {!currentConfig.showExcelPrintOnly && (
-                                                <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
+                                                <button className="dt-button" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-copy"></i></button>
                                             )}
                                             {!currentConfig.hideExportButtons && (
                                                 <>
-                                                    <button className="dt-button" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    {!currentConfig.showExcelPrintOnly && <button className="dt-button" title="CSV"><i className="fa fa-file-text-o"></i></button>}
-                                                    {!currentConfig.showExcelPrintOnly && <button className="dt-button" title="PDF"><i className="fa fa-file-pdf-o"></i></button>}
+                                                    <button className="dt-button" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                    {!currentConfig.showExcelPrintOnly && <button className="dt-button" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>}
                                                 </>
                                             )}
                                             {(activeReport === 'Daily Collection Report' || (!currentConfig.hidePrint && activeReport !== 'Daily Collection Report')) && (
-                                                <button className="dt-button" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
+                                                <button className="dt-button" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
                                             )}
                                             {!currentConfig.showExcelPrintOnly && <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>}
                                         </div>
@@ -1427,8 +1726,8 @@ const FinanceReport = () => {
                                 {!currentConfig.hideTable && (
                                     activeReport === 'Day Collection Report' && !Array.isArray(dayCollectionData) ? (
                                         <div className="table-responsive">
-                                            {Object.keys(dayCollectionData).map(mode => {
-                                                const modeData = dayCollectionData[mode];
+                                            {Object.keys(filteredDayCollectionGrouped || {}).map(mode => {
+                                                const modeData = filteredDayCollectionGrouped[mode];
                                                 // Calculate total for this section
                                                 const modeTotal = Array.isArray(modeData) ? modeData.reduce((sum, row) => sum + (parseFloat(row.amount) || 0) + (parseFloat(row.amount_fine) || 0), 0) : 0;
 
@@ -1576,13 +1875,12 @@ const FinanceReport = () => {
                                 <div>
                                     <strong>Collection Date: </strong> {selectedDateDetails?.date_col}
                                 </div>
-                                <div>
-                                    {/* Placeholder Export Buttons */}
-                                    <button className="btn btn-default btn-xs" title="Copy"><i className="fa fa-files-o"></i></button>
-                                    <button className="btn btn-default btn-xs" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                    <button className="btn btn-default btn-xs" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                    <button className="btn btn-default btn-xs" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                    <button className="btn btn-default btn-xs" title="Print"><i className="fa fa-print"></i></button>
+                                <div className="dt-buttons btn-group">
+                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleModalExport('copy')}><i className="fa fa-files-o"></i></button>
+                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleModalExport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleModalExport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleModalExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
+                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => handleModalExport('print')}><i className="fa fa-print"></i></button>
                                 </div>
                             </div>
 

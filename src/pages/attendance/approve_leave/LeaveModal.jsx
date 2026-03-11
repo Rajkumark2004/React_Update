@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import api from '../../../services/api';
 
-const LeaveModal = ({ show, handleClose, onSuccess, initialData, isEdit }) => {
+const LeaveModal = ({ show, handleClose, onSuccess, initialData, isEdit, classList: propClassList }) => {
     const [loading, setLoading] = useState(false);
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
     const [studentList, setStudentList] = useState([]);
     const [formData, setFormData] = useState({
+        id: '',
         class_id: '',
         section_id: '',
         student_id: '',
@@ -43,38 +44,50 @@ const LeaveModal = ({ show, handleClose, onSuccess, initialData, isEdit }) => {
     }, [show]);
 
     useEffect(() => {
-        const fetchClasses = async () => {
-            try {
-                const response = await api.getClasses();
-                if (response && response.data && Array.isArray(response.data.class_sections)) {
-                    setClassList(response.data.class_sections);
-                } else if (response && Array.isArray(response.class_sections)) {
-                    setClassList(response.class_sections);
-                } else if (response && response.data && Array.isArray(response.data)) {
-                    setClassList(response.data);
-                } else if (Array.isArray(response)) {
-                    setClassList(response);
-                } else {
-                    setClassList([]);
+        if (propClassList && Array.isArray(propClassList)) {
+            setClassList(propClassList);
+        } else {
+            const fetchClasses = async () => {
+                try {
+                    const response = await api.getApproveLeaveList();
+                    if (response && response.status && Array.isArray(response.classlist)) {
+                        setClassList(response.classlist);
+                    }
+                } catch (error) {
+                    console.error("Error fetching classes", error);
                 }
-            } catch (error) {
-                console.error("Error fetching classes", error);
-            }
-        };
-        fetchClasses();
-    }, []);
+            };
+            fetchClasses();
+        }
+    }, [propClassList]);
     useEffect(() => {
         if (initialData && isEdit) {
+            // Convert DD-MM-YYYY (from API) to YYYY-MM-DD (for HTML date input)
+            const formatDateForInput = (dateStr) => {
+                if (!dateStr || !dateStr.includes('-')) return dateStr;
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                return dateStr;
+            };
+
+            // Convert DD-MM-YYYY (from API) to DD/MM/YYYY (for text input)
+            const formatDateForText = (dateStr) => {
+                if (!dateStr) return dateStr;
+                return dateStr.replace(/-/g, '/');
+            };
+
             setFormData({
                 id: initialData.id,
                 class_id: initialData.class_id,
                 section_id: initialData.section_id,
                 student_id: initialData.stud_id,
-                apply_date: initialData.apply_date,
-                from_date: initialData.from_date,
-                to_date: initialData.to_date,
+                apply_date: formatDateForText(initialData.apply_date),
+                from_date: formatDateForInput(initialData.from_date),
+                to_date: formatDateForInput(initialData.to_date),
                 message: initialData.reason,
-                leave_status: initialData.status,
+                leave_status: initialData.leave_status !== undefined ? initialData.leave_status : initialData.status,
                 userfile: null
             });
             fetchSections(initialData.class_id);
@@ -99,13 +112,9 @@ const LeaveModal = ({ show, handleClose, onSuccess, initialData, isEdit }) => {
     const fetchSections = async (classId) => {
         if (!classId) return;
         try {
-            const response = await api.getSections(classId);
-            if (response && Array.isArray(response)) {
-                setSectionList(response);
-            } else if (response && Array.isArray(response.data)) {
+            const response = await api.getSectionsByClass(classId);
+            if (response && response.status && Array.isArray(response.data)) {
                 setSectionList(response.data);
-            } else if (response && Array.isArray(response.sections)) {
-                setSectionList(response.sections);
             } else {
                 setSectionList([]);
             }
@@ -117,13 +126,19 @@ const LeaveModal = ({ show, handleClose, onSuccess, initialData, isEdit }) => {
     const fetchStudents = async (classId, sectionId) => {
         if (!classId || !sectionId) return;
         try {
-            const response = await api.getStudentList(classId, sectionId);
-            if (Array.isArray(response)) {
+            const response = await api.getStudentsByClassSection(classId, sectionId);
+            if (response && (response.status === true || response.status === 'success')) {
+                if (Array.isArray(response.data)) {
+                    setStudentList(response.data);
+                } else if (response.data && response.data.student_list) {
+                    setStudentList(response.data.student_list);
+                } else if (response.data && response.data.student_data) {
+                    setStudentList(response.data.student_data);
+                } else {
+                    setStudentList([]);
+                }
+            } else if (Array.isArray(response)) {
                 setStudentList(response);
-            } else if (response && response.status === 'success' && Array.isArray(response.lists)) {
-                setStudentList(response.lists);
-            } else if (response && Array.isArray(response.studentList)) {
-                setStudentList(response.studentList);
             } else {
                 setStudentList([]);
             }
@@ -155,10 +170,35 @@ const LeaveModal = ({ show, handleClose, onSuccess, initialData, isEdit }) => {
         e.preventDefault();
         setLoading(true);
         try {
+            // Helper to convert YYYY-MM-DD to DD/MM/YYYY
+            const formatDateForAPI = (dateStr) => {
+                if (!dateStr || !dateStr.includes('-')) return dateStr;
+                const parts = dateStr.split('-');
+                if (parts.length === 3 && parts[0].length === 4) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return dateStr;
+            };
+
             const data = new FormData();
-            Object.keys(formData).forEach(key => {
-                if (key !== 'userfile' && formData[key] !== null) data.append(key, formData[key]);
-            });
+            data.append('class', formData.class_id);
+            data.append('section', formData.section_id);
+            data.append('student', formData.student_id);
+            data.append('apply_date', formData.apply_date.replace(/\//g, '/')); // Ensure consistent /
+            data.append('from_date', formatDateForAPI(formData.from_date));
+            data.append('to_date', formatDateForAPI(formData.to_date));
+            data.append('message', formData.message);
+            data.append('leave_status', formData.leave_status);
+
+            // Add approve_by from logged in user data
+            try {
+                const userData = JSON.parse(localStorage.getItem('user'));
+                if (userData && userData.id) {
+                    data.append('approve_by', userData.id);
+                }
+            } catch (err) {
+                console.error('Error parsing user data from localStorage', err);
+            }
 
             // Append file from Ref
             const file = fileInputRef.current?.files[0];
@@ -166,25 +206,18 @@ const LeaveModal = ({ show, handleClose, onSuccess, initialData, isEdit }) => {
                 data.append('userfile', file);
             }
 
-            data.set('class', formData.class_id);
-            data.set('section', formData.section_id);
-            data.set('student', formData.student_id);
-
             if (isEdit) {
-                await api.updateLeaveStatus({
-                    class_id: formData.class_id,
-                    section_id: formData.section_id,
-                    id: formData.id,
-                    status: formData.leave_status
-                });
+                data.append('leave_id', formData.id);
+                await api.updateApproveLeave(data);
             } else {
-                await api.addLeave(data);
+                data.append('leave_id', '');
+                await api.addApproveLeave(data);
             }
 
             onSuccess();
             handleClose();
         } catch (error) {
-            alert('Error saving leave: ' + error.message);
+            console.error("Error submitting leave", error);
         } finally {
             setLoading(false);
         }
@@ -224,7 +257,7 @@ const LeaveModal = ({ show, handleClose, onSuccess, initialData, isEdit }) => {
                                                 <select name="section_id" value={formData.section_id} onChange={handleChange} className="form-control" required>
                                                     <option value="">Select</option>
                                                     {sectionList.map(item => (
-                                                        <option key={item.id || item.section_id} value={item.id || item.section_id}>{item.section}</option>
+                                                        <option key={item.section_id || item.id} value={item.section_id}>{item.section}</option>
                                                     ))}
                                                 </select>
                                             </div>

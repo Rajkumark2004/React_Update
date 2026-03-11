@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import '../../../utils/include_files.js';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
@@ -59,7 +60,7 @@ const Source = () => {
             setSourceList(data.data || []);
         } catch (error) {
             console.error('Fetch Error:', error);
-            setMessage({ type: 'danger', text: 'Failed to fetch source list' });
+            toast.error('Failed to fetch source list');
         }
     };
 
@@ -69,7 +70,6 @@ const Source = () => {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState({ type: '', text: '' });
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
@@ -108,11 +108,10 @@ const Source = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage({ type: '', text: '' });
 
         const sourceErr = validateSource(formData.source);
         if (sourceErr) {
-            setMessage({ type: 'danger', text: sourceErr });
+            toast.error(sourceErr);
             return;
         }
 
@@ -120,32 +119,29 @@ const Source = () => {
 
         try {
             const response = await api.addSource(formData);
-            setMessage({ type: 'success', text: response.message || 'Source added successfully' });
+            toast.success(response.message || 'Source added successfully');
             setFormData({ source: '', description: '' });
             fetchSourceList();
         } catch (error) {
             console.error('Submit Error:', error);
-            setMessage({ type: 'danger', text: error.message || 'An error occurred while saving' });
+            toast.error(error.message || 'An error occurred while saving');
         } finally {
             setTimeout(() => setLoading(false), 5000);
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
         }
     };
 
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this record?')) {
-            setMessage({ type: '', text: '' });
             setLoading(true);
             try {
                 const response = await api.deleteSource(id);
-                setMessage({ type: 'success', text: response.message || 'Source deleted successfully' });
+                toast.success(response.message || 'Source deleted successfully');
                 fetchSourceList();
             } catch (error) {
                 console.error('Delete Error:', error);
-                setMessage({ type: 'danger', text: error.message || 'Failed to delete source' });
+                toast.error(error.message || 'Failed to delete source');
             } finally {
                 setLoading(false);
-                setTimeout(() => setMessage({ type: '', text: '' }), 3000);
             }
         }
     };
@@ -212,11 +208,6 @@ const Source = () => {
                                 </div>
                                 <form id="form1" onSubmit={handleSubmit} method="post" acceptCharset="utf-8" encType="multipart/form-data">
                                     <div className="box-body">
-                                        {message.text && (
-                                            <div className={`alert alert-${message.type} alert-dismissible`}>
-                                                {message.text}
-                                            </div>
-                                        )}
                                         <div className="form-group">
                                             <label htmlFor="pwd">Source</label> <small className="req"> *</small>
                                             <input

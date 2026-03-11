@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import '../../styles/reports.css';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const AttendanceReport = () => {
     const navigate = useNavigate();
@@ -608,6 +609,71 @@ const AttendanceReport = () => {
         setSearched(false);
         setReportData(null);
         setSearchTerm('');
+
+        // Clear all filter selections per user request
+        setClassId('');
+        setSectionId('');
+        setMonth('');
+        setYear('');
+        setDate('2025-01-01');
+        setDateFrom('2025-01-01');
+        setDateTo('2025-01-31');
+        setRole('');
+        setAttendanceType('');
+        setStudentId('');
+        setSearchType('today');
+    };
+
+    // ── Export helpers ──────────────────────────────────────────────
+    // class_attendance
+    const exportClassAttendance = (action) => {
+        if (!reportData?.students) return;
+        const hdrs = ['Student Name', 'Adm No', '%', 'P', 'L', 'A', 'H', 'F'];
+        const rows = reportData.students.map(s => [s.name, s.admission_no, s.percentage, s.counts.P, s.counts.L, s.counts.A, s.counts.H, s.counts.F].map(String));
+        if (action === 'copy') copyToClipboard(hdrs, rows);
+        if (action === 'excel') downloadExcel(hdrs, rows, 'Class_Attendance.xls');
+        if (action === 'csv') downloadCSV(hdrs, rows, 'Class_Attendance.csv');
+        if (action === 'print') printTable(hdrs, rows, 'Student Attendance Report');
+    };
+    // type_report
+    const exportTypeReport = (action) => {
+        if (!Array.isArray(reportData)) return;
+        const hdrs = ['Admission No', 'Student Name', 'Class (Section)', 'Father Name', 'Date Of Birth', 'Adm Date', 'Gender', 'Mobile', 'Count'];
+        const rows = reportData.map(s => [s.admission_no, s.name, `${s.class} (${s.section})`, s.father_name, s.dob, s.admission_date, s.gender, s.mobile, s.count].map(v => String(v ?? '')));
+        if (action === 'copy') copyToClipboard(hdrs, rows);
+        if (action === 'excel') downloadExcel(hdrs, rows, 'Type_Report.xls');
+        if (action === 'csv') downloadCSV(hdrs, rows, 'Type_Report.csv');
+        if (action === 'print') printTable(hdrs, rows, 'Student Attendance Type Report');
+    };
+    // daily_report
+    const exportDailyReport = (action) => {
+        if (!reportData?.list) return;
+        const hdrs = ['Class (Section)', 'Total Present', 'Total Absent', 'Present %', 'Absent %'];
+        const rows = reportData.list.map(r => [r.class_section || r.class_name || '-', r.total_present, r.total_absent, r.present_percent, r.absent_persent || r.absent_percent].map(v => String(v ?? '')));
+        if (action === 'copy') copyToClipboard(hdrs, rows);
+        if (action === 'excel') downloadExcel(hdrs, rows, 'Daily_Attendance.xls');
+        if (action === 'csv') downloadCSV(hdrs, rows, 'Daily_Attendance.csv');
+        if (action === 'print') printTable(hdrs, rows, 'Daily Attendance Report');
+    };
+    // staff_report
+    const exportStaffReport = (action) => {
+        if (!reportData?.staff) return;
+        const hdrs = ['Staff Name', 'Employee ID', '%', 'P', 'L', 'A', 'H', 'F'];
+        const rows = reportData.staff.map(s => [s.name, s.employee_id, s.percentage, s.counts.P, s.counts.L, s.counts.A, s.counts.H, s.counts.F].map(String));
+        if (action === 'copy') copyToClipboard(hdrs, rows);
+        if (action === 'excel') downloadExcel(hdrs, rows, 'Staff_Attendance.xls');
+        if (action === 'csv') downloadCSV(hdrs, rows, 'Staff_Attendance.csv');
+        if (action === 'print') printTable(hdrs, rows, 'Staff Attendance Report');
+    };
+    // late_report
+    const exportLateReport = (action) => {
+        if (!Array.isArray(reportData)) return;
+        const hdrs = ['S.No', 'Name', 'Admission No', 'Class (Section)', 'Date', 'Time', 'Roll No'];
+        const rows = reportData.map((r, i) => [i + 1, `${r.firstname} ${r.lastname}`, r.admission_no, `${r.class} (${r.section})`, r.date, r.time, r.roll_no].map(v => String(v ?? '')));
+        if (action === 'copy') copyToClipboard(hdrs, rows);
+        if (action === 'excel') downloadExcel(hdrs, rows, 'Late_Entries.xls');
+        if (action === 'csv') downloadCSV(hdrs, rows, 'Late_Entries.csv');
+        if (action === 'print') printTable(hdrs, rows, 'Late Entries Report');
     };
 
     const getDaysArray = (monthName, yearVal) => {
@@ -980,11 +1046,10 @@ const AttendanceReport = () => {
                                                         <b>Holiday: H</b>
                                                     </div>
                                                     <div className="dt-buttons">
-                                                        <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
-                                                        <button className="dt-button" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                        <button className="dt-button" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                        <button className="dt-button" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                        <button className="dt-button" title="Print"><i className="fa fa-print"></i></button>
+                                                        <button className="dt-button" title="Copy" onClick={() => exportClassAttendance('copy')}><i className="fa fa-copy"></i></button>
+                                                        <button className="dt-button" title="Excel" onClick={() => exportClassAttendance('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                        <button className="dt-button" title="CSV" onClick={() => exportClassAttendance('csv')}><i className="fa fa-file-text-o"></i></button>
+                                                        <button className="dt-button" title="Print" onClick={() => exportClassAttendance('print')}><i className="fa fa-print"></i></button>
                                                         <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
                                                     </div>
                                                 </div>
@@ -1031,11 +1096,10 @@ const AttendanceReport = () => {
                                                     />
                                                 </div>
                                                 <div className="dt-buttons">
-                                                    <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
-                                                    <button className="dt-button" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="dt-button" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="dt-button" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="dt-button" title="Print"><i className="fa fa-print"></i></button>
+                                                    <button className="dt-button" title="Copy" onClick={() => exportTypeReport('copy')}><i className="fa fa-copy"></i></button>
+                                                    <button className="dt-button" title="Excel" onClick={() => exportTypeReport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="dt-button" title="CSV" onClick={() => exportTypeReport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="dt-button" title="Print" onClick={() => exportTypeReport('print')}><i className="fa fa-print"></i></button>
                                                     <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
                                                 </div>
                                             </div>
@@ -1074,11 +1138,10 @@ const AttendanceReport = () => {
                                                     />
                                                 </div>
                                                 <div className="dt-buttons">
-                                                    <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
-                                                    <button className="dt-button" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="dt-button" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="dt-button" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="dt-button" title="Print"><i className="fa fa-print"></i></button>
+                                                    <button className="dt-button" title="Copy" onClick={() => exportDailyReport('copy')}><i className="fa fa-copy"></i></button>
+                                                    <button className="dt-button" title="Excel" onClick={() => exportDailyReport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="dt-button" title="CSV" onClick={() => exportDailyReport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="dt-button" title="Print" onClick={() => exportDailyReport('print')}><i className="fa fa-print"></i></button>
                                                     <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
                                                 </div>
                                             </div>
@@ -1093,7 +1156,7 @@ const AttendanceReport = () => {
                                                                 <td>{r.total_present}</td>
                                                                 <td>{r.total_absent}</td>
                                                                 <td>{r.present_percent}</td>
-                                                                <td>{r.absent_percent}</td>
+                                                                <td>{r.absent_persent || r.absent_percent}</td>
                                                             </tr>
                                                         ))
                                                     }
@@ -1136,11 +1199,10 @@ const AttendanceReport = () => {
                                                         <b>Holiday: H</b>
                                                     </div>
                                                     <div className="dt-buttons">
-                                                        <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
-                                                        <button className="dt-button" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                        <button className="dt-button" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                        <button className="dt-button" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                        <button className="dt-button" title="Print"><i className="fa fa-print"></i></button>
+                                                        <button className="dt-button" title="Copy" onClick={() => exportStaffReport('copy')}><i className="fa fa-copy"></i></button>
+                                                        <button className="dt-button" title="Excel" onClick={() => exportStaffReport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                        <button className="dt-button" title="CSV" onClick={() => exportStaffReport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                                        <button className="dt-button" title="Print" onClick={() => exportStaffReport('print')}><i className="fa fa-print"></i></button>
                                                         <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
                                                     </div>
                                                 </div>
@@ -1185,11 +1247,10 @@ const AttendanceReport = () => {
                                                     />
                                                 </div>
                                                 <div className="dt-buttons">
-                                                    <button className="dt-button" title="Copy"><i className="fa fa-copy"></i></button>
-                                                    <button className="dt-button" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="dt-button" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="dt-button" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="dt-button" title="Print"><i className="fa fa-print"></i></button>
+                                                    <button className="dt-button" title="Copy" onClick={() => exportLateReport('copy')}><i className="fa fa-copy"></i></button>
+                                                    <button className="dt-button" title="Excel" onClick={() => exportLateReport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="dt-button" title="CSV" onClick={() => exportLateReport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="dt-button" title="Print" onClick={() => exportLateReport('print')}><i className="fa fa-print"></i></button>
                                                     <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
                                                 </div>
                                             </div>

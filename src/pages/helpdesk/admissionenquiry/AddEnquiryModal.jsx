@@ -3,7 +3,8 @@ import toast from 'react-hot-toast';
 import { api } from '../../../services/api';
 import { sanitizeName, sanitizePhone, validateName, validatePhone, validateDateRange } from '../../../utils/validation';
 
-const AddEnquiryModal = ({ show, onClose, classList, sourceList, onSuccess }) => {
+const AddEnquiryModal = ({ show, onClose, classList, sourceList, staffList, referenceList, onSuccess }) => {
+    console.log('DEBUG: AddEnquiryModal Props:', { classList, sourceList, staffList, referenceList });
     const [formData, setFormData] = useState({
         name: '',
         contact: '',
@@ -21,32 +22,6 @@ const AddEnquiryModal = ({ show, onClose, classList, sourceList, onSuccess }) =>
     });
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-
-    // Mock staff list
-    const staffList = [
-        { id: '1', name: 'Admin', surname: 'User', employee_id: 'EMP001' },
-        { id: '2', name: 'Staff', surname: 'Member', employee_id: 'EMP002' }
-    ];
-
-    // Mock reference list
-    const [referenceList, setReferenceList] = useState([]);
-
-    useEffect(() => {
-        if (show) {
-            fetchReferences();
-        }
-    }, [show]);
-
-    const fetchReferences = async () => {
-        try {
-            const response = await api.getReferenceList();
-            if (response && response.data) {
-                setReferenceList(response.data);
-            }
-        } catch (error) {
-            console.error('Error fetching references:', error);
-        }
-    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;

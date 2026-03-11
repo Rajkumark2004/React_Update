@@ -6,7 +6,13 @@ import Footer from '../../components/Footer';
 import SiblingModal from '../../components/SiblingModal';
 import Loader from '../../components/Loader';
 import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 import '../../utils/include_files';
+
+const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://newlayout.wisibles.com/uploads/student_images/no_image.png';
+    return `https://newlayout.wisibles.com/${imagePath}`;
+};
 
 const StudentAdmission = () => {
     const navigate = useNavigate();
@@ -81,6 +87,14 @@ const StudentAdmission = () => {
         // Child ID
         child_id: '',
 
+        // Sibling Details
+        sibling_id: '',
+        sibling_name: '',
+
+        // Fees
+        fee_session_group_id: [],
+        fees_discount: '0',
+
         // Upload Documents
         first_title: '', first_doc: null,
         second_title: '', second_doc: null,
@@ -92,14 +106,55 @@ const StudentAdmission = () => {
     const [autofillPermanent, setAutofillPermanent] = useState(false);
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [siblings, setSiblings] = useState([]);
+    const [hostelRooms, setHostelRooms] = useState([]);
+    const [schSetting, setSchSetting] = useState(null);
+    const [feeGroups, setFeeGroups] = useState([]);
+    const [transportFeesList, setTransportFeesList] = useState([]);
+    const [vehRoutes, setVehRoutes] = useState({});
+    const [hostels, setHostels] = useState([]);
+    const [pickupPoints, setPickupPoints] = useState([]);
+    const [bloodGroups, setBloodGroups] = useState([]);
+    const [houses, setHouses] = useState([]);
+    const [feeSearchTerm, setFeeSearchTerm] = useState('');
+    const [isFeeDropdownOpen, setIsFeeDropdownOpen] = useState(false);
+    const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
 
     // Fetch classes and sections on component mount
     useEffect(() => {
         const fetchDropdownData = async () => {
             try {
                 const response = await api.getStudentCreatePreData();
-                if (response && response.status === 'success' && response.data && Array.isArray(response.data.classlist)) {
-                    setClasses(response.data.classlist);
+                if (response && response.status === 'success' && response.data) {
+                    const data = response.data;
+                    if (Array.isArray(data.classlist)) {
+                        setClasses(data.classlist);
+                    }
+                    if (Array.isArray(data.categorylist)) {
+                        setCategories(data.categorylist);
+                    }
+                    if (data.sch_setting) {
+                        setSchSetting(data.sch_setting);
+                    }
+                    if (Array.isArray(data.feesessiongroup_model)) {
+                        setFeeGroups(data.feesessiongroup_model);
+                    }
+                    if (Array.isArray(data.transport_fees)) {
+                        setTransportFeesList(data.transport_fees);
+                    }
+                    if (data.vehroutelist) {
+                        setVehRoutes(data.vehroutelist);
+                    }
+                    if (Array.isArray(data.hostelList)) {
+                        setHostels(data.hostelList);
+                    }
+                    if (data.bloodgroupList) {
+                        setBloodGroups(Object.values(data.bloodgroupList));
+                    }
+                    if (Array.isArray(data.houseList)) {
+                        setHouses(data.houseList);
+                    }
                 }
             } catch (err) {
                 console.warn('Failed to fetch classes:', err);
@@ -136,6 +191,23 @@ const StudentAdmission = () => {
                         }
                     } catch (error) {
                         console.error('Error fetching sections by class:', error);
+                    }
+                }
+            }
+
+            // Trigger hostel room fetch if hostel changes
+            if (name === 'hostel') {
+                setHostelRooms([]);
+                setFormData(prev => ({ ...prev, room_no: '' }));
+
+                if (value) {
+                    try {
+                        const response = await api.getHostelRooms(value);
+                        if (response && response.data) {
+                            setHostelRooms(response.data);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching hostel rooms:', error);
                     }
                 }
             }
@@ -261,26 +333,69 @@ const StudentAdmission = () => {
         try {
             const data = new FormData();
 
+            // Convert YYYY-MM-DD → DD/MM/YYYY for date fields the API expects
+            const dateFields = ['dob', 'admission_date', 'measurement_date'];
+            const formatDate = (val) => {
+                if (!val) return val;
+                const parts = val.split('-');
+                if (parts.length === 3 && parts[0].length === 4) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return val;
+            };
+
             // Append all fields from state
             Object.keys(formData).forEach(key => {
-                if (formData[key] !== null) {
+                const value = formData[key];
+                
+                // Only append if value is not empty (null, undefined, empty string, or empty array)
+                const isEmpty = (val) => {
+                    if (val === null || val === undefined) return true;
+                    if (typeof val === 'string' && val.trim() === '') return true;
+                    if (Array.isArray(val) && val.length === 0) return true;
+                    return false;
+                };
+
+                if (!isEmpty(value)) {
                     // For files, only append if it's a File object
-                    if (formData[key] instanceof File) {
-                        data.append(key, formData[key]);
-                    } else if (typeof formData[key] === 'object' && formData[key] !== null && !Array.isArray(formData[key])) {
-                        // Skip non-file objects if any ( shouldn't be based on init state)
-                    } else if (Array.isArray(formData[key])) {
-                        // Handle arrays (like fees_month)
-                        formData[key].forEach(val => data.append(`${key}[]`, val));
+                    if (value instanceof File) {
+                        data.append(key, value);
+                    } else if (Array.isArray(value)) {
+                        // Handle arrays
+                        if (key === 'fee_session_group_id') {
+                            value.forEach(val => data.append('fee_session_group_id[]', val));
+                        } else {
+                            value.forEach(val => data.append(`${key}[]`, val));
+                        }
                     } else {
-                        data.append(key, formData[key]);
+                        // Mapping logic
+                        if (key === 'national_identification_no') {
+                            data.append('adhar_no', value);
+                            return;
+                        }
+                        if (key === 'local_identification_no') {
+                            data.append('samagra_id', value);
+                            return;
+                        }
+                        if (key === 'route_list') {
+                            data.append('vehroute_id', value);
+                            return;
+                        }
+                        if (key === 'hostel') {
+                            data.append('hostel_id', value);
+                            return;
+                        }
+
+                        // Convert date fields from YYYY-MM-DD to DD/MM/YYYY
+                        const processedValue = dateFields.includes(key) ? formatDate(value) : value;
+                        data.append(key, processedValue);
                     }
                 }
             });
 
             const response = await api.createStudent(data);
 
-            setSuccessMessage(response.message || 'Student created successfully!');
+            toast.success('Student saved successfully');
             if (response.data) {
                 setCreatedStudent(response.data);
             }
@@ -344,6 +459,10 @@ const StudentAdmission = () => {
                 hostel: '',
                 room_no: '',
                 child_id: '',
+                sibling_id: '',
+                sibling_name: '',
+                fee_session_group_id: [],
+                fees_discount: '0',
                 first_title: '', first_doc: null,
                 second_title: '', second_doc: null,
                 third_title: '', third_doc: null,
@@ -365,7 +484,20 @@ const StudentAdmission = () => {
 
         } catch (error) {
             console.error('Submission Error:', error);
-            setErrorMessage(error.message || 'Failed to create student');
+
+            // Check for specific validation errors from API
+            if (error.response && error.response.errors) {
+                setFormErrors(prev => ({ ...prev, ...error.response.errors }));
+                const firstError = Object.values(error.response.errors)[0];
+                const msg = firstError || 'Validation failed';
+                setErrorMessage(msg);
+                toast.error(msg);
+            } else {
+                const msg = error.message || 'Failed to create student';
+                setErrorMessage(msg);
+                toast.error(msg);
+            }
+
             window.scrollTo(0, 0);
         } finally {
             setLoading(false);
@@ -373,8 +505,58 @@ const StudentAdmission = () => {
     };
 
     const handleAddSibling = (siblingData) => {
-        console.log("Sibling added:", siblingData);
-        // Implement logic to fetch and fill sibling's parent/address data here
+        console.log('Sibling DataReceived:', siblingData);
+        if (!siblingData) return;
+
+        // Add to siblings list for display
+        setSiblings(prev => [...prev, siblingData]);
+
+        setFormData(prev => {
+            const updatedData = {
+                ...prev,
+                religion: siblingData.religion || '',
+                cast: siblingData.cast || '',
+                blood_group: siblingData.blood_group || '',
+                category_id: siblingData.category_id || '',
+                father_name: siblingData.father_name || '',
+                father_phone: siblingData.father_phone || siblingData.guardian_phone || '',
+                father_occupation: siblingData.father_occupation || '',
+                mother_name: siblingData.mother_name || '',
+                mother_phone: siblingData.mother_phone || '',
+                mother_occupation: siblingData.mother_occupation || '',
+                guardian_is: siblingData.guardian_is || (siblingData.guardian_relation ? siblingData.guardian_relation.toLowerCase() : 'father'),
+                guardian_name: siblingData.guardian_name || '',
+                guardian_relation: siblingData.guardian_relation || '',
+                guardian_phone: siblingData.guardian_phone || '',
+                guardian_occupation: siblingData.guardian_occupation || '',
+                guardian_email: siblingData.guardian_email || '',
+                guardian_address: siblingData.guardian_address || '',
+                current_address: siblingData.current_address || '',
+                permanent_address: siblingData.permanent_address || '',
+                bank_account_no: siblingData.bank_account_no || '',
+                bank_name: siblingData.bank_name || '',
+                ifsc_code: siblingData.ifsc_code || '',
+                national_identification_no: siblingData.adhar_no || '',
+                local_identification_no: siblingData.samagra_id || '',
+                sibling_id: siblingData.id || '',
+                sibling_name: `${siblingData.firstname} ${siblingData.lastname}`.trim()
+            };
+            console.log('Updated Form Data (Sibling):', updatedData);
+            return updatedData;
+        });
+        toast.success(`Parent details populated from sibling: ${siblingData.firstname}`);
+    };
+
+    const handleRemoveSibling = (siblingId) => {
+        setSiblings(prev => prev.filter(s => String(s.id) !== String(siblingId)));
+        if (String(formData.sibling_id) === String(siblingId)) {
+            setFormData(prev => ({
+                ...prev,
+                sibling_id: '',
+                sibling_name: ''
+            }));
+        }
+        toast.success('Sibling removed from this record');
     };
 
     return (
@@ -391,7 +573,8 @@ const StudentAdmission = () => {
                                 <div className="box box-primary">
                                     <div className="box-header with-border">
                                         <h3 className="box-title">Student Admission</h3>
-                                        <div className="box-tools pull-right impbtntitle" style={{ zIndex: 1000, position: 'relative' }}>
+                                        <div className="box-tools pull-right impbtntitle" style={{ position: 'relative' }}>
+                                            <button onClick={() => navigate('/student/import')} className="btn btn-primary btn-sm"><i className="fa fa-upload"></i> Import Student</button>
                                             <div className="btn-group pull-right mml15">
                                                 <button onClick={() => navigate('/student/search')} className="btn btn-primary btn-sm"><i className="fa fa-arrow-left"></i> Back</button>
                                             </div>
@@ -399,34 +582,7 @@ const StudentAdmission = () => {
                                     </div>
                                     <form id="form1" className="" method="post" acceptCharset="utf-8" encType="multipart/form-data" onSubmit={handleSubmit}>
                                         <div className="box-body">
-                                            {successMessage && (
-                                                <div className="alert alert-success alert-dismissible">
-                                                    <button
-                                                        type="button"
-                                                        className="close"
-                                                        onClick={() => setSuccessMessage('')}
-                                                    >
-                                                        ×
-                                                    </button>
 
-                                                    <h4>
-                                                        <i className="icon fa fa-check"></i> Success!
-                                                    </h4>
-
-                                                    <p>{successMessage}</p>
-
-                                                    {createdStudent && (
-                                                        <div style={{ marginTop: '10px' }}>
-                                                            <p>
-                                                                <strong>Name:</strong> {createdStudent.firstname} {createdStudent.lastname}
-                                                            </p>
-                                                            <p>
-                                                                <strong>Admission No:</strong> {createdStudent.admission_no}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
 
                                             {errorMessage && (
                                                 <div className="alert alert-danger alert-dismissible">
@@ -449,12 +605,14 @@ const StudentAdmission = () => {
                                                         {formErrors.admission_no && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.admission_no}</span>}
                                                     </div>
                                                 </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Roll Number</label>
-                                                        <input name="roll_no" type="text" className="form-control" value={formData.roll_no} onChange={handleInputChange} />
+                                                {schSetting && schSetting.roll_no === '1' && (
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Roll Number</label>
+                                                            <input name="roll_no" type="text" className="form-control" value={formData.roll_no} onChange={handleInputChange} />
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Class <small className="req"> *</small></label>
@@ -487,12 +645,14 @@ const StudentAdmission = () => {
                                                 </div>
                                                 {/* Middle name removed as per request, but keeping state if needed later or if it was optional in PHP.
                                                 Actually user asked to remove it. */}
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Last Name</label>
-                                                        <input name="lastname" type="text" className="form-control" value={formData.lastname} onChange={handleInputChange} />
+                                                {schSetting && schSetting.lastname === '1' && (
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Last Name</label>
+                                                            <input name="lastname" type="text" className="form-control" value={formData.lastname} onChange={handleInputChange} />
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Gender <small className="req"> *</small></label>
@@ -514,315 +674,590 @@ const StudentAdmission = () => {
                                             </div>
 
                                             <div className="row">
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Category</label>
-                                                        <select name="category_id" className="form-control" value={formData.category_id} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            <option value="1">General</option>
-                                                        </select>
+                                                {schSetting && schSetting.category === '1' && (
+                                                    <div className="col-md-2">
+                                                        <div className="form-group">
+                                                            <label>Category</label>
+                                                            <select name="category_id" className="form-control" value={formData.category_id} onChange={handleInputChange}>
+                                                                <option value="">Select</option>
+                                                                {categories.map((cat) => (
+                                                                    <option key={cat.id} value={cat.id}>{cat.category}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Religion</label>
-                                                        <input name="religion" type="text" className="form-control" value={formData.religion} onChange={handleInputChange} />
+                                                )}
+                                                {schSetting && schSetting.religion === '1' && (
+                                                    <div className="col-md-2">
+                                                        <div className="form-group">
+                                                            <label>Religion</label>
+                                                            <input name="religion" type="text" className="form-control" value={formData.religion} onChange={handleInputChange} />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Caste</label>
-                                                        <input name="cast" type="text" className="form-control" value={formData.cast} onChange={handleInputChange} />
+                                                )}
+                                                {schSetting && schSetting.cast === '1' && (
+                                                    <div className="col-md-2">
+                                                        <div className="form-group">
+                                                            <label>Caste</label>
+                                                            <input name="cast" type="text" className="form-control" value={formData.cast} onChange={handleInputChange} />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mobile Number</label>
-                                                        <input name="mobileno" type="text" className="form-control" value={formData.mobileno} onChange={handleInputChange} />
+                                                )}
+                                                {schSetting && schSetting.mobile_no === '1' && (
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Mobile Number</label>
+                                                            <input name="mobileno" type="text" className="form-control" value={formData.mobileno} onChange={handleInputChange} />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Email</label>
-                                                        <input name="email" type="text" className="form-control" value={formData.email} onChange={handleInputChange} />
+                                                )}
+                                                {schSetting && schSetting.student_email === '1' && (
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Email</label>
+                                                            <input name="email" type="text" className="form-control" value={formData.email} onChange={handleInputChange} />
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
                                             </div>
 
                                             <div className="row">
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Admission Date</label>
-                                                        <input name="admission_date" type="date" className="form-control" value={formData.admission_date} onChange={handleInputChange} />
+                                                {schSetting && schSetting.admission_date === '1' && (
+                                                    <div className="col-md-2">
+                                                        <div className="form-group">
+                                                            <label>Admission Date</label>
+                                                            <input name="admission_date" type="date" className="form-control" value={formData.admission_date} onChange={handleInputChange} />
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
                                                 <div className="col-md-2">
                                                     <div className="form-group">
                                                         <label>Class Of Admission</label>
                                                         <input name="class_of_admission" type="text" className="form-control" value={formData.class_of_admission} onChange={handleInputChange} />
                                                     </div>
                                                 </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Student Photo</label>
-                                                        <input className="dropify" type='file' name='student_photo' onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Blood Group</label>
-                                                        <select className="form-control" name="blood_group" value={formData.blood_group} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            <option value="A+">A+</option>
-                                                            <option value="A-">A-</option>
-                                                            <option value="B+">B+</option>
-                                                            <option value="B-">B-</option>
-                                                            <option value="O+">O+</option>
-                                                            <option value="O-">O-</option>
-                                                            <option value="AB+">AB+</option>
-                                                            <option value="AB-">AB-</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>House</label>
-                                                        <select className="form-control" name="house" value={formData.house} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            <option value="Red">Red</option>
-                                                            <option value="Blue">Blue</option>
-                                                            <option value="Green">Green</option>
-                                                            <option value="Yellow">Yellow</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Height</label>
-                                                        <input name="height" type="text" className="form-control" value={formData.height} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Weight</label>
-                                                        <input name="weight" type="text" className="form-control" value={formData.weight} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Measurement Date</label>
-                                                        <input name="measurement_date" type="date" className="form-control" value={formData.measurement_date} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="row">
+                                                {schSetting && schSetting.student_photo === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
-                                                            <label>Child ID <small className="req"> *</small></label>
-                                                            <input name="child_id" type="text" className={`form-control ${formErrors.child_id ? 'border-danger' : ''}`} value={formData.child_id} onChange={handleInputChange} />
-                                                            {formErrors.child_id && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.child_id}</span>}
+                                                            <label>Student Photo</label>
+                                                            <input className="dropify" type='file' name='student_photo' onChange={handleInputChange} />
                                                         </div>
                                                     </div>
-                                                    <div className="col-md-3 pt25">
-                                                        <button type="button" className="btn btn-sm mysiblings anchorbtn" onClick={() => setIsSiblingModalOpen(true)}>
-                                                            <i className="fa fa-plus"></i> Add Sibling
-                                                        </button>
+                                                )}
+                                                {schSetting && schSetting.is_blood_group === '1' && (
+                                                    <div className="col-md-2">
+                                                        <div className="form-group">
+                                                            <label>Blood Group</label>
+                                                            <select className="form-control" name="blood_group" value={formData.blood_group} onChange={handleInputChange}>
+                                                                <option value="">Select</option>
+                                                                {bloodGroups.map(bg => (
+                                                                    <option key={bg} value={bg}>{bg}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {schSetting && schSetting.is_student_house === '1' && (
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>House</label>
+                                                            <select className="form-control" name="house" value={formData.house} onChange={handleInputChange}>
+                                                                <option value="">Select</option>
+                                                                {houses.map(house => (
+                                                                    <option key={house.id} value={house.id}>{house.house_name}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="row">
+                                                {schSetting && schSetting.student_height === '1' && (
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Height</label>
+                                                            <input name="height" type="text" className="form-control" value={formData.height} onChange={handleInputChange} />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {schSetting && schSetting.student_weight === '1' && (
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Weight</label>
+                                                            <input name="weight" type="text" className="form-control" value={formData.weight} onChange={handleInputChange} />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {schSetting && schSetting.measurement_date === '1' && (
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Measurement Date</label>
+                                                            <input name="measurement_date" type="date" className="form-control" value={formData.measurement_date} onChange={handleInputChange} />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                <div className="col-md-3" style={{ display: 'none' }}>
+                                                    <div className="form-group">
+                                                        <label>Fees Discount</label>
+                                                        <input name="fees_discount" type="text" className="form-control" value={formData.fees_discount} onChange={handleInputChange} />
                                                     </div>
                                                 </div>
+                                            </div>
+                                            <div className="row">
+                                                <div className="col-md-3">
+                                                    <div className="form-group">
+                                                        <label>Child ID <small className="req"> *</small></label>
+                                                        <input name="child_id" type="text" className={`form-control ${formErrors.child_id ? 'border-danger' : ''}`} value={formData.child_id} onChange={handleInputChange} />
+                                                        {formErrors.child_id && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.child_id}</span>}
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-3 pt25">
+                                                    <button type="button" className="btn btn-sm mysiblings anchorbtn" onClick={() => setIsSiblingModalOpen(true)}>
+                                                        <i className="fa fa-plus"></i> Add Sibling
+                                                    </button>
+                                                </div>
+                                            </div>
 
-
-
-                                                {/* Fees Details Accordion 
-                                            <h4 className="pagetitleh2">Fees Details
-                                                <span className="float-right bmedium total_fees_alloted">0.00</span>
-                                            </h4>
-                                            <div className="row around10">
-                                                <div className="col-md-12">
-                                                    <div className="table-responsive border0">
-                                                        <table className="table mb0">
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td colSpan="3" className="mailbox-name white-space-nowrap border0">
-                                                                        <div className="panel-group1 mb0">
-                                                                            <div className="panel panel-default1">
-                                                                                <div className="panel-heading pt5 pb5">
-                                                                                    <h6 className="panel-title panel-title1 overflow-hidden">
-                                                                                        <input className="fee_group_chk vertical-middle" type="checkbox" name="fee_session_group_id[]" value="1" />
-                                                                                        <a className="display-inline collapsed box-plus-panel" data-toggle="collapse" href="#collapse_fees_1">
-                                                                                            <span className="font14"> Class 1 General Fees</span>
-                                                                                        </a>
-                                                                                        <span className="float-right bmedium pt3 fee_group_total" data-amount="1000">1,000.00</span>
-                                                                                    </h6>
+                                            {siblings && siblings.length > 0 && (
+                                                <div className="row" style={{ marginTop: '20px' }}>
+                                                    <div className="col-md-12">
+                                                        <h4 className="pagetitleh2" style={{ marginTop: '0' }}>Existing Siblings</h4>
+                                                        <div className="row">
+                                                            {siblings.map((sibling, index) => (
+                                                                <div className="col-md-4" key={sibling.id || sibling.student_session_id || index}>
+                                                                    <div className="box box-widget widget-user-2" style={{ border: '1px solid #eee', marginBottom: '15px', borderRadius: '4px' }}>
+                                                                        <div className="widget-user-header bg-gray-light" style={{ padding: '10px', display: 'flex', alignItems: 'center' }}>
+                                                                            <div className="widget-user-image" style={{ marginRight: '15px', flexShrink: 0 }}>
+                                                                                <img
+                                                                                    className="img-circle"
+                                                                                    src={getImageUrl(sibling.image)}
+                                                                                    alt="Sibling"
+                                                                                    style={{ width: '60px', height: '60px', objectFit: 'cover', border: '2px solid #fff' }}
+                                                                                />
+                                                                            </div>
+                                                                            <div className="widget-user-details" style={{ flexGrow: 1, overflow: 'hidden' }}>
+                                                                                <div className="pull-right">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        className="btn btn-default btn-xs text-red"
+                                                                                        title="Remove"
+                                                                                        onClick={() => handleRemoveSibling(sibling.id)}
+                                                                                        style={{ border: "none", background: "transparent" }}
+                                                                                    >
+                                                                                        <i className="fa fa-trash-o" style={{ fontSize: "16px" }}></i>
+                                                                                    </button>
                                                                                 </div>
-                                                                                <div id="collapse_fees_1" className="panel-collapse collapse">
-                                                                                    <ul className="list-group student_fee_list">
-                                                                                        <li className="list-group-item">
-                                                                                            <div className="displayinline stfirstdiv bmedium font14 pl-65">Fees Type</div>
-                                                                                            <div className="due_date bmedium font14">Due Date</div>
-                                                                                            <div className="tools bmedium font14">Amount ($)</div>
-                                                                                        </li>
-                                                                                        <li className="list-group-item">
-                                                                                            <div className="displayinline stfirstdiv pl-65">Admission Fees (ADM001)</div>
-                                                                                            <small className="due_date"><i className="fa fa-calendar"></i> 01/04/2026</small>
-                                                                                            <div className="tools">500.00</div>
-                                                                                        </li>
-                                                                                        <li className="list-group-item">
-                                                                                            <div className="displayinline stfirstdiv pl-65">Tuition Fees (TUT001)</div>
-                                                                                            <small className="due_date"><i className="fa fa-calendar"></i> 01/04/2026</small>
-                                                                                            <div className="tools">500.00</div>
-                                                                                        </li>
-                                                                                    </ul>
-                                                                                </div>
+                                                                                <h5 style={{ margin: '0', fontSize: '12px', color: '#888', fontWeight: '600' }}>
+                                                                                    {sibling.class} ({sibling.section})
+                                                                                </h5>
+                                                                                <h4 style={{ margin: '2px 0 0 0', fontSize: '15px', fontWeight: 'bold', color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                                    {sibling.firstname} {sibling.lastname}
+                                                                                </h4>
+                                                                                <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#555' }}>
+                                                                                    Adm No: <strong>{sibling.admission_no}</strong>
+                                                                                </p>
                                                                             </div>
                                                                         </div>
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="row">
+                                                <div className="col-md-12">
+                                                </div>
+                                            </div>
+
+
+
+                                            {/* Fees Details Section */}
+                                            <div className="tshadow mb25 bozero mainstudent">
+                                                <h4 className="pagetitleh2">Fees Details
+                                                    <span className="float-right bmedium total_fees_alloted">
+                                                        {feeGroups
+                                                            .filter(g => formData.fee_session_group_id.includes(g.id))
+                                                            .reduce((sum, g) => sum + g.feetypes.reduce((s, f) => s + parseFloat(f.amount || 0), 0), 0)
+                                                            .toFixed(2)}
+                                                    </span>
+                                                </h4>
+                                                <div className="row around10">
+                                                    <div className="col-md-12">
+                                                        {/* Search Bar */}
+                                                        <div className="form-group mb10" style={{ position: 'relative' }}>
+                                                            <div className="input-group" style={{
+                                                                display: 'flex',
+                                                                flexWrap: 'wrap',
+                                                                alignItems: 'center',
+                                                                border: '1px solid #ccc',
+                                                                borderRadius: '4px',
+                                                                padding: '2px 5px',
+                                                                background: '#fff',
+                                                                minHeight: '34px'
+                                                            }}>
+                                                                <span style={{ padding: '0 10px', color: '#555' }}><i className="fa fa-search"></i></span>
+
+                                                                {/* Chips inside Search Bar */}
+                                                                {feeGroups
+                                                                    .filter(g => formData.fee_session_group_id.includes(g.id))
+                                                                    .map(group => (
+                                                                        <span key={group.id} className="label label-info" style={{
+                                                                            margin: '2px',
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            fontSize: '11px',
+                                                                            padding: '4px 8px',
+                                                                            borderRadius: '12px'
+                                                                        }}>
+                                                                            {group.group_name}
+                                                                            <i className="fa fa-times" style={{ marginLeft: '5px', cursor: 'pointer' }}
+                                                                                onClick={() => {
+                                                                                    setFormData(prev => ({
+                                                                                        ...prev,
+                                                                                        fee_session_group_id: prev.fee_session_group_id.filter(id => id !== group.id)
+                                                                                    }));
+                                                                                }}></i>
+                                                                        </span>
+                                                                    ))
+                                                                }
+
+                                                                <input
+                                                                    type="text"
+                                                                    style={{
+                                                                        border: 'none',
+                                                                        outline: 'none',
+                                                                        flex: 1,
+                                                                        minWidth: '150px',
+                                                                        height: '28px',
+                                                                        padding: '0 5px'
+                                                                    }}
+                                                                    placeholder={formData.fee_session_group_id.length === 0 ? "Search Fee Group..." : ""}
+                                                                    value={feeSearchTerm}
+                                                                    onChange={(e) => {
+                                                                        setFeeSearchTerm(e.target.value);
+                                                                        setIsFeeDropdownOpen(true);
+                                                                    }}
+                                                                    onFocus={() => setIsFeeDropdownOpen(true)}
+                                                                />
+                                                            </div>
+                                                            {isFeeDropdownOpen && (
+                                                                <div className="fee-search-dropdown shadow no-scrollbar" style={{
+                                                                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000,
+                                                                    background: '#fff', border: '1px solid #ccc', maxHeight: '200px',
+                                                                    overflowY: 'auto', borderRadius: '0 0 4px 4px',
+                                                                    msOverflowStyle: 'none', scrollbarWidth: 'none'
+                                                                }}>
+                                                                    <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
+                                                                    {feeGroups
+                                                                        .filter(g => !feeSearchTerm || g.group_name.toLowerCase().includes(feeSearchTerm.toLowerCase()))
+                                                                        .map(g => (
+                                                                            <div key={g.id} className="search-item" style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
+                                                                                onMouseDown={() => {
+                                                                                    setFormData(prev => {
+                                                                                        const current = [...prev.fee_session_group_id];
+                                                                                        if (!current.includes(g.id)) current.push(g.id);
+                                                                                        return { ...prev, fee_session_group_id: current };
+                                                                                    });
+                                                                                    setFeeSearchTerm('');
+                                                                                    setIsFeeDropdownOpen(false);
+                                                                                }}>
+                                                                                {g.group_name}
+                                                                            </div>
+                                                                        ))}
+                                                                    {feeGroups.filter(g => !feeSearchTerm || g.group_name.toLowerCase().includes(feeSearchTerm.toLowerCase())).length === 0 && (
+                                                                        <div style={{ padding: '8px 12px', color: '#888' }}>No matching fee groups</div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            {/* Backdrop to close dropdown */}
+                                                            {isFeeDropdownOpen && (
+                                                                <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 999 }} onClick={() => setIsFeeDropdownOpen(false)} />
+                                                            )}
+                                                        </div>
+
+
+                                                        <div className="table-responsive border0">
+                                                            <table className="table mb0">
+                                                                <tbody>
+                                                                    {feeGroups.filter(g => formData.fee_session_group_id.includes(g.id)).map(group => (
+                                                                        <tr key={group.id}>
+                                                                            <td colSpan="3" className="mailbox-name white-space-nowrap border0">
+                                                                                <div className="panel-group1 mb0">
+                                                                                    <div className="panel panel-default1">
+                                                                                        <div className="panel-heading pt5 pb5">
+                                                                                            <h6 className="panel-title panel-title1 overflow-hidden">
+                                                                                                <input className="fee_group_chk vertical-middle" type="checkbox" name="fee_session_group_id[]" value={group.id} onChange={(e) => {
+                                                                                                    const checked = e.target.checked;
+                                                                                                    setFormData(prev => {
+                                                                                                        const current = [...prev.fee_session_group_id];
+                                                                                                        if (checked) {
+                                                                                                            if (!current.includes(group.id)) current.push(group.id);
+                                                                                                        } else {
+                                                                                                            return { ...prev, fee_session_group_id: current.filter(id => id !== group.id) };
+                                                                                                        }
+                                                                                                        return { ...prev, fee_session_group_id: current };
+                                                                                                    });
+                                                                                                }} checked={formData.fee_session_group_id.includes(group.id)} />
+                                                                                                <a className={`display-inline box-plus-panel ${formData.fee_session_group_id.includes(group.id) ? '' : 'collapsed'}`} data-toggle="collapse" href={`#collapse_fees_${group.id}`} aria-expanded={formData.fee_session_group_id.includes(group.id)}>
+                                                                                                    <span className="font14"> {group.group_name}</span>
+                                                                                                </a>
+                                                                                                <span className="float-right bmedium pt3 fee_group_total">
+                                                                                                    {group.feetypes.reduce((sum, f) => sum + parseFloat(f.amount || 0), 0).toFixed(2)}
+                                                                                                </span>
+                                                                                            </h6>
+                                                                                        </div>
+                                                                                        <div id={`collapse_fees_${group.id}`} className={`panel-collapse collapse ${formData.fee_session_group_id.includes(group.id) ? 'in' : ''}`}>
+                                                                                            <div className="p10">
+                                                                                                <table className="table table-hover table-condensed mb0">
+                                                                                                    <thead>
+                                                                                                        <tr className="bg-light">
+                                                                                                            <th className="pl-65" style={{ width: '40%', borderTop: 'none' }}>Fees Type</th>
+                                                                                                            <th style={{ width: '30%', borderTop: 'none' }}>Due Date</th>
+                                                                                                            <th className="text-right" style={{ width: '30%', borderTop: 'none', paddingRight: '20px' }}>Amount ({schSetting?.currency_symbol || '$'})</th>
+                                                                                                        </tr>
+                                                                                                    </thead>
+                                                                                                    <tbody>
+                                                                                                        {group.feetypes.map(fee => (
+                                                                                                            <tr key={fee.id}>
+                                                                                                                <td className="pl-65" style={{ verticalAlign: 'middle' }}>{fee.type} ({fee.code})</td>
+                                                                                                                <td style={{ verticalAlign: 'middle' }}>
+                                                                                                                    <span className="text-muted"><i className="fa fa-calendar-o"></i> {fee.due_date || '0000-00-00'}</span>
+                                                                                                                </td>
+                                                                                                                <td className="text-right" style={{ verticalAlign: 'middle', paddingRight: '20px', fontWeight: 'bold' }}>
+                                                                                                                    {fee.amount}
+                                                                                                                </td>
+                                                                                                            </tr>
+                                                                                                        ))}
+                                                                                                    </tbody>
+                                                                                                </table>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            //transport
-                                            <h4 className="pagetitleh2">Transport Details</h4>
-                                            <div className="row">
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Route List</label>
-                                                        <select className="form-control" name="route_list" value={formData.route_list} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            <optgroup label="Route A">
-                                                                <option value="VH001">Vehicle 1 (VH001)</option>
-                                                                <option value="VH002">Vehicle 2 (VH002)</option>
-                                                            </optgroup>
-                                                            <optgroup label="Route B">
-                                                                <option value="VH003">Vehicle 3 (VH003)</option>
-                                                            </optgroup>
-                                                        </select>
+                                            {/* Transport Details */}
+                                            {schSetting && schSetting.route_list === '1' && (
+                                                <div className="tshadow mb25 bozero">
+                                                    <h4 className="pagetitleh2">Transport Details</h4>
+                                                    <div className="row around10">
+                                                        <div className="col-md-4">
+                                                            <div className="form-group">
+                                                                <label>Route List</label>
+                                                                <select className="form-control" name="route_list" value={formData.route_list} onChange={(e) => {
+                                                                    handleInputChange(e);
+                                                                    // Reset pickup points when route changes
+                                                                    setPickupPoints([]);
+                                                                    // In a real scenario, you'd fetch pickup points for the selected route/vehicle here
+                                                                }}>
+                                                                    <option value="">Select</option>
+                                                                    {Object.values(vehRoutes).map(route => (
+                                                                        <optgroup key={route.id} label={route.route_title}>
+                                                                            {route.vehicles && route.vehicles.map(vehicle => (
+                                                                                <option key={vehicle.vec_route_id} value={vehicle.vec_route_id}>
+                                                                                    {vehicle.vehicle_no} ({vehicle.vehicle_model})
+                                                                                </option>
+                                                                            ))}
+                                                                        </optgroup>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group">
+                                                                <label>Pickup Point</label>
+                                                                <select className="form-control" name="pickup_point" value={formData.pickup_point} onChange={handleInputChange}>
+                                                                    <option value="">Select</option>
+                                                                    <option value="Point A">Point A</option>
+                                                                    <option value="Point B">Point B</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-4">
+                                                            <div className="form-group">
+                                                                <label>Fees Month</label>
+                                                                <div className={`dropdown ${isMonthDropdownOpen ? 'open' : ''}`} style={{ position: 'relative' }}>
+                                                                    <div
+                                                                        className="form-control"
+                                                                        onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
+                                                                        style={{ cursor: 'pointer', height: 'auto', minHeight: '34px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
+                                                                    >
+                                                                        {formData.fees_month.length > 0
+                                                                            ? formData.fees_month.join(', ')
+                                                                            : 'Select Months'}
+                                                                        <span className="caret pull-right" style={{ marginTop: '7px' }}></span>
+                                                                    </div>
+                                                                    {isMonthDropdownOpen && (
+                                                                        <div className="dropdown-menu" style={{ display: 'block', width: '100%', maxHeight: '200px', overflowY: 'auto', padding: '10px' }}>
+                                                                            {transportFeesList.map(tf => (
+                                                                                <div key={tf.id} className="checkbox" style={{ margin: '5px 0' }}>
+                                                                                    <label style={{ width: '100%', cursor: 'pointer' }}>
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            value={tf.month}
+                                                                                            checked={formData.fees_month.includes(tf.month)}
+                                                                                            onChange={(e) => {
+                                                                                                const { checked, value } = e.target;
+                                                                                                setFormData(prev => {
+                                                                                                    const nextMonths = checked
+                                                                                                        ? [...prev.fees_month, value]
+                                                                                                        : prev.fees_month.filter(m => m !== value);
+                                                                                                    return { ...prev, fees_month: nextMonths };
+                                                                                                });
+                                                                                            }}
+                                                                                        />
+                                                                                        {tf.month}
+                                                                                    </label>
+                                                                                </div>
+                                                                            ))}
+                                                                            {transportFeesList.length === 0 && <div style={{ padding: '5px' }}>No months available</div>}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                {/* Close dropdown when clicking outside (not fully implemented in simple state, but will work for basic UX) */}
+                                                                {isMonthDropdownOpen && <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9 }} onClick={() => setIsMonthDropdownOpen(false)} />}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Pickup Point</label>
-                                                        <select className="form-control" name="pickup_point" value={formData.pickup_point} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            <option value="Point A">Point A</option>
-                                                            <option value="Point B">Point B</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Fees Month</label>
-                                                        <select className="form-control" name="fees_month" value={formData.fees_month} onChange={handleInputChange} multiple={true}>
-                                                            <option value="January">January</option>
-                                                            <option value="February">February</option>
-                                                            <option value="March">March</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            )}
 
-                                            //hostel details
-                                            <h4 className="pagetitleh2">Hostel Details</h4>
-                                            <div className="row">
-                                                <div className="col-md-6">
-                                                    <div className="form-group">
-                                                        <label>Hostel</label>
-                                                        <select className="form-control" name="hostel" value={formData.hostel} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            <option value="Hostel A">Hostel A</option>
-                                                        </select>
+                                            {/* Hostel Details */}
+                                            {schSetting && schSetting.hostel_id === '1' && (
+                                                <div className="tshadow mb25 bozero">
+                                                    <h4 className="pagetitleh2">Hostel Details</h4>
+                                                    <div className="row around10">
+                                                        <div className="col-md-6">
+                                                            <div className="form-group">
+                                                                <label>Hostel</label>
+                                                                <select className="form-control" name="hostel" value={formData.hostel} onChange={handleInputChange}>
+                                                                    <option value="">Select</option>
+                                                                    {hostels.map(hostel => (
+                                                                        <option key={hostel.id} value={hostel.id}>
+                                                                            {hostel.hostel_name}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-6">
+                                                            <div className="form-group">
+                                                                <label>Room No</label>
+                                                                <select className="form-control" name="room_no" value={formData.room_no} onChange={handleInputChange}>
+                                                                    <option value="">Select</option>
+                                                                    {hostelRooms.map(room => (
+                                                                        <option key={room.id} value={room.id}>{room.room_no}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="col-md-6">
-                                                    <div className="form-group">
-                                                        <label>Room No</label>
-                                                        <select className="form-control" name="room_no" value={formData.room_no} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            <option value="101">101 (AC)</option>
-                                                            <option value="102">102 (Non-AC)</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>*/}
+                                            )}
 
-                                                {/* Parent Guardian Detail */}
-                                                <h4 className="pagetitleh2">Parent Guardian Detail</h4>
-                                                <div className="row">
-                                                    {/* Father */}
+
+                                            {/* Parent Guardian Detail */}
+                                            <h4 className="pagetitleh2">Parent Guardian Detail</h4>
+                                            <div className="row">
+                                                {/* Father */}
+                                                {schSetting && schSetting.father_name === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Father Name</label>
                                                             <input name="father_name" type="text" className="form-control" value={formData.father_name} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
+                                                )}
+                                                {schSetting && schSetting.father_phone === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Father Phone</label>
                                                             <input name="father_phone" type="text" className="form-control" value={formData.father_phone} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
+                                                )}
+                                                {schSetting && schSetting.father_occupation === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Father Occupation</label>
                                                             <input name="father_occupation" type="text" className="form-control" value={formData.father_occupation} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
+                                                )}
+                                                {schSetting && schSetting.father_pic === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Father Photo</label>
-                                                            <input className="dropify" type='file' name='father_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="92" type='file' name='father_pic' onChange={handleInputChange} />
                                                         </div>
                                                     </div>
-                                                </div>
+                                                )}
+                                            </div>
 
-                                                <div className="row">
-                                                    {/* Mother */}
+                                            <div className="row">
+                                                {/* Mother */}
+                                                {schSetting && schSetting.mother_name === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Mother Name</label>
                                                             <input name="mother_name" type="text" className="form-control" value={formData.mother_name} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
+                                                )}
+                                                {schSetting && schSetting.mother_phone === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Mother Phone</label>
                                                             <input name="mother_phone" type="text" className="form-control" value={formData.mother_phone} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
+                                                )}
+                                                {schSetting && schSetting.mother_occupation === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Mother Occupation</label>
                                                             <input name="mother_occupation" type="text" className="form-control" value={formData.mother_occupation} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
+                                                )}
+                                                {schSetting && schSetting.mother_pic === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Mother Photo</label>
-                                                            <input className="dropify" type='file' name='mother_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="92" type='file' name='mother_pic' onChange={handleInputChange} />
                                                         </div>
                                                     </div>
-                                                </div>
+                                                )}
+                                            </div>
 
-                                                <div className="row">
-                                                    <div className="form-group col-md-12">
-                                                        <label>If Guardian Is <small className="req"> *</small>&nbsp;&nbsp;&nbsp;</label>
-                                                        <label className="radio-inline">
-                                                            <input type="radio" name="guardian_is" value="father" checked={formData.guardian_is === 'father'} onChange={handleGuardianChange} /> Father
-                                                        </label>
-                                                        <label className="radio-inline">
-                                                            <input type="radio" name="guardian_is" value="mother" checked={formData.guardian_is === 'mother'} onChange={handleGuardianChange} /> Mother
-                                                        </label>
-                                                        <label className="radio-inline">
-                                                            <input type="radio" name="guardian_is" value="other" checked={formData.guardian_is === 'other'} onChange={handleGuardianChange} /> Other
-                                                        </label>
-                                                    </div>
+                                            <div className="row">
+                                                <div className="form-group col-md-12">
+                                                    <label>If Guardian Is <small className="req"> *</small>&nbsp;&nbsp;&nbsp;</label>
+                                                    <label className="radio-inline">
+                                                        <input type="radio" name="guardian_is" value="father" checked={formData.guardian_is === 'father'} onChange={handleGuardianChange} /> Father
+                                                    </label>
+                                                    <label className="radio-inline">
+                                                        <input type="radio" name="guardian_is" value="mother" checked={formData.guardian_is === 'mother'} onChange={handleGuardianChange} /> Mother
+                                                    </label>
+                                                    <label className="radio-inline">
+                                                        <input type="radio" name="guardian_is" value="other" checked={formData.guardian_is === 'other'} onChange={handleGuardianChange} /> Other
+                                                    </label>
                                                 </div>
+                                            </div>
 
-                                                <div className="row">
+                                            <div className="row">
+                                                {schSetting && schSetting.guardian_name === '1' && (
                                                     <div className="col-md-6">
                                                         <div className="row">
                                                             <div className="col-md-6">
@@ -832,153 +1267,198 @@ const StudentAdmission = () => {
                                                                     {formErrors.guardian_name && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.guardian_name}</span>}
                                                                 </div>
                                                             </div>
-                                                            <div className="col-md-6">
-                                                                <div className="form-group">
-                                                                    <label>Guardian Relation</label>
-                                                                    <input name="guardian_relation" type="text" className="form-control" value={formData.guardian_relation} onChange={handleInputChange} />
+                                                            {schSetting && schSetting.guardian_relation === '1' && (
+                                                                <div className="col-md-6">
+                                                                    <div className="form-group">
+                                                                        <label>Guardian Relation</label>
+                                                                        <input name="guardian_relation" type="text" className="form-control" value={formData.guardian_relation} onChange={handleInputChange} />
+                                                                    </div>
                                                                 </div>
-                                                            </div>
+                                                            )}
                                                         </div>
                                                         <div className="row">
-                                                            <div className="col-md-6">
-                                                                <div className="form-group">
-                                                                    <label>Guardian Phone <small className="req"> *</small></label>
-                                                                    <input name="guardian_phone" type="text" className={`form-control ${formErrors.guardian_phone ? 'border-danger' : ''}`} value={formData.guardian_phone} onChange={handleInputChange} />
-                                                                    {formErrors.guardian_phone && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.guardian_phone}</span>}
+                                                            {schSetting && schSetting.guardian_phone === '1' && (
+                                                                <div className="col-md-6">
+                                                                    <div className="form-group">
+                                                                        <label>Guardian Phone <small className="req"> *</small></label>
+                                                                        <input name="guardian_phone" type="text" className={`form-control ${formErrors.guardian_phone ? 'border-danger' : ''}`} value={formData.guardian_phone} onChange={handleInputChange} />
+                                                                        {formErrors.guardian_phone && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.guardian_phone}</span>}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="col-md-6">
-                                                                <div className="form-group">
-                                                                    <label>Guardian Occupation</label>
-                                                                    <input name="guardian_occupation" type="text" className="form-control" value={formData.guardian_occupation} onChange={handleInputChange} />
+                                                            )}
+                                                            {schSetting && schSetting.guardian_occupation === '1' && (
+                                                                <div className="col-md-6">
+                                                                    <div className="form-group">
+                                                                        <label>Guardian Occupation</label>
+                                                                        <input name="guardian_occupation" type="text" className="form-control" value={formData.guardian_occupation} onChange={handleInputChange} />
+                                                                    </div>
                                                                 </div>
-                                                            </div>
+                                                            )}
                                                         </div>
                                                     </div>
+                                                )}
 
+                                                {schSetting && schSetting.guardian_email === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Guardian Email</label>
                                                             <input name="guardian_email" type="text" className="form-control" value={formData.guardian_email} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
+                                                )}
+                                                {schSetting && schSetting.guardian_pic === '1' && (
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Guardian Photo</label>
-                                                            <input className="dropify" type='file' name='guardian_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="92" type='file' name='guardian_pic' onChange={handleInputChange} />
                                                         </div>
                                                     </div>
+                                                )}
+                                                {schSetting && schSetting.guardian_address === '1' && (
                                                     <div className="col-md-6">
                                                         <div className="form-group">
                                                             <label>Guardian Address</label>
                                                             <textarea name="guardian_address" className="form-control" rows="2" value={formData.guardian_address} onChange={handleInputChange}></textarea>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                {/* Add More Details Toggle */}
-                                                <div className="box-group">
-                                                    <div className="panel box border0 mb0">
-                                                        <div className="addmoredetail-title">
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-link boxplus"
-                                                                onClick={() => setShowMoreDetails(!showMoreDetails)}
-                                                                style={{ textDecoration: 'none', color: '#444', fontWeight: 'bold' }}
-                                                            >
-                                                                <i className={`fa fa-fw ${showMoreDetails ? 'fa-minus' : 'fa-plus'}`}></i>
-                                                                {showMoreDetails ? ' Hide More Details' : ' Add More Details'}
-                                                            </button>
-                                                        </div>
+                                                )}
+                                            </div>
+                                            {/* Add More Details Toggle */}
+                                            <div className="box-group">
+                                                <div className="panel box border0 mb0">
+                                                    <div className="addmoredetail-title">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-link boxplus"
+                                                            onClick={() => setShowMoreDetails(!showMoreDetails)}
+                                                            style={{ textDecoration: 'none', color: '#444', fontWeight: 'bold' }}
+                                                        >
+                                                            <i className={`fa fa-fw ${showMoreDetails ? 'fa-minus' : 'fa-plus'}`}></i>
+                                                            {showMoreDetails ? ' Hide More Details' : ' Add More Details'}
+                                                        </button>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                {showMoreDetails && (
-                                                    <div className="show-more-details-section">
+                                            {showMoreDetails && (
+                                                <div className="show-more-details-section">
+                                                    <div className="tshadow mb25 bozero">
                                                         <h4 className="pagetitleh2">Student Address Details</h4>
-                                                        <div className="row">
-                                                            <div className="col-md-6">
-                                                                <div className="checkbox">
-                                                                    <label>
-                                                                        <input type="checkbox" checked={autofillCurrent} onChange={handleAutofillGuardianAddress} /> If Guardian Address is Current Address
-                                                                    </label>
+                                                        <div className="row around10">
+                                                            {schSetting && schSetting.current_address === '1' && (
+                                                                <div className="col-md-6">
+                                                                    <div className="checkbox">
+                                                                        <label>
+                                                                            <input type="checkbox" checked={autofillCurrent} onChange={handleAutofillGuardianAddress} /> If Guardian Address is Current Address
+                                                                        </label>
+                                                                    </div>
+                                                                    <div className="form-group">
+                                                                        <label>Current Address</label>
+                                                                        <textarea name="current_address" rows="2" className="form-control" value={formData.current_address} onChange={handleInputChange}></textarea>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="form-group">
-                                                                    <label>Current Address</label>
-                                                                    <textarea name="current_address" rows="2" className="form-control" value={formData.current_address} onChange={handleInputChange}></textarea>
+                                                            )}
+                                                            {schSetting && schSetting.permanent_address === '1' && (
+                                                                <div className="col-md-6">
+                                                                    <div className="checkbox">
+                                                                        <label>
+                                                                            <input type="checkbox" checked={autofillPermanent} onChange={handleAutofillPermanentAddress} /> If Permanent Address is Current Address
+                                                                        </label>
+                                                                    </div>
+                                                                    <div className="form-group">
+                                                                        <label>Permanent Address</label>
+                                                                        <textarea name="permanent_address" rows="2" className="form-control" value={formData.permanent_address} onChange={handleInputChange}></textarea>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="col-md-6">
-                                                                <div className="checkbox">
-                                                                    <label>
-                                                                        <input type="checkbox" checked={autofillPermanent} onChange={handleAutofillPermanentAddress} /> If Permanent Address is Current Address
-                                                                    </label>
-                                                                </div>
-                                                                <div className="form-group">
-                                                                    <label>Permanent Address</label>
-                                                                    <textarea name="permanent_address" rows="2" className="form-control" value={formData.permanent_address} onChange={handleInputChange}></textarea>
-                                                                </div>
-                                                            </div>
+                                                            )}
                                                         </div>
+                                                    </div>
 
-                                                        {/* Miscellaneous Details */}
+                                                    {/* Miscellaneous Details */}
+                                                    {(schSetting && (schSetting.bank_account_no === '1' || schSetting.bank_name === '1' || schSetting.ifsc_code === '1' || schSetting.national_identification_no === '1' || schSetting.local_identification_no === '1' || schSetting.rte === '1' || schSetting.previous_school_details === '1' || schSetting.student_note === '1')) && (
                                                         <div className="tshadow mb25 bozero">
                                                             <h4 className="pagetitleh2">Miscellaneous Details</h4>
                                                             <div className="row around10">
-                                                                <div className="col-md-4">
-                                                                    <div className="form-group">
-                                                                        <label>Bank Account Number</label>
-                                                                        <input name="bank_account_no" type="text" className="form-control" value={formData.bank_account_no} onChange={handleInputChange} />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-md-4">
-                                                                    <div className="form-group">
-                                                                        <label>Bank Name</label>
-                                                                        <input name="bank_name" type="text" className="form-control" value={formData.bank_name} onChange={handleInputChange} />
-                                                                    </div>
-                                                                </div>
-                                                                <div className="col-md-4">
-                                                                    <div className="form-group">
-                                                                        <label>IFSC Code</label>
-                                                                        <input name="ifsc_code" type="text" className="form-control" value={formData.ifsc_code} onChange={handleInputChange} />
-                                                                    </div>
-                                                                </div>
+                                                                {(schSetting.bank_account_no === '1' || schSetting.bank_name === '1' || schSetting.ifsc_code === '1') && (
+                                                                    <>
+                                                                        {schSetting.bank_account_no === '1' && (
+                                                                            <div className="col-md-4">
+                                                                                <div className="form-group">
+                                                                                    <label>Bank Account Number</label>
+                                                                                    <input name="bank_account_no" type="text" className="form-control" value={formData.bank_account_no} onChange={handleInputChange} />
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                        {schSetting.bank_name === '1' && (
+                                                                            <div className="col-md-4">
+                                                                                <div className="form-group">
+                                                                                    <label>Bank Name</label>
+                                                                                    <input name="bank_name" type="text" className="form-control" value={formData.bank_name} onChange={handleInputChange} />
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                        {schSetting.ifsc_code === '1' && (
+                                                                            <div className="col-md-4">
+                                                                                <div className="form-group">
+                                                                                    <label>IFSC Code</label>
+                                                                                    <input name="ifsc_code" type="text" className="form-control" value={formData.ifsc_code} onChange={handleInputChange} />
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                )}
                                                             </div>
                                                             <div className="row around10">
-                                                                <div className="col-md-4">
-                                                                    <div className="form-group">
-                                                                        <label>National Identification Number</label>
-                                                                        <input name="national_identification_no" type="text" className="form-control" value={formData.national_identification_no} onChange={handleInputChange} />
+                                                                {schSetting.national_identification_no === '1' && (
+                                                                    <div className="col-md-4">
+                                                                        <div className="form-group">
+                                                                            <label>National Identification Number</label>
+                                                                            <input name="national_identification_no" type="text" className="form-control" value={formData.national_identification_no} onChange={handleInputChange} />
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                                <div className="col-md-4">
-                                                                    <div className="form-group">
-                                                                        <label>Local Identification Number</label>
-                                                                        <input name="local_identification_no" type="text" className="form-control" value={formData.local_identification_no} onChange={handleInputChange} />
+                                                                )}
+                                                                {schSetting.local_identification_no === '1' && (
+                                                                    <div className="col-md-4">
+                                                                        <div className="form-group">
+                                                                            <label>Local Identification Number</label>
+                                                                            <input name="local_identification_no" type="text" className="form-control" value={formData.local_identification_no} onChange={handleInputChange} />
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                                {/*<div className="col-md-4">
-                                                        <label>RTE</label>
-                                                        <div className="radio" style={{ marginTop: '2px' }}>
-                                                            <label><input className="radio-inline" type="radio" name="rte" value="Yes" checked={formData.rte === 'Yes'} onChange={handleInputChange} /> Yes</label>
-                                                            <label><input className="radio-inline" type="radio" name="rte" value="No" checked={formData.rte === 'No'} onChange={handleInputChange} /> No</label>
-                                                        </div>
-                                                    </div>*/}
-                                                                <div className="col-md-6">
-                                                                    <div className="form-group">
-                                                                        <label>Previous School Details</label>
-                                                                        <textarea className="form-control" rows="3" name="previous_school" value={formData.previous_school} onChange={handleInputChange}></textarea>
+                                                                )}
+                                                                {schSetting.rte === '1' && (
+                                                                    <div className="col-md-4">
+                                                                        <div className="form-group">
+                                                                            <label>RTE</label>
+                                                                            <select className="form-control" name="rte" value={formData.rte} onChange={handleInputChange}>
+                                                                                <option value="Yes">Yes</option>
+                                                                                <option value="No">No</option>
+                                                                            </select>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                                <div className="col-md-6">
-                                                                    <div className="form-group">
-                                                                        <label>Note</label>
-                                                                        <textarea className="form-control" rows="3" name="note" value={formData.note} onChange={handleInputChange}></textarea>
+                                                                )}
+
+                                                                {schSetting.previous_school_details === '1' && (
+                                                                    <div className="col-md-6">
+                                                                        <div className="form-group">
+                                                                            <label>Previous School Details</label>
+                                                                            <textarea className="form-control" rows="3" name="previous_school" value={formData.previous_school} onChange={handleInputChange}></textarea>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
+                                                                )}
+                                                                {schSetting.student_note === '1' && (
+                                                                    <div className="col-md-6">
+                                                                        <div className="form-group">
+                                                                            <label>Note</label>
+                                                                            <textarea className="form-control" rows="3" name="note" value={formData.note} onChange={handleInputChange}></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
+                                                    )}
 
-                                                        {/* Upload Documents */}
+                                                    {/* Upload Documents */}
+                                                    {schSetting && schSetting.upload_documents === '1' && (
                                                         <div className="row">
                                                             <div className="col-md-12">
                                                                 <div className="tshadow bozero">
@@ -1038,9 +1518,9 @@ const StudentAdmission = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="box-footer">
                                             <button type="submit" className="btn btn-info pull-right" disabled={loading}>
@@ -1055,9 +1535,8 @@ const StudentAdmission = () => {
                 </section>
             </div>
             <Footer />
-            <SiblingModal isOpen={isSiblingModalOpen} onClose={() => setIsSiblingModalOpen(false)} onAddSibling={handleAddSibling} />
+            {isSiblingModalOpen && <SiblingModal isOpen={isSiblingModalOpen} onClose={() => setIsSiblingModalOpen(false)} onAddSibling={handleAddSibling} />}
         </div>
-
     );
 };
 

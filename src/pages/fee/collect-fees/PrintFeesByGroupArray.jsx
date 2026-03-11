@@ -221,7 +221,11 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
                 </div>
                 <div className="row header" style={{ marginTop: '10px' }}>
                     <div className="col-sm-8">
-                        Note: Fee once paid is not refundable
+                        {sch_setting.receipt_footer_content ? (
+                            <div dangerouslySetInnerHTML={{ __html: sch_setting.receipt_footer_content }} />
+                        ) : (
+                            "Note: Fee once paid is not refundable"
+                        )}
                     </div>
                     <div className="col-sm-4 text-right">
                         Signature

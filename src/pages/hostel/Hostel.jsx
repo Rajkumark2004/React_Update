@@ -6,6 +6,8 @@ import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { useTableSort } from '../../hooks/useTableSort';
 
 const Hostel = () => {
     const navigate = useNavigate();
@@ -19,7 +21,42 @@ const Hostel = () => {
     });
 
     const [hostellist, setHostelList] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const hostelTypes = ['Boys', 'Girls', 'Combined']; // Hostel type options
+
+    // Columns
+    const columns = [
+        { key: 'hostel_name', label: 'Hostel Name', sortKey: 'hostel_name' },
+        { key: 'type', label: 'Type', sortKey: 'type' },
+        { key: 'address', label: 'Address', sortKey: 'address' },
+        { key: 'intake', label: 'Intake', sortKey: 'intake' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) newVisible.delete(key);
+        else newVisible.add(key);
+        setVisibleColumns(newVisible);
+    };
+
+    const { sortedData, requestSort, sortConfig, getSortIcon } = useTableSort(hostellist);
+
+    const filteredHostelList = sortedData.filter(hostel =>
+        Object.values(hostel).some(value =>
+            String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    );
+
+    // Export Data formatting
+    const formatCell = (row, key) => {
+        return row[key] || '';
+    };
+
+    const getExportData = () => {
+        return buildExportData(columns, visibleColumns, filteredHostelList, formatCell);
+    };
 
     useEffect(() => {
         fetchData();
@@ -107,7 +144,7 @@ const Hostel = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '16px' }}>
+            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-building-o"></i> Hostel
@@ -205,33 +242,86 @@ const Hostel = () => {
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Hostel List</h3>
                                     <div className="btn-group pull-right">
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
                                     </div>
                                 </div>
                                 <div className="box-body">
+                                    <div className="mailbox-controls">
+                                        <div className="pull-left">
+                                            <div className="btn-group">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                    <i className="fa fa-files-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'hostel_list.csv'); }}>
+                                                    <i className="fa fa-file-text-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'hostel_list.xls'); }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'hostel_list.pdf', 'Hostel List'); }}>
+                                                    <i className="fa fa-file-pdf-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Hostel List'); }}>
+                                                    <i className="fa fa-print"></i>
+                                                </button>
+                                                <div className="btn-group">
+                                                    <button type="button" className="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Columns">
+                                                        <i className="fa fa-columns"></i> <span className="caret"></span>
+                                                    </button>
+                                                    <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
+                                                        {columns.map(col => (
+                                                            <li key={col.key} style={{ padding: '0px' }}>
+                                                                <label style={{ display: 'block', margin: '0', fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={visibleColumns.has(col.key)}
+                                                                        onChange={() => toggleColumn(col.key)}
+                                                                        style={{ marginRight: '8px' }}
+                                                                    />
+                                                                    {col.label}
+                                                                </label>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="pull-right">
+                                            <div className="has-feedback">
+                                                <input
+                                                    type="text"
+                                                    className="form-control input-sm"
+                                                    placeholder="Search..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                                <span className="glyphicon glyphicon-search form-control-feedback"></span>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div className="mailbox-messages table-responsive overflow-visible">
-                                        <div className="download_label">Hostel List</div>
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Hostel Name</th>
-                                                    <th>Type</th>
-                                                    <th>Address</th>
-                                                    <th>Intake</th>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <th key={col.key} onClick={() => requestSort(col.sortKey)} style={{ cursor: 'pointer' }}>
+                                                            {col.label} {getSortIcon(col.sortKey)}
+                                                        </th>
+                                                    ))}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {hostellist.length === 0 ? (
+                                                {filteredHostelList.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan="5" className="text-center">No Record Found</td>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center">No Record Found</td>
                                                     </tr>
                                                 ) : (
-                                                    hostellist.map(hostel => (
+                                                    filteredHostelList.map(hostel => (
                                                         <tr key={hostel.id}>
-                                                            <td className="mailbox-name">
+                                                            {visibleColumns.has('hostel_name') && <td className="mailbox-name">
                                                                 <a
                                                                     href="#"
                                                                     data-toggle="tooltip"
@@ -240,10 +330,10 @@ const Hostel = () => {
                                                                 >
                                                                     {hostel.hostel_name}
                                                                 </a>
-                                                            </td>
-                                                            <td className="mailbox-name">{hostel.type}</td>
-                                                            <td className="mailbox-name">{hostel.address}</td>
-                                                            <td className="mailbox-name">{hostel.intake}</td>
+                                                            </td>}
+                                                            {visibleColumns.has('type') && <td className="mailbox-name">{hostel.type}</td>}
+                                                            {visibleColumns.has('address') && <td className="mailbox-name">{hostel.address}</td>}
+                                                            {visibleColumns.has('intake') && <td className="mailbox-name">{hostel.intake}</td>}
                                                             <td className="mailbox-date pull-right no-print">
                                                                 <Link
                                                                     to={`/admin/hostel/edit/${hostel.id}`}

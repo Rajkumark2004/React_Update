@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import '../../styles/reports.css';
 import { api } from '../../services/api';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const UserLog = () => {
     const navigate = useNavigate();
@@ -110,27 +111,40 @@ const UserLog = () => {
         }
     };
 
-    // Table action handlers
-    const handleCopy = (tab) => {
+    // Export helpers for UserLog
+    const getTabHeaders = (tab) => {
+        const hasClass = tab === 'all_users' || tab === 'student';
+        const cols = ['User', 'Role'];
+        if (hasClass) cols.push('Class');
+        cols.push('IP Address', 'Login Date Time', 'User Agent');
+        return cols;
+    };
+    const getTabRows = (tab) => {
         const data = getFilteredData(tab);
         const hasClass = tab === 'all_users' || tab === 'student';
-        let headers = 'Users\tRole';
-        if (hasClass) headers += '\tClass';
-        headers += '\tIP Address\tLogin Date Time\tUser Agent';
-
-        const text = data.map(item => {
-            let row = `${item.user}\t${item.role}`;
-            if (hasClass) row += `\t${item.class || ''}`;
-            row += `\t${item.ipaddress || item.ip_address}\t${item.login_datetime}\t${item.user_agent}`;
-            return row;
-        }).join('\n');
-
-        navigator.clipboard.writeText(headers + '\n' + text);
-        alert('Copied to clipboard!');
+        return data.map(item => {
+            const row = [item.user, item.role];
+            if (hasClass) row.push(item.class || '');
+            row.push(item.ipaddress || item.ip_address || '', item.login_datetime || '', item.user_agent || '');
+            return row.map(String);
+        });
     };
 
-    const handlePrint = () => {
-        window.print();
+    // Table action handlers
+    const handleCopy = (tab) => {
+        copyToClipboard(getTabHeaders(tab), getTabRows(tab));
+    };
+
+    const handlePrint = (tab) => {
+        printTable(getTabHeaders(tab), getTabRows(tab), tab.replace(/_/g, ' ') + ' User Log');
+    };
+
+    const handleExcel = (tab) => {
+        downloadExcel(getTabHeaders(tab), getTabRows(tab), `${tab}_log.xls`);
+    };
+
+    const handleCSV = (tab) => {
+        downloadCSV(getTabHeaders(tab), getTabRows(tab), `${tab}_log.csv`);
     };
 
     // Check if tab has Class column
@@ -181,10 +195,9 @@ const UserLog = () => {
                         <div className="pull-right">
                             <div className="dt-buttons btn-group" style={{ paddingBottom: '2px' }}>
                                 <button className="btn btn-default dt-button" title="Copy" onClick={() => handleCopy(tab)} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-copy"></i></button>
-                                <button className="btn btn-default dt-button" title="Excel" style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-file-excel-o"></i></button>
-                                <button className="btn btn-default dt-button" title="CSV" style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-file-text-o"></i></button>
-                                <button className="btn btn-default dt-button" title="PDF" style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-file-pdf-o"></i></button>
-                                <button className="btn btn-default dt-button" title="Print" onClick={handlePrint} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-print"></i></button>
+                                <button className="btn btn-default dt-button" title="Excel" onClick={() => handleExcel(tab)} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-file-excel-o"></i></button>
+                                <button className="btn btn-default dt-button" title="CSV" onClick={() => handleCSV(tab)} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-file-text-o"></i></button>
+                                <button className="btn btn-default dt-button" title="Print" onClick={() => handlePrint(tab)} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-print"></i></button>
                                 <button className="btn btn-default dt-button" title="Columns" style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-columns"></i></button>
                             </div>
                         </div>

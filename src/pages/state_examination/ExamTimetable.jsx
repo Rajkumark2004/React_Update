@@ -71,7 +71,7 @@ const ExamTimetable = () => {
             <Header />
             <Sidebar />
             <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                <section className="content" style={{ marginTop: '20px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-12">
                             <div className="box box-primary">

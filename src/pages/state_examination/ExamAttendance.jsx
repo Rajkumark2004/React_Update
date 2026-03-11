@@ -133,7 +133,10 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
                 if (onSaveSuccess) {
                     onSaveSuccess();
                 }
-                fetchAttendanceData(); // Refresh
+                if (handleClose) {
+                    handleClose();
+                }
+                // fetchAttendanceData(); // Refresh not needed if closing
             } else {
                 toast.error(response.message || 'Failed to save attendance. Please try again.');
             }

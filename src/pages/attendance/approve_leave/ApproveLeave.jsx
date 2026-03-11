@@ -5,6 +5,7 @@ import Footer from '../../../components/Footer';
 import Loader from '../../../components/Loader';
 import api from '../../../services/api';
 import LeaveModal from './LeaveModal';
+import AttendanceSidebar from '../../../components/AttendanceSidebar';
 import '../../../utils/include_files'; // Importing global scripts/styles
 
 const API_BASE = 'https://newlayout.wisibles.com/api_admin';
@@ -15,7 +16,7 @@ const ApproveLeave = () => {
     const [leaveList, setLeaveList] = useState([]);
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
-    const [filter, setFilter] = useState({ class_id: '', section_id: '' });
+    const [filter, setFilter] = useState({ class_id: '', section_id: '', search: '' });
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -36,38 +37,18 @@ const ApproveLeave = () => {
     }, []);
 
     const fetchClasses = async () => {
-        try {
-            const response = await api.getClasses();
-            if (response && response.data && Array.isArray(response.data.class_sections)) {
-                setClassList(response.data.class_sections);
-            } else if (response && Array.isArray(response.class_sections)) {
-                setClassList(response.class_sections);
-            } else if (response && response.data && Array.isArray(response.data)) {
-                setClassList(response.data);
-            } else if (Array.isArray(response)) {
-                setClassList(response);
-            } else {
-                console.warn("Unexpected class data format", response);
-                setClassList([]);
-            }
-        } catch (error) {
-            console.error("Error fetching classes", error);
-        }
+        // Class list is now fetched via fetchLeaveData from getApproveLeaveList
     };
 
     const fetchLeaveData = async () => {
         setLoading(true);
         try {
-            // Using the search API or list API
-            // If filter is empty, maybe fetch all?
             const response = await api.getApproveLeaveList();
-            // Note: Currently getApproveLeaveList in api.js parses a generic get_list endpoint. 
-            // In reality we might need to rely on the search endpoint if get_list isn't standard.
-            // But let's assume it returns data array matching the table.
-            if (response && response.data) { // Adjust based on actual API response structure
-                setLeaveList(Array.isArray(response.data) ? response.data : []);
-            } else if (Array.isArray(response)) {
-                setLeaveList(response);
+            if (response && response.status) {
+                setLeaveList(Array.isArray(response.results) ? response.results : []);
+                if (Array.isArray(response.classlist)) {
+                    setClassList(response.classlist);
+                }
             }
         } catch (error) {
             console.error("Error fetching leave list", error);
@@ -81,18 +62,10 @@ const ApproveLeave = () => {
         setFilter(prev => ({ ...prev, class_id: classId, section_id: '' }));
         if (classId) {
             try {
-                const response = await api.getSections(classId);
-                // Check format. api.getSections returns "data" object. 
-                // Usually { data: [...] } or { section_list: [...] } or array.
-                if (response && Array.isArray(response)) {
-                    setSectionList(response);
-                } else if (response && Array.isArray(response.data)) {
+                const response = await api.getSectionsByClass(classId);
+                if (response && response.status && Array.isArray(response.data)) {
                     setSectionList(response.data);
-                } else if (response && Array.isArray(response.sections)) {
-                    setSectionList(response.sections);
                 } else {
-                    // Try to convert object to array if needed or default empty
-                    // Assuming 'data' property holds it based on typical pattern
                     console.warn("Unexpected section data format", response);
                     setSectionList([]);
                 }
@@ -109,9 +82,9 @@ const ApproveLeave = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await api.searchApproveLeave(filter.class_id, filter.section_id);
-            if (response && response.data) {
-                setLeaveList(response.data);
+            const response = await api.searchApproveLeave(filter);
+            if (response && response.status) {
+                setLeaveList(Array.isArray(response.results) ? response.results : []);
             }
         } catch (error) {
             console.error("Error searching leave", error);
@@ -149,7 +122,7 @@ const ApproveLeave = () => {
     const handleDelete = async (id, classId, sectionId) => {
         if (window.confirm('Are you sure you want to delete this leave request?')) {
             try {
-                await api.deleteLeave({ id, class_id: classId, section_id: sectionId });
+                await api.deleteApproveLeave({ id, class_id: classId, section_id: sectionId });
                 fetchLeaveData(); // Refresh list
             } catch (error) {
                 alert('Error deleting leave: ' + error.message);
@@ -157,8 +130,27 @@ const ApproveLeave = () => {
         }
     };
 
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "";
+        // If already has /, just return
+        if (dateStr.includes('/')) return dateStr;
+        // If contains - (could be YYYY-MM-DD or DD-MM-YYYY)
+        if (dateStr.includes('-')) {
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                // Check if first part is year
+                if (parts[0].length === 4) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                // Case for DD-MM-YYYY
+                return `${parts[0]}/${parts[1]}/${parts[2]}`;
+            }
+        }
+        return dateStr;
+    };
+
     const getStatusLabel = (status, date) => {
-        if (status == 1) return <span className="label label-success">Approved {date ? `(${date})` : ''}</span>;
+        if (status == 1) return <span className="label label-success">Approved {date ? `(${formatDate(date)})` : ''}</span>;
         if (status == 2) return <span className="label label-danger">Disapproved</span>;
         return <span className="label label-warning">Pending</span>;
     };
@@ -177,125 +169,144 @@ const ApproveLeave = () => {
                     {initialLoading ? (
                         <Loader />
                     ) : (
-                        <div className="box box-primary">
-                            <div className="box-header with-border">
-                                <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
-                                <div className="btn-group pull-right">
-                                    <button onClick={() => window.history.back()} className="btn btn-primary btn-xs">
-                                        <i className="fa fa-arrow-left"></i> Back
-                                    </button>
-                                </div>
+                        <div className="row">
+                            <div className="col-md-2">
+                                <AttendanceSidebar />
                             </div>
-                            <form onSubmit={handleSearch}>
-                                <div className="box-body">
-                                    <div className="row">
-                                        <div className="col-md-3 col-lg-3 col-sm-6">
-                                            <div className="form-group">
-                                                <label>Class</label><small className="req"> *</small>
-                                                <select
-                                                    className="form-control"
-                                                    value={filter.class_id}
-                                                    onChange={handleClassChange}
-                                                    autoFocus
-                                                >
-                                                    <option value="">Select</option>
-                                                    {classList.map(cls => (
-                                                        <option key={cls.id} value={cls.id}>{cls.class}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-3 col-lg-3 col-sm-6">
-                                            <div className="form-group">
-                                                <label>Section</label><small className="req"> *</small>
-                                                <select
-                                                    className="form-control"
-                                                    value={filter.section_id}
-                                                    onChange={(e) => setFilter(prev => ({ ...prev, section_id: e.target.value }))}
-                                                >
-                                                    <option value="">Select</option>
-                                                    {sectionList.map(sec => (
-                                                        <option key={sec.id || sec.section_id} value={sec.id || sec.section_id}>{sec.section}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button type="submit" className="btn btn-primary btn-sm checkbox-toggle pull-right">
-                                        <i className="fa fa-search"></i> Search
-                                    </button>
-                                </div>
-                            </form>
-
-                            <div className="row">
-                                <div className="col-md-12">
+                            <div className="col-md-10">
+                                <div className="box box-primary">
                                     <div className="box-header with-border">
-                                        <h3 className="box-title"><i className="fa fa-users"></i> Approve Leave List</h3>
-                                        <div className="box-tools pull-right">
-                                            <button type="button" onClick={handleAdd} className="btn btn-sm btn-primary" data-toggle="tooltip" title="Add">
-                                                <i className="fa fa-plus"></i> Add
+                                        <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
+                                        <div className="btn-group pull-right">
+                                            <button onClick={() => window.history.back()} className="btn btn-primary btn-xs">
+                                                <i className="fa fa-arrow-left"></i> Back
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="box-body table-responsive overflow-visible-lg">
-                                        <table className="table table-hover table-striped table-bordered example">
-                                            <thead>
-                                                <tr>
-                                                    <th>Student Name</th>
-                                                    <th>Class</th>
-                                                    <th>Section</th>
-                                                    <th>Apply Date</th>
-                                                    <th>From Date</th>
-                                                    <th>To Date</th>
-                                                    <th>Status</th>
-                                                    <th>Approve/Disapprove By</th>
-                                                    <th className="text-right noExport">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {loading ? (
-                                                    <tr><td colSpan="9" className="text-center">Loading...</td></tr>
-                                                ) : leaveList.length > 0 ? (
-                                                    leaveList.map(leave => (
-                                                        <tr key={leave.id}>
-                                                            <td>{leave.firstname} {leave.lastname} ({leave.admission_no})</td>
-                                                            <td>{leave.class}</td>
-                                                            <td>{leave.section}</td>
-                                                            <td>{leave.apply_date}</td>
-                                                            <td>{leave.from_date}</td>
-                                                            <td>{leave.to_date}</td>
-                                                            <td>{getStatusLabel(leave.status, leave.approve_date)}</td>
-                                                            <td>{leave.staff_name} {leave.surname} {leave.staff_id ? `(${leave.staff_id})` : ''}</td>
-                                                            <td className="text-right white-space-nowrap">
-                                                                {leave.docs && (
-                                                                    <a href={`${API_BASE}/admin/approve_leave/download/${leave.id}`} className="btn btn-default btn-xs" title="Download" target="_blank" rel="noopener noreferrer">
-                                                                        <i className="fa fa-download"></i>
-                                                                    </a>
-                                                                )}
-                                                                <button
-                                                                    onClick={() => handleEdit(leave)}
-                                                                    className="btn btn-default btn-xs"
-                                                                    title="Edit"
-                                                                    style={{ marginLeft: '3px' }}
-                                                                >
-                                                                    <i className="fa fa-pencil"></i>
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDelete(leave.id, leave.class_id, leave.section_id)}
-                                                                    className="btn btn-default btn-xs"
-                                                                    title="Delete"
-                                                                    style={{ marginLeft: '3px' }}
-                                                                >
-                                                                    <i className="fa fa-trash"></i>
-                                                                </button>
-                                                            </td>
+                                    <form onSubmit={handleSearch}>
+                                        <div className="box-body">
+                                            <div className="row">
+                                                <div className="col-md-3 col-lg-3 col-sm-6">
+                                                    <div className="form-group">
+                                                        <label>Class</label><small className="req"> *</small>
+                                                        <select
+                                                            className="form-control"
+                                                            value={filter.class_id}
+                                                            onChange={handleClassChange}
+                                                            autoFocus
+                                                        >
+                                                            <option value="">Select</option>
+                                                            {classList.map(cls => (
+                                                                <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-3 col-lg-3 col-sm-6">
+                                                    <div className="form-group">
+                                                        <label>Section</label><small className="req"> *</small>
+                                                        <select
+                                                            className="form-control"
+                                                            value={filter.section_id}
+                                                            onChange={(e) => setFilter(prev => ({ ...prev, section_id: e.target.value }))}
+                                                        >
+                                                            <option value="">Select</option>
+                                                            {sectionList.map(sec => (
+                                                                <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-3 col-lg-3 col-sm-6">
+                                                    <div className="form-group">
+                                                        <label>Search</label>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={filter.search}
+                                                            onChange={(e) => setFilter(prev => ({ ...prev, search: e.target.value }))}
+                                                            placeholder="Search by student name..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="submit" className="btn btn-primary btn-sm checkbox-toggle pull-right">
+                                                <i className="fa fa-search"></i> Search
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <div className="row">
+                                        <div className="col-md-12">
+                                            <div className="box-header with-border">
+                                                <h3 className="box-title"><i className="fa fa-users"></i> Approve Leave List</h3>
+                                                <div className="box-tools pull-right">
+                                                    <button type="button" onClick={handleAdd} className="btn btn-sm btn-primary" data-toggle="tooltip" title="Add">
+                                                        <i className="fa fa-plus"></i> Add
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="box-body table-responsive overflow-visible-lg">
+                                                <table className="table table-hover table-striped table-bordered example">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Student Name</th>
+                                                            <th>Class</th>
+                                                            <th>Section</th>
+                                                            <th>Apply Date</th>
+                                                            <th>From Date</th>
+                                                            <th>To Date</th>
+                                                            <th>Status</th>
+                                                            <th>Approve/Disapprove By</th>
+                                                            <th className="text-right noExport">Action</th>
                                                         </tr>
-                                                    ))
-                                                ) : (
-                                                    <tr><td colSpan="9" className="text-center">No data available in table</td></tr>
-                                                )}
-                                            </tbody>
-                                        </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        {loading ? (
+                                                            <tr><td colSpan="9" className="text-center">Loading...</td></tr>
+                                                        ) : leaveList.length > 0 ? (
+                                                            leaveList.map(leave => (
+                                                                <tr key={leave.id}>
+                                                                    <td>{leave.firstname} {leave.lastname} ({leave.admission_no})</td>
+                                                                    <td>{leave.class}</td>
+                                                                    <td>{leave.section}</td>
+                                                                    <td>{formatDate(leave.apply_date)}</td>
+                                                                    <td>{formatDate(leave.from_date)}</td>
+                                                                    <td>{formatDate(leave.to_date)}</td>
+                                                                    <td>{getStatusLabel(leave.status, leave.approve_date)}</td>
+                                                                    <td>{leave.staff_name} {leave.surname} {leave.staff_id ? `(${leave.staff_id})` : ''}</td>
+                                                                    <td className="text-right white-space-nowrap">
+                                                                        {leave.docs && (
+                                                                            <a href={`${API_BASE}/admin/approve_leave/download/${leave.id}`} className="btn btn-default btn-xs" title="Download" target="_blank" rel="noopener noreferrer">
+                                                                                <i className="fa fa-download"></i>
+                                                                            </a>
+                                                                        )}
+                                                                        <button
+                                                                            onClick={() => handleEdit(leave)}
+                                                                            className="btn btn-default btn-xs"
+                                                                            title="Edit"
+                                                                            style={{ marginLeft: '3px' }}
+                                                                        >
+                                                                            <i className="fa fa-pencil"></i>
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDelete(leave.id, leave.class_id, leave.section_id)}
+                                                                            className="btn btn-default btn-xs"
+                                                                            title="Delete"
+                                                                            style={{ marginLeft: '3px' }}
+                                                                        >
+                                                                            <i className="fa fa-trash"></i>
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr><td colSpan="9" className="text-center">No data available in table</td></tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -312,6 +323,7 @@ const ApproveLeave = () => {
                 onSuccess={() => { fetchLeaveData(); }}
                 initialData={selectedLeave}
                 isEdit={modalMode === 'edit'}
+                classList={classList}
             />
         </div>
     );

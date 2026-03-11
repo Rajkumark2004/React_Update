@@ -50,7 +50,7 @@ export const ReceiptContent = ({ student, sch_setting }) => {
             <div className="row header">
                 <div className="col-sm-12">
                     <img
-                        src={`https://newlayout.wisibles.com/api_admin//uploads/print_headerfooter/student_receipt/${sch_setting.image}`}
+                        src={sch_setting.receipt_header_url || `https://newlayout.wisibles.com/api_admin//uploads/print_headerfooter/student_receipt/${sch_setting.image}`}
                         style={{ height: '100px', width: '100%' }}
                         alt="Header"
                     />
@@ -133,7 +133,13 @@ export const ReceiptContent = ({ student, sch_setting }) => {
                     </div>
                 </div>
                 <div className="row header" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
-                    <div className="col-sm-8">Note: Fee once paid is not refundable</div>
+                    <div className="col-sm-8">
+                        {sch_setting.receipt_footer_content ? (
+                            <div dangerouslySetInnerHTML={{ __html: sch_setting.receipt_footer_content }} />
+                        ) : (
+                            "Note: Fee once paid is not refundable"
+                        )}
+                    </div>
                     <div className="col-sm-4 text-right" style={{ textAlign: 'right' }}>Signature</div>
                 </div>
             </div>

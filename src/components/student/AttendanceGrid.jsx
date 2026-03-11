@@ -30,11 +30,11 @@ const AttendanceGrid = ({ attendanceResult, year }) => {
 
     // Helper to get attendance symbol
     const getAttendanceSymbol = (dateString) => {
-        // The PHP structure:
-        // $resultlist['2025-01-01'] = object { key: 'P', ... }
-        // So keys are full dates.
         if (attendanceResult && attendanceResult[dateString]) {
-            return attendanceResult[dateString].key || '-';
+            const rawKey = attendanceResult[dateString].key || '-';
+            // Extract just the text value from the HTML string e.g. `<b class="text text-success">P</b>` -> `P`
+            const strippedKey = rawKey.replace(/(<([^>]+)>)/gi, "");
+            return strippedKey;
         }
         return '';
     };

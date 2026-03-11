@@ -6,7 +6,13 @@ import Footer from '../../components/Footer';
 import SiblingModal from '../../components/SiblingModal';
 import Loader from '../../components/Loader';
 import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 import '../../utils/include_files';
+
+const getImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://newlayout.wisibles.com/uploads/student_images/no_image.png';
+    return `https://newlayout.wisibles.com/${imagePath}`;
+};
 
 const StudentEdit = () => {
     const { id } = useParams();
@@ -85,6 +91,14 @@ const StudentEdit = () => {
         // Child ID
         child_id: '',
 
+        // Sibling Details
+        sibling_id: '',
+        sibling_name: '',
+
+        // Student Identifiers
+        student_id: '',
+        student_session_id: '',
+
         // Upload Documents
         first_title: '', first_doc: null,
         second_title: '', second_doc: null,
@@ -96,6 +110,8 @@ const StudentEdit = () => {
     const [autofillPermanent, setAutofillPermanent] = useState(false);
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [siblings, setSiblings] = useState([]);
 
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
@@ -103,34 +119,30 @@ const StudentEdit = () => {
 
     // Fetch classes and sections on component mount
     useEffect(() => {
-        const fetchDropdownData = async () => {
-            try {
-                const classesRes = await api.getClasses();
-                if (classesRes && classesRes.status && classesRes.data) {
-                    if (classesRes.data.class_sections && Array.isArray(classesRes.data.class_sections)) {
-                        setClasses(classesRes.data.class_sections);
-                    }
-                }
-            } catch (err) {
-                console.warn('Failed to fetch classes:', err);
-            }
-
-            try {
-                const sectionsRes = await api.getSections();
-                if (sectionsRes && sectionsRes.status && sectionsRes.data) {
-                    setSections(sectionsRes.data);
-                }
-            } catch (err) {
-                console.warn('Failed to fetch sections:', err);
-            }
-        };
-
         const fetchStudentData = async () => {
             if (!id) return;
             try {
                 const studentRes = await api.getStudentEditDetails(id);
                 if (studentRes && (studentRes.status === true || studentRes.status === 'success') && studentRes.student_data) {
-                    const data = studentRes.student_data;
+                    const data = studentRes.student_data.student;
+
+                    if (Array.isArray(studentRes.student_data.classlist)) {
+                        setClasses(studentRes.student_data.classlist);
+                    }
+                    if (Array.isArray(studentRes.student_data.categorylist)) {
+                        setCategories(studentRes.student_data.categorylist);
+                    }
+
+                    if (data && data.class_id) {
+                        try {
+                            const response = await api.getSectionsByClass(data.class_id);
+                            if (response && response.data) setSections(response.data);
+                            else if (response && Array.isArray(response)) setSections(response);
+                        } catch (err) {
+                            console.error('Error fetching sections:', err);
+                        }
+                    }
+
                     setFormData(prev => ({
                         ...prev,
                         ...data,
@@ -193,7 +205,38 @@ const StudentEdit = () => {
                         // Hostel
                         hostel_id: data.hostel_id || '',
                         hostel_room_id: data.hostel_room_id || '',
+
+                        sibling_id: data.sibling_id || '',
+                        sibling_name: data.sibling_name || '',
+
+                        student_id: data.id || id,
+                        student_session_id: data.student_session_id || '',
                     }));
+
+                    // Use siblings from studentRes if available
+                    if (studentRes.student_data.siblings) {
+                        setSiblings(studentRes.student_data.siblings);
+                    }
+                }
+
+                // If siblings weren't in main response or we want to ensure latest
+                if (!studentRes.student_data.siblings) {
+                    const siblingRes = await api.getSiblingDetails(id);
+                    if (siblingRes && siblingRes.status) {
+                        let siblingData = [];
+                        if (Array.isArray(siblingRes.data)) {
+                            siblingData = siblingRes.data;
+                        } else if (siblingRes.data && typeof siblingRes.data === 'object' && siblingRes.data.id) {
+                            siblingData = [siblingRes.data];
+                        } else if (siblingRes.data && (siblingRes.data.siblings || siblingRes.data.sibling)) {
+                            const nested = siblingRes.data.siblings || siblingRes.data.sibling;
+                            siblingData = Array.isArray(nested) ? nested : [nested];
+                        } else if (siblingRes.siblings || siblingRes.sibling) {
+                            const direct = siblingRes.siblings || siblingRes.sibling;
+                            siblingData = Array.isArray(direct) ? direct : [direct];
+                        }
+                        setSiblings(siblingData);
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching student details:", err);
@@ -203,16 +246,34 @@ const StudentEdit = () => {
             }
         };
 
-        fetchDropdownData();
         fetchStudentData();
     }, [id]);
 
-    const handleInputChange = (e) => {
+    const handleInputChange = async (e) => {
         const { name, value, type, files } = e.target;
         if (type === 'file') {
             setFormData(prev => ({ ...prev, [name]: files[0] }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
+
+            // Trigger section fetch if class changes
+            if (name === 'class_id') {
+                setSections([]); // Clear sections
+                setFormData(prev => ({ ...prev, section_id: '' })); // Reset section selection
+
+                if (value) {
+                    try {
+                        const response = await api.getSectionsByClass(value);
+                        if (response && response.data) {
+                            setSections(response.data);
+                        } else if (response && Array.isArray(response)) {
+                            setSections(response);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching sections by class:', error);
+                    }
+                }
+            }
         }
     };
 
@@ -293,37 +354,69 @@ const StudentEdit = () => {
 
         try {
             const dataToSend = new FormData();
+
+            // Convert YYYY-MM-DD → DD/MM/YYYY for date fields the API expects
+            const dateFields = ['dob', 'admission_date', 'measurement_date'];
             // Append all fields
             Object.keys(formData).forEach(key => {
-                if (formData[key] !== null && formData[key] !== undefined) {
-                    if (formData[key] instanceof File) {
-                        dataToSend.append(key, formData[key]);
-                    } else if (Array.isArray(formData[key])) {
-                        formData[key].forEach(val => dataToSend.append(`${key}[]`, val));
-                    } else {
-                        // Mapping dates directly without conversion since API expects YYYY-MM-DD now
+                const value = formData[key];
+                
+                // Only append if value is not empty (null, undefined, empty string, or empty array)
+                const isEmpty = (val) => {
+                    if (val === null || val === undefined) return true;
+                    if (typeof val === 'string' && val.trim() === '') return true;
+                    if (Array.isArray(val) && val.length === 0) return true;
+                    return false;
+                };
 
-                        // Map back specific fields if needed
+                if (!isEmpty(value)) {
+                    if (value instanceof File) {
+                        dataToSend.append(key, value);
+                    } else if (Array.isArray(value)) {
+                        value.forEach(val => dataToSend.append(`${key}[]`, val));
+                    } else {
+                        // Mapping back specific fields
                         if (key === 'national_identification_no') {
-                            dataToSend.append('adhar_no', formData[key]); // Map back to API expectation
+                            dataToSend.append('adhar_no', value);
                             return;
                         }
                         if (key === 'local_identification_no') {
-                            dataToSend.append('samagra_id', formData[key]); // Map back to API expectation
+                            dataToSend.append('samagra_id', value);
+                            return;
+                        }
+                        if (key === 'measurement_date') {
+                            dataToSend.append('measure_date', value);
+                            return;
+                        }
+                        if (key === 'route_list') {
+                            dataToSend.append('vehroute_id', value);
+                            return;
+                        }
+                        if (key === 'hostel') {
+                            dataToSend.append('hostel_id', value);
                             return;
                         }
 
-                        dataToSend.append(key, formData[key]);
+                        dataToSend.append(key, value);
                     }
                 }
             });
 
+            // Explicitly ensure student_id and student_session_id are present
+            if (formData.student_id) {
+                dataToSend.append('id', formData.student_id);
+            }
+            if (formData.student_session_id) {
+                dataToSend.append('student_session_id', formData.student_session_id);
+            }
+
             const res = await api.updateStudent(id, dataToSend); // Use updateStudent
 
             if (res.status || res.success) {
-                setSuccessMessage('Student updated successfully!');
-                window.scrollTo(0, 0);
+                toast.success('Student updated successfully!');
+                navigate(-1);
             } else {
+                toast.error(res.message || 'Failed to update student');
                 setErrorMessage(res.message || 'Failed to update student');
                 window.scrollTo(0, 0);
             }
@@ -339,26 +432,53 @@ const StudentEdit = () => {
 
     // Callback for sibling modal
     const handleAddSibling = (siblingData) => {
-        console.log("Sibling added:", siblingData);
-        // Implement logic to pre-fill parent/address data from sibling if needed
-        if (siblingData) {
+        if (!siblingData) return;
+
+        // Add to siblings list for display
+        setSiblings(prev => [...prev, siblingData]);
+
+        setFormData(prev => ({
+            ...prev,
+            religion: siblingData.religion || '',
+            cast: siblingData.cast || '',
+            blood_group: siblingData.blood_group || '',
+            category_id: siblingData.category_id || '',
+            father_name: siblingData.father_name || '',
+            father_phone: siblingData.father_phone || siblingData.guardian_phone || '',
+            father_occupation: siblingData.father_occupation || '',
+            mother_name: siblingData.mother_name || '',
+            mother_phone: siblingData.mother_phone || '',
+            mother_occupation: siblingData.mother_occupation || '',
+            guardian_is: siblingData.guardian_is || (siblingData.guardian_relation ? siblingData.guardian_relation.toLowerCase() : 'father'),
+            guardian_name: siblingData.guardian_name || '',
+            guardian_relation: siblingData.guardian_relation || '',
+            guardian_phone: siblingData.guardian_phone || '',
+            guardian_occupation: siblingData.guardian_occupation || '',
+            guardian_email: siblingData.guardian_email || '',
+            guardian_address: siblingData.guardian_address || '',
+            current_address: siblingData.current_address || '',
+            permanent_address: siblingData.permanent_address || '',
+            bank_account_no: siblingData.bank_account_no || '',
+            bank_name: siblingData.bank_name || '',
+            ifsc_code: siblingData.ifsc_code || '',
+            national_identification_no: siblingData.adhar_no || '',
+            local_identification_no: siblingData.samagra_id || '',
+            sibling_id: siblingData.id || '',
+            sibling_name: `${siblingData.firstname} ${siblingData.lastname}`.trim()
+        }));
+        toast.success(`Parent details populated from sibling: ${siblingData.firstname}`);
+    };
+
+    const handleRemoveSibling = (siblingId) => {
+        setSiblings(prev => prev.filter(s => String(s.id) !== String(siblingId)));
+        if (String(formData.sibling_id) === String(siblingId)) {
             setFormData(prev => ({
                 ...prev,
-                father_name: siblingData.father_name || prev.father_name,
-                father_phone: siblingData.father_phone || prev.father_phone,
-                father_occupation: siblingData.father_occupation || prev.father_occupation,
-                mother_name: siblingData.mother_name || prev.mother_name,
-                mother_phone: siblingData.mother_phone || prev.mother_phone,
-                mother_occupation: siblingData.mother_occupation || prev.mother_occupation,
-                guardian_name: siblingData.guardian_name || prev.guardian_name,
-                guardian_is: siblingData.guardian_is ? siblingData.guardian_is.toLowerCase() : prev.guardian_is,
-                guardian_phone: siblingData.guardian_phone || prev.guardian_phone,
-                guardian_email: siblingData.guardian_email || prev.guardian_email,
-                guardian_address: siblingData.guardian_address || prev.guardian_address,
-                current_address: siblingData.current_address || prev.current_address,
-                permanent_address: siblingData.permanent_address || prev.permanent_address,
+                sibling_id: '',
+                sibling_name: ''
             }));
         }
+        toast.success('Sibling removed from this record');
     };
 
     // UI Render - Copied from StudentAdmission but adapted
@@ -376,7 +496,7 @@ const StudentEdit = () => {
                                 <div className="box box-primary">
                                     <div className="box-header with-border">
                                         <h3 className="box-title">Edit Student</h3>
-                                        <div className="box-tools pull-right impbtntitle" style={{ zIndex: 1000, position: 'relative' }}>
+                                        <div className="box-tools pull-right impbtntitle" style={{ zIndex: 0, position: 'relative' }}>
                                             <div className="btn-group pull-right mml15">
                                                 <button onClick={() => navigate('/student/search')} className="btn btn-primary btn-sm"><i className="fa fa-arrow-left"></i> Back</button>
                                             </div>
@@ -428,7 +548,7 @@ const StudentEdit = () => {
                                                         <label>Section <small className="req"> *</small></label>
                                                         <select name="section_id" className="form-control" value={formData.section_id} onChange={handleInputChange}>
                                                             <option value="">Select</option>
-                                                            {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.section}</option>)}
+                                                            {sections.map(sec => <option key={sec.section_id || sec.id} value={sec.section_id || sec.id}>{sec.section}</option>)}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -472,10 +592,9 @@ const StudentEdit = () => {
                                                         {/* Mock categories for now, usually fetched */}
                                                         <select name="category_id" className="form-control" value={formData.category_id} onChange={handleInputChange}>
                                                             <option value="">Select</option>
-                                                            <option value="1">General</option>
-                                                            <option value="2">OBC</option>
-                                                            <option value="3">SC</option>
-                                                            <option value="4">ST</option>
+                                                            {categories.map((cat) => (
+                                                                <option key={cat.id} value={cat.id}>{cat.category}</option>
+                                                            ))}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -589,6 +708,54 @@ const StudentEdit = () => {
                                                         </button>
                                                     </div>
                                                 </div>
+
+                                                {siblings && siblings.length > 0 && (
+                                                    <div className="row">
+                                                        <div className="col-md-12">
+                                                            <h4 className="pagetitleh2" style={{ marginTop: '0' }}>Existing Siblings</h4>
+                                                            <div className="row">
+                                                                {siblings.map((sibling) => (
+                                                                    <div className="col-md-4" key={sibling.id || sibling.student_session_id}>
+                                                                        <div className="box box-widget widget-user-2" style={{ border: '1px solid #eee', marginBottom: '15px', borderRadius: '4px' }}>
+                                                                            <div className="widget-user-header bg-gray-light" style={{ padding: '10px', display: 'flex', alignItems: 'center' }}>
+                                                                                <div className="widget-user-image" style={{ marginRight: '15px', flexShrink: 0 }}>
+                                                                                    <img
+                                                                                        className="img-circle"
+                                                                                        src={getImageUrl(sibling.image)}
+                                                                                        alt="Sibling"
+                                                                                        style={{ width: '60px', height: '60px', objectFit: 'cover', border: '2px solid #fff' }}
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="widget-user-details" style={{ flexGrow: 1, overflow: 'hidden' }}>
+                                                                                    <div className="pull-right">
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            className="btn btn-default btn-xs text-red"
+                                                                                            title="Remove"
+                                                                                            onClick={() => handleRemoveSibling(sibling.id)}
+                                                                                            style={{ border: "none", background: "transparent" }}
+                                                                                        >
+                                                                                            <i className="fa fa-trash-o" style={{ fontSize: "16px" }}></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                    <h5 style={{ margin: '0', fontSize: '12px', color: '#888', fontWeight: '600' }}>
+                                                                                        {sibling.class} ({sibling.section})
+                                                                                    </h5>
+                                                                                    <h4 style={{ margin: '2px 0 0 0', fontSize: '15px', fontWeight: 'bold', color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                                                        {sibling.firstname} {sibling.lastname}
+                                                                                    </h4>
+                                                                                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#555' }}>
+                                                                                        Adm No: <strong>{sibling.admission_no}</strong>
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Parent Guardian Detail */}
@@ -758,26 +925,6 @@ const StudentEdit = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="row">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>City</label>
-                                                                <input type="text" className="form-control" name="city" value={formData.city} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>State</label>
-                                                                <input type="text" className="form-control" name="state" value={formData.state} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Pincode</label>
-                                                                <input type="text" className="form-control" name="pincode" value={formData.pincode} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
 
                                                     {/* Misc */}
                                                     <h4 className="pagetitleh2">Miscellaneous Details</h4>
@@ -815,14 +962,12 @@ const StudentEdit = () => {
                                                             </div>
                                                         </div>
                                                         <div className="col-md-4">
-                                                            <label>RTE</label>
-                                                            <div className="radio">
-                                                                <label className="radio-inline">
-                                                                    <input type="radio" name="rte" value="Yes" checked={formData.rte === 'Yes'} onChange={handleInputChange} /> Yes
-                                                                </label>
-                                                                <label className="radio-inline">
-                                                                    <input type="radio" name="rte" value="No" checked={formData.rte === 'No'} onChange={handleInputChange} /> No
-                                                                </label>
+                                                            <div className="form-group">
+                                                                <label>RTE</label>
+                                                                <select className="form-control" name="rte" value={formData.rte} onChange={handleInputChange}>
+                                                                    <option value="Yes">Yes</option>
+                                                                    <option value="No">No</option>
+                                                                </select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -968,12 +1113,13 @@ const StudentEdit = () => {
                                 </div>
                             </div>
                         </div>
-                    )}
-                </section>
-            </div>
+                    )
+                    }
+                </section >
+            </div >
             <Footer />
             {isSiblingModalOpen && <SiblingModal isOpen={isSiblingModalOpen} onClose={() => setIsSiblingModalOpen(false)} onAddSibling={handleAddSibling} />}
-        </div>
+        </div >
     );
 };
 

@@ -4,9 +4,10 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const TimetableCreate = () => {
+    const navigate = useNavigate();
     // Top Level Criteria
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
@@ -32,6 +33,7 @@ const TimetableCreate = () => {
     const [loading, setLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
     const [showTimetable, setShowTimetable] = useState(false);
+    const [dayLoading, setDayLoading] = useState(false);
 
     // Initial Data Fetch (Classes, Staff)
     useEffect(() => {
@@ -93,6 +95,75 @@ const TimetableCreate = () => {
         }
     };
 
+    // Fetch existing timetable for a specific day using getBydategroupclasssection
+    const fetchDayTimetable = async (day, classId, sectionId, subjectGroupId) => {
+        setDayLoading(true);
+        try {
+            const payload = {
+                day: day,
+                class_id: classId,
+                section_id: sectionId,
+                subject_group_id: subjectGroupId
+            };
+            const response = await api.getTimetableData(payload);
+
+            if (response && response.status === 'success') {
+                // Update staff and subject lists from the response
+                if (response.staff && response.staff.length > 0) {
+                    setStaffList(response.staff);
+                }
+                if (response.subject && response.subject.length > 0) {
+                    setSubjectList(response.subject);
+                }
+
+                // Map prev_record into rows
+                const prevRecords = response.prev_record || [];
+                if (prevRecords.length > 0) {
+                    const rows = prevRecords.map(r => ({
+                        id: r.id || Date.now() + Math.random(),
+                        subject_id: r.subject_group_subject_id || '',
+                        staff_id: r.staff_id || '',
+                        time_from: r.time_from || '',
+                        time_to: r.time_to || '',
+                        room_no: r.room_no || '',
+                        prev_id: r.id || '0'
+                    }));
+
+                    setTimetableByDay(prev => ({
+                        ...prev,
+                        [day]: rows
+                    }));
+                    setInitialRecordIdsByDay(prev => ({
+                        ...prev,
+                        [day]: prevRecords.map(r => r.id).filter(id => id)
+                    }));
+                } else {
+                    // No existing records, set an empty row
+                    setTimetableByDay(prev => ({
+                        ...prev,
+                        [day]: [{
+                            id: Date.now() + Math.random(),
+                            subject_id: '',
+                            staff_id: '',
+                            time_from: '',
+                            time_to: '',
+                            room_no: '',
+                            prev_id: '0'
+                        }]
+                    }));
+                    setInitialRecordIdsByDay(prev => ({
+                        ...prev,
+                        [day]: []
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching day timetable:', error);
+        } finally {
+            setDayLoading(false);
+        }
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
         if (!selectedClass || !selectedSection || !selectedSubjectGroup) {
@@ -104,7 +175,7 @@ const TimetableCreate = () => {
         try {
             const payload = {
                 class_id: selectedClass,
-                section_id: selectedSection, // Directly using numerical section_id
+                section_id: selectedSection,
                 subject_group_id: selectedSubjectGroup
             };
             const response = await api.createTimetablePost(payload);
@@ -125,21 +196,7 @@ const TimetableCreate = () => {
             const initialIds = {};
 
             daysToUse.forEach(day => {
-                const dayKey = day.toLowerCase();
-                const existingRows = response.timetable_data?.[dayKey] || [];
-
-                initialIds[day] = existingRows.map(r => r.id).filter(id => id);
-
-                newTimetable[day] = existingRows.length > 0 ? existingRows.map(r => ({
-                    ...r,
-                    id: r.id || Date.now() + Math.random(),
-                    subject_id: r.subject_group_subject_id || r.subject_id || '',
-                    staff_id: r.staff_id || '',
-                    time_from: r.time_from || '',
-                    time_to: r.time_to || '',
-                    room_no: r.room_no || '',
-                    prev_id: r.id || '0'
-                })) : [{
+                newTimetable[day] = [{
                     id: Date.now() + Math.random(),
                     subject_id: '',
                     staff_id: '',
@@ -148,17 +205,56 @@ const TimetableCreate = () => {
                     room_no: '',
                     prev_id: '0'
                 }];
+                initialIds[day] = [];
             });
 
             setTimetableByDay(newTimetable);
             setInitialRecordIdsByDay(initialIds);
+            setActiveTab(0);
             setShowTimetable(true);
+
+            // Fetch existing timetable for the first day
+            const firstDay = daysToUse[0];
+            if (firstDay) {
+                fetchDayTimetable(firstDay, selectedClass, selectedSection, selectedSubjectGroup);
+            }
         } catch (error) {
             console.error('Error searching timetable:', error);
             toast.error('Failed to fetch timetable data');
         } finally {
             setSearchLoading(false);
         }
+    };
+
+    const parseTime = (timeStr) => {
+        if (!timeStr) return new Date();
+        const parts = timeStr.trim().split(/\s+/);
+        const time = parts[0];
+        const modifier = parts[1];
+
+        let [hoursStr, minutesStr] = (time || "").split(':');
+        let hours = parseInt(hoursStr, 10) || 0;
+        let minutes = parseInt(minutesStr, 10) || 0;
+
+        if (modifier && modifier.toUpperCase() === 'PM' && hours < 12) {
+            hours += 12;
+        }
+        if (modifier && modifier.toUpperCase() === 'AM' && hours === 12) {
+            hours = 0;
+        }
+
+        const d = new Date();
+        d.setHours(hours, minutes, 0, 0);
+        return d;
+    };
+
+    const formatTime = (date) => {
+        let hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${hours}:${minutes} ${ampm}`;
     };
 
     const handleApplyParameters = (e) => {
@@ -168,60 +264,84 @@ const TimetableCreate = () => {
             return;
         }
 
-        const currentDay = daysList[activeTab];
-        const rows = [...(timetableByDay[currentDay] || [])];
-        if (rows.length === 0) return;
-
-        const parseTime = (timeStr) => {
-            if (!timeStr) return new Date();
-            // Handle HH:mm or hh:mm A
-            const [time, modifier] = timeStr.split(' ');
-            let [hours, minutes] = time.split(':');
-            if (hours === '12') hours = '00';
-            if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-            const d = new Date();
-            d.setHours(hours, minutes, 0, 0);
-            return d;
-        };
-
-        const formatTime = (date) => {
-            let hours = date.getHours();
-            const minutes = date.getMinutes().toString().padStart(2, '0');
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            return `${hours}:${minutes} ${ampm}`;
-        };
-
-        let lastTime = parseTime(startTime);
-        const durationMin = parseInt(duration, 10);
+        const durationMin = parseInt(duration, 10) || 0;
         const intervalMin = parseInt(interval, 10) || 0;
 
-        const updatedRows = rows.map(row => {
-            const timeFrom = formatTime(lastTime);
-            lastTime.setMinutes(lastTime.getMinutes() + durationMin);
-            const timeTo = formatTime(lastTime);
-            lastTime.setMinutes(lastTime.getMinutes() + intervalMin);
-            return { ...row, time_from: timeFrom, time_to: timeTo, room_no: roomNo || row.room_no };
+        const newTimetable = { ...timetableByDay };
+
+        Object.keys(newTimetable).forEach(day => {
+            const rows = newTimetable[day];
+            if (rows && rows.length > 0) {
+                let lastTime = parseTime(startTime);
+                newTimetable[day] = rows.map(row => {
+                    const timeFrom = formatTime(lastTime);
+                    lastTime.setMinutes(lastTime.getMinutes() + durationMin);
+                    const timeTo = formatTime(lastTime);
+                    lastTime.setMinutes(lastTime.getMinutes() + intervalMin);
+
+                    return {
+                        ...row,
+                        time_from: timeFrom,
+                        time_to: timeTo,
+                        room_no: roomNo !== '' ? roomNo : row.room_no
+                    };
+                });
+            }
         });
 
-        setTimetableByDay(prev => ({ ...prev, [currentDay]: updatedRows }));
+        setTimetableByDay(newTimetable);
+        toast.success('Parameters applied to all days successfully');
     };
 
     const handleAddRow = () => {
         const currentDay = daysList[activeTab];
+        const rows = timetableByDay[currentDay] || [];
+
+        let newTimeFrom = '';
+        let newTimeTo = '';
+        let newRoomNo = roomNo || '';
+
+        const durationMin = parseInt(duration, 10) || 0;
+        const intervalMin = parseInt(interval, 10) || 0;
+
+        // Auto-calculate the next period's start and end times if duration is specified
+        if (durationMin > 0) {
+            if (rows.length > 0) {
+                // Base it on the last row's end time
+                const lastRow = rows[rows.length - 1];
+                if (lastRow && lastRow.time_to) {
+                    let lastTime = parseTime(lastRow.time_to);
+                    lastTime.setMinutes(lastTime.getMinutes() + intervalMin);
+                    newTimeFrom = formatTime(lastTime);
+                    lastTime.setMinutes(lastTime.getMinutes() + durationMin);
+                    newTimeTo = formatTime(lastTime);
+
+                    // Retain the room number from the last row if local parameter roomNo is blank
+                    if (!roomNo && lastRow.room_no) {
+                        newRoomNo = lastRow.room_no;
+                    }
+                }
+            } else if (startTime) {
+                // No rows yet, base it on the quick parameter start time
+                let lastTime = parseTime(startTime);
+                newTimeFrom = formatTime(lastTime);
+                lastTime.setMinutes(lastTime.getMinutes() + durationMin);
+                newTimeTo = formatTime(lastTime);
+            }
+        }
+
         const newRow = {
             id: Date.now() + Math.random(),
             subject_id: '',
             staff_id: '',
-            time_from: '',
-            time_to: '',
-            room_no: '',
+            time_from: newTimeFrom,
+            time_to: newTimeTo,
+            room_no: newRoomNo,
             prev_id: '0'
         };
         setTimetableByDay(prev => ({
             ...prev,
-            [currentDay]: [...(prev[currentDay] || []), newRow]
+            [currentDay]: [...rows, newRow]
         }));
     };
 
@@ -284,6 +404,7 @@ const TimetableCreate = () => {
             const response = await api.saveTimetableGroup(payload);
             if (response.status === 'success' || response.status === true || response.message?.includes('Successfully')) {
                 toast.success(response.message || 'Timetable saved successfully for ' + currentDay);
+                navigate('/admin/timetable/classreport');
             } else {
                 toast.error(response.message || 'Failed to save timetable');
             }
@@ -382,7 +503,7 @@ const TimetableCreate = () => {
                                                         <div className="form-group">
                                                             <label>Period Start Time<small className="req"> *</small></label>
                                                             <div className="input-group">
-                                                                <input type="text" className="form-control" placeholder="10:00 AM" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
+                                                                <input type="time" className="form-control" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
                                                                 <div className="input-group-addon"><i className="fa fa-clock-o"></i></div>
                                                             </div>
                                                         </div>
@@ -426,87 +547,94 @@ const TimetableCreate = () => {
                                             <ul className="nav nav-tabs">
                                                 {daysList.map((day, idx) => (
                                                     <li key={day} className={activeTab === idx ? 'active' : ''}>
-                                                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab(idx); }}>{day}</a>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab(idx); fetchDayTimetable(day, selectedClass, selectedSection, selectedSubjectGroup); }}>{day}</a>
                                                     </li>
                                                 ))}
                                             </ul>
                                             <div className="tab-content">
                                                 {daysList.map((day, dIdx) => (
                                                     <div key={day} className={`tab-pane ${activeTab === dIdx ? 'active' : ''}`}>
-                                                        <div className="row relative">
-                                                            <button type="button" onClick={handleAddRow} className="btn btn-primary btn-sm addbtnright">
-                                                                <i className="fa fa-plus"></i> Add New
-                                                            </button>
-                                                            <div className="col-md-12">
-                                                                <form onSubmit={handleSave}>
-                                                                    <div className="table-responsive" style={{ marginTop: '20px' }}>
-                                                                        <table className="table table-bordered table-hover">
-                                                                            <thead>
-                                                                                <tr>
-                                                                                    <th>Subject</th>
-                                                                                    <th>Teacher</th>
-                                                                                    <th>Time From<small className="astrike"> *</small></th>
-                                                                                    <th>Time To<small className="astrike"> *</small></th>
-                                                                                    <th>Room No</th>
-                                                                                    <th className="text-right">Action</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                {(timetableByDay[day] || []).map((row, rIdx) => (
-                                                                                    <tr key={row.id}>
-                                                                                        <td>
-                                                                                            <select
-                                                                                                className="form-control"
-                                                                                                value={row.subject_id}
-                                                                                                onChange={(e) => handleInputChange(rIdx, 'subject_id', e.target.value)}
-                                                                                                required
-                                                                                            >
-                                                                                                <option value="">Select</option>
-                                                                                                {subjectList.map(s => <option key={s.id} value={s.id}>{s.name} {s.code && `(${s.code})`}</option>)}
-                                                                                            </select>
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <select
-                                                                                                className="form-control"
-                                                                                                value={row.staff_id}
-                                                                                                onChange={(e) => handleInputChange(rIdx, 'staff_id', e.target.value)}
-                                                                                                required
-                                                                                            >
-                                                                                                <option value="">Select</option>
-                                                                                                {staffList.map(t => <option key={t.id} value={t.id}>{t.name} {t.surname} ({t.employee_id})</option>)}
-                                                                                            </select>
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <div className="input-group">
-                                                                                                <input type="text" className="form-control" placeholder="10:00 AM" value={row.time_from} onChange={(e) => handleInputChange(rIdx, 'time_from', e.target.value)} required />
-                                                                                                <div className="input-group-addon"><i className="fa fa-clock-o"></i></div>
-                                                                                            </div>
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <div className="input-group">
-                                                                                                <input type="text" className="form-control" placeholder="11:00 AM" value={row.time_to} onChange={(e) => handleInputChange(rIdx, 'time_to', e.target.value)} required />
-                                                                                                <div className="input-group-addon"><i className="fa fa-clock-o"></i></div>
-                                                                                            </div>
-                                                                                        </td>
-                                                                                        <td>
-                                                                                            <input type="text" className="form-control" value={row.room_no} onChange={(e) => handleInputChange(rIdx, 'room_no', e.target.value)} />
-                                                                                        </td>
-                                                                                        <td className="text-right">
-                                                                                            <button type="button" onClick={() => handleDeleteRow(rIdx)} className="btn btn-danger btn-sm">
-                                                                                                <i className="fa fa-trash"></i>
-                                                                                            </button>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                ))}
-                                                                            </tbody>
-                                                                        </table>
-                                                                    </div>
-                                                                    <button type="submit" className="btn btn-primary btn-sm pull-right" style={{ marginTop: '10px' }}>
-                                                                        <i className="fa fa-save"></i> Save
-                                                                    </button>
-                                                                </form>
+                                                        {dayLoading && activeTab === dIdx ? (
+                                                            <div className="text-center" style={{ padding: '30px' }}>
+                                                                <i className="fa fa-spinner fa-spin fa-2x"></i>
+                                                                <p>Loading timetable for {day}...</p>
                                                             </div>
-                                                        </div>
+                                                        ) : (
+                                                            <div className="row relative">
+                                                                <button type="button" onClick={handleAddRow} className="btn btn-primary btn-sm addbtnright">
+                                                                    <i className="fa fa-plus"></i> Add New
+                                                                </button>
+                                                                <div className="col-md-12">
+                                                                    <form onSubmit={handleSave}>
+                                                                        <div className="table-responsive" style={{ marginTop: '20px' }}>
+                                                                            <table className="table table-bordered table-hover">
+                                                                                <thead>
+                                                                                    <tr>
+                                                                                        <th>Subject</th>
+                                                                                        <th>Teacher</th>
+                                                                                        <th>Time From<small className="astrike"> *</small></th>
+                                                                                        <th>Time To<small className="astrike"> *</small></th>
+                                                                                        <th>Room No</th>
+                                                                                        <th className="text-right">Action</th>
+                                                                                    </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    {(timetableByDay[day] || []).map((row, rIdx) => (
+                                                                                        <tr key={row.id}>
+                                                                                            <td>
+                                                                                                <select
+                                                                                                    className="form-control"
+                                                                                                    value={row.subject_id}
+                                                                                                    onChange={(e) => handleInputChange(rIdx, 'subject_id', e.target.value)}
+                                                                                                    required
+                                                                                                >
+                                                                                                    <option value="">Select</option>
+                                                                                                    {subjectList.map(s => <option key={s.id} value={s.id}>{s.name} {s.code && `(${s.code})`}</option>)}
+                                                                                                </select>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <select
+                                                                                                    className="form-control"
+                                                                                                    value={row.staff_id}
+                                                                                                    onChange={(e) => handleInputChange(rIdx, 'staff_id', e.target.value)}
+                                                                                                    required
+                                                                                                >
+                                                                                                    <option value="">Select</option>
+                                                                                                    {staffList.map(t => <option key={t.id} value={t.id}>{t.name} {t.surname} ({t.employee_id})</option>)}
+                                                                                                </select>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <div className="input-group">
+                                                                                                    <input type="text" className="form-control" placeholder="10:00 AM" value={row.time_from} onChange={(e) => handleInputChange(rIdx, 'time_from', e.target.value)} required />
+                                                                                                    <div className="input-group-addon"><i className="fa fa-clock-o"></i></div>
+                                                                                                </div>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <div className="input-group">
+                                                                                                    <input type="text" className="form-control" placeholder="11:00 AM" value={row.time_to} onChange={(e) => handleInputChange(rIdx, 'time_to', e.target.value)} required />
+                                                                                                    <div className="input-group-addon"><i className="fa fa-clock-o"></i></div>
+                                                                                                </div>
+                                                                                            </td>
+                                                                                            <td>
+                                                                                                <input type="text" className="form-control" value={row.room_no} onChange={(e) => handleInputChange(rIdx, 'room_no', e.target.value)} />
+                                                                                            </td>
+                                                                                            <td className="text-right">
+                                                                                                <button type="button" onClick={() => handleDeleteRow(rIdx)} className="btn btn-danger btn-sm">
+                                                                                                    <i className="fa fa-trash"></i>
+                                                                                                </button>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    ))}
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                        <button type="submit" className="btn btn-primary btn-sm pull-right" style={{ marginTop: '10px' }}>
+                                                                            <i className="fa fa-save"></i> Save
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

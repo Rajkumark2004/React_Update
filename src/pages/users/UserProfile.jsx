@@ -5,6 +5,7 @@ import Header from './user_components/Header_user';
 import Sidebar from './user_components/Sidebar_user';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
+import { api_users } from '../../services/api_users';
 import '../../utils/include_files.js';
 
 const Profile = () => {
@@ -19,20 +20,43 @@ const Profile = () => {
     });
 
     const [activeTab, setActiveTab] = useState('profile');
-    const [showNotice, setShowNotice] = useState(true);
 
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Detailed Fees States
+    const [processedFees, setProcessedFees] = useState([]);
+    const [transportFees, setTransportFees] = useState([]);
+    const [discountFees, setDiscountFees] = useState([]);
+    const [currencySymbol, setCurrencySymbol] = useState('$');
+    const [totals, setTotals] = useState({
+        amount: 0,
+        paid: 0,
+        discount: 0,
+        fine: 0,
+        balance: 0
+    });
+
+    // Documents, Behavioural Notes, Timeline States
+    const [documentsData, setDocumentsData] = useState([]);
+    const [behaviouralNotes, setBehaviouralNotes] = useState([]);
+    const [timelineData, setTimelineData] = useState([]);
 
 
     const sessionYear = currentSession?.session || '2024-25';
 
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            await api_users.userLogout();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            clearSession();
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('token');
+            navigate('/user/login');
+        }
     };
 
 
@@ -41,98 +65,165 @@ const Profile = () => {
         const fetchProfileData = async () => {
             try {
                 setLoading(true);
-                const { api_users } = await import('../../services/api_users');
-                const res = await api_users.getUserProfile();
+                const profileRes = await api_users.getUserProfile();
 
-                if (res && res.status && res.data) {
-                    setProfileData(res.data);
+                if (profileRes && profileRes.status && profileRes.data) {
+                    setProfileData(profileRes.data);
 
-                    if (res.data.student) {
+                    if (profileRes.data.student) {
                         setUserData({
-                            name: `${res.data.student.firstname} ${res.data.student.lastname}`.trim() || 'Student',
+                            name: `${profileRes.data.student.firstname} ${profileRes.data.student.lastname}`.trim() || 'Student',
                             role: 'Student',
-                            id: res.data.student.id,
-                            admission_no: res.data.student.admission_no,
-                            avatar: res.data.student.image ? `${res.data.student.base_url || ''}uploads/student_images/${res.data.student.image}` : "/uploads/student_images/no_image.png",
-                            adminLogoUrl: "" // Update if logo is returned by profile API
+                            id: profileRes.data.student.id,
+                            admission_no: profileRes.data.student.admission_no,
+                            avatar: profileRes.data.student.image ? `${profileRes.data.student.base_url || ''}uploads/student_images/${profileRes.data.student.image}` : "/uploads/student_images/no_image.png",
+                            adminLogoUrl: ""
                         });
                     }
+
+                    // Populate documents, behavioural notes, timeline
+                    setDocumentsData(profileRes.data.student_documents || profileRes.data.student?.student_documents || []);
+                    setBehaviouralNotes(profileRes.data.behavioural_notes || profileRes.data.student?.behavioural_notes || []);
+                    setTimelineData(profileRes.data.timeline || profileRes.data.student?.timeline || []);
                 }
+
+                // Fetch detailed Fees data
+                const feesRes = await api_users.getFees();
+                if (feesRes && feesRes.status && feesRes.data) {
+                    processFeesData(feesRes.data);
+                }
+
             } catch (error) {
-                console.error("Failed to load user profile:", error);
+                console.error("Failed to load user profile or fees:", error);
             } finally {
                 setLoading(false);
             }
         };
 
+        const processFeesData = (data) => {
+            let processed = [];
+            let tAmt = 0, tPaid = 0, tDisc = 0, tFine = 0, tBal = 0;
+            const currentDate = new Date();
+
+            if (data.student_due_fee) {
+                data.student_due_fee.forEach(group => {
+                    if (group.fees) {
+                        group.fees.forEach(fee => {
+                            const details = parseAmountDetailDetailed(fee.amount_detail);
+                            const amt = parseFloat(fee.amount || 0);
+                            const fFine = parseFloat(details.fineTotal || 0);
+                            const fDisc = parseFloat(details.discountTotal || 0);
+                            const fPaid = parseFloat(details.paidTotal || 0);
+
+                            let fineAmount = 0;
+                            if (fee.due_date && fee.due_date !== "0000-00-00") {
+                                const dueDate = new Date(fee.due_date);
+                                if (dueDate < currentDate) {
+                                    fineAmount = parseFloat(fee.fine_amount || 0);
+                                }
+                            }
+
+                            const fBal = amt + fFine - fDisc - fPaid;
+                            let status = "Unpaid";
+                            if (fBal <= 0) {
+                                status = "Paid";
+                            } else if (details.payments.length > 0) {
+                                status = "Partial";
+                            }
+
+                            processed.push({
+                                ...fee,
+                                groupName: group.name,
+                                groupIsSystem: group.is_system,
+                                feeDetails: details,
+                                balance: fBal < 0 ? 0 : fBal,
+                                status: status,
+                                total_paid: fPaid,
+                                total_discount: fDisc,
+                                total_fine: fFine,
+                                fine_amount_display: fineAmount
+                            });
+
+                            tAmt += amt;
+                            tFine += fFine;
+                            tDisc += fDisc;
+                            tPaid += fPaid;
+                            tBal += (fBal < 0 ? 0 : fBal);
+                        });
+                    }
+                });
+            }
+
+            // Transport Fees
+            let transportList = [];
+            if (data.transport_fees) {
+                data.transport_fees.forEach(fee => {
+                    const details = parseAmountDetailDetailed(fee.amount_detail);
+                    const amt = parseFloat(fee.fees || 0);
+                    const fFine = parseFloat(details.fineTotal || 0);
+                    const fDisc = parseFloat(details.discountTotal || 0);
+                    const fPaid = parseFloat(details.paidTotal || 0);
+
+                    const fBal = amt + fFine - fDisc - fPaid;
+                    let status = "Unpaid";
+                    if (fBal <= 0) {
+                        status = "Paid";
+                    } else if (details.payments.length > 0) {
+                        status = "Partial";
+                    }
+
+                    transportList.push({
+                        ...fee,
+                        feeDetails: details,
+                        balance: fBal < 0 ? 0 : fBal,
+                        status: status,
+                        total_paid: fPaid,
+                        total_discount: fDisc,
+                        total_fine: fFine
+                    });
+                    tAmt += amt;
+                    tFine += fFine;
+                    tDisc += fDisc;
+                    tPaid += fPaid;
+                    tBal += (fBal < 0 ? 0 : fBal);
+                });
+            }
+
+            setProcessedFees(processed);
+            setTransportFees(transportList);
+            setDiscountFees(data.student_discount_fee || []);
+            setCurrencySymbol(data.currency_symbol || '₹');
+            setTotals({ amount: tAmt, paid: tPaid, discount: tDisc, fine: tFine, balance: tBal });
+        };
+
         fetchProfileData();
     }, []);
 
-    const parseAmountDetail = (detailStr) => {
-        let paid = 0;
-        let mode = '';
-        let date = '';
-        let discount = 0;
-        let fine = 0;
-        let paymentId = '';
+    const parseAmountDetailDetailed = (detailStr) => {
+        let payments = [];
+        let paidTotal = 0, fineTotal = 0, discountTotal = 0;
         try {
-            if (detailStr && detailStr !== "0" && typeof detailStr === 'string') {
+            if (detailStr && detailStr !== "0") {
                 const details = JSON.parse(detailStr);
-                Object.values(details).forEach((entry) => {
-                    paid += parseFloat(entry.amount || 0);
-                    discount += parseFloat(entry.amount_discount || 0);
-                    fine += parseFloat(entry.amount_fine || 0);
-                    mode = mode ? `${mode}, ${entry.payment_mode}` : entry.payment_mode;
-                    date = date ? `${date}, ${entry.date}` : entry.date;
-                    paymentId = paymentId ? `${paymentId}, ${entry.inv_no}` : (entry.inv_no || '');
+                Object.values(details).forEach(entry => {
+                    payments.push(entry);
+                    paidTotal += parseFloat(entry.amount || 0);
+                    fineTotal += parseFloat(entry.amount_fine || 0);
+                    discountTotal += parseFloat(entry.amount_discount || 0);
                 });
             }
-        } catch (e) {
-            console.error('Error parsing fee details', e);
-        }
-        return {
-            paid: paid.toFixed(2),
-            mode,
-            date,
-            discount: discount.toFixed(2),
-            fine: fine.toFixed(2),
-            paymentId
-        };
+        } catch (e) { console.error('Error parsing details', e); }
+        return { payments, paidTotal, fineTotal, discountTotal };
+    };
+
+    const amountFormat = (num) => {
+        if (!num || isNaN(num)) return "0.00";
+        return parseFloat(num).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
     const themeColor = "#9c68e4";
 
     const studentObj = profileData?.student || {};
-    const feesData = profileData?.student_due_fee || [];
-    const attendanceTypes = profileData?.attendance_types || [];
-    const timelineData = profileData?.timeline || [];
-    const documentsData = profileData?.student_docs || [];
-    const behaviouralNotes = profileData?.behavioural_notes || [];
-
-    // Calculate Grand Totals for Fees
-    let grandTotalAmount = 0;
-    let grandTotalPaid = 0;
-    let grandTotalDiscount = 0;
-    let grandTotalFine = 0;
-    let grandTotalBalance = 0;
-
-    feesData.forEach(group => {
-        if (group.fees && group.fees.length > 0) {
-            group.fees.forEach(fee => {
-                const amt = parseFloat(fee.amount || 0);
-                const { paid, discount, fine } = parseAmountDetail(fee.amount_detail);
-                const feePaid = parseFloat(paid);
-                const feeDiscount = parseFloat(discount);
-                const feeFine = parseFloat(fine);
-
-                grandTotalAmount += amt;
-                grandTotalPaid += feePaid;
-                grandTotalDiscount += feeDiscount;
-                grandTotalFine += feeFine;
-                grandTotalBalance += (amt + feeFine - feeDiscount - feePaid);
-            });
-        }
-    });
 
     const attendanceData = profileData?.student_attendance || [];
     let totalPresent = 0;
@@ -323,13 +414,6 @@ const Profile = () => {
 
             <div className="content-wrapper" style={{ minHeight: "626px", marginTop: "0px" }}>
                 <section className="content" style={{ padding: '15px' }}>
-                    {showNotice && (
-                        <div className="notice-bar">
-                            <span>Holiday Notice Cancel</span>
-                            <span className="close-btn" onClick={() => setShowNotice(false)}>&times;</span>
-                        </div>
-                    )}
-
                     <div className="row">
                         <div className="col-md-3">
                             <div className="profile-box">
@@ -530,89 +614,133 @@ const Profile = () => {
 
                                     {activeTab === 'fees' && (
                                         <div className="table-responsive" style={{ padding: '15px' }}>
-                                            <table className="fees-table">
+                                            <table className="table table-striped table-bordered table-hover">
                                                 <thead>
                                                     <tr>
-                                                        <th>Fees Group</th>
-                                                        <th>Fees Code</th>
-                                                        <th>Due Date</th>
-                                                        <th>Status</th>
-                                                        <th>Amount (₹)</th>
-                                                        <th>Payment ID</th>
-                                                        <th>Mode</th>
-                                                        <th>Date</th>
-                                                        <th>Discount (₹)</th>
-                                                        <th>Fine (₹)</th>
-                                                        <th>Paid (₹)</th>
-                                                        <th>Balance (₹)</th>
+                                                        <th align="left">Fees Group</th>
+                                                        <th align="left">Fees Code</th>
+                                                        <th align="left">Due Date</th>
+                                                        <th align="left">Status</th>
+                                                        <th className="text-right">Amount ({currencySymbol})</th>
+                                                        <th className="text-left">Payment ID</th>
+                                                        <th className="text-left">Mode</th>
+                                                        <th className="text-left">Date</th>
+                                                        <th className="text-right">Discount ({currencySymbol})</th>
+                                                        <th className="text-right">Fine ({currencySymbol})</th>
+                                                        <th className="text-right">Paid ({currencySymbol})</th>
+                                                        <th className="text-right">Balance ({currencySymbol})</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {feesData.length > 0 ? (
-                                                        feesData.map((group, gIdx) => (
-                                                            <React.Fragment key={gIdx}>
-                                                                {group.fees && group.fees.length > 0 ? (
-                                                                    group.fees.map((fee, fIdx) => {
-                                                                        const amt = parseFloat(fee.amount || 0);
-                                                                        const { paid, mode, date, discount, fine, paymentId } = parseAmountDetail(fee.amount_detail);
-
-                                                                        const paidAmt = parseFloat(paid);
-                                                                        const disAmt = parseFloat(discount);
-                                                                        const fineAmt = parseFloat(fine);
-                                                                        const balance = amt + fineAmt - disAmt - paidAmt;
-
-                                                                        const isPaid = balance <= 0 && paidAmt > 0;
-                                                                        const isPartial = balance > 0 && paidAmt > 0;
-                                                                        const isUnpaid = paidAmt === 0;
-
-                                                                        let statusText = "Unpaid";
-                                                                        let statusClass = "status-unpaid";
-                                                                        if (isPaid) {
-                                                                            statusText = "Paid";
-                                                                            statusClass = "status-paid";
-                                                                        } else if (isPartial) {
-                                                                            statusText = "Partial";
-                                                                            statusClass = "status-warning";
-                                                                        }
-
-                                                                        return (
-                                                                            <tr key={`${gIdx}-${fIdx}`} className="fees-summary-row" style={{ background: isPaid ? '#fff' : '#fde8e8' }}>
-                                                                                <td>{group.name} ({fee.type})</td>
-                                                                                <td>{fee.code}</td>
-                                                                                <td>{fee.due_date && fee.due_date !== '0000-00-00' ? fee.due_date : ''}</td>
-                                                                                <td><span className={`status-badge ${statusClass}`}>{statusText}</span></td>
-                                                                                <td>{amt.toFixed(2)}</td>
-                                                                                <td>{paymentId}</td>
-                                                                                <td>{mode}</td>
-                                                                                <td>{date}</td>
-                                                                                <td>{discount}</td>
-                                                                                <td>{fine}</td>
-                                                                                <td>{paid}</td>
-                                                                                <td>{balance.toFixed(2)}</td>
-                                                                            </tr>
-                                                                        );
-                                                                    })
-                                                                ) : null}
-                                                            </React.Fragment>
-                                                        ))
-                                                    ) : (
+                                                    {processedFees.length === 0 && transportFees.length === 0 && (
                                                         <tr>
-                                                            <td colSpan="12" style={{ textAlign: 'center', padding: '20px' }}>
-                                                                No Fees Record Found
+                                                            <td colSpan="12" className="text-center text-danger">No fees data found.</td>
+                                                        </tr>
+                                                    )}
+                                                    {processedFees.map((fee, feeIndex) => {
+                                                        const balance = fee.balance;
+                                                        const status = fee.status;
+                                                        const statusLabel = status === 'Paid' ? 'paid' : (status === 'Partial' ? 'warning' : 'unpaid');
+
+                                                        return (
+                                                            <React.Fragment key={`fee-${feeIndex}`}>
+                                                                <tr className={status === 'Paid' ? "sub-row" : "fees-summary-row"}>
+                                                                    <td align="left">{fee.name} ({fee.type})</td>
+                                                                    <td align="left">{fee.code}</td>
+                                                                    <td align="left">{fee.due_date === "0000-00-00" ? "" : fee.due_date}</td>
+                                                                    <td align="left"><span className={`status-badge status-${statusLabel}`}>{status}</span></td>
+                                                                    <td className="text-right">
+                                                                        {amountFormat(fee.amount)}
+                                                                        {fee.fine_amount_display > 0 && <span className="text text-danger"> + {amountFormat(fee.fine_amount_display)}</span>}
+                                                                    </td>
+                                                                    <td></td><td></td><td></td>
+                                                                    <td className="text-right">{amountFormat(fee.total_discount)}</td>
+                                                                    <td className="text-right">{amountFormat(fee.total_fine)}</td>
+                                                                    <td className="text-right">{amountFormat(fee.total_paid)}</td>
+                                                                    <td className="text-right">{balance > 0 ? amountFormat(balance) : ""}</td>
+                                                                </tr>
+                                                                {(fee.feeDetails?.payments || []).map((deposit, dIndex) => (
+                                                                    <tr key={`dep-${dIndex}`} className="white-td">
+                                                                        <td colSpan="4"></td>
+                                                                        <td className="text-right"><i className="fa fa-level-up fa-rotate-90" style={{ color: '#999' }}></i></td>
+                                                                        <td className="text-left">{fee.student_fees_deposite_id}/{deposit.inv_no}</td>
+                                                                        <td className="text-left">{deposit.payment_mode}</td>
+                                                                        <td className="text-left">{deposit.date}</td>
+                                                                        <td className="text-right">{amountFormat(deposit.amount_discount)}</td>
+                                                                        <td className="text-right">{amountFormat(deposit.amount_fine)}</td>
+                                                                        <td className="text-right">{amountFormat(deposit.amount)}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                ))}
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+
+                                                    {transportFees.map((fee, feeIndex) => {
+                                                        const balance = parseFloat(fee.fees) + parseFloat(fee.feeDetails?.fineTotal || 0) - parseFloat(fee.feeDetails?.discountTotal || 0) - parseFloat(fee.feeDetails?.paidTotal || 0);
+                                                        const status = balance <= 0 ? "Paid" : (fee.feeDetails?.payments?.length > 0 ? "Partial" : "Unpaid");
+                                                        const statusLabel = status === 'Paid' ? 'paid' : (status === 'Partial' ? 'warning' : 'unpaid');
+
+                                                        return (
+                                                            <React.Fragment key={`trans-${feeIndex}`}>
+                                                                <tr className={status === 'Paid' ? "sub-row" : "fees-summary-row"}>
+                                                                    <td align="left">Transport Fees</td>
+                                                                    <td align="left">{fee.month}</td>
+                                                                    <td align="left">{fee.due_date}</td>
+                                                                    <td align="left"><span className={`status-badge status-${statusLabel}`}>{status}</span></td>
+                                                                    <td className="text-right">{amountFormat(fee.fees)}
+                                                                        {fee.fine_amount_display > 0 && <span className="text text-danger"> + {amountFormat(fee.fine_amount_display)}</span>}
+                                                                    </td>
+                                                                    <td></td><td></td><td></td>
+                                                                    <td className="text-right">{amountFormat(fee.feeDetails?.discountTotal)}</td>
+                                                                    <td className="text-right">{amountFormat(fee.feeDetails?.fineTotal)}</td>
+                                                                    <td className="text-right">{amountFormat(fee.feeDetails?.paidTotal)}</td>
+                                                                    <td className="text-right">{balance > 0 ? amountFormat(balance) : ""}</td>
+                                                                </tr>
+                                                                {(fee.feeDetails?.payments || []).map((deposit, dIndex) => (
+                                                                    <tr key={`trans-dep-${dIndex}`} className="white-td">
+                                                                        <td colSpan="4"></td>
+                                                                        <td className="text-right"><i className="fa fa-level-up fa-rotate-90" style={{ color: '#999' }}></i></td>
+                                                                        <td className="text-left">{fee.student_fees_deposite_id}/{deposit.inv_no}</td>
+                                                                        <td className="text-left">{deposit.payment_mode}</td>
+                                                                        <td className="text-left">{deposit.date}</td>
+                                                                        <td className="text-right">{amountFormat(deposit.amount_discount)}</td>
+                                                                        <td className="text-right">{amountFormat(deposit.amount_fine)}</td>
+                                                                        <td className="text-right">{amountFormat(deposit.amount)}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                ))}
+                                                            </React.Fragment>
+                                                        );
+                                                    })}
+
+                                                    {discountFees.map((discount, dIndex) => (
+                                                        <tr key={`disc-${dIndex}`} className="dark-light">
+                                                            <td align="left">Discount</td>
+                                                            <td align="left">{discount.code}</td>
+                                                            <td align="left"></td>
+                                                            <td align="left">
+                                                                {discount.status === 'applied' ? (
+                                                                    <span className="text text-success">Discount of {discount.type === 'percentage' ? `${discount.percentage}%` : `${currencySymbol}${amountFormat(discount.amount)}`} Applied</span>
+                                                                ) : (
+                                                                    <span className="text text-danger">Discount of {discount.type === 'percentage' ? `${discount.percentage}%` : `${currencySymbol}${amountFormat(discount.amount)}`} {discount.status}</span>
+                                                                )}
                                                             </td>
+                                                            <td colSpan="8"></td>
                                                         </tr>
-                                                    )}
-                                                    {feesData.length > 0 && (
-                                                        <tr className="grand-total-row">
-                                                            <td colSpan="4" style={{ textAlign: 'right' }}>Grand Total</td>
-                                                            <td>₹{grandTotalAmount.toFixed(2)}</td>
-                                                            <td colSpan="3"></td>
-                                                            <td>₹{grandTotalDiscount.toFixed(2)}</td>
-                                                            <td>₹{grandTotalFine.toFixed(2)}</td>
-                                                            <td>₹{grandTotalPaid.toFixed(2)}</td>
-                                                            <td>₹{grandTotalBalance.toFixed(2)}</td>
-                                                        </tr>
-                                                    )}
+                                                    ))}
+
+                                                    <tr style={{ backgroundColor: '#f4f4f4', fontWeight: 'bold' }}>
+                                                        <td colSpan="4" className="text-right">Grand Total</td>
+                                                        <td className="text-right">
+                                                            {currencySymbol}{amountFormat(totals.amount)}
+                                                        </td>
+                                                        <td colSpan="3"></td>
+                                                        <td className="text-right">{currencySymbol}{amountFormat(totals.discount)}</td>
+                                                        <td className="text-right">{currencySymbol}{amountFormat(totals.fine)}</td>
+                                                        <td className="text-right">{currencySymbol}{amountFormat(totals.paid)}</td>
+                                                        <td className="text-right">{currencySymbol}{amountFormat(totals.balance)}</td>
+                                                    </tr>
                                                 </tbody>
                                             </table>
                                         </div>
@@ -683,33 +811,125 @@ const Profile = () => {
                                     )}
 
                                     {activeTab === 'timeline' && (
-                                        <div className="timeline-section" style={{ padding: '15px' }}>
-                                            {timelineData.length > 0 ? (
-                                                <div className="timeline" style={{ padding: '10px' }}>
-                                                    {timelineData.map((item, index) => (
-                                                        <div key={index} className="timeline-item" style={{ borderLeft: '2px solid #3c8dbc', paddingLeft: '15px', position: 'relative', marginBottom: '20px' }}>
-                                                            <div style={{ position: 'absolute', left: '-6px', top: '0', bottom: '0', width: '10px', height: '10px', background: '#3c8dbc', borderRadius: '50%' }}></div>
-                                                            <div style={{ fontSize: '12px', color: '#999', marginBottom: '5px' }}>
-                                                                <i className="fa fa-clock-o"></i> {item.timeline_date || item.date}
-                                                            </div>
-                                                            <h3 style={{ fontSize: '15px', marginTop: '0', color: '#333' }}>{item.title}</h3>
-                                                            <div style={{ fontSize: '13px', color: '#666', marginTop: '10px' }}>
-                                                                {item.description}
-                                                            </div>
-                                                            {item.document && (
-                                                                <div style={{ marginTop: '10px' }}>
-                                                                    <a href={`${studentObj.base_url || ''}uploads/student_timeline/${item.document}`} target="_blank" rel="noreferrer" className="btn btn-default btn-xs">
-                                                                        <i className="fa fa-download"></i> Download Document
-                                                                    </a>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                        <div className="timeline-section" style={{ padding: '20px 15px' }}>
+                                            {timelineData.length === 0 ? (
+                                                <div className="no-record-box">No record found</div>
                                             ) : (
-                                                <div className="no-record-box">
-                                                    No Record Found
-                                                </div>
+                                                <ul className="timeline timeline-inverse" style={{
+                                                    position: "relative",
+                                                    margin: "0 0 30px 0",
+                                                    padding: "0",
+                                                    listStyle: "none"
+                                                }}>
+                                                    {/* Vertical line */}
+                                                    <div style={{
+                                                        position: "absolute",
+                                                        top: "0",
+                                                        bottom: "0",
+                                                        width: "3px",
+                                                        background: "#eee",
+                                                        left: "31px",
+                                                        margin: "0",
+                                                        borderRadius: "2px"
+                                                    }}></div>
+
+                                                    {timelineData.map((item, index) => (
+                                                        <li key={index} style={{ position: "relative", marginRight: "10px", marginBottom: "15px" }}>
+                                                            <div className="time-label" style={{ marginBottom: "10px" }}>
+                                                                <span style={{
+                                                                    borderRadius: "4px",
+                                                                    fontSize: "12px",
+                                                                    padding: "5px 10px",
+                                                                    display: "inline-block",
+                                                                    backgroundColor: "#3c8dbc",
+                                                                    color: "#fff",
+                                                                    fontWeight: "600",
+                                                                    marginLeft: "10px"
+                                                                }}>
+                                                                    {item.timeline_date || item.date}
+                                                                </span>
+                                                            </div>
+
+                                                            <div style={{ position: "relative", marginTop: "10px" }}>
+                                                                <i className="fa fa-id-card-o" style={{
+                                                                    width: "30px",
+                                                                    height: "30px",
+                                                                    lineHeight: "30px",
+                                                                    fontSize: "14px",
+                                                                    borderRadius: "50%",
+                                                                    textAlign: "center",
+                                                                    position: "absolute",
+                                                                    left: "18px",
+                                                                    top: "0",
+                                                                    color: "#fff",
+                                                                    backgroundColor: "#3c8dbc",
+                                                                    zIndex: 2
+                                                                }}></i>
+
+                                                                <div className="timeline-item" style={{
+                                                                    marginLeft: "60px",
+                                                                    border: "1px solid #f4f4f4",
+                                                                    borderRadius: "3px",
+                                                                    backgroundColor: "#fff",
+                                                                    boxShadow: "0 1px 1px rgba(0,0,0,0.1)",
+                                                                    position: "relative"
+                                                                }}>
+                                                                    <div className="timeline-header" style={{
+                                                                        padding: "10px",
+                                                                        borderBottom: "1px solid #f4f4f4",
+                                                                        display: "flex",
+                                                                        justifyContent: "space-between",
+                                                                        alignItems: "center"
+                                                                    }}>
+                                                                        <h3 className="timeline-header-title" style={{
+                                                                            margin: 0,
+                                                                            fontSize: "14px",
+                                                                            color: "#3c8dbc",
+                                                                            fontWeight: "600"
+                                                                        }}>
+                                                                            {item.title}
+                                                                        </h3>
+                                                                        {item.document && (
+                                                                            <a
+                                                                                href={`${studentObj.base_url || ''}uploads/student_timeline/${item.document}`}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="btn btn-default btn-xs"
+                                                                                title="Download Document"
+                                                                                style={{ border: "none", background: "transparent" }}
+                                                                            >
+                                                                                <i className="fa fa-download text-muted"></i>
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="timeline-body" style={{
+                                                                        padding: "10px",
+                                                                        fontSize: "13px",
+                                                                        color: "#666"
+                                                                    }}>
+                                                                        {item.description}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </li>
+                                                    ))}
+                                                    <li>
+                                                        <i className="fa fa-clock-o" style={{
+                                                            width: "30px",
+                                                            height: "30px",
+                                                            lineHeight: "30px",
+                                                            fontSize: "14px",
+                                                            borderRadius: "50%",
+                                                            textAlign: "center",
+                                                            position: "absolute",
+                                                            left: "18px",
+                                                            bottom: "-30px",
+                                                            color: "#bbb",
+                                                            backgroundColor: "#eee",
+                                                            zIndex: 1
+                                                        }}></i>
+                                                    </li>
+                                                </ul>
                                             )}
                                         </div>
                                     )}

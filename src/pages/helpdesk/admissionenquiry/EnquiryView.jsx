@@ -30,10 +30,20 @@ const EnquiryView = () => {
     const [enquiryList, setEnquiryList] = useState([]);
     const [classList, setClassList] = useState([]);
     const [sourceList, setSourceList] = useState([]);
+    const [staffList, setStaffList] = useState([]);
+    const [referenceList, setReferenceList] = useState([]);
+    const [enquiryStatus, setEnquiryStatus] = useState({
+        'active': 'Active',
+        'passive': 'Passive',
+        'dead': 'Dead',
+        'won': 'Won',
+        'lost': 'Lost'
+    });
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [flashMessage, setFlashMessage] = useState('');
     const [error, setError] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
 
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
@@ -70,20 +80,11 @@ const EnquiryView = () => {
 
     const formatCell = (row, key) => {
         if (key === 'date' || key === 'followupdate' || key === 'follow_up_date') return formatDate(row[key]);
-        if (key === 'status') return enquiryStatus[row[key]] || row[key];
+        if (key === 'status') return (enquiryStatus && enquiryStatus[row[key]]) || row[key];
         return row[key];
     };
 
     const getExportData = () => buildExportData(columns, visibleColumns, finalFilteredEnquiries, formatCell);
-
-    // Status options
-    const enquiryStatus = {
-        'active': 'Active',
-        'passive': 'Passive',
-        'dead': 'Dead',
-        'won': 'Won',
-        'lost': 'Lost'
-    };
 
     // Use sorting hook
     const { sortedData: sortedEnquiries, requestSort: handleSort, getSortIcon } = useTableSort(enquiryList);
@@ -95,37 +96,55 @@ const EnquiryView = () => {
             setLoading(true);
             // Fetch ALL data initially (pass empty filters to get everything)
             const response = await api.getEnquiryList({});
-            console.log('Enquiry API Response:', response);
+            console.log('DEBUG: Full Enquiry API Response:', response);
 
             // Handle different response formats and ensure array
-            // API returns: { status: true, data: { enquiry_list: [...], class_list: [...], sourcelist: [...] } }
+            // The API response can be directly the object or wrapped in .data
+            const enquiryData = (response && response.data) ? response.data : response;
+
+            console.log('DEBUG: Parsed Enquiry Data Object:', enquiryData);
+
             let enquiries = [];
-            if (response && response.data && Array.isArray(response.data.enquiry_list)) {
-                // Main format: response.data.enquiry_list
-                enquiries = response.data.enquiry_list;
+            if (enquiryData && Array.isArray(enquiryData.enquiry_list)) {
+                enquiries = enquiryData.enquiry_list;
 
-                // Set class list from same response if not already set or refreshing
-                if (Array.isArray(response.data.class_list)) {
-                    console.log('Setting classList from API:', response.data.class_list);
-                    setClassList(response.data.class_list);
+                // Set class list
+                if (Array.isArray(enquiryData.class_list)) {
+                    console.log('DEBUG: Setting classList:', enquiryData.class_list);
+                    setClassList(enquiryData.class_list);
                 }
 
-                // Set source list (API uses 'sourcelist')
-                if (Array.isArray(response.data.sourcelist)) {
-                    console.log('Setting sourceList from API:', response.data.sourcelist);
-                    setSourceList(response.data.sourcelist);
+                // Set source list (handles both sourcelist and source_list)
+                const sources = enquiryData.sourcelist || enquiryData.source_list;
+                if (Array.isArray(sources)) {
+                    console.log('DEBUG: Setting sourceList:', sources);
+                    setSourceList(sources);
                 }
-            } else if (response && Array.isArray(response.data)) {
-                enquiries = response.data;
-            } else if (response && Array.isArray(response.enquiry_list)) {
-                enquiries = response.enquiry_list;
-            } else if (Array.isArray(response)) {
-                enquiries = response;
+
+                // Set staff list
+                if (Array.isArray(enquiryData.staff_list)) {
+                    console.log('DEBUG: Setting staffList:', enquiryData.staff_list);
+                    setStaffList(enquiryData.staff_list);
+                }
+
+                // Set reference list
+                if (Array.isArray(enquiryData.reference)) {
+                    console.log('DEBUG: Setting referenceList:', enquiryData.reference);
+                    setReferenceList(enquiryData.reference);
+                }
+
+                // Set enquiry status mapping
+                if (enquiryData.enquiry_status) {
+                    console.log('DEBUG: Setting enquiryStatus:', enquiryData.enquiry_status);
+                    setEnquiryStatus(enquiryData.enquiry_status);
+                }
+            } else if (Array.isArray(enquiryData)) {
+                enquiries = enquiryData;
             }
 
-            console.log('Setting enquiryList to:', enquiries);
-            setMasterEnquiryList(enquiries); // Save to master list
-            setEnquiryList(enquiries);       // Initial display is full list
+            console.log('DEBUG: Final enquiries extracted:', enquiries.length);
+            setMasterEnquiryList(enquiries);
+            setEnquiryList(enquiries);
         } catch (err) {
             console.error('Error fetching enquiry list:', err);
             setError(err.message || 'Failed to load enquiry list');
@@ -152,15 +171,28 @@ const EnquiryView = () => {
     const handleSearch = (e) => {
         e.preventDefault();
 
+        const errors = {};
+        if (!filterForm.from_date) {
+            errors.from_date = 'The Enquiry From Date field is required.';
+        }
+        if (!filterForm.to_date) {
+            errors.to_date = 'The Enquiry To Date field is required.';
+        }
+
         // Validation: Date logic check
         if (filterForm.from_date && filterForm.to_date) {
             const start = new Date(filterForm.from_date);
             const end = new Date(filterForm.to_date);
 
             if (end < start) {
-                toast.error('Enquiry To Date cannot be before Enquiry From Date');
-                return;
+                errors.to_date = 'Enquiry To Date cannot be before Enquiry From Date';
             }
+        }
+
+        setValidationErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            return;
         }
 
         console.log('Search with filters (Internal):', filterForm);
@@ -407,6 +439,7 @@ const EnquiryView = () => {
                                                         value={filterForm.from_date}
                                                         onChange={handleFilterChange}
                                                     />
+                                                    {validationErrors.from_date && <span className="text-danger">{validationErrors.from_date}</span>}
                                                 </div>
                                             </div>
 
@@ -422,6 +455,7 @@ const EnquiryView = () => {
                                                         value={filterForm.to_date}
                                                         onChange={handleFilterChange}
                                                     />
+                                                    {validationErrors.to_date && <span className="text-danger">{validationErrors.to_date}</span>}
                                                 </div>
                                             </div>
 
@@ -642,6 +676,8 @@ const EnquiryView = () => {
                     onClose={() => setShowAddModal(false)}
                     classList={classList}
                     sourceList={sourceList}
+                    staffList={staffList}
+                    referenceList={referenceList}
                     onSuccess={() => {
                         setShowAddModal(false);
                         setFlashMessage('Enquiry added successfully');
@@ -657,6 +693,8 @@ const EnquiryView = () => {
                     enquiry={selectedEnquiry}
                     classList={classList}
                     sourceList={sourceList}
+                    staffList={staffList}
+                    referenceList={referenceList}
                     onSuccess={() => {
                         setShowEditModal(false);
                         setFlashMessage('Enquiry updated successfully');

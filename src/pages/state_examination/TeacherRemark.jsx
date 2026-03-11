@@ -97,8 +97,9 @@ const TeacherRemark = ({ examId, handleClose, onSaveSuccess }) => {
                 if (onSaveSuccess) {
                     onSaveSuccess();
                 }
-                // Refresh data after save
-                fetchStudents();
+                if (handleClose) {
+                    handleClose();
+                }
             } else {
                 alert('Failed to save remarks. Please try again.');
             }

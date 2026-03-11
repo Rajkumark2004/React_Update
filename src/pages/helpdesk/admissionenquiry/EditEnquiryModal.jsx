@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { api } from '../../../services/api';
 import { sanitizeName, sanitizePhone, validateName, validatePhone, validateDateRange } from '../../../utils/validation';
 
-const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuccess }) => {
+const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, staffList, referenceList, onSuccess }) => {
     const [formData, setFormData] = useState({
         id: '',
         name: '',
@@ -25,19 +25,13 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
     const [loading, setLoading] = useState(false);
     const [fetchingDetails, setFetchingDetails] = useState(false);
 
+    console.log('DEBUG: EditEnquiryModal Parent Props:', { classList, sourceList, staffList, referenceList });
+
     // Local state for lists (initialized with props or defaults)
     const [localClassList, setLocalClassList] = useState(classList || []);
     const [localSourceList, setLocalSourceList] = useState(sourceList || []);
-    const [localStaffList, setLocalStaffList] = useState([
-        { id: '1', name: 'Admin', surname: 'User', employee_id: 'EMP001' },
-        { id: '2', name: 'Staff', surname: 'Member', employee_id: 'EMP002' }
-    ]);
-    const [localReferenceList, setLocalReferenceList] = useState([
-        { reference: 'Parent' },
-        { reference: 'Friend' },
-        { reference: 'Employee' },
-        { reference: 'Other' }
-    ]);
+    const [localStaffList, setLocalStaffList] = useState(staffList || []);
+    const [localReferenceList, setLocalReferenceList] = useState(referenceList || []);
 
     // Status options
     const enquiryStatus = {
@@ -55,6 +49,7 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, onSuc
                 try {
                     setFetchingDetails(true);
                     const response = await api.getEnquiryDetails(enquiry.id);
+                    console.log('DEBUG: EditEnquiryModal getEnquiryDetails raw:', response);
                     if (response && response.data) {
                         const { enquiry_data, class_list, stff_list, source: apiSource, Reference } = response.data;
 

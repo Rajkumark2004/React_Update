@@ -454,11 +454,11 @@
     transform: scale(1.1);
 }
 
-/* Scrolling placeholder */
+/* Static placeholder */
 .search-scroll-placeholder {
     position: absolute;
     top: 50%;
-    left: 0;
+    left: 15px;
     display: flex;
     transform: translateY(-50%);
     font-size: 15px;
@@ -466,24 +466,14 @@
     white-space: nowrap;
     pointer-events: none;
     z-index: 0;
-    animation: scrollPlaceholderLTR 12s linear infinite;
     opacity: 0.8;
 }
 
 .search-text-item {
     margin-right: 35px;
-    /* Space separating the loops */
 }
 
-@keyframes scrollPlaceholderLTR {
-    0% {
-        transform: translateY(-50%) translateX(-50%);
-    }
 
-    100% {
-        transform: translateY(-50%) translateX(0%);
-    }
-}
 
 
 

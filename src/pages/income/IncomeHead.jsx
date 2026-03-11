@@ -5,6 +5,9 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { useTableSort } from '../../hooks/useTableSort';
+
 
 const IncomeHead = () => {
     const navigate = useNavigate();
@@ -16,6 +19,25 @@ const IncomeHead = () => {
         description: ''
     });
     const [initialLoading, setInitialLoading] = useState(true);
+
+    const columns = [
+        { key: 'income_category', label: 'Income Head', sortKey: 'income_category' },
+        { key: 'description', label: 'Description', sortKey: 'description' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    const formatCell = (row, key) => {
+        return row[key] || '';
+    };
 
     useEffect(() => {
         fetchIncomeHeadList();
@@ -80,15 +102,15 @@ const IncomeHead = () => {
         }
     };
 
-    const filteredIncomeHeadList = incomeHeadList.filter(head =>
+    const { sortedData: sortedIncomeHead, requestSort: handleSort, getSortIcon } = useTableSort(incomeHeadList);
+
+    const filteredIncomeHeadList = sortedIncomeHead.filter(head =>
         Object.values(head).some(value =>
             String(value).toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
 
-    const handleExport = (type) => {
-        toast.success(`${type} export triggered (Simulation)`);
-    };
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredIncomeHeadList, formatCell);
 
     return (
         <div className="wrapper theme-white-skin">
@@ -172,36 +194,51 @@ const IncomeHead = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-controls">
-                                        <div className="pull-left">
-                                            <div className="btn-group">
-                                                <button type="button" className="btn btn-default btn-xs" title="Copy" onClick={() => handleExport('Copy')}>
-                                                    <i className="fa fa-copy"></i>
+                                    <div className="row" style={{ marginBottom: '10px' }}>
+                                        <div className="col-md-6">
+                                            <div className="dt-buttons btn-group">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                    <i className="fa fa-files-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="Excel" onClick={() => handleExport('Excel')}>
-                                                    <i className="fa fa-file-excel-o"></i>
-                                                </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="CSV" onClick={() => handleExport('CSV')}>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'income_head_list.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="PDF" onClick={() => handleExport('PDF')}>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'income_head_list.xls'); }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'income_head_list.pdf', 'Income Head List'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="Print" onClick={() => window.print()}>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Income Head List'); }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showColumnsDropdown && (
+                                                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {columns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                    <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="pull-right">
-                                            <div className="has-feedback">
+                                        <div className="col-md-6">
+                                            <div className="input-group input-group-sm">
                                                 <input
                                                     type="text"
-                                                    className="form-control input-sm"
+                                                    className="form-control"
                                                     placeholder="Search..."
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
                                                 />
-                                                <span className="glyphicon glyphicon-search form-control-feedback"></span>
+                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
                                             </div>
                                         </div>
                                     </div>
@@ -210,8 +247,15 @@ const IncomeHead = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Income Head</th>
-                                                    <th>Description</th>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <th key={col.key}
+                                                            className={col.sortKey ? 'sorting' : ''}
+                                                            style={col.sortKey ? { cursor: 'pointer' } : {}}
+                                                            onClick={col.sortKey ? () => handleSort(col.sortKey) : undefined}
+                                                        >
+                                                            {col.label} {col.sortKey && getSortIcon(col.sortKey)}
+                                                        </th>
+                                                    ))}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
@@ -227,12 +271,11 @@ const IncomeHead = () => {
                                                 ) : (
                                                     filteredIncomeHeadList.map((head) => (
                                                         <tr key={head.id}>
-                                                            <td className="mailbox-name">
-                                                                {head.income_category}
-                                                            </td>
-                                                            <td className="mailbox-name">
-                                                                {head.description}
-                                                            </td>
+                                                            {columns.map(col => visibleColumns.has(col.key) && (
+                                                                <td key={col.key} className="mailbox-name">
+                                                                    {formatCell(head, col.key)}
+                                                                </td>
+                                                            ))}
                                                             <td className="mailbox-date pull-right">
                                                                 <Link
                                                                     to={`/admin/incomehead/edit/${head.id}`}

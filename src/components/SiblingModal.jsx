@@ -54,9 +54,14 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
 
         if (value) {
             try {
-                const response = await api.getStudentsByClassSection(value);
+                // Find the selected section object to get its details if needed
+                // The user said to send payload as class_id and section_id "literally from response of getbyclass method"
+                // Assuming "value" (which is sec.section_id) is what we need for section_id
+                const response = await api.getStudentsByClassSection(searchParams.class_id, value);
                 if (response && response.data && response.data.student_list) {
                     setStudents(response.data.student_list);
+                } else if (response && response.data && response.data.student_data) {
+                    setStudents(response.data.student_data);
                 } else if (response && response.data && Array.isArray(response.data)) {
                     setStudents(response.data);
                 } else {
@@ -72,9 +77,11 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
     if (!isOpen) return null;
 
     const handleCopy = () => {
-        // In a real app, this would fetch the sibling's data and pass it back
-        // For now, we'll just mock it or pass the selected ID
-        onAddSibling(searchParams);
+        const selectedStudent = students.find(s => String(s.id) === String(searchParams.student_id));
+        console.log('SiblingModal: Selected Student for Copy:', selectedStudent);
+        if (selectedStudent) {
+            onAddSibling(selectedStudent);
+        }
         onClose();
     };
 
@@ -114,7 +121,7 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
                                             <option value="">Select</option>
                                             {students.map(student => (
                                                 <option key={student.id} value={student.id}>
-                                                    {student.firstname} {student.lastname}
+                                                    {student.firstname} {student.lastname} ({student.admission_no})
                                                 </option>
                                             ))}
                                         </select>

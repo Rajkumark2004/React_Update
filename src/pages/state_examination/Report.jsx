@@ -274,7 +274,7 @@ const Report = () => {
     );
 
     const renderSubjectMarksReport = () => (
-        <div className="row" style={{ marginTop: '10px' }}>
+        <div className="row" style={{ marginTop: '0px' }}>
             <div className="col-md-12">
                 <div className="box removeboxmius">
                     <div className="box-header with-border">
@@ -364,7 +364,7 @@ const Report = () => {
     );
 
     const renderTemplateWiseReport = () => (
-        <div className="row" style={{ marginTop: '10px' }}>
+        <div className="row" style={{ marginTop: '0px' }}>
             <div className="col-md-12">
                 <div className="box removeboxmius">
                     <div className="box-header with-border">
@@ -494,7 +494,7 @@ const Report = () => {
     };
 
     const renderConsolidatedReport = () => (
-        <div className="row" style={{ marginTop: '10px' }}>
+        <div className="row" style={{ marginTop: '0px' }}>
             <div className="col-md-12">
                 <div className="box removeboxmius">
                     <div className="box-header with-border">
@@ -548,7 +548,7 @@ const Report = () => {
                 <section className="content-header">
                     <h1><i className="fa fa-money"></i> State Examination</h1>
                 </section>
-                <section className="content" style={{ marginTop: '20px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     {renderMenu()}
                     {reportType === 'examsubject' && renderSubjectMarksReport()}
                     {reportType === 'templatewise' && renderTemplateWiseReport()}

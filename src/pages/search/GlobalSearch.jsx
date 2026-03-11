@@ -49,6 +49,7 @@ const GlobalSearch = () => {
 
             const mappedStudents = studentData.map(student => ({
                 id: student.id,
+                student_session_id: student.student_session_id,
                 admission_no: student.admission_no,
                 name: student.full_name || student.firstname + ' ' + (student.lastname || ''),
                 class: student.class_section || student.class,
@@ -197,7 +198,7 @@ const GlobalSearch = () => {
                                                                         <Link to={`/student/edit/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                                             <i className="fa fa-pencil"></i>
                                                                         </Link>
-                                                                        <Link to={`/studentfee/addfee/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Collect Fees">
+                                                                        <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Add Fees">
                                                                             ₹
                                                                         </Link>
                                                                     </td>
@@ -259,7 +260,7 @@ const GlobalSearch = () => {
                                                                         <Link to={`/student/edit/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                                             <i className="fa fa-pencil"></i>
                                                                         </Link>
-                                                                        <Link to={`/studentfee/addfee/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Collect Fees">
+                                                                        <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Collect Fees">
                                                                             ₹
                                                                         </Link>
                                                                     </span>

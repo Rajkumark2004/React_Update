@@ -11,6 +11,8 @@ const NoticeBoardEdit = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -32,64 +34,56 @@ const NoticeBoardEdit = () => {
     // Fetch initial data and existing notice data
     useEffect(() => {
         const fetchInitialData = async () => {
+            if (!id) return;
+            setLoading(true);
             try {
-                // 1. Fetch Add Data (Roles, ClassList) - using getNoticeBoardAdd as per discussion
-                const addResponse = await api.getNoticeBoardAdd();
-                if (addResponse && addResponse.status === true) {
-                    const addData = addResponse.data || {};
-                    setClassList(addData.classlist || []);
-                    setRoles(addData.roles || []);
-                }
-
-                // 2. Fetch Existing Notice Data
-                if (id) {
-                    // Get roleId from localStorage
-                    const userStr = localStorage.getItem('user');
-                    let roleId = '7'; // Default to Super Admin (7) if not found
-                    if (userStr) {
-                        const user = JSON.parse(userStr);
-                        // User roles is an object like {"Super Admin": "7"}
-                        // We need to take the first value
-                        if (user.roles && typeof user.roles === 'object') {
-                            const roleValues = Object.values(user.roles);
-                            if (roleValues.length > 0) {
-                                roleId = roleValues[0];
-                            }
+                // Get roleId from localStorage
+                const userStr = localStorage.getItem('user');
+                let roleId = null;
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (user.roles && typeof user.roles === 'object') {
+                        const roleValues = Object.values(user.roles);
+                        if (roleValues.length > 0) {
+                            roleId = roleValues[0];
                         }
                     }
-
-                    const response = await api.getNoticeBoard(id, roleId); // Pass roleId
-                    if (response && response.status === true) {
-                        const data = response.data;
-                        const notification = data.notification;
-                        // Helper to format date YYYY-MM-DD from API date
-                        const formatDateForInput = (dateStr) => {
-                            if (!dateStr) return '';
-                            // Assuming API might return YYYY-MM-DD directly or formatted.
-                            // Adjust based on actual API response if needed.
-                            // PHP Code uses: date($this->customlib->getSchoolDateFormat(), $this->customlib->dateyyyymmddTodateformat($notification['date']))
-                            // We need YYYY-MM-DD for input type="date"
-                            return dateStr;
-                        };
-
-                        setFormData({
-                            title: notification.title || '',
-                            date: notification.date || '', // Assign directly if YYYY-MM-DD
-                            publish_date: notification.publish_date || '', // Assign directly if YYYY-MM-DD
-                            message: notification.message || '',
-                            visible_student: notification.visible_student === 'Yes',
-                            visible_parent: notification.visible_parent === 'Yes',
-                            roles: notification.roles ? notification.roles.split(',') : [],
-                            // Note: API response might not return class_id/section_id if not stored directly effectively
-                            // But roles are stored as comma separated string
-                            prev_roles: notification.roles ? notification.roles.split(',') : []
-                        });
-                    }
                 }
 
+                if (!roleId) {
+                    toast.error('User role not found. Please login again.');
+                    return;
+                }
+
+                // Fetch Notice Data (which also returns roles in data.roles)
+                const response = await api.getNoticeBoard(id, roleId);
+
+                if (response && (response.status === true || response.status === 'success')) {
+                    const notification = response.notification || response.data?.notification;
+                    const apiRoles = response.roles || response.data?.roles || [];
+
+                    // Populate roles from the API response
+                    setRoles(apiRoles);
+
+                    // Pre-fill form data
+                    setFormData({
+                        title: notification.title || '',
+                        date: notification.date || '',
+                        publish_date: notification.publish_date || '',
+                        message: notification.message || '',
+                        visible_student: notification.visible_student === 'Yes',
+                        visible_parent: notification.visible_parent === 'Yes',
+                        roles: notification.roles ? notification.roles.split(',') : [],
+                        prev_roles: notification.roles ? notification.roles.split(',') : []
+                    });
+                } else {
+                    toast.error('Failed to fetch notice details');
+                }
             } catch (error) {
                 console.error('Error fetching data:', error);
                 toast.error('Failed to load data');
+            } finally {
+                setLoading(false);
             }
         };
         fetchInitialData();
@@ -125,14 +119,12 @@ const NoticeBoardEdit = () => {
         try {
             // Get user info and roleId from localStorage
             const userStr = localStorage.getItem('user');
-            let createdBy = 'Super Admin';
-            let createdId = '1';
-            let roleId = '7'; // Default to Super Admin (7)
+            let createdId = 1;
+            let roleId = null;
 
             if (userStr) {
                 const user = JSON.parse(userStr);
-                createdBy = user.username || 'Super Admin';
-                createdId = user.id || '1';
+                createdId = parseInt(user.id) || 1;
 
                 if (user.roles && typeof user.roles === 'object') {
                     const roleValues = Object.values(user.roles);
@@ -142,45 +134,44 @@ const NoticeBoardEdit = () => {
                 }
             }
 
+            if (!roleId) {
+                toast.error('User role not found');
+                return;
+            }
+
+            // Format date from YYYY-MM-DD to MM/DD/YYYY
             const formatDate = (dateStr) => {
                 if (!dateStr) return '';
                 const [year, month, day] = dateStr.split('-');
-                return `${day}-${month}-${year}`;
+                return `${month}/${day}/${year}`;
             };
 
-
-            const formPayload = new FormData();
-            formPayload.append('title', formData.title);
-            formPayload.append('date', formatDate(formData.date));
-            formPayload.append('publish_date', formatDate(formData.publish_date));
-            formPayload.append('message', formData.message);
-            formPayload.append('created_by', createdBy);
-            formPayload.append('created_id', createdId);
-
-            // Previous roles (hidden inputs in PHP)
-            formData.prev_roles.forEach(roleId => {
-                formPayload.append('prev_roles[]', roleId);
-            });
-
-            // Visibility
+            // Build visible array: ["student", "parent", roleId_as_number]
+            const visible = [];
             if (formData.visible_student) {
-                formPayload.append('visible[]', 'student');
+                visible.push('student');
             }
             if (formData.visible_parent) {
-                formPayload.append('visible[]', 'parent');
+                visible.push('parent');
             }
-            // Add other roles
-            formData.roles.forEach(roleId => {
-                formPayload.append('visible[]', roleId);
+            formData.roles.forEach(r => {
+                visible.push(parseInt(r) || r);
             });
 
-            // File Attachment
-            const fileInput = document.querySelector('input[name="file"]');
-            if (fileInput && fileInput.files[0]) {
-                formPayload.append('file', fileInput.files[0]);
-            }
+            // Build prev_roles as number array
+            const prev_roles = formData.prev_roles.map(r => parseInt(r) || r);
 
-            const response = await api.updateNoticeBoard(id, roleId, formPayload);
+            const payload = {
+                title: formData.title,
+                message: formData.message,
+                date: formatDate(formData.date),
+                publish_date: formatDate(formData.publish_date),
+                visible: visible,
+                prev_roles: prev_roles,
+                created_id: createdId
+            };
+
+            const response = await api.updateNoticeBoard(id, roleId, payload);
 
             if (response && (response.status === true || response.status === 'success')) {
                 toast.success('Message updated successfully');
@@ -215,6 +206,11 @@ const NoticeBoardEdit = () => {
                                 <div className="box box-primary">
                                     <div className="box-header with-border">
                                         <h3 className="box-title">Edit Message</h3>
+                                        <div className="box-tools pull-right">
+                                            <button type="button" onClick={() => navigate(-1)} className="btn btn-primary btn-sm">
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="box-body">
                                         <div className="row">
@@ -263,7 +259,54 @@ const NoticeBoardEdit = () => {
                                                     <div className="col-md-12">
                                                         <div className="form-group">
                                                             <label>Attachment</label>
-                                                            <input type="file" className="form-control" name="file" />
+                                                            <div
+                                                                style={{
+                                                                    border: isDragging ? '2px dashed #3c8dbc' : '1px dashed #ccc',
+                                                                    borderRadius: '4px',
+                                                                    padding: '10px 15px',
+                                                                    textAlign: 'center',
+                                                                    cursor: 'pointer',
+                                                                    background: isDragging ? '#f0f8ff' : '#fafafa',
+                                                                    transition: 'all 0.2s',
+                                                                    fontSize: '13px',
+                                                                    color: '#888',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    gap: '8px'
+                                                                }}
+                                                                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                                                                onDragLeave={() => setIsDragging(false)}
+                                                                onDrop={(e) => {
+                                                                    e.preventDefault();
+                                                                    setIsDragging(false);
+                                                                    if (e.dataTransfer.files[0]) setSelectedFile(e.dataTransfer.files[0]);
+                                                                }}
+                                                                onClick={() => document.getElementById('notice-edit-file-input').click()}
+                                                            >
+                                                                <input
+                                                                    id="notice-edit-file-input"
+                                                                    type="file"
+                                                                    style={{ display: 'none' }}
+                                                                    onChange={(e) => { if (e.target.files[0]) setSelectedFile(e.target.files[0]); }}
+                                                                />
+                                                                {selectedFile ? (
+                                                                    <>
+                                                                        <i className="fa fa-paperclip" style={{ color: '#3c8dbc' }}></i>
+                                                                        <span style={{ color: '#333' }}>{selectedFile.name}</span>
+                                                                        <i
+                                                                            className="fa fa-times-circle"
+                                                                            style={{ color: '#d9534f', cursor: 'pointer', marginLeft: '4px' }}
+                                                                            onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                                                                        ></i>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <i className="fa fa-cloud-upload"></i>
+                                                                        <span>Drag & drop a file here or click to browse</span>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     {/* Note: Edit Notification PHP does not show Class/Section dropdowns, only Title, Dates, File, Message and Roles */}

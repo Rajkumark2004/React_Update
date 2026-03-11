@@ -27,6 +27,7 @@ const StaffAttendanceList = () => {
     const [isHoliday, setIsHoliday] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchPerformed, setSearchPerformed] = useState(false);
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         const fetchRoles = async () => {
@@ -47,7 +48,9 @@ const StaffAttendanceList = () => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
+        setErrors({});
         if (userTypeId === 'select') {
+            setErrors({ role: 'Role is required' });
             toast.error('Please select a role');
             return;
         }
@@ -177,6 +180,7 @@ const StaffAttendanceList = () => {
                 .radio.radio-inline { margin-top: 0; display: inline-block; margin-right: 15px; }
                 @media (max-width:767px){ .radio.radio-inline { display: block; margin-bottom: 10px; } }
                 .button-checkbox button { min-width: 140px; }
+                .req { color: red; margin-left: 2px; }
             `}} />
             <Header />
             <Sidebar />
@@ -201,18 +205,22 @@ const StaffAttendanceList = () => {
                                         <div className="row">
                                             <div className="col-md-6">
                                                 <div className="form-group">
-                                                    <label>Role</label>
+                                                    <label>Role</label><span className="req"> *</span>
                                                     <select
                                                         autoFocus
                                                         className="form-control"
                                                         value={userTypeId}
-                                                        onChange={(e) => setUserTypeId(e.target.value)}
+                                                        onChange={(e) => {
+                                                            setUserTypeId(e.target.value);
+                                                            if (e.target.value !== 'select') setErrors({});
+                                                        }}
                                                     >
                                                         <option value="select">Select</option>
                                                         {roleList.map((role) => (
                                                             <option key={role.id} value={role.id}>{role.type}</option>
                                                         ))}
                                                     </select>
+                                                    {errors.role && <span className="text-danger" style={{ fontSize: '11px', display: 'block', marginTop: '2px' }}>{errors.role}</span>}
                                                 </div>
                                             </div>
                                             <div className="col-md-6">

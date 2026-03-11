@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api_users } from '../../../services/api_users';
 import { LogOut } from 'lucide-react';
@@ -19,8 +19,17 @@ const Sidebar = ({
     // Function to check if a menu item is active
     const isMenuActive = (menuUrl) => {
         if (menuUrl === '#') return false;
+
+        // Exact match
+        if (currentPath === menuUrl) return true;
+
+        // Special case to prevent /user/syllabus from incorrectly highlighting on /user/syllabus/status
+        if (menuUrl === '/user/syllabus' && currentPath.startsWith('/user/syllabus/status')) {
+            return false;
+        }
+
         // Exact match for any other routes or startsWith
-        return currentPath === menuUrl || currentPath.startsWith(menuUrl + '/');
+        return currentPath.startsWith(menuUrl + '/');
     };
 
     // Available routes in the app - only these will have working links
@@ -80,31 +89,82 @@ const Sidebar = ({
     ];
 
 
+    // --- Permission-based filtering ---
+    const [studentPermissions, setStudentPermissions] = useState([]);
+    const [parentPermissions, setParentPermissions] = useState([]);
+    const [permissionsLoaded, setPermissionsLoaded] = useState(false);
+
+    // Determine user type from localStorage
+    const userType = useMemo(() => {
+        try {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                return parsed.role || parsed.usertype || 'student';
+            }
+        } catch (e) { /* ignore */ }
+        return 'student';
+    }, []);
+
+    useEffect(() => {
+        const fetchPermissions = async () => {
+            try {
+                const data = await api_users.getModulePermissions();
+                setStudentPermissions(data.studentpermissionList || []);
+                setParentPermissions(data.parentpermissionList || []);
+            } catch (err) {
+                console.error('Failed to fetch module permissions:', err);
+            } finally {
+                setPermissionsLoaded(true);
+            }
+        };
+        fetchPermissions();
+    }, []);
+
     const defaultSidebarMenus = [
-        { id: 1, icon: 'helpdesk.png', label: 'Dashboard', url: '/user/dashboard' },
-        { id: 2, icon: 'certificate.png', label: 'Gallery', url: '/user/content/list' },
-        { id: 3, icon: 'student.png', label: 'My Profile', url: '/user/profile' },
-        { id: 15, icon: 'attendance.png', label: 'Attendance', url: '/user/attendance' },
-        { id: 4, icon: 'Fees.png', label: 'Fees', url: '/user/getfees' },
-        { id: 5, icon: 'messages.png', label: 'Circular', url: '/user/notification' },
-        { id: 6, icon: 'homework.png', label: 'Student Assessment', url: '#' },
-        { id: 7, icon: 'attendance.png', label: 'Class Timetable', url: '/user/timetable' },
-        { id: 8, icon: 'homework.png', label: 'Lesson Plan', url: '/user/syllabus' },
-        { id: 9, icon: 'reports.png', label: 'Syllabus Status', url: '#' },
-        { id: 10, icon: 'homework.png', label: 'Homework', url: '#' },
-        { id: 11, icon: 'courses.png', label: 'Courses', url: '#' },
-        { id: 12, icon: 'applyleave.png', label: 'Apply Leave', url: '#' },
-        { id: 13, icon: 'visitorbook.png', label: 'Visitor Book', url: '#' },
-        { id: 14, icon: 'download_resouces.png', label: 'Download Center', url: '#' },
-        { id: 16, icon: 'helpdesk.png', label: 'State Examination', url: '#' },
-        { id: 17, icon: 'messages.png', label: 'Notice Board', url: '#' },
-        { id: 18, icon: 'teachersrating.png', label: 'Teachers Reviews', url: '#' },
-        { id: 19, icon: 'transport.png', label: 'Transport Route', url: '#' },
-        { id: 20, icon: 'my_day_today.png', label: 'My Day Today', url: '#' },
-        { id: 21, icon: 'hostle.png', label: 'Hostel Rooms', url: '#' }
+        { id: 1, icon: 'helpdesk.png', label: 'Dashboard', url: '/user/dashboard', alwaysVisible: true },
+        { id: 3, icon: 'student.png', label: 'My Profile', url: '/user/profile', alwaysVisible: true },
+        { id: 15, icon: 'attendance.png', label: 'Attendance', url: '/user/attendance', permissionShortCode: 'attendance' },
+        { id: 4, icon: 'Fees.png', label: 'Fees', url: '/user/getfees', permissionShortCode: 'fees' },
+        { id: 5, icon: 'noticeboard.png', label: 'Circular', url: '/user/notification', permissionShortCode: 'notice_board' },
+        { id: 6, icon: 'homework.png', label: 'Student Assessment', url: '/user/studentassessment', permissionShortCode: 'examinations' },
+        { id: 7, icon: 'timetable.png', label: 'Class Timetable', url: '/user/timetable', alwaysVisible: true },
+        { id: 8, icon: 'homework.png', label: 'Lesson Plan', url: '/user/syllabus', permissionShortCode: 'lesson_plan' },
+        { id: 9, icon: 'syllabus.png', label: 'Syllabus Status', url: '/user/syllabus/status', permissionShortCode: 'syllabus_status' },
+        { id: 10, icon: 'homework.png', label: 'Homework', url: '/user/homework', permissionShortCode: 'homework' },
+        { id: 18, icon: 'homework.png', label: 'Daily Assignment', url: '/user/daily_assignment', permissionShortCode: 'homework' },
+        { id: 11, icon: 'courses.png', label: 'Courses', url: '/user/onlinecourse', permissionShortCode: 'online_course' },
+        { id: 12, icon: 'applyleave.png', label: 'Apply Leave', url: '/user/apply_leave', permissionShortCode: 'apply_leave' },
+        { id: 13, icon: 'visitorbook.png', label: 'Visitor Book', url: '/user/visitors', permissionShortCode: 'visitor_book' },
+        { id: 14, icon: 'download_resouces.png', label: 'Download Center', url: '/user/content/list', permissionShortCode: 'download_center' },
+        { id: 16, icon: 'helpdesk.png', label: 'State Examination', url: '/user/examresult', permissionShortCode: 'cbseexam' },
+        { id: 17, icon: 'noticeboard.png', label: 'Notice Board', url: '/user/notice_board', permissionShortCode: 'notice_board' },
+        { id: 19, icon: 'transport.png', label: 'Transport Route', url: '/user/route', permissionShortCode: 'transport_routes' },
+        { id: 21, icon: 'hostle.png', label: 'Hostel Rooms', url: '/user/hostelroom', permissionShortCode: 'hostel_rooms' }
     ];
 
-    const menus = sidebarMenus.length > 0 ? sidebarMenus : defaultSidebarMenus;
+    // Build a Set of active short_codes based on user type
+    const activePermissions = useMemo(() => {
+        const set = new Set();
+        const isParent = userType.toLowerCase() === 'parent';
+        const list = isParent ? parentPermissions : studentPermissions;
+        list.forEach(p => {
+            const field = isParent ? p.parent : p.student;
+            if (field === '1') set.add(p.short_code);
+        });
+        return set;
+    }, [studentPermissions, parentPermissions, userType]);
+
+    const allMenus = sidebarMenus.length > 0 ? sidebarMenus : defaultSidebarMenus;
+
+    // Filter menus based on permissions
+    const menus = useMemo(() => {
+        return allMenus.filter(menu => {
+            if (menu.alwaysVisible) return true;
+            if (!menu.permissionShortCode) return true;
+            return activePermissions.has(menu.permissionShortCode);
+        });
+    }, [allMenus, activePermissions]);
 
     // Mobile Menu State
     const [showMobileMore, setShowMobileMore] = React.useState(false);

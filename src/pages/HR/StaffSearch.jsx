@@ -103,15 +103,10 @@ const StaffSearch = () => {
                 sessionYear={sessionYear}
             />
 
-            <div className="content-wrapper" style={{ marginTop: '17px' }}>
+            <div className="content-wrapper" style={{ marginTop: '0px' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-sitemap"></i> Human Resource
-                        <small className="pull-right">
-                            <a href="/admin/staff/create" className="btn btn-primary btn-sm">
-                                <i className="fa fa-plus"></i> Add Staff
-                            </a>
-                        </small>
                     </h1>
                 </section>
 
@@ -133,7 +128,7 @@ const StaffSearch = () => {
                                     {/* <li><Link to="/admin/staff/rating"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/7.png" alt="icon7" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Teachers Rating</Link></li> */}
                                     <li><Link to="/admin/department"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/8.png" alt="icon8" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Department</Link></li>
                                     <li><Link to="/admin/designation"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/9.png" alt="icon9" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Designation</Link></li>
-                                    <li><Link to="/admin/disabledstaff"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/88.png" alt="icon10" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Disabled Staff</Link></li>
+                                    {/* <li><Link to="/admin/disabledstaff"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/88.png" alt="icon10" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Disabled Staff</Link></li>*/}₹
                                     {/* <li><Link to="/admin/staff/staffrecruitment"><img src="https://newlayout.wisibles.com/backend/images/sidebar/submenu/human_resource/1.png" alt="icon11" className="img-fluid" style={{ width: '20px', marginRight: '5px' }} /> Staff Recruitment</Link></li> */}
                                 </ul>
                             </div>
@@ -145,6 +140,11 @@ const StaffSearch = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
+                                    <div className="box-tools pull-right">
+                                        <Link to="/admin/staff/create" className="btn btn-primary btn-sm">
+                                            <i className="fa fa-plus"></i> Add Staff
+                                        </Link>
+                                    </div>
                                 </div>
                                 <div className="box-body">
                                     <div className="row">

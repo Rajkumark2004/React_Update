@@ -7,6 +7,7 @@ import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const OnlineCourseList = () => {
     const navigate = useNavigate();
@@ -93,12 +94,26 @@ const OnlineCourseList = () => {
         console.log('Search triggered');
     };
 
-    const handleExport = (type) => {
-        if (type === 'Print') {
-            window.print();
-        } else {
-            toast.success(`${type} export triggered (Simulation)`);
-        }
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Title");
+
+        const rows = filteredVideos.map(video => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(video.title);
+            return row;
+        });
+
+        return { headers, rows };
     };
 
     const handleAddVideo = async (e) => {
@@ -310,7 +325,7 @@ const OnlineCourseList = () => {
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">
-                            <div className="nav-tabs-custom theme-shadow box box-primary" style={{ marginTop: '20px' }}>
+                            <div className="nav-tabs-custom theme-shadow box box-primary" style={{ marginTop: '0px' }}>
                                 <div className="box-header ptbnull" style={{ padding: '10px' }}>
                                     <h3 className="box-title titlefix pt5">Video List</h3>
                                     <div className="box-tools pull-right">
@@ -328,18 +343,30 @@ const OnlineCourseList = () => {
                                                 </div>
 
                                                 <div className="dt-buttons btn-group pull-right" style={{ padding: '10px', marginBottom: '10px' }}>
-                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleExport('Copy')}><i className="fa fa-copy"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleExport('Excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleExport('CSV')}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleExport('PDF')}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => handleExport('Print')}><i className="fa fa-print"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Video_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Video_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Video List'); }}><i className="fa fa-print"></i></button>
+
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i>
+                                                        </button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Title</label>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 <div className="table-responsive overflow-visible">
                                                     <table className="table table-striped table-bordered table-hover example">
                                                         <thead>
                                                             <tr>
-                                                                <th>Title</th>
+                                                                {!hiddenColumns.includes(0) && <th>Title</th>}
                                                                 <th className="pull-right noExport">Action</th>
                                                             </tr>
                                                         </thead>
@@ -353,7 +380,7 @@ const OnlineCourseList = () => {
                                                             ) : (
                                                                 filteredVideos.map((video) => (
                                                                     <tr key={video.id}>
-                                                                        <td>{video.title}</td>
+                                                                        {!hiddenColumns.includes(0) && <td>{video.title}</td>}
                                                                         <td className="pull-right noExport">
                                                                             <button className="btn btn-default btn-xs" onClick={() => handleViewVideo(video.url)}>
                                                                                 <i className="fa fa-eye"></i>
@@ -385,8 +412,8 @@ const OnlineCourseList = () => {
 
             {/* Add Video Modal */}
             {showAddModal && (
-                <div className="modal-overlay">
-                    <div className="modal-dialog">
+                <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+                    <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-content">
                             <div className="modal-header">
                                 <button type="button" className="close" onClick={() => setShowAddModal(false)}>&times;</button>
@@ -405,6 +432,7 @@ const OnlineCourseList = () => {
                                     </div>
                                 </div>
                                 <div className="modal-footer">
+                                    <button type="button" className="btn btn-default" onClick={() => setShowAddModal(false)}>Cancel</button>
                                     <button type="submit" className="btn btn-primary" disabled={loading}>
                                         {loading ? <i className='fa fa-spinner fa-spin'></i> : 'Save'}
                                     </button>
@@ -417,8 +445,8 @@ const OnlineCourseList = () => {
 
             {/* Edit Video Modal */}
             {showEditModal && (
-                <div className="modal-overlay">
-                    <div className="modal-dialog">
+                <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+                    <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-content">
                             <div className="modal-header">
                                 <button type="button" className="close" onClick={() => setShowEditModal(false)}>&times;</button>
@@ -436,6 +464,7 @@ const OnlineCourseList = () => {
                                     </div>
                                 </div>
                                 <div className="modal-footer">
+                                    <button type="button" className="btn btn-default" onClick={() => setShowEditModal(false)}>Cancel</button>
                                     <button type="submit" className="btn btn-primary" disabled={loading}>
                                         {loading ? <i className='fa fa-spinner fa-spin'></i> : 'Save'}
                                     </button>
@@ -448,17 +477,20 @@ const OnlineCourseList = () => {
 
             {/* View Video Modal */}
             {showViewModal && (
-                <div className="modal-overlay">
-                    <div className="modal-dialog modal-lg">
+                <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
+                    <div className="modal-dialog modal-lg" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h4 className="modal-title">View Video</h4>
                                 <button type="button" className="close" onClick={() => setShowViewModal(false)}>&times;</button>
+                                <h4 className="modal-title">View Video</h4>
                             </div>
                             <div className="modal-body">
                                 <div className="embed-responsive embed-responsive-16by9">
                                     <iframe className="embed-responsive-item" src={viewUrl} allowFullScreen title="Video Viewer"></iframe>
                                 </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-default" onClick={() => setShowViewModal(false)}>Close</button>
                             </div>
                         </div>
                     </div>

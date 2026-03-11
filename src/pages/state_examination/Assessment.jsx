@@ -5,6 +5,7 @@ import Footer from '../../components/Footer';
 import api from '../../services/api';
 import '../../utils/include_files';
 import { useSession } from '../../context/SessionContext';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const Assessment = () => {
     const { sessionYear } = useSession();
@@ -13,13 +14,14 @@ const Assessment = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [activeAssessment, setActiveAssessment] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const [formData, setFormData] = useState({
         id: '',
         name: '',
         description: '',
         rows: [
-            { id: Date.now(), type_name: '', code: '', maximum_marks: '', pass_percentage: '', type_description: '' }
+            { ui_id: Date.now(), id: '', type_name: '', code: '', maximum_marks: '', pass_percentage: '', type_description: '' }
         ]
     });
 
@@ -61,7 +63,7 @@ const Assessment = () => {
     const addRow = () => {
         setFormData({
             ...formData,
-            rows: [...formData.rows, { id: Date.now(), type_name: '', code: '', maximum_marks: '', pass_percentage: '', type_description: '' }]
+            rows: [...formData.rows, { ui_id: Date.now(), id: '', type_name: '', code: '', maximum_marks: '', pass_percentage: '', type_description: '' }]
         });
     };
 
@@ -75,28 +77,56 @@ const Assessment = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Validation
+        const newErrors = {};
+        if (!formData.name.trim()) newErrors.name = "This field is required";
+
+        const rowErrors = [];
+        formData.rows.forEach((row, index) => {
+            const currentLineErrors = {};
+            if (!row.type_name.trim()) currentLineErrors.type_name = "This field is required";
+            if (!row.code.trim()) currentLineErrors.code = "This field is required";
+            if (!String(row.maximum_marks).trim()) currentLineErrors.maximum_marks = "This field is required";
+            if (!String(row.pass_percentage).trim()) currentLineErrors.pass_percentage = "This field is required";
+
+            if (Object.keys(currentLineErrors).length > 0) {
+                rowErrors[index] = currentLineErrors;
+            }
+        });
+
+        if (Object.keys(newErrors).length > 0 || rowErrors.length > 0) {
+            setErrors({ ...newErrors, rows: rowErrors });
+            return;
+        }
+
+        setErrors({});
+
         // Construct payload as per requirement:
         // { "name": "...", "description": "...", "row": [1, 2], "type_name_1": "...", ... }
 
         const payload = {
             name: formData.name,
             description: formData.description,
-            row: [] // indices
+            types: formData.rows.map(row => {
+                const typeObj = {
+                    name: row.type_name,
+                    code: row.code,
+                    maximum_marks: parseFloat(row.maximum_marks) || 0,
+                    pass_percentage: parseFloat(row.pass_percentage) || 0,
+                };
+                if (row.type_description) {
+                    typeObj.description = row.type_description;
+                }
+                if (row.id) {
+                    typeObj.id = parseInt(row.id, 10);
+                }
+                return typeObj;
+            })
         };
-
-        formData.rows.forEach((row, index) => {
-            const idx = index + 1; // 1-based index as per example
-            payload.row.push(idx);
-            payload[`type_name_${idx}`] = row.type_name;
-            payload[`code_${idx}`] = row.code;
-            payload[`maximum_marks_${idx}`] = row.maximum_marks;
-            payload[`pass_percentage_${idx}`] = row.pass_percentage;
-            payload[`type_description_${idx}`] = row.type_description;
-        });
 
         // Add ID if editing
         if (isEditing) {
-            payload.id = formData.id;
+            payload.record_id = parseInt(formData.id, 10);
             payload.action = "update"; // Required for edit operation
         }
 
@@ -128,8 +158,9 @@ const Assessment = () => {
             id: '',
             name: '',
             description: '',
-            rows: [{ id: Date.now(), type_name: '', code: '', maximum_marks: '', pass_percentage: '', type_description: '' }]
+            rows: [{ ui_id: Date.now(), id: '', type_name: '', code: '', maximum_marks: '', pass_percentage: '', type_description: '' }]
         });
+        setErrors({});
         setIsEditing(false);
     };
 
@@ -141,7 +172,8 @@ const Assessment = () => {
 
                 // Map API list response to form rows
                 const rows = (data.list || []).map(item => ({
-                    id: item.id || Date.now() + Math.random(),
+                    ui_id: Date.now() + Math.random(),
+                    id: item.id || '',
                     type_name: item.name,
                     code: item.code,
                     maximum_marks: item.maximum_marks,
@@ -151,7 +183,7 @@ const Assessment = () => {
 
                 // If no rows, ensure at least one empty row
                 if (rows.length === 0) {
-                    rows.push({ id: Date.now(), type_name: '', code: '', maximum_marks: '', pass_percentage: '', type_description: '' });
+                    rows.push({ ui_id: Date.now(), id: '', type_name: '', code: '', maximum_marks: '', pass_percentage: '', type_description: '' });
                 }
 
                 setFormData({
@@ -217,6 +249,39 @@ const Assessment = () => {
         a.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Assessment");
+        if (!hiddenColumns.includes(1)) headers.push("Assessment Description");
+        if (!hiddenColumns.includes(2)) headers.push("Assessment Type");
+
+        const rows = filteredAssessments.map(assessment => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(assessment.name);
+            if (!hiddenColumns.includes(1)) row.push(assessment.description);
+            if (!hiddenColumns.includes(2)) {
+                if (assessment.data && assessment.data.length > 0) {
+                    const typeStr = assessment.data.map(item => `${item.name} (${item.code})`).join(', ');
+                    row.push(typeStr);
+                } else {
+                    row.push("");
+                }
+            }
+            return row;
+        });
+
+        return { headers, rows };
+    };
+
     return (
         <div className="wrapper theme-white-skin">
             <Header appName={appName} userData={userData} handleLogout={() => { }} />
@@ -230,7 +295,7 @@ const Assessment = () => {
                 <section className="content-header">
                     <h1><i className="fa fa-money"></i> State Examination</h1>
                 </section>
-                <section className="content" style={{ marginTop: '20px' }}>
+                <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-12">
                             <div className="box box-primary">
@@ -270,12 +335,26 @@ const Assessment = () => {
                                             </div>
                                             <div className="col-md-6">
                                                 <div className="pull-right dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy"><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print"><i className="fa fa-print"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns"><i className="fa fa-columns"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Assessment_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Assessment_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Assessment List'); }}><i className="fa fa-print"></i></button>
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Assessment</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Assessment Description</label>
+                                                                </li>
+                                                                <li>
+                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Assessment Type</label>
+                                                                </li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -283,18 +362,18 @@ const Assessment = () => {
                                             <table className="table table-striped table-bordered table-hover example">
                                                 <thead>
                                                     <tr>
-                                                        <th width="10%">Assessment</th>
-                                                        <th width="20%">Assessment Description</th>
-                                                        <th width="65%">Assessment Type</th>
+                                                        {!hiddenColumns.includes(0) && <th width="10%">Assessment</th>}
+                                                        {!hiddenColumns.includes(1) && <th width="20%">Assessment Description</th>}
+                                                        {!hiddenColumns.includes(2) && <th width="65%">Assessment Type</th>}
                                                         <th className="text-right noExport" width="5%">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {filteredAssessments.map(assessment => (
                                                         <tr key={assessment.id}>
-                                                            <td>{assessment.name}</td>
-                                                            <td>{assessment.description}</td>
-                                                            <td className="mailbox-name">
+                                                            {!hiddenColumns.includes(0) && <td>{assessment.name}</td>}
+                                                            {!hiddenColumns.includes(1) && <td>{assessment.description}</td>}
+                                                            {!hiddenColumns.includes(2) && <td className="mailbox-name">
                                                                 <table className="table table-bordered table-hover" style={{ marginBottom: 0 }}>
                                                                     <thead>
                                                                         <tr>
@@ -317,7 +396,7 @@ const Assessment = () => {
                                                                         ))}
                                                                     </tbody>
                                                                 </table>
-                                                            </td>
+                                                            </td>}
                                                             <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                                                                 <button className="btn btn-default btn-xs" title="Edit" onClick={() => handleEdit(assessment)}><i className="fa fa-pencil"></i></button>
                                                                 <button className="btn btn-default btn-xs" title="Delete" onClick={() => handleDelete(assessment.id)}><i className="fa fa-trash"></i></button>
@@ -360,9 +439,10 @@ const Assessment = () => {
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="modal-body">
-                                    <div className="form-group">
+                                    <div className={`form-group ${errors.name ? 'has-error' : ''}`}>
                                         <label>Assessment</label><small className="req"> *</small>
-                                        <input type="text" name="name" className="form-control" value={formData.name} onChange={handleInputChange} required />
+                                        <input type="text" name="name" className="form-control" value={formData.name} onChange={handleInputChange} />
+                                        {errors.name && <span className="text-danger">{errors.name}</span>}
                                     </div>
                                     <div className="form-group">
                                         <label>Assessment Description</label>
@@ -372,26 +452,30 @@ const Assessment = () => {
                                     <h5 className="box-title">Assessment Type</h5>
                                     <div id="grade_result">
                                         <div className="row">
-                                            <div className="col-md-2"><b>Name</b></div>
-                                            <div className="col-md-2"><b>Code</b></div>
-                                            <div className="col-md-2"><b>Maximum Marks</b></div>
-                                            <div className="col-md-2"><b>Passing Percentage</b></div>
+                                            <div className="col-md-2"><b>Name</b><small className="req"> *</small></div>
+                                            <div className="col-md-2"><b>Code</b><small className="req"> *</small></div>
+                                            <div className="col-md-2"><b>Maximum Marks</b><small className="req"> *</small></div>
+                                            <div className="col-md-2"><b>Passing Percentage</b><small className="req"> *</small></div>
                                             <div className="col-md-3"><b>Description</b></div>
                                             <div className="col-md-1"></div>
                                         </div>
                                         {formData.rows.map((row, index) => (
-                                            <div className="row mb10" key={row.id} style={{ marginBottom: '10px' }}>
-                                                <div className="col-md-2">
-                                                    <input type="text" className="form-control" value={row.type_name} onChange={(e) => handleRowChange(index, 'type_name', e.target.value)} required />
+                                            <div className="row mb10" key={row.ui_id} style={{ marginBottom: '10px' }}>
+                                                <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].type_name ? 'has-error' : ''}`}>
+                                                    <input type="text" className="form-control" value={row.type_name} onChange={(e) => handleRowChange(index, 'type_name', e.target.value)} />
+                                                    {errors.rows && errors.rows[index] && errors.rows[index].type_name && <span className="text-danger">{errors.rows[index].type_name}</span>}
                                                 </div>
-                                                <div className="col-md-2">
-                                                    <input type="text" className="form-control" value={row.code} onChange={(e) => handleRowChange(index, 'code', e.target.value)} required />
+                                                <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].code ? 'has-error' : ''}`}>
+                                                    <input type="text" className="form-control" value={row.code} onChange={(e) => handleRowChange(index, 'code', e.target.value)} />
+                                                    {errors.rows && errors.rows[index] && errors.rows[index].code && <span className="text-danger">{errors.rows[index].code}</span>}
                                                 </div>
-                                                <div className="col-md-2">
-                                                    <input type="number" className="form-control" value={row.maximum_marks} onChange={(e) => handleRowChange(index, 'maximum_marks', e.target.value)} required />
+                                                <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].maximum_marks ? 'has-error' : ''}`}>
+                                                    <input type="number" className="form-control" value={row.maximum_marks} onChange={(e) => handleRowChange(index, 'maximum_marks', e.target.value)} />
+                                                    {errors.rows && errors.rows[index] && errors.rows[index].maximum_marks && <span className="text-danger">{errors.rows[index].maximum_marks}</span>}
                                                 </div>
-                                                <div className="col-md-2">
-                                                    <input type="number" className="form-control" value={row.pass_percentage} onChange={(e) => handleRowChange(index, 'pass_percentage', e.target.value)} required />
+                                                <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].pass_percentage ? 'has-error' : ''}`}>
+                                                    <input type="number" className="form-control" value={row.pass_percentage} onChange={(e) => handleRowChange(index, 'pass_percentage', e.target.value)} />
+                                                    {errors.rows && errors.rows[index] && errors.rows[index].pass_percentage && <span className="text-danger">{errors.rows[index].pass_percentage}</span>}
                                                 </div>
                                                 <div className="col-md-3">
                                                     <textarea className="form-control" rows="1" value={row.type_description} onChange={(e) => handleRowChange(index, 'type_description', e.target.value)}></textarea>

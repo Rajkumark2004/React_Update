@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
+import { ClockInput } from '../../utils/clock';
 
 const AssignExamSubjects = ({ examId, handleClose }) => {
     const [loading, setLoading] = useState(true);
@@ -133,28 +134,9 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
     return (
         <div className="modal show" style={{ display: 'block', background: 'rgba(0,0,0,0.5)', minHeight: '100vh', zIndex: 1050, position: 'fixed', top: 0, left: 0, overflow: 'auto' }}>
             <div className="modal-dialog modal-xl" style={{ margin: '30px auto' }}>
-                <div className="modal-content" style={{ border: 'none', borderRadius: 0, boxShadow: 'none', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                    <div className="modal-header" style={{ borderBottom: '1px solid #f4f4f4', padding: '15px', position: 'relative' }}>
-                        <button
-                            type="button"
-                            className="close"
-                            onClick={handleClose}
-                            style={{
-                                position: 'absolute',
-                                right: '15px',
-                                top: '15px',
-                                opacity: 1,
-                                color: '#000',
-                                fontSize: '28px',
-                                lineHeight: '1',
-                                border: 'none',
-                                background: 'transparent',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>
+                <div className="modal-content" style={{ border: 'none', borderRadius: 0, boxShadow: 'none', display: 'flex', flexDirection: 'column' }}>
+                    <div className="modal-header" style={{ padding: '8px 15px' }}>
+                        <h4 className="modal-title" style={{ fontWeight: 'bold', fontSize: '16px', margin: 0 }}>
                             Exam Subjects
                         </h4>
                     </div>
@@ -228,17 +210,11 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            <div className="input-group">
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control timepicker"
-                                                                    value={row.time_from}
-                                                                    onChange={(e) => handleRowChange(row.id, 'time_from', e.target.value)}
-                                                                    required
-                                                                    placeholder="HH:MM"
-                                                                />
-                                                                <span className="input-group-addon"><i className="fa fa-clock-o"></i></span>
-                                                            </div>
+                                                            <ClockInput
+                                                                onChange={(val) => handleRowChange(row.id, 'time_from', val)}
+                                                                value={row.time_from}
+                                                                required
+                                                            />
                                                         </td>
                                                         <td>
                                                             <input
@@ -271,6 +247,7 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                                         </table>
                                     </div>
                                     <div className="modal-footer clearboth mx-nt-lr-15 pb0" style={{ borderTop: 'unset' }}>
+                                        <button type="button" className="btn btn-default" onClick={handleClose}>Close</button>
                                         <button type="submit" className="btn btn-primary pull-right" id="load" disabled={saving}>
                                             {saving ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                                         </button>

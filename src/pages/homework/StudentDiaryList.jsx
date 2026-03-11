@@ -248,10 +248,20 @@ const StudentDiaryList = () => {
 
             submitData.append('date', formattedDate);
             submitData.append('description', addFormData.description);
-            // assigned_by is required. Using a static value or fetching from session if available.
-            // Postman example: "Super Admin(9000)"
-            // For now, hardcoding or using a placeholder. Ideally should come from user session.
-            submitData.append('assigned_by', 'Super Admin(9000)');
+            // assigned_by is required. Using dynamic value from session if available.
+            const storedUser = localStorage.getItem('user');
+            let assignedBy = '';
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    const name = user.username || user.name;
+                    const employeeId = user.staff_id || user.employee_id || user.id;
+                    assignedBy = `${name} (${employeeId})`;
+                } catch (e) {
+                    console.error("Error parsing user for assigned_by:", e);
+                }
+            }
+            submitData.append('assigned_by', assignedBy);
 
             if (addFormData.file) {
                 submitData.append('userfile', addFormData.file);
@@ -306,8 +316,22 @@ const StudentDiaryList = () => {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
+            // assigned_by is required for edit as well
+            const storedUser = localStorage.getItem('user');
+            let assignedBy = '';
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    const name = user.username || user.name || 'Admin';
+                    const employeeId = user.staff_id || user.employee_id || user.id || '';
+                    assignedBy = `${name} (${employeeId})`;
+                } catch (e) {
+                    console.error("Error parsing user for assigned_by:", e);
+                }
+            }
+
             // Match the body carefully as requested by user
-            // User Postman body has: id, class_id, section_id, date, description
+            // User Postman body has: id, class_id, section_id, date, description, assigned_by
             // Check if file is selected
             if (editFormData.file) {
                 const submitData = new FormData();
@@ -316,6 +340,7 @@ const StudentDiaryList = () => {
                 submitData.append('section_id', editFormData.section_id);
                 submitData.append('date', editFormData.date); // Standard HTML5 date is YYYY-MM-DD
                 submitData.append('description', editFormData.description);
+                submitData.append('assigned_by', assignedBy);
                 submitData.append('userfile', editFormData.file);
 
                 await api.updateStudentDiary(submitData);
@@ -326,7 +351,8 @@ const StudentDiaryList = () => {
                     class_id: editFormData.class_id,
                     section_id: editFormData.section_id,
                     date: editFormData.date, // format: 2026-01-20
-                    description: editFormData.description
+                    description: editFormData.description,
+                    assigned_by: assignedBy
                 };
                 await api.updateStudentDiary(jsonBody);
             }

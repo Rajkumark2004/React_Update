@@ -6,6 +6,7 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const StudentIdCard = () => {
     const navigate = useNavigate();
@@ -70,6 +71,37 @@ const StudentIdCard = () => {
         old_sign_image: ''
     });
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const filteredIdCards = idCardList.filter(item =>
+        item.title && item.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("ID Card Title");
+        if (!hiddenColumns.includes(1)) headers.push("Background Image");
+        if (!hiddenColumns.includes(2)) headers.push("Design Type");
+
+        const rows = filteredIdCards.map(item => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(item.title);
+            if (!hiddenColumns.includes(1)) row.push(item.background_image ? "Yes" : "No");
+            if (!hiddenColumns.includes(2)) row.push(item.vertical ? 'Vertical' : 'Horizontal');
+            return row;
+        });
+
+        return { headers, rows };
+    };
+
     const [activeViewItem, setActiveViewItem] = useState(null);
     const [showViewModal, setShowViewModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -79,9 +111,15 @@ const StudentIdCard = () => {
     // Colorpicker useEffect removed as we are using native input type='color'
 
     const getImageUrl = (type, filename) => {
-        if (!filename) return "";
-        // Based on typical structure: /backend/uploads/certificate/student_id_card/background/filename
-        const uploadPath = `/backend/uploads/certificate/student_id_card/${type}/${filename}`;
+        if (!filename) {
+            if (type === 'student') return "https://newlayout.wisibles.com/uploads/student_images/no_image.png";
+            return "";
+        }
+        // If it's already an absolute URL, return it
+        if (filename.startsWith('http')) return filename;
+
+        // Use the new API structure for paths
+        const uploadPath = `/uploads/student_id_card/${type}/${filename}`;
         return `https://newlayout.wisibles.com${uploadPath}`;
     };
 
@@ -298,7 +336,7 @@ const StudentIdCard = () => {
     };
 
     return (
-        <div className="wrapper" style={{ marginTop: '17px' }}>
+        <div className="wrapper" style={{ marginTop: '0px' }}>
             <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
             <Sidebar sessionYear={sessionYear} currentUrl="/admin/studentidcard" />
 
@@ -520,39 +558,50 @@ const StudentIdCard = () => {
                                             <div className="col-sm-6">
                                                 <div className="pull-left">
                                                     <label style={{ fontWeight: 'normal' }}>Search:
-                                                        <input type="search" className="form-control input-sm" placeholder="" style={{ display: 'inline-block', width: 'auto', marginLeft: '5px' }} />
+                                                        <input type="search" className="form-control input-sm" placeholder="" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ display: 'inline-block', width: 'auto', marginLeft: '5px' }} />
                                                     </label>
                                                 </div>
                                             </div>
                                             <div className="col-sm-6">
                                                 <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm" title="Copy"><i className="fa fa-copy"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Print"><i className="fa fa-print"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Student_ID_Cards.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Student_ID_Cards.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student ID Cards'); }}><i className="fa fa-print"></i></button>
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i>
+                                                        </button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> ID Card Title</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Background Image</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Design Type</label></li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="table-responsive">
+                                        <div className="table-responsive overflow-visible">
                                             <table className="table table-striped table-bordered table-hover" style={{ fontSize: '13px' }}>
                                                 <thead>
                                                     <tr>
-                                                        <th>ID Card Title</th>
-                                                        <th>Background Image</th>
-                                                        <th className="text-center">Design Type</th>
-                                                        <th className="text-right">Action</th>
+                                                        {!hiddenColumns.includes(0) && <th>ID Card Title</th>}
+                                                        {!hiddenColumns.includes(1) && <th>Background Image</th>}
+                                                        {!hiddenColumns.includes(2) && <th className="text-center">Design Type</th>}
+                                                        <th className="text-right noExport">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {idCardList.map(item => (
+                                                    {filteredIdCards.map(item => (
                                                         <tr key={item.id}>
-                                                            <td><a href="#" onClick={(e) => { e.preventDefault(); handleView(item.id); }}>{item.title}</a></td>
-                                                            <td>
+                                                            {!hiddenColumns.includes(0) && <td><a href="#" onClick={(e) => { e.preventDefault(); handleView(item.id); }}>{item.title}</a></td>}
+                                                            {!hiddenColumns.includes(1) && <td>
                                                                 {item.background_image ? <img src={getImageUrl('background', item.background_image)} width="40" alt="bg" /> : <i className="fa fa-picture-o fa-2x"></i>}
-                                                            </td>
-                                                            <td className="text-center">{item.vertical ? 'Vertical' : 'Horizontal'}</td>
+                                                            </td>}
+                                                            {!hiddenColumns.includes(2) && <td className="text-center">{item.vertical ? 'Vertical' : 'Horizontal'}</td>}
                                                             <td className="text-right">
                                                                 <button className="btn btn-default btn-xs" onClick={() => handleView(item.id)} title="View"><i className="fa fa-reorder"></i></button>
                                                                 <button className="btn btn-default btn-xs" onClick={() => handleEdit(item.id)} title="Edit" style={{ marginLeft: '2px' }}><i className="fa fa-pencil"></i></button>
@@ -566,7 +615,7 @@ const StudentIdCard = () => {
 
                                         <div className="row mt10">
                                             <div className="col-sm-5">
-                                                <div className="dataTables_info">Records: 1 to {idCardList.length} of {idCardList.length}</div>
+                                                <div className="dataTables_info">Records: 1 to {filteredIdCards.length} of {filteredIdCards.length}</div>
                                             </div>
                                             <div className="col-sm-7">
                                                 <div className="pull-right">
@@ -647,7 +696,7 @@ const StudentIdCard = () => {
                                         {/* Main Body */}
                                         <div style={{ padding: '10px', display: 'flex', flexDirection: activeViewItem.vertical ? 'column' : 'row' }}>
                                             <div style={{ flex: '0 0 80px', textAlign: 'center' }}>
-                                                <img src="/uploads/student_images/no_image.png" style={{ width: '70px', height: '80px', border: '1px solid #ccc', borderRadius: '4px' }} alt="student" />
+                                                <img src={getImageUrl('student', null)} style={{ width: '70px', height: '80px', border: '1px solid #ccc', borderRadius: '4px' }} alt="student" />
                                             </div>
                                             <div style={{ flex: 1, paddingLeft: activeViewItem.vertical ? '0' : '15px', paddingTop: activeViewItem.vertical ? '10px' : '0' }}>
                                                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>

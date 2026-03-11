@@ -8,6 +8,7 @@ import Loader from '../../components/Loader';
 import { api } from '../../services/api';
 import '../../utils/include_files';
 import { useTableSort } from '../../hooks/useTableSort';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
 const DisabledStudents = () => {
     const [activeTab, setActiveTab] = useState('list');
@@ -25,8 +26,51 @@ const DisabledStudents = () => {
     const [sectionId, setSectionId] = useState('');
     const [searchText, setSearchText] = useState('');
 
+    const [tableSearchTerm, setTableSearchTerm] = useState('');
+
+    const columns = [
+        { key: 'admission_no', label: 'Admission No' },
+        { key: 'firstname', label: 'Student Name' },
+        { key: 'class', label: 'Class' },
+        { key: 'father_name', label: 'Father Name' },
+        { key: 'disable_reason', label: 'Disable Reason' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'mobileno', label: 'Mobile Number' },
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
     // Sorting Hook
     const { sortedData: sortedStudents, requestSort, getSortIcon } = useTableSort(students);
+
+    // Client-side table filter
+    const filteredStudents = sortedStudents.filter(s => {
+        if (tableSearchTerm === '') return true;
+        const term = tableSearchTerm.toLowerCase();
+        return [s.admission_no, getFullName(s), s.class, s.section, s.father_name, s.gender, s.mobileno]
+            .some(val => String(val ?? '').toLowerCase().includes(term));
+    });
+
+    // Export helpers
+    const getExportData = () => {
+        const visibleCols = columns.filter(col => visibleColumns.has(col.key));
+        const headers = visibleCols.map(col => col.label);
+        const rows = filteredStudents.map(s => visibleCols.map(col => {
+            if (col.key === 'firstname') return getFullName(s);
+            if (col.key === 'class') return `${s.class}(${s.section})`;
+            if (col.key === 'disable_reason') return getDisableReason(s.dis_reason);
+            return String(s[col.key] ?? '');
+        }));
+        return { headers, rows };
+    };
 
     // Fetch classes on component mount
     useEffect(() => {
@@ -147,6 +191,25 @@ const DisabledStudents = () => {
             return disableReasons[reasonId].reason || '-';
         }
         return '-';
+    };
+
+    // Enable student handler
+    const handleEnableStudent = async (studentId, studentName) => {
+        if (!window.confirm(`Are you sure you want to enable student "${studentName}"?`)) {
+            return;
+        }
+        try {
+            const response = await api.enableStudent(studentId);
+            if (response.status === 'success' || response.status === true) {
+                toast.success(response.message || 'Student enabled successfully');
+                setStudents(prev => prev.filter(s => s.id !== studentId));
+            } else {
+                toast.error(response.message || 'Failed to enable student');
+            }
+        } catch (error) {
+            console.error('Enable student error:', error);
+            toast.error(error.message || 'Failed to enable student');
+        }
     };
 
     return (
@@ -310,6 +373,55 @@ const DisabledStudents = () => {
                                     <div className="tab-content">
                                         {/* List View Tab */}
                                         <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} table-responsive no-padding overflow-visible-lg`} id="tab_1">
+                                            <div className="row" style={{ margin: '10px 0' }}>
+                                                <div className="col-sm-6">
+                                                    <div className="dt-buttons btn-group">
+                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                            <i className="fa fa-files-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'disabled_students.csv'); }}>
+                                                            <i className="fa fa-file-text-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'disabled_students.xls'); }}>
+                                                            <i className="fa fa-file-excel-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'disabled_students.pdf', 'Disabled Students'); }}>
+                                                            <i className="fa fa-file-pdf-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Disabled Students'); }}>
+                                                            <i className="fa fa-print"></i>
+                                                        </button>
+                                                        <div className="btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                <i className="fa fa-columns"></i>
+                                                            </button>
+                                                            {showColumnsDropdown && (
+                                                                <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                    {columns.map(col => (
+                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                            <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                            {col.label}
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="col-sm-6">
+                                                    <div className="pull-right">
+                                                        <label>Search:
+                                                            <input
+                                                                type="search"
+                                                                className="form-control input-sm"
+                                                                value={tableSearchTerm}
+                                                                onChange={(e) => setTableSearchTerm(e.target.value)}
+                                                                style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             {loading ? (
                                                 <div className="text-center" style={{ padding: '20px' }}>
                                                     <i className="fa fa-spinner fa-spin fa-2x"></i>
@@ -319,26 +431,34 @@ const DisabledStudents = () => {
                                                 <table className="table table-striped table-bordered table-hover example" cellSpacing="0" width="100%">
                                                     <thead>
                                                         <tr>
-                                                            <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('admission_no')}>
-                                                                Admission No {getSortIcon('admission_no')}
-                                                            </th>
-                                                            <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('firstname')}>
-                                                                Student Name {getSortIcon('firstname')}
-                                                            </th>
-                                                            <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('class')}>
-                                                                Class {getSortIcon('class')}
-                                                            </th>
-                                                            <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('father_name')}>
-                                                                Father Name {getSortIcon('father_name')}
-                                                            </th>
-                                                            <th>Disable Reason</th>
-                                                            <th>Gender</th>
-                                                            <th>Mobile Number</th>
+                                                            {visibleColumns.has('admission_no') && (
+                                                                <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('admission_no')}>
+                                                                    Admission No {getSortIcon('admission_no')}
+                                                                </th>
+                                                            )}
+                                                            {visibleColumns.has('firstname') && (
+                                                                <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('firstname')}>
+                                                                    Student Name {getSortIcon('firstname')}
+                                                                </th>
+                                                            )}
+                                                            {visibleColumns.has('class') && (
+                                                                <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('class')}>
+                                                                    Class {getSortIcon('class')}
+                                                                </th>
+                                                            )}
+                                                            {visibleColumns.has('father_name') && (
+                                                                <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('father_name')}>
+                                                                    Father Name {getSortIcon('father_name')}
+                                                                </th>
+                                                            )}
+                                                            {visibleColumns.has('disable_reason') && <th>Disable Reason</th>}
+                                                            {visibleColumns.has('gender') && <th>Gender</th>}
+                                                            {visibleColumns.has('mobileno') && <th>Mobile Number</th>}
                                                             <th className="pull-right noExport">Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {students.length === 0 ? (
+                                                        {filteredStudents.length === 0 ? (
                                                             <tr>
                                                                 <td colSpan="8" className="text-center">
                                                                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
@@ -349,27 +469,31 @@ const DisabledStudents = () => {
                                                                 </td>
                                                             </tr>
                                                         ) : (
-                                                            sortedStudents.map((student) => (
+                                                            filteredStudents.map((student) => (
                                                                 <tr key={student.id}>
-                                                                    <td>{student.admission_no || '-'}</td>
-                                                                    <td>
-                                                                        <Link to={`/student/view/${student.id}`}>
-                                                                            {getFullName(student)}
-                                                                        </Link>
-                                                                    </td>
-                                                                    <td>{student.class}({student.section})</td>
-                                                                    <td>{student.father_name || '-'}</td>
-                                                                    <td>
-                                                                        <span
-                                                                            data-toggle="tooltip"
-                                                                            title={student.dis_note || ''}
-                                                                            style={{ cursor: 'pointer' }}
-                                                                        >
-                                                                            {getDisableReason(student.dis_reason)}
-                                                                        </span>
-                                                                    </td>
-                                                                    <td>{student.gender || '-'}</td>
-                                                                    <td>{student.mobileno || '-'}</td>
+                                                                    {visibleColumns.has('admission_no') && <td>{student.admission_no || '-'}</td>}
+                                                                    {visibleColumns.has('firstname') && (
+                                                                        <td>
+                                                                            <Link to={`/student/view/${student.id}`}>
+                                                                                {getFullName(student)}
+                                                                            </Link>
+                                                                        </td>
+                                                                    )}
+                                                                    {visibleColumns.has('class') && <td>{student.class}({student.section})</td>}
+                                                                    {visibleColumns.has('father_name') && <td>{student.father_name || '-'}</td>}
+                                                                    {visibleColumns.has('disable_reason') && (
+                                                                        <td>
+                                                                            <span
+                                                                                data-toggle="tooltip"
+                                                                                title={student.dis_note || ''}
+                                                                                style={{ cursor: 'pointer' }}
+                                                                            >
+                                                                                {getDisableReason(student.dis_reason)}
+                                                                            </span>
+                                                                        </td>
+                                                                    )}
+                                                                    {visibleColumns.has('gender') && <td>{student.gender || '-'}</td>}
+                                                                    {visibleColumns.has('mobileno') && <td>{student.mobileno || '-'}</td>}
                                                                     <td className="pull-right">
                                                                         <Link
                                                                             to={`/student/view/${student.id}`}
@@ -379,6 +503,15 @@ const DisabledStudents = () => {
                                                                         >
                                                                             <i className="fa fa-reorder"></i>
                                                                         </Link>
+                                                                        {' '}
+                                                                        <button
+                                                                            className="btn btn-success btn-xs"
+                                                                            data-toggle="tooltip"
+                                                                            title="Enable Student"
+                                                                            onClick={() => handleEnableStudent(student.id, getFullName(student))}
+                                                                        >
+                                                                            <i className="fa fa-check"></i>
+                                                                        </button>
                                                                     </td>
                                                                 </tr>
                                                             ))
@@ -453,6 +586,15 @@ const DisabledStudents = () => {
                                                                     >
                                                                         <i className="fa fa-reorder"></i>
                                                                     </Link>
+                                                                    {' '}
+                                                                    <button
+                                                                        className="btn btn-success btn-xs"
+                                                                        data-toggle="tooltip"
+                                                                        title="Enable Student"
+                                                                        onClick={() => handleEnableStudent(student.id, getFullName(student))}
+                                                                    >
+                                                                        <i className="fa fa-check"></i>
+                                                                    </button>
                                                                 </span>
                                                             </div>
                                                         </div>

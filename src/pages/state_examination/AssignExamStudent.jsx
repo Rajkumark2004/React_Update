@@ -120,28 +120,9 @@ const AssignExamStudent = ({ examId: propExamId, handleClose }) => {
 
     // Only render the inner content if using as component
     const content = (
-        <div className="modal-content" style={{ border: 'none', borderRadius: 0, boxShadow: 'none', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <div className="modal-header" style={{ borderBottom: '1px solid #f4f4f4', padding: '15px', position: 'relative' }}>
-                <button
-                    type="button"
-                    className="close"
-                    onClick={() => handleClose ? handleClose() : navigate('/cbseexam/exam')}
-                    style={{
-                        position: 'absolute',
-                        right: '15px',
-                        top: '15px',
-                        opacity: 1,
-                        color: '#000',
-                        fontSize: '28px',
-                        lineHeight: '1',
-                        border: 'none',
-                        background: 'transparent',
-                        cursor: 'pointer'
-                    }}
-                >
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 className="modal-title" style={{ fontWeight: 'bold' }}>
+        <div className="modal-content" style={{ border: 'none', borderRadius: 0, boxShadow: 'none', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-header" style={{ padding: '8px 15px' }}>
+                <h4 className="modal-title" style={{ fontWeight: 'bold', fontSize: '16px', margin: 0 }}>
                     Assign / view Student
                 </h4>
             </div>
@@ -218,6 +199,7 @@ const AssignExamStudent = ({ examId: propExamId, handleClose }) => {
                             </table>
                         </div>
                         <div className="modal-footer" style={{ borderTop: '1px solid #f4f4f4', padding: '15px 0 0 0', marginTop: '15px' }}>
+                            <button type="button" className="btn btn-default" onClick={() => handleClose ? handleClose() : navigate('/cbseexam/exam')}>Close</button>
                             <button type="submit" className="btn btn-primary pull-right" id="load" disabled={saving}>
                                 {saving ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                             </button>

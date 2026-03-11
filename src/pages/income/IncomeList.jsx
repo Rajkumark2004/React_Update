@@ -5,8 +5,13 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { useTableSort } from '../../hooks/useTableSort';
+
+
 
 const IncomeList = () => {
+    const [isDragOver, setIsDragOver] = useState(false);
     const navigate = useNavigate();
     const [incomeList, setIncomeList] = useState([]);
     const [incomeHeadList, setIncomeHeadList] = useState([]);
@@ -15,6 +20,31 @@ const IncomeList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(100);
+
+    const columns = [
+        { key: 'name', label: 'Name', sortKey: 'name' },
+        { key: 'description', label: 'Description', sortKey: 'description' },
+        { key: 'invoice_no', label: 'Invoice Number', sortKey: 'invoice_no' },
+        { key: 'date', label: 'Date', sortKey: 'date' },
+        { key: 'income_category', label: 'Income Head', sortKey: 'income_category' },
+        { key: 'amount', label: 'Amount (₹)', sortKey: 'amount' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    const formatCell = (row, key) => {
+        if (key === 'income_category') return row.income_category || getHeadName(row.inc_head_id);
+        if (key === 'amount') return row.amount_formatted || row.amount;
+        return row[key] || '';
+    };
 
     const [formData, setFormData] = useState({
         inc_head_id: '',
@@ -70,6 +100,22 @@ const IncomeList = () => {
         }
     };
 
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file) setFormData(prev => ({ ...prev, documents: file }));
+    };
+
+    const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+    const handleDragLeave = () => setIsDragOver(false);
+
+    const removeFile = () => {
+        setFormData(prev => ({ ...prev, documents: null }));
+        const el = document.getElementById('documents');
+        if (el) el.value = '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -97,6 +143,7 @@ const IncomeList = () => {
                     description: '',
                     documents: null
                 });
+                setIsDragOver(false);
                 if (document.getElementById('documents')) {
                     document.getElementById('documents').value = "";
                 }
@@ -134,15 +181,15 @@ const IncomeList = () => {
         return head ? head.income_category : '';
     };
 
-    const filteredIncomeList = incomeList.filter(income =>
+    const { sortedData: sortedIncome, requestSort: handleSort, getSortIcon } = useTableSort(incomeList);
+
+    const filteredIncomeList = sortedIncome.filter(income =>
         Object.values(income).some(value =>
             String(value).toLowerCase().includes(searchTerm.toLowerCase())
         ) || getHeadName(income.inc_head_id).toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleExport = (type) => {
-        toast.success(`${type} export triggered (Simulation)`);
-    };
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredIncomeList, formatCell);
 
     // Pagination logic
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -257,13 +304,49 @@ const IncomeList = () => {
                                         </div>
                                         <div className="form-group">
                                             <label>Attach Document</label>
-                                            <input
-                                                id="documents"
-                                                name="documents"
-                                                type="file"
-                                                className="form-control"
-                                                onChange={handleInputChange}
-                                            />
+                                            <div
+                                                onDrop={handleDrop}
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onClick={() => document.getElementById('documents').click()}
+                                                style={{
+                                                    border: `2px dashed ${isDragOver ? '#31708f' : '#aaa'}`,
+                                                    borderRadius: '6px',
+                                                    padding: '18px 12px',
+                                                    textAlign: 'center',
+                                                    cursor: 'pointer',
+                                                    background: isDragOver ? '#d9edf7' : '#fafafa',
+                                                    transition: 'background 0.2s, border-color 0.2s',
+                                                    userSelect: 'none'
+                                                }}
+                                            >
+                                                <input
+                                                    id="documents"
+                                                    name="documents"
+                                                    type="file"
+                                                    style={{ display: 'none' }}
+                                                    onChange={handleInputChange}
+                                                />
+                                                {formData.documents ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                                        <i className="fa fa-file-text-o" style={{ color: '#31708f' }}></i>
+                                                        <span style={{ fontSize: '13px', color: '#333' }}>{formData.documents.name}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); removeFile(); }}
+                                                            style={{ background: 'none', border: 'none', color: '#a94442', cursor: 'pointer', padding: '0 4px', fontSize: '14px' }}
+                                                            title="Remove file"
+                                                        >
+                                                            <i className="fa fa-times-circle"></i>
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <i className="fa fa-cloud-upload" style={{ fontSize: '22px', color: '#aaa', display: 'block', marginBottom: '6px' }}></i>
+                                                        <span style={{ fontSize: '13px', color: '#888' }}>Drag &amp; drop a file here, or <span style={{ color: '#31708f', textDecoration: 'underline' }}>click to browse</span></span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="form-group">
                                             <label>Description</label>
@@ -297,36 +380,54 @@ const IncomeList = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-controls">
-                                        <div className="pull-left">
-                                            <div className="btn-group">
-                                                <button type="button" className="btn btn-default btn-xs" title="Copy" onClick={() => handleExport('Copy')}>
-                                                    <i className="fa fa-copy"></i>
+                                    <div className="row" style={{ marginBottom: '10px' }}>
+                                        <div className="col-md-6">
+                                            <div className="dt-buttons btn-group">
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                    <i className="fa fa-files-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="Excel" onClick={() => handleExport('Excel')}>
-                                                    <i className="fa fa-file-excel-o"></i>
-                                                </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="CSV" onClick={() => handleExport('CSV')}>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'income_list.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="PDF" onClick={() => handleExport('PDF')}>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'income_list.xls'); }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'income_list.pdf', 'Income List'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="Print" onClick={() => window.print()}>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Income List'); }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showColumnsDropdown && (
+                                                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {columns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                    <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="pull-right">
-                                            <div className="has-feedback">
+                                        <div className="col-md-6">
+                                            <div className="input-group input-group-sm">
                                                 <input
                                                     type="text"
-                                                    className="form-control input-sm"
+                                                    className="form-control"
                                                     placeholder="Search..."
                                                     value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
                                                 />
-                                                <span className="glyphicon glyphicon-search form-control-feedback"></span>
+                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
                                             </div>
                                         </div>
                                     </div>
@@ -335,12 +436,15 @@ const IncomeList = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Name</th>
-                                                    <th>Description</th>
-                                                    <th>Invoice Number</th>
-                                                    <th>Date</th>
-                                                    <th>Income Head</th>
-                                                    <th className="text-right">Amount (₹)</th>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <th key={col.key}
+                                                            className={col.sortKey ? 'sorting' : ''}
+                                                            style={col.sortKey ? { cursor: 'pointer' } : {}}
+                                                            onClick={col.sortKey ? () => handleSort(col.sortKey) : undefined}
+                                                        >
+                                                            {col.label} {col.sortKey && getSortIcon(col.sortKey)}
+                                                        </th>
+                                                    ))}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
@@ -352,12 +456,11 @@ const IncomeList = () => {
                                                 ) : (
                                                     currentItems.map((income) => (
                                                         <tr key={income.id}>
-                                                            <td className="mailbox-name">{income.name}</td>
-                                                            <td className="mailbox-name">{income.description}</td>
-                                                            <td className="mailbox-name">{income.invoice_no}</td>
-                                                            <td className="mailbox-name">{income.date}</td>
-                                                            <td className="mailbox-name">{income.income_category || getHeadName(income.inc_head_id)}</td>
-                                                            <td className="mailbox-name text-right">{income.amount_formatted || income.amount}</td>
+                                                            {columns.map(col => visibleColumns.has(col.key) && (
+                                                                <td key={col.key} className={col.key === 'amount' ? "mailbox-name text-right" : "mailbox-name"}>
+                                                                    {formatCell(income, col.key)}
+                                                                </td>
+                                                            ))}
                                                             <td className="mailbox-date pull-right">
                                                                 <Link to={`/admin/income/edit/${income.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                                     <i className="fa fa-pencil"></i>

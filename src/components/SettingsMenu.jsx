@@ -148,21 +148,21 @@ const SettingsMenu = ({ children, hideSidebars = false }) => {
                                                 <img src={getIconPath('10.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Roles Permissions
                                             </Link>
                                         </li>
-                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('11.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Backup Restore</a></li>
+                                        {/*  <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('11.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Backup Restore</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('12.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Languages</a></li>
-                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('14.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Users</a></li>
+                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('14.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Users</a></li>*/}
                                         <li>
                                             <Link to="/settings/modules" className={location.pathname.startsWith('/settings/modules') ? "active" : ""}>
                                                 <img src={getIconPath('15.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Modules
                                             </Link>
                                         </li>
-                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('16.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Custom Fields</a></li>
+                                        {/* <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('16.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Custom Fields</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('17.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Captcha Setting</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('18.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> System Fields</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('19.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Student Profile Update</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('20.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Online Admission</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('22.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> File Types</a></li>
-                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('21.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Sidebar Menu</a></li>
+                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src={getIconPath('21.png')} alt="icon" className="img-fluid" style={{ width: '20px' }} /> Sidebar Menu</a></li>*/}
                                     </ul>
                                 </div>
                             </div>

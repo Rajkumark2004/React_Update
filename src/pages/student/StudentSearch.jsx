@@ -8,27 +8,19 @@ import Loader from '../../components/Loader';
 import { api } from '../../services/api';
 import '../../utils/include_files';
 import { useTableSort } from '../../hooks/useTableSort';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 
 
+const BASE_URL = 'https://newlayout.wisibles.com';
 
-const StudentImage = ({ student }) => {
-    const [imgSrc, setImgSrc] = useState(student.image);
-
-    useEffect(() => {
-        setImgSrc(student.image);
-    }, [student.image]);
-
-    return (
-        <img
-            className="img-responsive img-thumbnail width150"
-            alt={student.name}
-            src={imgSrc}
-            onError={() => {
-                setImgSrc("/images/default_image.jpg");
-            }}
-        />
-    );
+const getImageUrl = (imagePath, gender) => {
+    if (imagePath && imagePath !== "") {
+        return `${BASE_URL}/${imagePath}`;
+    }
+    if (gender === 'Female') return `${BASE_URL}/uploads/student_images/default_female.jpg`;
+    return `${BASE_URL}/uploads/student_images/default_male.jpg?1769064211`;
 };
+
 
 const StudentSearch = () => {
     const [activeTab, setActiveTab] = useState('list');
@@ -47,8 +39,24 @@ const StudentSearch = () => {
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
 
+    const [tableSearchTerm, setTableSearchTerm] = useState('');
+
     // Sorting Hook
     const { sortedData: sortedStudents, requestSort, getSortIcon } = useTableSort(students);
+
+    // Client-side table filter
+    const filteredStudents = sortedStudents.filter(s =>
+        tableSearchTerm === '' || Object.values(s).some(val => String(val).toLowerCase().includes(tableSearchTerm.toLowerCase()))
+    );
+
+    // Export helpers
+    const getExportData = () => {
+        const headers = ['Admission No', 'Student Name', 'Class', 'Father Name', 'Date Of Birth', 'Gender', 'Category', 'Mobile Number'];
+        const rows = filteredStudents.map(s => [
+            s.admission_no, s.name, s.class, s.father_name, s.dob, s.gender, s.category, s.mobile
+        ].map(v => String(v ?? '')));
+        return { headers, rows };
+    };
 
 
     // Fetch classes on component mount
@@ -128,7 +136,7 @@ const StudentSearch = () => {
                 sectionId = '';
                 params = {
                     srch_type: 'search_full',
-                    search_text: formData.search_text
+                    search: formData.search_text
                 };
             }
 
@@ -158,7 +166,7 @@ const StudentSearch = () => {
                 gender: student.gender,
                 category: student.category || '',
                 mobile: student.mobile_no || student.mobileno,
-                image: student.image ? `https://newlayout.wisibles.com/${student.image}` : (student.gender === 'Female' ? "/uploads/student_images/default_female.jpg" : "/uploads/student_images/default_male.jpg"),
+                image: student.image || '',
                 custom_fields: student.custom_fields || []
             }));
 
@@ -333,6 +341,40 @@ const StudentSearch = () => {
                                     </ul>
                                     <div className="tab-content">
                                         <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} table-responsive no-padding`} id="tab_1">
+                                            <div className="row" style={{ margin: '10px 0' }}>
+                                                <div className="col-sm-6">
+                                                    <div className="dt-buttons btn-group">
+                                                        <button className="btn btn-default btn-xs" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                            <i className="fa fa-files-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-xs" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_list.xls'); }}>
+                                                            <i className="fa fa-file-excel-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-xs" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_list.csv'); }}>
+                                                            <i className="fa fa-file-text-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-xs" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
+                                                            <i className="fa fa-file-pdf-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-xs" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}>
+                                                            <i className="fa fa-print"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="col-sm-6">
+                                                    <div className="pull-right">
+                                                        <label>Search:
+                                                            <input
+                                                                type="search"
+                                                                className="form-control input-sm"
+                                                                value={tableSearchTerm}
+                                                                onChange={(e) => setTableSearchTerm(e.target.value)}
+                                                                style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <table className="table table-striped table-bordered table-hover student-list">
                                                 <thead>
                                                     <tr>
@@ -358,7 +400,7 @@ const StudentSearch = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {students.length === 0 ? (
+                                                    {filteredStudents.length === 0 ? (
                                                         <tr>
                                                             <td colSpan="9" className="text-center">
                                                                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
@@ -369,7 +411,7 @@ const StudentSearch = () => {
                                                             </td>
                                                         </tr>
                                                     ) : (
-                                                        sortedStudents.map((student) => (
+                                                        filteredStudents.map((student) => (
                                                             <tr key={student.id}>
                                                                 <td>{student.admission_no}</td>
                                                                 <td><Link to={`/student/view/${student.id}`}>{student.name}</Link></td>
@@ -386,9 +428,9 @@ const StudentSearch = () => {
                                                                     <Link to={`/student/edit/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                                         <i className="fa fa-pencil"></i>
                                                                     </Link>
-                                                                    <a href="#" className="btn btn-default btn-xs" data-toggle="tooltip" title="Add Fees">
+                                                                    <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Add Fees">
                                                                         ₹
-                                                                    </a>
+                                                                    </Link>
 
                                                                 </td>
                                                             </tr>
@@ -412,7 +454,15 @@ const StudentSearch = () => {
                                                                 <div className="carousel-inner">
                                                                     <div className="item active">
                                                                         <Link to={`/student/view/${student.id}`}>
-                                                                            <StudentImage student={student} />
+                                                                            <img
+                                                                                className="img-responsive img-thumbnail width150"
+                                                                                alt={student.name}
+                                                                                src={getImageUrl(student.image, student.gender)}
+                                                                                onError={(e) => {
+                                                                                    e.target.onerror = null;
+                                                                                    e.target.src = getImageUrl('', student.gender);
+                                                                                }}
+                                                                            />
                                                                         </Link>
                                                                     </div>
                                                                 </div>
@@ -442,9 +492,9 @@ const StudentSearch = () => {
                                                                     <Link to={`/student/edit/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                                         <i className="fa fa-pencil"></i>
                                                                     </Link>
-                                                                    <a href="#" className="btn btn-default btn-xs" data-toggle="tooltip" title="Collect Fees">
+                                                                    <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Collect Fees">
                                                                         ₹
-                                                                    </a>
+                                                                    </Link>
 
                                                                 </span>
                                                             </div>
@@ -457,7 +507,7 @@ const StudentSearch = () => {
                                     <div className="box-footer">
                                         <div className="mailbox-controls">
                                             <div className="pull-left">
-                                                {students.length === 0 ? "Records 0 to 0 of 0" : `Records 1 to ${students.length} of ${totalRecords} `}
+                                                {filteredStudents.length === 0 ? "Records 0 to 0 of 0" : `Records 1 to ${filteredStudents.length} of ${totalRecords} `}
                                             </div>
                                         </div>
                                     </div>

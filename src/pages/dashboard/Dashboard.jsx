@@ -30,8 +30,11 @@ import {
     Building,
     BarChart3
 } from 'lucide-react';
+import { useSession } from '../../context/SessionContext';
 
 export default function Dashboard() {
+    const { currentSession } = useSession();
+
     return (
         <div className="dashboard-container">
             {/* TOP HEADER (Full Width Loop) */}
@@ -67,7 +70,7 @@ export default function Dashboard() {
                 <aside className="dashboard-sidebar">
                     <div className="session-info-top">
                         <div className="session-label">Session:</div>
-                        <div className="session-year">2024-25</div>
+                        <div className="session-year">{currentSession?.session || '---'}</div>
                     </div>
 
                     <ul className="dashboard-sidebar-menu">

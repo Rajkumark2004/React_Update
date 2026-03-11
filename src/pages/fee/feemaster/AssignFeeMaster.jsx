@@ -180,23 +180,26 @@ const AssignFeeMaster = () => {
     };
 
     const handleSave = async () => {
-        const selectedIds = Object.keys(selectedStudents).filter(key => selectedStudents[key]);
-        if (selectedIds.length === 0) {
-            toast.error('Please select at least one student');
-            return;
-        }
-
-        if (!window.confirm('Are you sure you want to assign fees to selected students?')) return;
+        if (!window.confirm('Are you sure you want to save the fee assignments for these students?')) return;
 
         setLoading(true);
         try {
+            const checkedIds = [];
+            const uncheckedIds = [];
+
+            studentList.forEach(student => {
+                const sid = parseInt(student.student_session_id);
+                if (selectedStudents[sid]) {
+                    checkedIds.push(sid);
+                } else {
+                    uncheckedIds.push(sid);
+                }
+            });
+
             const payload = {
                 fee_session_groups: parseInt(id),
-                student_session_id: selectedIds.map(sid => parseInt(sid)),
-                student_ids: selectedIds.map(sid => {
-                    const student = studentList.find(s => s.student_session_id == sid);
-                    return student && student.id ? parseInt(student.id) : parseInt(sid);
-                })
+                student_session_id: checkedIds,
+                student_ids: uncheckedIds
             };
 
             console.log('Saving fee assignment payload:', payload);

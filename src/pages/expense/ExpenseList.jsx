@@ -5,8 +5,11 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { useTableSort } from '../../hooks/useTableSort';
 
 const ExpenseList = () => {
+    const [isDragOver, setIsDragOver] = useState(false);
     const navigate = useNavigate();
     const [expenseList, setExpenseList] = useState([]);
     const [expenseHeadList, setExpenseHeadList] = useState([]);
@@ -15,6 +18,25 @@ const ExpenseList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(100);
+
+    // Columns Definition
+    const columns = [
+        { key: 'name', label: 'Name', sortKey: 'name' },
+        { key: 'description', label: 'Description', sortKey: 'description' },
+        { key: 'invoice_no', label: 'Invoice Number', sortKey: 'invoice_no' },
+        { key: 'date', label: 'Date', sortKey: 'date' },
+        { key: 'exp_head', label: 'Expense Head', sortKey: 'exp_head_id' },
+        { key: 'amount', label: 'Amount', sortKey: 'amount' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) newVisible.delete(key);
+        else newVisible.add(key);
+        setVisibleColumns(newVisible);
+    };
 
     const [formData, setFormData] = useState({
         exp_head_id: '',
@@ -70,6 +92,22 @@ const ExpenseList = () => {
         }
     };
 
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file) setFormData(prev => ({ ...prev, documents: file }));
+    };
+
+    const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+    const handleDragLeave = () => setIsDragOver(false);
+
+    const removeFile = () => {
+        setFormData(prev => ({ ...prev, documents: null }));
+        const el = document.getElementById('documents');
+        if (el) el.value = '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -97,6 +135,7 @@ const ExpenseList = () => {
                     description: '',
                     documents: null
                 });
+                setIsDragOver(false);
                 if (document.getElementById('documents')) {
                     document.getElementById('documents').value = "";
                 }
@@ -136,14 +175,30 @@ const ExpenseList = () => {
         return head ? head.exp_category : '';
     };
 
-    const filteredExpenseList = expenseList.filter(expense =>
+    // Prepare data for sorting
+    const sortableData = React.useMemo(() => {
+        return expenseList.map(expense => ({
+            ...expense,
+            exp_head: expense.exp_category || getHeadName(expense.exp_head_id)
+        }));
+    }, [expenseList, expenseHeadList]);
+
+    // Apply Sorting
+    const { sortedData, requestSort, sortConfig, getSortIcon } = useTableSort(sortableData);
+
+    const filteredExpenseList = sortedData.filter(expense =>
         Object.values(expense).some(value =>
             String(value).toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
 
-    const handleExport = (type) => {
-        toast.success(`${type} export triggered (Simulation)`);
+    // Export Helper
+    const formatCell = (row, key) => {
+        return row[key] || '';
+    };
+
+    const getExportData = () => {
+        return buildExportData(columns, visibleColumns, filteredExpenseList, formatCell);
     };
 
     // Pagination logic
@@ -259,13 +314,49 @@ const ExpenseList = () => {
                                         </div>
                                         <div className="form-group">
                                             <label>Attach Document</label>
-                                            <input
-                                                id="documents"
-                                                name="documents"
-                                                type="file"
-                                                className="form-control"
-                                                onChange={handleInputChange}
-                                            />
+                                            <div
+                                                onDrop={handleDrop}
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onClick={() => document.getElementById('documents').click()}
+                                                style={{
+                                                    border: `2px dashed ${isDragOver ? '#31708f' : '#aaa'}`,
+                                                    borderRadius: '6px',
+                                                    padding: '18px 12px',
+                                                    textAlign: 'center',
+                                                    cursor: 'pointer',
+                                                    background: isDragOver ? '#d9edf7' : '#fafafa',
+                                                    transition: 'background 0.2s, border-color 0.2s',
+                                                    userSelect: 'none'
+                                                }}
+                                            >
+                                                <input
+                                                    id="documents"
+                                                    name="documents"
+                                                    type="file"
+                                                    style={{ display: 'none' }}
+                                                    onChange={handleInputChange}
+                                                />
+                                                {formData.documents ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                                        <i className="fa fa-file-text-o" style={{ color: '#31708f' }}></i>
+                                                        <span style={{ fontSize: '13px', color: '#333' }}>{formData.documents.name}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); removeFile(); }}
+                                                            style={{ background: 'none', border: 'none', color: '#a94442', cursor: 'pointer', padding: '0 4px', fontSize: '14px' }}
+                                                            title="Remove file"
+                                                        >
+                                                            <i className="fa fa-times-circle"></i>
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <i className="fa fa-cloud-upload" style={{ fontSize: '22px', color: '#aaa', display: 'block', marginBottom: '6px' }}></i>
+                                                        <span style={{ fontSize: '13px', color: '#888' }}>Drag &amp; drop a file here, or <span style={{ color: '#31708f', textDecoration: 'underline' }}>click to browse</span></span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="form-group">
                                             <label>Description</label>
@@ -302,33 +393,58 @@ const ExpenseList = () => {
                                     <div className="mailbox-controls">
                                         <div className="pull-left">
                                             <div className="btn-group">
-                                                <button type="button" className="btn btn-default btn-xs" title="Copy" onClick={() => handleExport('Copy')}>
-                                                    <i className="fa fa-copy"></i>
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                    <i className="fa fa-files-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="Excel" onClick={() => handleExport('Excel')}>
-                                                    <i className="fa fa-file-excel-o"></i>
-                                                </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="CSV" onClick={() => handleExport('CSV')}>
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'expense_list.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="PDF" onClick={() => handleExport('PDF')}>
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'expense_list.xls'); }}>
+                                                    <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'expense_list.pdf', 'Expense List'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
-                                                <button type="button" className="btn btn-default btn-xs" title="Print" onClick={() => window.print()}>
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Expense List'); }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
+                                                <div className="btn-group">
+                                                    <button type="button" className="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Columns">
+                                                        <i className="fa fa-columns"></i> <span className="caret"></span>
+                                                    </button>
+                                                    <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
+                                                        {columns.map(col => (
+                                                            <li key={col.key} style={{ padding: '0px' }}>
+                                                                <label style={{ display: 'block', margin: '0', fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={visibleColumns.has(col.key)}
+                                                                        onChange={() => toggleColumn(col.key)}
+                                                                        style={{ marginRight: '8px' }}
+                                                                    />
+                                                                    {col.label}
+                                                                </label>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="pull-right">
-                                            <div className="has-feedback">
+                                            <div className="input-group input-group-sm" style={{ width: '150px' }}>
                                                 <input
                                                     type="text"
-                                                    className="form-control input-sm"
+                                                    className="form-control"
                                                     placeholder="Search..."
                                                     value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
                                                 />
-                                                <span className="glyphicon glyphicon-search form-control-feedback"></span>
+                                                <div className="input-group-addon">
+                                                    <i className="fa fa-search"></i>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -336,29 +452,28 @@ const ExpenseList = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Name</th>
-                                                    <th>Description</th>
-                                                    <th>Invoice Number</th>
-                                                    <th>Date</th>
-                                                    <th>Expense Head</th>
-                                                    <th className="text-right">Amount</th>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <th key={col.key} onClick={() => requestSort(col.sortKey)} style={{ cursor: 'pointer' }} className={col.key === 'amount' ? 'text-right' : ''}>
+                                                            {col.label} {getSortIcon(col.sortKey)}
+                                                        </th>
+                                                    ))}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {initialLoading ? (
-                                                    <tr><td colSpan="7" className="text-center">Loading...</td></tr>
+                                                    <tr><td colSpan={visibleColumns.size + 1} className="text-center">Loading...</td></tr>
                                                 ) : currentItems.length === 0 ? (
-                                                    <tr><td colSpan="7" className="text-center">No data available</td></tr>
+                                                    <tr><td colSpan={visibleColumns.size + 1} className="text-center">No data available</td></tr>
                                                 ) : (
                                                     currentItems.map((expense) => (
                                                         <tr key={expense.id}>
-                                                            <td className="mailbox-name">{expense.name}</td>
-                                                            <td className="mailbox-name">{expense.note || expense.description}</td>
-                                                            <td className="mailbox-name">{expense.invoice_no}</td>
-                                                            <td className="mailbox-name">{expense.date}</td>
-                                                            <td className="mailbox-name">{expense.exp_category || getHeadName(expense.exp_head_id)}</td>
-                                                            <td className="mailbox-name text-right">{expense.amount}</td>
+                                                            {visibleColumns.has('name') && <td className="mailbox-name">{expense.name}</td>}
+                                                            {visibleColumns.has('description') && <td className="mailbox-name">{expense.note || expense.description}</td>}
+                                                            {visibleColumns.has('invoice_no') && <td className="mailbox-name">{expense.invoice_no}</td>}
+                                                            {visibleColumns.has('date') && <td className="mailbox-name">{expense.date}</td>}
+                                                            {visibleColumns.has('exp_head') && <td className="mailbox-name">{expense.exp_head}</td>}
+                                                            {visibleColumns.has('amount') && <td className="mailbox-name text-right">{expense.amount}</td>}
                                                             <td className="mailbox-date pull-right">
                                                                 <Link to={`/admin/expense/edit/${expense.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                                     <i className="fa fa-pencil"></i>

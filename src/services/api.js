@@ -13,6 +13,16 @@ const getGeneralSettingsId = () => {
 
 // Helper to create fetch options with session ID included
 const createFetchOptions = (method = 'GET', body = null, includeSession = true) => {
+    if (body instanceof FormData) {
+        if (includeSession) {
+            body.append('session_id', getSessionId());
+        }
+        return {
+            method,
+            body,
+        };
+    }
+
     const options = {
         method,
         headers: {
@@ -798,15 +808,15 @@ export const api = {
         }
     },
 
-    getStudentsByClassSection: async (cls_section_id) => {
-        console.log('API Request: Get Students By Class Section', cls_section_id);
+    getStudentsByClassSection: async (class_id, section_id) => {
+        console.log('API Request: Get Students By Class Section', { class_id, section_id });
         try {
-            const response = await fetch(`${API_BASE}/student/getStudentByClassSection`, {
+            const response = await fetch(`${API_BASE}/student/getByClassAndSection`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ cls_section_id }),
+                body: JSON.stringify({ class_id, section_id }),
             });
             const data = await response.json();
             console.log('Get Students By Class Section Response:', data);
@@ -817,6 +827,29 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Students By Class Section API Error:', error);
+            throw error;
+        }
+    },
+
+    getStudentByClassSectionNew: async (cls_section_id) => {
+        console.log('API Request: Get Student By Class Section New', { cls_section_id });
+        try {
+            const response = await fetch(`${API_BASE}/student/getStudentByClassSection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ cls_section_id }),
+            });
+            const data = await response.json();
+            console.log('Get Student By Class Section New Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch students by class section');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Student By Class Section New API Error:', error);
             throw error;
         }
     },
@@ -1128,10 +1161,27 @@ export const api = {
         try {
             const response = await fetch(`${API_BASE}/site/logout`);
             console.log('Logout Response Status:', response.status);
+
+            // Global Logout Logic
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('token');
+            localStorage.removeItem('activeSession');
+            localStorage.removeItem('activeSessionId');
+            window.location.href = '/login';
+
             return await response.json();
         } catch (error) {
             console.error('Logout API Error:', error);
-            // We don't throw here to ensure local logout still happens
+
+            // Fallback Global Logout Logic
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('token');
+            localStorage.removeItem('activeSession');
+            localStorage.removeItem('activeSessionId');
+            window.location.href = '/login';
+
             return { status: false, message: 'Network error' };
         }
     },
@@ -1166,10 +1216,11 @@ export const api = {
             throw error;
         }
     },
+
     getGeneralSettings: async () => {
         console.log('API Request: Get General Settings');
         try {
-            const response = await fetch(`${API_BASE}/schsettings/generalsetting`, {
+            const response = await fetch(`${API_BASE}/schsettings`, {
                 method: 'GET',
             });
 
@@ -1562,7 +1613,7 @@ export const api = {
                 class_id: classId,
                 section_id: sectionId,
                 srch_type: params.srch_type || 'search_filter',
-                search_text: params.search_text || '',
+                search: params.search || params.search_text || '',
                 action: params.action // Keep legacy if needed, but primary logic is srch_type now
             };
 
@@ -1627,7 +1678,9 @@ export const api = {
             console.log('Create Student Response:', data);
 
             if (!response.ok || !data.status) {
-                throw new Error(data.message || 'Failed to create student');
+                const error = new Error(data.message || 'Failed to create student');
+                error.response = data; // Attach full response for validation error handling
+                throw error;
             }
 
             return data;
@@ -1715,8 +1768,8 @@ export const api = {
                 };
             }
 
-            // Updated to use the provided endpoint
-            const response = await fetch(`${API_BASE}/student/edit`, options);
+            // Updated to use the provided endpoint with ID in the URL
+            const response = await fetch(`${API_BASE}/student/edit/${id}`, options);
             const data = await response.json();
             console.log('Update Student Response:', data);
 
@@ -2202,6 +2255,41 @@ export const api = {
         }
     },
 
+    importStudent: async (formData) => {
+        console.log('API Request: Import Student', formData);
+        try {
+            const response = await fetch(`${API_BASE}/student/import`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Import Student Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Import Student API Error:', error);
+            throw error;
+        }
+    },
+
+    getImportStudentDetails: async () => {
+        console.log('API Request: Get Import Student Details');
+        try {
+            const response = await fetch(`${API_BASE}/student/import`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Import Student Details Response:', data);
+
+            if (!response.ok || (data.status !== 'success' && data.status !== true)) {
+                throw new Error(data.message || 'Failed to fetch import student details');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Import Student Details API Error:', error);
+            throw error;
+        }
+    },
+
     addClass: async (payload) => {
         console.log('API Request: Add Class', payload);
         try {
@@ -2362,7 +2450,7 @@ export const api = {
     addSubjectGroup: async (payload) => {
         console.log('API Request: Add Subject Group', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/subjectgroup/add`, {
+            const response = await fetch(`${API_BASE}/admin/subjectgroup/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2393,13 +2481,16 @@ export const api = {
     },
     editSubjectGroup: async (id, payload) => {
         console.log('API Request: Edit Subject Group', id, payload);
+        // Ensure id is not in the body payload
+        const { id: _unused_id, ...payloadWithoutId } = payload;
+
         try {
             const response = await fetch(`${API_BASE}/admin/subjectgroup/edit/${id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(payload),
+                body: JSON.stringify(payloadWithoutId),
             });
             const data = await response.json();
             console.log('Edit Subject Group Response:', data);
@@ -2661,6 +2752,22 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Add Notification Error:', error);
+            throw error;
+        }
+    },
+    editNotificationClass: async (id, formData) => {
+        console.log('API Request: Edit Notification Class', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification_class/edit/${id}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const text = await response.text();
+            const data = text ? JSON.parse(text) : { status: response.ok };
+            console.log('Edit Notification Class Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Edit Notification Class Error:', error);
             throw error;
         }
     },
@@ -2929,17 +3036,71 @@ export const api = {
                 method: 'GET',
             });
 
-            console.log('Get Sessions Response Status:', response.status);
+            console.log('api.js: getAllSessionwithactive Response Status:', response.status);
             const data = await response.json();
-            console.log('Get Sessions Response Data:', data);
+            console.log('api.js: getAllSessionwithactive Raw JSON Data:', JSON.stringify(data, null, 2));
 
             // Return the data regardless of status - let caller handle it
             // This allows flexibility in API response format
             return data;
         } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    },
+
+    getAdminSession: async () => {
+        console.log('API Request: Get Admin Session');
+        try {
+            const response = await fetch(`${API_BASE}/admin/admin/getSession`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({}) // API requires an empty body
+            });
+
+            console.log('Get Admin Session Response Status:', response.status);
+            const data = await response.json();
+            console.log('Get Admin Session Response Data:', data);
+
+            if (!response.ok || !data.status) {
+                console.error('API Error Response:', data);
+                throw new Error(data.message || 'Failed to fetch admin session');
+            }
+            return data;
+        } catch (error) {
             console.error('Get Sessions API Error:', error);
             // Return empty structure on error so dropdown can still render
             return { status: false, result: [], session: [] };
+        }
+    },
+
+    updateAdminSession: async (sessionId) => {
+        console.log('API Request: Update Admin Session', { popup_session: sessionId });
+        try {
+            const response = await fetch(`${API_BASE}/admin/admin/updateSession`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ popup_session: sessionId })
+            });
+
+            console.log('api.js: updateAdminSession Response Status:', response.status);
+            const data = await response.json();
+            console.log('api.js: updateAdminSession Response Data:', JSON.stringify(data, null, 2));
+
+            if (!response.ok || !data.status) {
+                console.error('api.js: updateAdminSession API Error Response:', data);
+                throw new Error(data.message || 'Failed to update admin session');
+            }
+            return data;
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
         }
     },
 
@@ -3888,14 +4049,14 @@ export const api = {
     },
 
     getEnquiryList: async () => {
-        const url = `${API_BASE}/admin/enquiry?_t=${new Date().getTime()}`; // Add timestamp to bust cache
+        const url = `${API_BASE}/admin/enquiry`; // Add timestamp to bust cache
 
         const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'include',
+            //credentials: 'include',
         });
 
         //Check if response is JSON
@@ -3919,7 +4080,7 @@ export const api = {
 
         const body = {
             ...enquiryData,
-            session_id: getSessionId() // Ensure session_id is sent
+            session_id: getSessionId() || '9' // Ensure session_id is sent
         };
 
         console.log(`POST ${url} Request Body:`, JSON.stringify(body));
@@ -4025,6 +4186,38 @@ export const api = {
             throw new Error(data.message || 'Failed to fetch follow up list');
         }
 
+        return data;
+    },
+
+    // FOLLOW UP INSERT
+    addFollowUp: async (body) => {
+        const url = `${API_BASE}/admin/enquiry/follow_up_insert`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.status) {
+            throw new Error(data.message || 'Failed to save follow up');
+        }
+        return data;
+    },
+
+    // CHANGE ENQUIRY STATUS
+    changeEnquiryStatus: async (id, status) => {
+        const url = `${API_BASE}/admin/enquiry/change_status/`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.status) {
+            throw new Error(data.message || 'Failed to change status');
+        }
         return data;
     },
 
@@ -4198,6 +4391,31 @@ export const api = {
         return data;
     },
 
+    // Enable Student API
+    enableStudent: async (studentId) => {
+        const url = `${API_BASE}/student/enablestudent`;
+        console.log('API Request: Enable Student', studentId);
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ student_id: studentId }),
+            });
+
+            const data = await response.json();
+            console.log('Enable Student Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to enable student');
+            }
+            return data;
+        } catch (error) {
+            console.error('Enable Student API Error:', error);
+            throw error;
+        }
+    },
 
 
     // Timeline APIs
@@ -4208,21 +4426,40 @@ export const api = {
             method: 'POST',
             body: formData, // FormData matches PHP expectation
         });
-        const data = await response.json();
+        let data;
+        const responseText = await response.text();
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('API Error: Invalid JSON response from Add Timeline', responseText);
+            throw new Error('Server returned an invalid response. Check console for details.');
+        }
+
         if (!response.ok || data.status === 'fail') {
             throw new Error(data.message || 'Failed to add timeline');
         }
         return data;
     },
 
-    editTimeline: async (formData) => {
+    editTimeline: async (payload) => {
         const url = `${API_BASE}/admin/timeline/editstudenttimeline`;
-        console.log('API Request: Edit Timeline');
+        console.log('API Request: Edit Timeline', payload);
         const response = await fetch(url, {
             method: 'POST',
-            body: formData,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
         });
-        const data = await response.json();
+        let data;
+        const responseText = await response.text();
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('API Error: Invalid JSON response from Edit Timeline', responseText);
+            throw new Error('Server returned an invalid response. Check console for details.');
+        }
+
         if (!response.ok || data.status === 'fail') {
             throw new Error(data.message || 'Failed to edit timeline');
         }
@@ -4235,12 +4472,20 @@ export const api = {
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: `id=${id}`,
+            body: JSON.stringify({ id: id }),
         });
-        const data = await response.json();
-        if (!response.ok || data.status !== 'success') {
+        let data;
+        const responseText = await response.text();
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('API Error: Invalid JSON response from Delete Timeline', responseText);
+            throw new Error('Server returned an invalid response. Check console for details.');
+        }
+
+        if (!response.ok || (data.status !== 'success' && data.status !== true)) {
             throw new Error(data.message || 'Failed to delete timeline');
         }
         return data;
@@ -4252,9 +4497,9 @@ export const api = {
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
-            body: `id=${id}`,
+            body: JSON.stringify({ id: id }),
         });
         const data = await response.json();
         if (!response.ok) {
@@ -4267,12 +4512,9 @@ export const api = {
     addDocument: async (formData) => {
         const url = `${API_BASE}/student/create_doc`;
         console.log('API Request: Add Document');
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData,
-        });
+        const response = await fetch(url, createFetchOptions('POST', formData));
         const data = await response.json();
-        if (!response.ok || data.status === 'fail') {
+        if (!response.ok || (data.status !== 'success' && data.status !== true)) {
             throw new Error(data.message || 'Failed to add document');
         }
         return data;
@@ -4323,6 +4565,26 @@ export const api = {
             throw error;
         }
     },
+
+    getSiblingDetails: async (studentId) => {
+        console.log('API Request: Get Sibling Details', studentId);
+        try {
+            const response = await fetch(`${API_BASE}/student/sibling_details/${studentId}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Sibling Details Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to fetch sibling details');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Sibling Details API Error:', error);
+            throw error;
+        }
+    },
+
 
     // Online Student
     getOnlineStudentList: async () => {
@@ -4611,8 +4873,139 @@ export const api = {
     },
 
     // Approve Leave APIs
-    searchApproveLeave: async (classId, sectionId) => {
-        return { status: true, data: [] };
+    getApproveLeaveList: async () => {
+        console.log('API Request: Get Approve Leave List');
+        try {
+            const response = await fetch(`${API_BASE}/admin/approve_leave`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Approve Leave List Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to fetch approve leave list');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get Approve Leave List API Error:', error);
+            throw error;
+        }
+    },
+
+    searchApproveLeave: async (payload) => {
+        console.log('API Request: Search Approve Leave', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/approve_leave`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            console.log('Search Approve Leave Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to search approve leave');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Search Approve Leave API Error:', error);
+            throw error;
+        }
+    },
+
+    addApproveLeave: async (formData) => {
+        console.log('API Request: Add Approve Leave', formData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/approve_leave/add`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Add Approve Leave Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to add approve leave');
+            }
+            return data;
+        } catch (error) {
+            console.error('Add Approve Leave API Error:', error);
+            throw error;
+        }
+    },
+
+    updateApproveLeave: async (formData) => {
+        console.log('API Request: Update Approve Leave', formData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/approve_leave/add`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Update Approve Leave Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to update approve leave');
+            }
+            return data;
+        } catch (error) {
+            console.error('Update Approve Leave API Error:', error);
+            throw error;
+        }
+    },
+
+    getLeaveDetails: async (payload) => {
+        console.log('API Request: Get Leave Details', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/approve_leave/get_details`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            console.log('Get Leave Details Response:', data);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch leave details');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Get Leave Details API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteApproveLeave: async (payload) => {
+        console.log('API Request: Delete Approve Leave', payload);
+        try {
+            const response = await fetch(`${API_BASE}/admin/approve_leave/remove_leave`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            console.log('Delete Approve Leave Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to delete approve leave');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Delete Approve Leave API Error:', error);
+            throw error;
+        }
     },
 
 
@@ -4692,7 +5085,21 @@ export const api = {
         }
     },
 
-
+    // HR Module
+    getStaffCreateMeta: async () => {
+        console.log('API Request: Get Staff Create Meta');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staff/create_meta`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Staff Create Meta Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Staff Create Meta Error:', error);
+            throw error;
+        }
+    },
     getStaffList: async () => {
         console.log('API Request: Get Staff List');
         try {
@@ -4713,6 +5120,40 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Staff List API Error:', error);
+            throw error;
+        }
+    },
+
+    getStaffCreateData: async () => {
+        console.log('API Request: Get Staff Create Data');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staff/create`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            const data = await response.json();
+            console.log('Staff Create Data Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Staff Create Data Error:', error);
+            throw error;
+        }
+    },
+
+    createStaff: async (formData) => {
+        console.log('API Request: Create Staff');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staff/create`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Create Staff Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Create Staff Error:', error);
             throw error;
         }
     },
@@ -5363,7 +5804,7 @@ export const api = {
             };
             if (!isFormData) options.headers = { 'Content-Type': 'application/json' };
 
-            const response = await fetch(`${API_BASE}/admin/income/create`, options);
+            const response = await fetch(`${API_BASE}/admin/income`, options);
             const resData = await response.json();
             console.log('Add Income Response:', resData);
             return resData;
@@ -5642,6 +6083,25 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Student Hostel Details Error:', error);
+            throw error;
+        }
+    },
+
+    getHostelRooms: async (hostelId) => {
+        console.log('API Request: Get Hostel Rooms', hostelId);
+        try {
+            const response = await fetch(`${API_BASE}/admin/Hostelroom/getRoom`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ hostel_id: hostelId, session_id: getSessionId() })
+            });
+            const data = await response.json();
+            console.log('Get Hostel Rooms Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Hostel Rooms Error:', error);
             throw error;
         }
     },
@@ -6149,6 +6609,32 @@ export const api = {
         }
     },
 
+    getCBSETemplateWiseRank: async (templateId) => {
+        try {
+            const response = await fetch(`${API_BASE}/cbseexam/template/templatewiserank/${templateId}`, createFetchOptions('POST', {}));
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Get CBSE Template Wise Rank Error:', error);
+            throw error;
+        }
+    },
+
+    generateCBSETemplateWiseRank: async (templateId, payload) => {
+        try {
+            const response = await fetch(`${API_BASE}/cbseexam/template/templatewiserank/${templateId}`, createFetchOptions('POST', payload));
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Generate CBSE Template Wise Rank Error:', error);
+            throw error;
+        }
+    },
+
     getMarksSuraj: async (payload) => {
         try {
             // payload: { marksheet_template: int, student_session_id: [int] }
@@ -6220,24 +6706,17 @@ export const api = {
 
     addCBSEAssessment: async (payload) => {
         try {
-            const formData = new FormData();
-            Object.keys(payload).forEach(key => {
-                const value = payload[key];
-                if (Array.isArray(value)) {
-                    value.forEach(val => formData.append(`${key}[]`, val));
-                } else {
-                    formData.append(key, value);
-                }
-            });
-
-            // Ensure session_id is present if needed (though usually in payload or headers)
+            // Ensure session_id is present if needed
             if (!payload.session_id) {
-                formData.append('session_id', getSessionId());
+                payload.session_id = getSessionId();
             }
 
             const response = await fetch(`${API_BASE}/cbseexam/Assessment/add`, {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
@@ -6673,12 +7152,9 @@ export const api = {
         }
     },
 
-    saveExamMarks: async (formData) => {
+    saveExamMarks: async (payload) => {
         try {
-            const response = await fetch(`${API_BASE}/cbseexam/exam/entrymarks`, {
-                method: 'POST',
-                body: formData,
-            });
+            const response = await fetch(`${API_BASE}/cbseexam/exam/entrymarks`, createFetchOptions('POST', payload));
             return await response.json();
         } catch (error) {
             console.error('Save Exam Marks Error:', error);
@@ -7212,8 +7688,13 @@ export const api = {
     getNoticeBoardList: async (roleId) => {
         console.log('API Request: Get Notice Board List', roleId);
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`${API_BASE}/admin/notification/index/${roleId}`, {
                 method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
             });
             const data = await response.json();
             console.log('Get Notice Board List Response:', data);
@@ -7306,12 +7787,15 @@ export const api = {
     },
 
 
-    updateNoticeBoard: async (id, roleId, formData) => {
+    updateNoticeBoard: async (id, roleId, payload) => {
         console.log('API Request: Update Notice Board', id, roleId);
         try {
-            const response = await fetch(`${API_BASE}/admin/notification/save_edit_data/${id}/${roleId}`, {
+            const response = await fetch(`${API_BASE}/admin/notification/edit/${id}/${roleId}`, {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
             });
             const data = await response.json();
             console.log('Update Notice Board Response:', data);
@@ -7904,6 +8388,21 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Delete To-Do Task Error:', error);
+            throw error;
+        }
+    },
+
+    getNotificationClass: async (id) => {
+        console.log('API Request: Get Class Notification', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/notification_class/getNotification/${id}`);
+            const data = await response.json();
+            if (!response.ok || data.status === false) {
+                console.warn('Get Class Notification Warning:', data.message || 'Failed to fetch notification');
+            }
+            return data;
+        } catch (error) {
+            console.error('Get Class Notification Error:', error);
             throw error;
         }
     },
