@@ -375,51 +375,55 @@ const DisabledStudents = () => {
                                         <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} table-responsive no-padding overflow-visible-lg`} id="tab_1">
                                             <div className="row" style={{ margin: '10px 0' }}>
                                                 <div className="col-sm-6">
-                                                    <div className="dt-buttons btn-group">
-                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
-                                                            <i className="fa fa-files-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'disabled_students.csv'); }}>
-                                                            <i className="fa fa-file-text-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'disabled_students.xls'); }}>
-                                                            <i className="fa fa-file-excel-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'disabled_students.pdf', 'Disabled Students'); }}>
-                                                            <i className="fa fa-file-pdf-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Disabled Students'); }}>
-                                                            <i className="fa fa-print"></i>
-                                                        </button>
-                                                        <div className="btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                                <i className="fa fa-columns"></i>
+                                                    {students.length > 0 && (
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                                <i className="fa fa-files-o"></i>
                                                             </button>
-                                                            {showColumnsDropdown && (
-                                                                <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                    {columns.map(col => (
-                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
-                                                                            <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
-                                                                            {col.label}
-                                                                        </label>
-                                                                    ))}
-                                                                </div>
-                                                            )}
+                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'disabled_students.csv'); }}>
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'disabled_students.xls'); }}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'disabled_students.pdf', 'Disabled Students'); }}>
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Disabled Students'); }}>
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
+                                                            <div className="btn-group">
+                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showColumnsDropdown && (
+                                                                    <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                        {columns.map(col => (
+                                                                            <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                                <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                                {col.label}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    )}
                                                 </div>
                                                 <div className="col-sm-6">
-                                                    <div className="pull-right">
-                                                        <label>Search:
-                                                            <input
-                                                                type="search"
-                                                                className="form-control input-sm"
-                                                                value={tableSearchTerm}
-                                                                onChange={(e) => setTableSearchTerm(e.target.value)}
-                                                                style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
-                                                            />
-                                                        </label>
-                                                    </div>
+                                                    {students.length > 0 && (
+                                                        <div className="pull-right">
+                                                            <label>Search:
+                                                                <input
+                                                                    type="search"
+                                                                    className="form-control input-sm"
+                                                                    value={tableSearchTerm}
+                                                                    onChange={(e) => setTableSearchTerm(e.target.value)}
+                                                                    style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             {loading ? (
@@ -494,7 +498,7 @@ const DisabledStudents = () => {
                                                                     )}
                                                                     {visibleColumns.has('gender') && <td>{student.gender || '-'}</td>}
                                                                     {visibleColumns.has('mobileno') && <td>{student.mobileno || '-'}</td>}
-                                                                    <td className="pull-right">
+                                                                    <td className="pull-right noExport">
                                                                         <Link
                                                                             to={`/student/view/${student.id}`}
                                                                             className="btn btn-default btn-xs"

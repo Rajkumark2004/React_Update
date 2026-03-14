@@ -111,6 +111,8 @@ const StudentEdit = () => {
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [houseList, setHouseList] = useState([]);
+    const [bloodgroupList, setBloodgroupList] = useState([]);
     const [siblings, setSiblings] = useState([]);
 
     const [loading, setLoading] = useState(false);
@@ -131,6 +133,14 @@ const StudentEdit = () => {
                     }
                     if (Array.isArray(studentRes.student_data.categorylist)) {
                         setCategories(studentRes.student_data.categorylist);
+                    }
+                    const hList = studentRes.student_data.houseList || [];
+                    if (Array.isArray(hList)) {
+                        setHouseList(hList);
+                    }
+                    if (studentRes.student_data.bloodgroupList) {
+                        const bgList = studentRes.student_data.bloodgroupList;
+                        setBloodgroupList(Array.isArray(bgList) ? bgList : Object.values(bgList));
                     }
 
                     if (data && data.class_id) {
@@ -186,7 +196,7 @@ const StudentEdit = () => {
 
                         height: data.height || '',
                         weight: data.weight || '',
-                        house: data.school_house_id || '',
+                        house: data.house_id || data.house || '',
                         blood_group: data.blood_group || '',
                         class_id: data.class_id || '',
                         section_id: data.section_id || '',
@@ -648,14 +658,11 @@ const StudentEdit = () => {
                                                         <label>Blood Group</label>
                                                         <select className="form-control" name="blood_group" value={formData.blood_group} onChange={handleInputChange}>
                                                             <option value="">Select</option>
-                                                            <option value="A+">A+</option>
-                                                            <option value="A-">A-</option>
-                                                            <option value="B+">B+</option>
-                                                            <option value="B-">B-</option>
-                                                            <option value="O+">O+</option>
-                                                            <option value="O-">O-</option>
-                                                            <option value="AB+">AB+</option>
-                                                            <option value="AB-">AB-</option>
+                                                            {bloodgroupList.map((bg, idx) => (
+                                                                <option key={idx} value={bg}>
+                                                                    {bg}
+                                                                </option>
+                                                            ))}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -664,11 +671,11 @@ const StudentEdit = () => {
                                                         <label>House</label>
                                                         <select className="form-control" name="house" value={formData.house} onChange={handleInputChange}>
                                                             <option value="">Select</option>
-                                                            <option value="Red">Red</option>
-                                                            <option value="Blue">Blue</option>
-                                                            <option value="Green">Green</option>
-                                                            <option value="Yellow">Yellow</option>
-                                                            {/* If house is ID, might need mapping loop if houses fetched */}
+                                                            {houseList.map((house) => (
+                                                                <option key={house.id} value={house.id}>
+                                                                    {house.house_name}
+                                                                </option>
+                                                            ))}
                                                         </select>
                                                     </div>
                                                 </div>

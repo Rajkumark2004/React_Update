@@ -8,7 +8,7 @@ import FollowUpModal from '../../components/FollowUpModal';
 
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 
 const OnlineStudentList = () => {
     // State
@@ -269,49 +269,8 @@ const OnlineStudentList = () => {
     };
 
     const handleListPrint = () => {
-        const element = document.getElementById('printable-list-container');
-        if (!element) return;
-
-        const printWin = window.open('', '_blank', 'width=1000,height=800');
-        printWin.document.open();
-        printWin.document.write(`
-            <html>
-                <head>
-                    <title>Student List - Print</title>
-                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-                    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-                    <style>
-                        body { padding: 20px; font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-                        .no-print, .dt-buttons, .box-tools, .btn-group, .noExport, .text-right.white-space-nowrap { display: none !important; }
-                        .box { border: none !important; box-shadow: none !important; }
-                        .box-header { margin-bottom: 15px; border-bottom: 1px solid #f4f4f4; padding-bottom: 10px; }
-                        .box-title { font-size: 18px; font-weight: bold; margin: 0; }
-                        .table-responsive { overflow: visible !important; }
-                        table { width: 100% !important; border-collapse: collapse !important; margin-bottom: 20px; }
-                        th, td { border: 1px solid #f4f4f4 !important; padding: 8px !important; text-align: left !important; }
-                        .label { padding: 2px 6px; font-size: 75%; font-weight: 700; border-radius: .25em; color: #fff; }
-                        .label-success { background-color: #5cb85c; }
-                        .label-danger { background-color: #d9534f; }
-                        @media print {
-                            body { padding: 0; }
-                            .no-print { display: none !important; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="box box-primary">
-                        ${element.innerHTML}
-                    </div>
-                    <script>
-                        window.onload = function() {
-                            window.focus();
-                            window.print();
-                        };
-                    </script>
-                </body>
-            </html>
-        `);
-        printWin.document.close();
+        const { headers, rows } = getExportData();
+        printTable(headers, rows, 'Student List');
     };
 
     const handleOpenFollowUp = (student) => {
@@ -361,7 +320,7 @@ const OnlineStudentList = () => {
 
     const handleDownloadPDF = () => {
         const { headers, rows } = getExportData();
-        printTable(headers, rows, 'Online Student List');
+        downloadPDF(headers, rows, 'online_student_list.pdf', 'Online Student List');
     };
 
     // Sorting Logic
@@ -429,43 +388,44 @@ const OnlineStudentList = () => {
                                     <div className="box-body">
                                         <div className="table-responsive mailbox-messages overflow-visible">
 
-                                            {/* DataTables Search Simulation */}
-                                            <div className="row mb-10">
-                                                <div className="row mb-10">
-                                                    <div className="col-sm-12">
-                                                        <div className="pull-left">
-                                                            <label>Search:
-                                                                <input
-                                                                    type="search"
-                                                                    className="form-control input-sm"
-                                                                    placeholder=""
-                                                                    aria-controls="student-list"
-                                                                    value={searchTerm}
-                                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                                    style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
-                                                                />
-                                                            </label>
-                                                        </div>
-                                                        <div className="dt-buttons btn-group pull-right">
-                                                            <button className="btn btn-default btn-xs" title="Copy" onClick={handleCopy}>
-                                                                <i className="fa fa-files-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" title="Excel" onClick={handleDownloadExcel}>
-                                                                <i className="fa fa-file-excel-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" title="CSV" onClick={handleDownloadCSV}>
-                                                                <i className="fa fa-file-text-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" title="PDF" onClick={handleDownloadPDF}>
-                                                                <i className="fa fa-file-pdf-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" title="Print" onClick={handleListPrint}>
-                                                                <i className="fa fa-print"></i>
-                                                            </button>
+                                            {students.length > 0 && (
+                                                <div className="row mb-10 no-print">
+                                                    <div className="row mb-10">
+                                                        <div className="col-sm-12">
+                                                            <div className="pull-left">
+                                                                <label>Search:
+                                                                    <input
+                                                                        type="search"
+                                                                        className="form-control input-sm"
+                                                                        placeholder=""
+                                                                        aria-controls="student-list"
+                                                                        value={searchTerm}
+                                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                                        style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
+                                                                    />
+                                                                </label>
+                                                            </div>
+                                                            <div className="dt-buttons btn-group pull-right">
+                                                                <button className="btn btn-default btn-xs" title="Copy" onClick={handleCopy}>
+                                                                    <i className="fa fa-files-o"></i>
+                                                                </button>
+                                                                <button className="btn btn-default btn-xs" title="Excel" onClick={handleDownloadExcel}>
+                                                                    <i className="fa fa-file-excel-o"></i>
+                                                                </button>
+                                                                <button className="btn btn-default btn-xs" title="CSV" onClick={handleDownloadCSV}>
+                                                                    <i className="fa fa-file-text-o"></i>
+                                                                </button>
+                                                                <button className="btn btn-default btn-xs" title="PDF" onClick={handleDownloadPDF}>
+                                                                    <i className="fa fa-file-pdf-o"></i>
+                                                                </button>
+                                                                <button className="btn btn-default btn-xs" title="Print" onClick={handleListPrint}>
+                                                                    <i className="fa fa-print"></i>
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            )}
 
                                             <table className="table table-striped table-bordered table-hover student-list">
                                                 <thead>
@@ -537,7 +497,7 @@ const OnlineStudentList = () => {
                                                                     <i className={`fa ${student.enrolled === 'Yes' ? 'fa-check' : 'fa-times'}`} style={{ color: student.enrolled === 'Yes' ? 'green' : 'red' }}></i>
                                                                 </td>
                                                                 <td>{student.created_at}</td>
-                                                                <td className="text-right white-space-nowrap">
+                                                                <td className="text-right white-space-nowrap noExport">
                                                                     <button className="btn btn-default btn-xs" data-toggle="tooltip" title="Print" style={{ marginRight: '3px' }} onClick={() => handlePrint(student.ref_no)} disabled={printLoading}>
                                                                         <i className="fa fa-print"></i>
                                                                     </button>

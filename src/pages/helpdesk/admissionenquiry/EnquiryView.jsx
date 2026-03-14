@@ -10,7 +10,7 @@ import EditEnquiryModal from './EditEnquiryModal';
 import FollowUpModal from './FollowUpModal';
 import { api } from '../../../services/api';
 import { filterEnquiries } from './enquiryFilterLogic';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
 import '../../../utils/include_files';
 import { useTableSort } from '../../../hooks/useTableSort';
 import './EnquiryView.css';
@@ -309,7 +309,7 @@ const EnquiryView = () => {
                 {/* Content Header */}
                 <section className="content-header">
                     <h1>
-                        <i className="fa fa-ioxhost"></i> Front Office
+                        <i className="fa fa-ioxhost"></i> Help Desk
                     </h1>
                 </section>
 
@@ -320,7 +320,7 @@ const EnquiryView = () => {
                         <div className="col-md-2">
                             <div className="box border0">
                                 <div className="box-header with-border">
-                                    <h3 className="box-title">Front Office</h3>
+                                    <h3 className="box-title">Help Desk</h3>
                                 </div>
                                 <ul className="tablists">
                                     <li>
@@ -531,6 +531,9 @@ const EnquiryView = () => {
                                                             <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'enquiry_list.xls'); }}>
                                                                 <i className="fa fa-file-excel-o"></i>
                                                             </button>
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'enquiry_list.pdf', 'Admission Enquiry List'); }}>
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
                                                             <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Admission Enquiry List'); }}>
                                                                 <i className="fa fa-print"></i>
                                                             </button>
@@ -582,7 +585,7 @@ const EnquiryView = () => {
                                                                             {col.label} {col.sortKey && getSortIcon(col.sortKey)}
                                                                         </th>
                                                                     ))}
-                                                                    <th className="text-right noExport1">Action</th>
+                                                                    <th className="text-right noExport">Action</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -602,7 +605,7 @@ const EnquiryView = () => {
                                                                             {columns.map(col => visibleColumns.has(col.key) && (
                                                                                 <td key={col.key} className="mailbox-name">{formatCell(enquiry, col.key)}</td>
                                                                             ))}
-                                                                            <td className="mailbox-date text-right white-space-nowrap">
+                                                                            <td className="mailbox-date text-right white-space-nowrap noExport">
                                                                                 <a
                                                                                     className="btn btn-default btn-xs"
                                                                                     onClick={() => handleFollowUp(enquiry)}

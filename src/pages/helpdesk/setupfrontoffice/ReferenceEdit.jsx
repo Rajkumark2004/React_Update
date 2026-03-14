@@ -8,7 +8,7 @@ import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
 import { sanitizeAlphaWithSpaces, validateReference } from '../../../utils/validation';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
 
 const ReferenceEdit = () => {
     const navigate = useNavigate();
@@ -286,6 +286,12 @@ const ReferenceEdit = () => {
                                                     downloadExcel(headers, rows, 'reference_list.xls');
                                                 }}>
                                                     <i className="fa fa-file-excel-o"></i>
+                                                </button>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => {
+                                                    const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    downloadPDF(headers, rows, 'reference_list.pdf', 'Reference List');
+                                                }}>
+                                                    <i className="fa fa-file-pdf-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="Print" onClick={() => {
                                                     const { headers, rows } = buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);

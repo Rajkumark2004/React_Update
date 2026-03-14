@@ -11,6 +11,12 @@ import "../../utils/include_files";
 import AttendanceGrid from "../../components/student/AttendanceGrid";
 
 const StudentView = () => {
+  const formatDate = (dateString) => {
+    if (!dateString || dateString === "0000-00-00" || dateString === "0000-00-00 00:00:00") return "-";
+    const m = moment(dateString, ["YYYY-MM-DD", "YYYY-MM-DD HH:mm:ss", "DD/MM/YYYY"], true);
+    return m.isValid() ? m.format("DD/MM/YYYY") : dateString;
+  };
+
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState("activity");
   const [student, setStudent] = useState(null);
@@ -558,7 +564,7 @@ const StudentView = () => {
                         <li className="list-group-item listnoback">
                           <b>Disable Date</b>
                           <span className="pull-right text-aqua">
-                            {student.disable_at}
+                            {formatDate(student.disable_at)}
                           </span>
                         </li>
                       </>
@@ -692,7 +698,7 @@ const StudentView = () => {
                               <tbody>
                                 <tr>
                                   <td width="40%">Date of Birth</td>
-                                  <td className="text-aqua">{sibling.dob}</td>
+                                  <td className="text-aqua">{formatDate(sibling.dob)}</td>
                                 </tr>
                                 <tr>
                                   <td>Category</td>
@@ -869,12 +875,12 @@ const StudentView = () => {
                             <tr>
                               <td width="35%">Admission Date</td>
                               <td className="col-md-5">
-                                {student.admission_date}
+                                {formatDate(student.admission_date)}
                               </td>
                             </tr>
                             <tr>
                               <td>Date of Birth</td>
-                              <td>{student.dob}</td>
+                              <td>{formatDate(student.dob)}</td>
                             </tr>
                             <tr>
                               <td>Category</td>
@@ -1076,10 +1082,7 @@ const StudentView = () => {
                             <tr>
                               <td>Measurement Date</td>
                               <td>
-                                {student.measurement_date &&
-                                  student.measurement_date !== "0000-00-00"
-                                  ? student.measurement_date
-                                  : "-"}
+                                {formatDate(student.measurement_date)}
                               </td>
                             </tr>
                             <tr>
@@ -1149,7 +1152,7 @@ const StudentView = () => {
                             <tr key={index}>
                               <td>{fee.name}</td>
                               <td>{fee.code}</td>
-                              <td>{fee.due_date}</td>
+                              <td>{formatDate(fee.due_date)}</td>
                               <td>
                                 <span
                                   className={`label ${fee.status === "Paid" ? "label-success" : "label-danger"}`}
@@ -1160,7 +1163,7 @@ const StudentView = () => {
                               <td>{fee.amount}</td>
                               <td>{fee.payment_id}</td>
                               <td>{fee.payment_mode}</td>
-                              <td>{fee.payment_date}</td>
+                              <td>{formatDate(fee.payment_date)}</td>
                               <td>{fee.discount || "0.00"}</td>
                               <td>{fee.fine || "0.00"}</td>
                               <td>{fee.paid || "0.00"}</td>
@@ -1370,7 +1373,7 @@ const StudentView = () => {
                                   display: "inline-block",
                                 }}
                               >
-                                {item.timeline_date}
+                                {formatDate(item.timeline_date)}
                               </span>
                               <ul
                                 className="timeline-items"
@@ -1543,7 +1546,7 @@ const StudentView = () => {
                                 </tr>
                                 <tr>
                                   <th>Date</th>
-                                  <td>{note.date}</td>
+                                  <td>{formatDate(note.date)}</td>
                                 </tr>
                                 <tr>
                                   <th>Handwriting</th>

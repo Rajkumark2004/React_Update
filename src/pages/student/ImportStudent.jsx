@@ -167,7 +167,7 @@ const ImportStudent = () => {
                                     <div className="box-header with-border">
                                         <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
                                         <div className="pull-right box-tools">
-                                            <a href="#" onClick={(e) => { e.preventDefault(); toast.info('Download sample functionality is pending.'); }}>
+                                            <a href="https://newlayout.wisibles.com/student/exportformat">
                                                 <button className="btn btn-primary btn-sm"><i className="fa fa-download"></i> Download Sample Import File</button>
                                             </a>
                                         </div>

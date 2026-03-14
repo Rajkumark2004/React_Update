@@ -343,36 +343,40 @@ const StudentSearch = () => {
                                         <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} table-responsive no-padding`} id="tab_1">
                                             <div className="row" style={{ margin: '10px 0' }}>
                                                 <div className="col-sm-6">
-                                                    <div className="dt-buttons btn-group">
-                                                        <button className="btn btn-default btn-xs" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
-                                                            <i className="fa fa-files-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-xs" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_list.xls'); }}>
-                                                            <i className="fa fa-file-excel-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-xs" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_list.csv'); }}>
-                                                            <i className="fa fa-file-text-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-xs" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
-                                                            <i className="fa fa-file-pdf-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-xs" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}>
-                                                            <i className="fa fa-print"></i>
-                                                        </button>
-                                                    </div>
+                                                    {filteredStudents.length > 0 && (
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-xs" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                                <i className="fa fa-files-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-xs" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_list.xls'); }}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-xs" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_list.csv'); }}>
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-xs" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-xs" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}>
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="col-sm-6">
-                                                    <div className="pull-right">
-                                                        <label>Search:
-                                                            <input
-                                                                type="search"
-                                                                className="form-control input-sm"
-                                                                value={tableSearchTerm}
-                                                                onChange={(e) => setTableSearchTerm(e.target.value)}
-                                                                style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
-                                                            />
-                                                        </label>
-                                                    </div>
+                                                    {students.length > 0 && (
+                                                        <div className="pull-right">
+                                                            <label>Search:
+                                                                <input
+                                                                    type="search"
+                                                                    className="form-control input-sm"
+                                                                    value={tableSearchTerm}
+                                                                    onChange={(e) => setTableSearchTerm(e.target.value)}
+                                                                    style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <table className="table table-striped table-bordered table-hover student-list">
@@ -421,7 +425,7 @@ const StudentSearch = () => {
                                                                 <td>{student.gender}</td>
                                                                 <td>{student.category}</td>
                                                                 <td>{student.mobile}</td>
-                                                                <td className="text-right">
+                                                                <td className="text-right noExport">
                                                                     <Link to={`/student/view/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="View">
                                                                         <i className="fa fa-reorder"></i>
                                                                     </Link>

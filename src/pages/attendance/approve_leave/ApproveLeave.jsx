@@ -5,7 +5,6 @@ import Footer from '../../../components/Footer';
 import Loader from '../../../components/Loader';
 import api from '../../../services/api';
 import LeaveModal from './LeaveModal';
-import AttendanceSidebar from '../../../components/AttendanceSidebar';
 import '../../../utils/include_files'; // Importing global scripts/styles
 
 const API_BASE = 'https://newlayout.wisibles.com/api_admin';
@@ -170,10 +169,7 @@ const ApproveLeave = () => {
                         <Loader />
                     ) : (
                         <div className="row">
-                            <div className="col-md-2">
-                                <AttendanceSidebar />
-                            </div>
-                            <div className="col-md-10">
+                            <div className="col-md-12">
                                 <div className="box box-primary">
                                     <div className="box-header with-border">
                                         <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>

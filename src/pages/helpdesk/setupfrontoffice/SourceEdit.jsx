@@ -7,7 +7,7 @@ import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
 import { sanitizeAlphaWithSpaces, validateSource } from '../../../utils/validation';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
 
 const SourceEdit = () => {
     const navigate = useNavigate();
@@ -290,6 +290,12 @@ const SourceEdit = () => {
                                                 }}>
                                                     <i className="fa fa-file-excel-o"></i>
                                                 </button>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => {
+                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
+                                                    downloadPDF(headers, rows, 'source_list.pdf', 'Source List');
+                                                }}>
+                                                    <i className="fa fa-file-pdf-o"></i>
+                                                </button>
                                                 <button className="btn btn-default btn-sm" title="Print" onClick={() => {
                                                     const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
                                                     printTable(headers, rows, 'Source List');
@@ -350,7 +356,7 @@ const SourceEdit = () => {
                                                     {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
                                                         <td key={col.key} className="mailbox-name">{value[col.key]}</td>
                                                     ))}
-                                                    <td className="mailbox-date pull-right">
+                                                    <td className="mailbox-date pull-right noExport">
                                                         <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                             <i className="fa fa-pencil"></i>
                                                         </Link>

@@ -9,6 +9,13 @@ import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 
+const amountFormat = (amount) => {
+    return parseFloat(amount || 0).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+};
+
 const StudentFeeSearch = () => {
     // Session from context
     const { currentSession } = useSession();
@@ -107,10 +114,10 @@ const StudentFeeSearch = () => {
 
                     // Format to 2 decimals
                     setStats({
-                        cash: newStats.cash.toFixed(2),
-                        card: newStats.card.toFixed(2),
-                        upi: newStats.upi.toFixed(2),
-                        total: newStats.total.toFixed(2)
+                        cash: amountFormat(newStats.cash),
+                        card: amountFormat(newStats.card),
+                        upi: amountFormat(newStats.upi),
+                        total: amountFormat(newStats.total)
                     });
                 }
             } catch (err) {

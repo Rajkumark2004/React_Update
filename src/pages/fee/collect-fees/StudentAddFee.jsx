@@ -69,6 +69,8 @@ const StudentAddFee = () => {
     const fetchStudentFees = async () => {
         try {
             setLoading(true);
+            setSelectedFeesList([]);
+            setSelectedFee(null);
             const response = await api.getStudentFees(id);
 
             if (response && response.status === true) {
@@ -454,8 +456,7 @@ const StudentAddFee = () => {
         }
 
         try {
-            // Match PHP logic: totalbalanceAmount is the grand total balance from the whole table
-            const totalBalance = totals.total_balance_amount;
+            const totalToCollect = selectedFeesList.reduce((sum, item) => sum + parseFloat(item.balance || 0), 0);
 
             const array_to_collect_fees = selectedFeesList.map(item => ({
                 fee_category: item.fee_category,
@@ -463,24 +464,36 @@ const StudentAddFee = () => {
                 fee_session_group_id: item.fee_session_group_id,
                 fee_master_id: item.fee_master_id,
                 fee_groups_feetype_id: item.fee_groups_feetype_id,
-                totalbalanceAmount: totalBalance
+                totalbalanceAmount: totalToCollect
             }));
 
             // Fetch collection details from API
-            const response = await api.getCollectFee({ data: JSON.stringify(array_to_collect_fees) });
+            let response = await api.getCollectFee({ data: JSON.stringify(array_to_collect_fees) });
 
-            // If response has view (HTML), for now we'll handle it by calculating totals 
-            // and passing them to the React modal. In a full React conversion, 
-            // the API would return JSON data.
+            // Filter response to only include items we actually selected
+            // This is necessary because the backend might return all outstanding fees for the student
+            if (response && response.feearray) {
+                const selectedTypeIds = selectedFeesList.map(i => i.fee_groups_feetype_id).filter(id => id !== 0);
+                const selectedTransIds = selectedFeesList.map(i => i.trans_fee_id).filter(id => id !== 0);
 
-            const totalToCollect = selectedFeesList.reduce((sum, item) => sum + parseFloat(item.balance || 0), 0);
+                response.feearray = response.feearray.filter(apiItem => {
+                    const typeId = apiItem.fee_groups_feetype_id;
+                    const transId = apiItem.transport_fees_id;
+
+                    let isMatch = false;
+                    if (typeId && (selectedTypeIds.includes(String(typeId)) || selectedTypeIds.includes(Number(typeId)))) isMatch = true;
+                    if (transId && (selectedTransIds.includes(String(transId)) || selectedTransIds.includes(Number(transId)))) isMatch = true;
+
+                    return isMatch;
+                });
+            }
 
             setSelectedFee({
                 name: `Selected Fees (${selectedFeesList.length})`,
                 balance: totalToCollect,
                 is_batch: true,
                 selectedItems: selectedFeesList,
-                apiResponse: response // Pass raw response if needed
+                apiResponse: response
             });
             setShowModal(true);
         } catch (error) {

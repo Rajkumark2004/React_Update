@@ -217,7 +217,7 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, staff
                 assigned: formData.assigned || '1',
                 reference: formData.reference,
                 source: formData.source,
-                class_id: formData.class_id,
+                class: formData.class_id,
                 no_of_child: formData.no_of_child || '1',
                 status: formData.status || 'active',
                 created_by: getCurrentTimestamp() // Postman: "19-01-2026 18:34:55"

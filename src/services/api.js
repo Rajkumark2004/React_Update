@@ -3967,7 +3967,7 @@ export const api = {
     collectFeeDiscount: async (payload) => {
         console.log('API Request: Collect Fee Discount', payload);
         try {
-            const response = await fetch(`${API_BASE}/studentfee/addfeegrp1`, createFetchOptions('POST', payload));
+            const response = await fetch(`${API_BASE}/studentfee/addfeegrp`, createFetchOptions('POST', payload));
             const data = await response.json();
             console.log('Collect Fee Discount Response:', data);
             return data;
@@ -5670,7 +5670,7 @@ export const api = {
 
     collectFeeGroup: async (data) => {
         try {
-            const response = await api.postWithSession('/studentfee/addfeegrp1', data);
+            const response = await api.postWithSession('/studentfee/addfeegrp', data);
             return response;
         } catch (error) {
             console.error('Collect Fee Group Error:', error);

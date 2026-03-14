@@ -9,7 +9,7 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
   const [formData, setFormData] = useState({
     follow_up_date: '',
     next_follow_up_date: '',
-    response: '',
+      response: '',
     note: '',
     status: 'active'
   });
@@ -161,6 +161,15 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
     }
   };
 
+  const handleModalClose = () => {
+    setFormData(prev => ({
+      ...prev,
+      response: '',
+      note: ''
+    }));
+    onClose();
+  };
+
   if (!show) return null;
 
   return (
@@ -170,7 +179,7 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
 
           {/* HEADER */}
           <div className="modal-header">
-            <button className="close" onClick={onClose}>×</button>
+            <button className="close" onClick={handleModalClose}>×</button>
             <h4 className="modal-title">Follow Up Admission Enquiry</h4>
           </div>
 
@@ -256,12 +265,11 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
                           <li key={idx}>
                             <i className="fa fa-phone bg-blue"></i>
                             <div className="timeline-item">
-                              <span className="time">
-                                <i className="fa fa-clock-o"></i> {item.follow_up_date}
-                              </span>
                               <h3 className="timeline-header">
                                 <span className="label label-info">{item.response}</span>
-                                <span className="ml-2">By: {item.staff_name}</span>
+                                <span className="ml-2">
+                                  By: {item.name} {item.surname ? item.surname : ''} ({item.employee_id})
+                                </span>
                               </h3>
                               <div className="timeline-body">
                                 {item.note || 'No note provided.'}
@@ -318,7 +326,7 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
             )}
           </div>
           <div className="modal-footer">
-            <button className="btn btn-default" onClick={onClose}>Close</button>
+            <button className="btn btn-default" onClick={handleModalClose}>Close</button>
           </div>
 
         </div>

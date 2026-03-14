@@ -13,11 +13,29 @@ const ApplyDiscountModal = ({ show, handleClose, student, feeData, onSuccess }) 
     // State for batch fee amounts (editable per item)
     const [feeAmounts, setFeeAmounts] = useState({});
     const [loading, setLoading] = useState(false);
-    const [currencySymbol] = useState('₹');
+    const currencySymbol = '₹';
+
+    // Indian currency formatting (en-IN locale) matching StudentAddFee.jsx
+    const amountFormat = (amount) => {
+        if (amount === null || amount === undefined) return "0.00";
+        return parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
 
     const getItems = () => {
-        if (feeData?.apiResponse?.feearray) return feeData.apiResponse.feearray;
-        return feeData?.selectedItems || [];
+        // Even if multiple fees are selected, only apply discount to the first selected row
+        const selectedItems = feeData?.selectedItems || [];
+        const feearray = feeData?.apiResponse?.feearray || [];
+
+        if (selectedItems.length > 0 && feearray.length > 0) {
+            const firstSelected = selectedItems[0];
+            const match = feearray.find(f =>
+                String(f.fee_groups_feetype_id) === String(firstSelected.fee_groups_feetype_id)
+            );
+            return match ? [match] : [feearray[0]];
+        }
+        if (feearray.length > 0) return [feearray[0]];
+        if (selectedItems.length > 0) return [selectedItems[0]];
+        return [];
     };
 
     useEffect(() => {
@@ -72,13 +90,9 @@ const ApplyDiscountModal = ({ show, handleClose, student, feeData, onSuccess }) 
 
         setLoading(true);
         try {
-            // Format date as DD/MM/YYYY
-            const dateParts = formData.date.split('-');
-            const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-
             const payload = {
                 student_session_id: student.student_session_id,
-                collected_date: formattedDate,
+                collected_date: formData.date,
                 payment_mode_fee: formData.payment_mode,
                 fee_gupcollected_note: formData.description,
                 total_amount: totalPay.toFixed(2),
@@ -133,127 +147,168 @@ const ApplyDiscountModal = ({ show, handleClose, student, feeData, onSuccess }) 
     return (
         <>
             <style>{`
-                .collect_grp_fees { font-size: 15px; font-weight: 600; padding-bottom: 15px; }
-                .fees-list { list-style: none; margin: 0; padding: 0; }
-                .fees-list > .item { border-radius: 3px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); padding: 10px 0; background: #fff; }
-                .fees-list .product-info { margin-left: 0; }
-                .fees-list .product-title { font-weight: 600; font-size: 15px; display: flex; justify-content: space-between; color: #00a2d4; }
-                .fees-list .product-description { display: block; color: #999; font-size: 13px; }
-                .fees-list-in-box > .item { box-shadow: none; border-radius: 0; border-bottom: 1px solid #f4f4f4; padding: 15px 0; }
-                .fees-list-in-box > .item:last-of-type { border-bottom-width: 0; }
-                .fees-footer { padding: 15px 0 0 0; text-align: right; border-top: 1px solid #e5e5e5; }
-                .fine-label { color: #dd4b39; font-weight: 600; }
+                .adm-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1040; }
+                .adm-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1050; display: flex; align-items: center; justify-content: center; padding: 20px; }
+                .adm-dialog { background: #fff; border-radius: 12px; width: 100%; max-width: 580px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+                .adm-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; }
+                .adm-header h4 { margin: 0; font-size: 18px; font-weight: 700; color: #1e293b; }
+                .adm-header .badge { background: #fef3c7; color: #92400e; font-size: 12px; padding: 3px 10px; border-radius: 12px; margin-left: 10px; font-weight: 600; }
+                .adm-close { background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer; padding: 4px 8px; border-radius: 6px; line-height: 1; }
+                .adm-close:hover { background: #f1f5f9; color: #475569; }
+                .adm-body { padding: 24px; overflow-y: auto; flex: 1; }
+                .adm-section { margin-bottom: 20px; }
+                .adm-section-title { font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+                .adm-form-row { display: flex; align-items: center; margin-bottom: 14px; gap: 12px; }
+                .adm-form-label { width: 100px; min-width: 100px; font-size: 14px; font-weight: 500; color: #475569; }
+                .adm-form-label .req { color: #ef4444; }
+                .adm-form-input { flex: 1; }
+                .adm-form-input input, .adm-form-input textarea { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; color: #1e293b; outline: none; transition: border-color 0.2s; }
+                .adm-form-input input:focus, .adm-form-input textarea:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+                .adm-mode-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 20px; font-size: 13px; font-weight: 600; color: #92400e; }
+                .adm-fee-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 12px; background: #fff; transition: box-shadow 0.2s; }
+                .adm-fee-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+                .adm-fee-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+                .adm-fee-name { font-size: 15px; font-weight: 600; color: #1e293b; }
+                .adm-fee-type { display: inline-block; font-size: 11px; font-weight: 600; color: #6366f1; background: #eef2ff; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+                .adm-fee-code { font-size: 12px; color: #94a3b8; margin-top: 3px; }
+                .adm-fee-balance-box { text-align: right; min-width: 100px; }
+                .adm-fee-balance-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; }
+                .adm-fee-balance-value { font-size: 17px; font-weight: 700; color: #0284c7; }
+                .adm-fee-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px dashed #e2e8f0; }
+                .adm-fee-pay-label { font-size: 14px; font-weight: 500; color: #475569; }
+                .adm-fee-pay-input { display: flex; align-items: center; }
+                .adm-fee-pay-prefix { background: #f1f5f9; border: 1px solid #cbd5e1; border-right: none; padding: 7px 10px; border-radius: 6px 0 0 6px; font-weight: 600; color: #475569; font-size: 14px; }
+                .adm-fee-pay-field { border-radius: 0 6px 6px 0 !important; text-align: right; font-weight: 600; font-size: 15px; color: #0f172a; width: 130px; padding: 7px 10px; border: 1px solid #cbd5e1; outline: none; }
+                .adm-fee-pay-field:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+                .adm-fine-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
+                .adm-total { background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); border: 1px solid #fde68a; border-radius: 10px; padding: 18px 24px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
+                .adm-total-label { font-size: 16px; font-weight: 600; color: #92400e; }
+                .adm-total-amount { font-size: 26px; font-weight: 800; color: #b45309; }
+                .adm-footer { padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+                .adm-btn { padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+                .adm-btn-cancel { background: #f1f5f9; color: #475569; }
+                .adm-btn-cancel:hover { background: #e2e8f0; }
+                .adm-btn-apply { background: #f59e0b; color: #fff; }
+                .adm-btn-apply:hover { background: #d97706; }
+                .adm-btn-apply:disabled { background: #94a3b8; cursor: not-allowed; }
             `}</style>
-            <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
-                <div className="modal-dialog modal-lg">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <button type="button" className="close" onClick={handleClose}>&times;</button>
-                            <h4 className="modal-title title text-center fees_title">
-                                Apply Discount {feeData?.is_batch ? `(${feeData.selectedItems?.length || 0} items)` : `(${feeData?.name || feeData?.feeTypeName || ''})`}
-                            </h4>
-                        </div>
-                        <div className="modal-body pb0" style={{ maxHeight: 'calc(100vh - 250px)', overflowY: 'auto' }}>
-                            <div className="form-horizontal">
-                                {/* Date Field */}
-                                <div className="form-group row">
-                                    <label className="col-sm-3 control-label">Date <small className="req">*</small></label>
-                                    <div className="col-sm-9">
-                                        <input type="date" name="date" className="form-control" value={formData.date} onChange={handleChange} />
-                                    </div>
+            <div className="adm-overlay" onClick={handleClose}></div>
+            <div className="adm-modal">
+                <div className="adm-dialog">
+                    <div className="adm-header">
+                        <h4>
+                            <i className="fa fa-tag" style={{ color: '#f59e0b', marginRight: '8px' }}></i>
+                            Apply Discount
+                            {feeData?.is_batch && <span className="badge">{feeData.selectedItems?.length || 0} selected</span>}
+                            {!feeData?.is_batch && (feeData?.name || feeData?.feeTypeName) && <span className="badge">{feeData.name || feeData.feeTypeName}</span>}
+                        </h4>
+                        <button className="adm-close" onClick={handleClose}>&times;</button>
+                    </div>
+                    <div className="adm-body">
+                        {/* Discount Details */}
+                        <div className="adm-section">
+                            <div className="adm-section-title">Discount Details</div>
+
+                            <div className="adm-form-row">
+                                <div className="adm-form-label">Date <span className="req">*</span></div>
+                                <div className="adm-form-input">
+                                    <input type="date" name="date" value={formData.date} onChange={handleChange} />
                                 </div>
+                            </div>
 
-                                {/* Payment Mode (Static as Discount) */}
-                                <div className="form-group row">
-                                    <label className="col-sm-3 control-label">Payment Mode</label>
-                                    <div className="col-sm-9">
-                                        <label className="radio-inline">
-                                            <input
-                                                type="radio"
-                                                name="payment_mode_fee"
-                                                value="discount"
-                                                checked={true}
-                                                readOnly
-                                            /> Discount
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Note */}
-                                <div className="form-group row">
-                                    <label className="col-sm-3 control-label">Note</label>
-                                    <div className="col-sm-9">
-                                        <textarea name="description" className="form-control" rows="2" value={formData.description} onChange={handleChange}></textarea>
-                                    </div>
-                                </div>
-
-                                {/* Single Fee Amount */}
-                                {!feeData?.is_batch && (
-                                    <div className="form-group row">
-                                        <label className="col-sm-3 control-label">Amount ({currencySymbol}) <small className="req">*</small></label>
-                                        <div className="col-sm-9">
-                                            <input type="number" name="amount" className="form-control" value={formData.amount} onChange={handleChange} />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Batch Fee Items List */}
-                                {feeData?.is_batch && getItems().length > 0 && (
-                                    <ul className="fees-list fees-list-in-box">
-                                        {getItems().map((item, idx) => (
-                                            <li className="item" key={idx}>
-                                                <div className="product-info">
-                                                    <div className="product-title">
-                                                        <span>{item.name || item.groupName || 'Fee Group'} {item.type || item.feeTypeName ? `(${item.type || item.feeTypeName || item.fee_category})` : ''}</span>
-                                                        <span>{currencySymbol}{parseFloat(item.fee_remaing_amount || item.balance || 0).toFixed(2)}</span>
-                                                    </div>
-                                                    <span className="product-description">{item.code || item.feeTypeCode || item.fee_category}</span>
-                                                    <input
-                                                        type="number"
-                                                        className="form-control"
-                                                        style={{ marginTop: '8px', maxWidth: '200px' }}
-                                                        value={feeAmounts[idx] || ''}
-                                                        onChange={(e) => handleFeeAmountChange(idx, e.target.value, item.fee_remaing_amount || item.balance)}
-                                                    />
-                                                    {(item.fine_amount > 0 || item.amount_fine > 0) && (
-                                                        <div className="fine-label" style={{ marginTop: '5px' }}>
-                                                            Fine: {currencySymbol}{parseFloat(item.fine_amount || item.amount_fine).toFixed(2)}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-
-                                {/* Total Discount Amount */}
-                                <div className="row collect_grp_fees" style={{ marginTop: '15px' }}>
-                                    <div className="col-md-8">
-                                        <span className="pull-right">Total Discount Amount</span>
-                                    </div>
-                                    <div className="col-md-4">
-                                        <span className="pull-right" style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                                            {currencySymbol}{calculateTotalPay().toFixed(2)}
-                                        </span>
+                            <div className="adm-form-row">
+                                <div className="adm-form-label">Mode</div>
+                                <div className="adm-form-input">
+                                    <div className="adm-mode-tag">
+                                        <i className="fa fa-tag"></i> Discount
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="adm-form-row">
+                                <div className="adm-form-label">Note</div>
+                                <div className="adm-form-input">
+                                    <textarea name="description" rows="2" placeholder="Reason for discount (optional)" value={formData.description} onChange={handleChange}></textarea>
+                                </div>
+                            </div>
                         </div>
-                        <div className="modal-footer fees-footer">
-                            <button type="button" className="btn btn-default pull-left" onClick={handleClose}>Cancel</button>
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={handleSubmit}
-                                disabled={loading}
-                            >
-                                {loading ? <i className="fa fa-spinner fa-spin"></i> : <><i className="fa fa-check"></i> Apply Discount</>}
-                            </button>
+
+                        {/* Single Fee Amount */}
+                        {!feeData?.is_batch && (
+                            <div className="adm-section">
+                                <div className="adm-section-title">Discount Amount</div>
+                                <div className="adm-form-row">
+                                    <div className="adm-form-label">Amount ({currencySymbol}) <span className="req">*</span></div>
+                                    <div className="adm-form-input">
+                                        <input type="number" name="amount" placeholder="Enter discount amount" value={formData.amount} onChange={handleChange} />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Batch Fee Items */}
+                        {feeData?.is_batch && getItems().length > 0 && (
+                            <div className="adm-section">
+                                <div className="adm-section-title">Fee to Discount</div>
+                                {getItems().map((item, idx) => (
+                                    <div className="adm-fee-card" key={idx}>
+                                        <div className="adm-fee-top">
+                                            <div>
+                                                <div className="adm-fee-name">
+                                                    {item.name || item.groupName || 'Fee Group'}
+                                                    {(item.type || item.feeTypeName) && (
+                                                        <span className="adm-fee-type">{item.type || item.feeTypeName || item.fee_category}</span>
+                                                    )}
+                                                </div>
+                                                <div className="adm-fee-code">{item.code || item.feeTypeCode || item.fee_category}</div>
+                                                {(item.fine_amount > 0 || item.amount_fine > 0) && (
+                                                    <div className="adm-fine-badge">
+                                                        <i className="fa fa-exclamation-circle"></i>
+                                                        Fine: {currencySymbol}{amountFormat(item.fine_amount || item.amount_fine)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="adm-fee-balance-box">
+                                                <div className="adm-fee-balance-label">Balance</div>
+                                                <div className="adm-fee-balance-value">{currencySymbol}{amountFormat(item.fee_remaing_amount || item.balance || 0)}</div>
+                                            </div>
+                                        </div>
+                                        <div className="adm-fee-bottom">
+                                            <span className="adm-fee-pay-label">Discount Amount</span>
+                                            <div className="adm-fee-pay-input">
+                                                <span className="adm-fee-pay-prefix">{currencySymbol}</span>
+                                                <input
+                                                    type="number"
+                                                    className="adm-fee-pay-field"
+                                                    value={feeAmounts[idx] || ''}
+                                                    onChange={(e) => handleFeeAmountChange(idx, e.target.value, item.fee_remaing_amount || item.balance)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Total */}
+                        <div className="adm-total">
+                            <span className="adm-total-label">Total Discount</span>
+                            <span className="adm-total-amount">{currencySymbol}{amountFormat(calculateTotalPay())}</span>
                         </div>
+                    </div>
+                    <div className="adm-footer">
+                        <button type="button" className="adm-btn adm-btn-cancel" onClick={handleClose}>Cancel</button>
+                        <button
+                            type="button"
+                            className="adm-btn adm-btn-apply"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                        >
+                            {loading ? <i className="fa fa-spinner fa-spin"></i> : <><i className="fa fa-check"></i> Apply Discount</>}
+                        </button>
                     </div>
                 </div>
             </div>
-            <div className="modal-backdrop fade in"></div>
         </>
     );
 };

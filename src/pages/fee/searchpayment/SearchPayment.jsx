@@ -36,7 +36,41 @@ const SearchPayment = () => {
             console.log('Search Payment Response:', response);
 
             if (response.status === true || response.status === 'success') {
-                setFeeData(response.data || response.feeList || response);
+                const subInvoiceId = response.sub_invoice_id;
+                const list = response.feeList || response.data;
+                
+                if (list) {
+                    let amountDetail = list.amount_detail;
+                    if (typeof amountDetail === 'string') {
+                        try {
+                            amountDetail = JSON.parse(amountDetail);
+                        } catch (e) {
+                            console.error('Error parsing amount_detail:', e);
+                            amountDetail = {};
+                        }
+                    }
+
+                    // Find the specific sub-invoice details
+                    const paymentDetail = amountDetail[subInvoiceId];
+
+                    if (paymentDetail) {
+                        setFeeData({
+                            ...list,
+                            sub_invoice_id: subInvoiceId,
+                            amount: paymentDetail.amount,
+                            amount_discount: paymentDetail.amount_discount,
+                            amount_fine: paymentDetail.amount_fine,
+                            payment_mode: paymentDetail.payment_mode,
+                            date: paymentDetail.date,
+                            description: paymentDetail.description
+                        });
+                    } else {
+                        setFeeData(list); // Fallback to raw list if sub-invoice not found
+                    }
+                } else {
+                    setFeeData(null);
+                    toast.error('Payment not found');
+                }
             } else {
                 setFeeData(null);
                 toast.error(response.message || 'Payment not found');

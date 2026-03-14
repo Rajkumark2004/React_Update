@@ -6,6 +6,7 @@ import Loader from '../../components/Loader';
 import AttendanceReportNav from './AttendanceReportNav';
 import { api } from '../../services/api';
 import '../../utils/include_files';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 
 const DailyAttendanceReport = () => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
@@ -15,6 +16,16 @@ const DailyAttendanceReport = () => {
     const [initialLoading, setInitialLoading] = useState(true);
     const [resultList, setResultList] = useState([]);
     const [message, setMessage] = useState({ type: '', text: '' });
+
+    // New states for column visibility and dropdown
+    const columns = [
+        { key: 'class_section', label: 'Class (Section)' },
+        { key: 'total_present', label: 'Total Present' },
+        { key: 'total_absent', label: 'Total Absent' },
+        { key: 'present_percent', label: 'Present %' },
+        { key: 'absent_percent', label: 'Absent %' }
+    ];
+
 
     useEffect(() => {
         fetchInitialData();
@@ -91,6 +102,67 @@ const DailyAttendanceReport = () => {
     // Helper to read class section label from various API response shapes
     const getClassSection = (item) => item.class_section || `${item.class || ''} ${item.section ? `(${item.section})` : ''}`.trim();
 
+    const formatCell = (row, key) => {
+        if (key === 'class_section') return getClassSection(row);
+        return row[key] || '0';
+    };
+
+    const handleCopy = () => {
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+            class_section: 'Total', 
+            total_present: totals.all_present, 
+            total_absent: totals.all_absent, 
+            present_percent: all_present_percent, 
+            absent_percent: all_absent_percent 
+        }], formatCell);
+        copyToClipboard(headers, rows);
+    };
+
+    const handleCSV = () => {
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+            class_section: 'Total', 
+            total_present: totals.all_present, 
+            total_absent: totals.all_absent, 
+            present_percent: all_present_percent, 
+            absent_percent: all_absent_percent 
+        }], formatCell);
+        downloadCSV(headers, rows, 'daily_attendance_report.csv');
+    };
+
+    const handleExcel = () => {
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+            class_section: 'Total', 
+            total_present: totals.all_present, 
+            total_absent: totals.all_absent, 
+            present_percent: all_present_percent, 
+            absent_percent: all_absent_percent 
+        }], formatCell);
+        downloadExcel(headers, rows, 'daily_attendance_report.xls');
+    };
+
+    const handlePDF = () => {
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+            class_section: 'Total', 
+            total_present: totals.all_present, 
+            total_absent: totals.all_absent, 
+            present_percent: all_present_percent, 
+            absent_percent: all_absent_percent 
+        }], formatCell);
+        downloadPDF(headers, rows, 'daily_attendance_report.pdf', 'Daily Attendance Report');
+    };
+
+    const handlePrint = () => {
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+            class_section: 'Total', 
+            total_present: totals.all_present, 
+            total_absent: totals.all_absent, 
+            present_percent: all_present_percent, 
+            absent_percent: all_absent_percent 
+        }], formatCell);
+        printTable(headers, rows, 'Daily Attendance Report');
+    };
+
+
     return (
         <div className="wrapper theme-white-skin">
             <Header />
@@ -102,7 +174,6 @@ const DailyAttendanceReport = () => {
                     </h1>
                 </section>
                 <section className="content">
-                    <AttendanceReportNav />
                     {initialLoading ? (
                         <Loader />
                     ) : (
@@ -167,16 +238,37 @@ const DailyAttendanceReport = () => {
                                         <div className="box-body table-responsive hide-mobile">
                                             <div className="download_label">Daily Attendance Report</div>
 
-                                            {/* Search Input */}
-                                            <div className="form-group">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    placeholder="Search..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                    style={{ marginBottom: '15px', maxWidth: '300px' }}
-                                                />
+                                            {/* Search and Export Controls */}
+                                            <div className="row mb-3" style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div className="col-sm-6">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        placeholder="Search..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                        style={{ maxWidth: '300px' }}
+                                                    />
+                                                </div>
+                                                <div className="col-sm-6 text-right">
+                                                    <div className="dt-buttons btn-group">
+                                                        <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy">
+                                                            <i className="fa fa-files-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel">
+                                                            <i className="fa fa-file-excel-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV">
+                                                            <i className="fa fa-file-text-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF">
+                                                            <i className="fa fa-file-pdf-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print">
+                                                            <i className="fa fa-print"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             <table className="table table-striped table-bordered table-hover example">

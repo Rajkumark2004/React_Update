@@ -23,9 +23,6 @@ const AttendanceReport = () => {
 
     // New states for search and export
     const [searchTerm, setSearchTerm] = useState('');
-    const [visibleColumns, setVisibleColumns] = useState(new Set(['sno', 'admission_no', 'roll_no', 'name', 'attendance', 'note']));
-    const [showDropdown, setShowDropdown] = useState(false);
-    const dropdownRef = useRef(null);
 
     const columns = [
         { key: 'sno', label: 'S.NO' },
@@ -36,15 +33,6 @@ const AttendanceReport = () => {
         { key: 'note', label: 'Note' }
     ];
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setShowDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     const filteredList = studentList.filter(student => {
         if (!searchTerm) return true;
@@ -69,38 +57,30 @@ const AttendanceReport = () => {
     };
 
     const handleCopy = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
         copyToClipboard(headers, rows);
     };
 
     const handleCSV = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
         downloadCSV(headers, rows, 'attendance_report.csv');
     };
 
     const handleExcel = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
         downloadExcel(headers, rows, 'attendance_report.xls');
     };
 
     const handlePDF = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
         downloadPDF(headers, rows, 'attendance_report.pdf', 'Attendance Report');
     };
 
     const handlePrint = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
         printTable(headers, rows, 'Attendance Report');
     };
 
-    const toggleColumn = (colKey) => {
-        setVisibleColumns(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(colKey)) newSet.delete(colKey);
-            else newSet.add(colKey);
-            return newSet;
-        });
-    };
 
     // Derive CSS class from attendance type name
     const getClassForType = (typeName) => {
@@ -209,10 +189,7 @@ const AttendanceReport = () => {
                         <Loader />
                     ) : (
                         <div className="row">
-                            <div className="col-md-2">
-                                <AttendanceSidebar />
-                            </div>
-                            <div className="col-md-10">
+                            <div className="col-md-12">
                                 <div className="box box-primary">
                                     <div className="box-header with-border">
                                         <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
@@ -319,31 +296,6 @@ const AttendanceReport = () => {
                                                             <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print">
                                                                 <i className="fa fa-print"></i>
                                                             </button>
-                                                            <div className="btn-group" ref={dropdownRef}>
-                                                                <button
-                                                                    className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis"
-                                                                    onClick={() => setShowDropdown(!showDropdown)}
-                                                                    title="Columns"
-                                                                >
-                                                                    <i className="fa fa-columns"></i>
-                                                                </button>
-                                                                {showDropdown && (
-                                                                    <ul className="dropdown-menu" style={{ display: 'block', left: 'auto', right: 0, padding: '10px', minWidth: '150px', zIndex: 1000 }}>
-                                                                        {columns.map(col => (
-                                                                            <li key={col.key} style={{ padding: '5px 0' }}>
-                                                                                <label style={{ margin: 0, cursor: 'pointer', fontWeight: 'normal', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                                    <input
-                                                                                        type="checkbox"
-                                                                                        checked={visibleColumns.has(col.key)}
-                                                                                        onChange={() => toggleColumn(col.key)}
-                                                                                    />
-                                                                                    {col.label}
-                                                                                </label>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
-                                                                )}
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -355,9 +307,12 @@ const AttendanceReport = () => {
                                                     <table className="table table-hover table-striped example">
                                                         <thead>
                                                             <tr>
-                                                                {columns.map(col => (
-                                                                    visibleColumns.has(col.key) && <th key={col.key}>{col.label}</th>
-                                                                ))}
+                                                                <th>S.NO</th>
+                                                                <th>Admission No</th>
+                                                                <th>Roll Number</th>
+                                                                <th>Name</th>
+                                                                <th>Attendance</th>
+                                                                <th>Note</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -366,18 +321,16 @@ const AttendanceReport = () => {
                                                                 const attClass = getClassForType(attLabel);
                                                                 return (
                                                                     <tr key={index}>
-                                                                        {visibleColumns.has('sno') && <td>{filteredList.indexOf(student) + 1}</td>}
-                                                                        {visibleColumns.has('admission_no') && <td>{student.admission_no}</td>}
-                                                                        {visibleColumns.has('roll_no') && <td>{student.roll_no}</td>}
-                                                                        {visibleColumns.has('name') && <td>{student.firstname} {student.lastname}</td>}
-                                                                        {visibleColumns.has('attendance') && (
-                                                                            <td>
-                                                                                <small className={attClass}>
-                                                                                    {attLabel}
-                                                                                </small>
-                                                                            </td>
-                                                                        )}
-                                                                        {visibleColumns.has('note') && <td>{student.remark}</td>}
+                                                                        <td>{filteredList.indexOf(student) + 1}</td>
+                                                                        <td>{student.admission_no}</td>
+                                                                        <td>{student.roll_no}</td>
+                                                                        <td>{student.firstname} {student.lastname}</td>
+                                                                        <td>
+                                                                            <small className={attClass}>
+                                                                                {attLabel}
+                                                                            </small>
+                                                                        </td>
+                                                                        <td>{student.remark}</td>
                                                                     </tr>
                                                                 );
                                                             })}

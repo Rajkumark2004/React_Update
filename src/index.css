@@ -590,3 +590,58 @@ body {
   font-size: 13px;
   letter-spacing: 0.5px;
 }
+
+/* ========================================
+   MODAL SHARED INPUT & BUTTON THEME
+   ======================================== */
+.theme-modal-btn {
+  background-color: #9854cb !important;
+  color: #fff !important;
+}
+.theme-modal-btn:hover {
+  background-color: #8243b3 !important;
+  color: #fff !important;
+}
+.theme-modal-btn:disabled {
+  background-color: #c7a4e6 !important;
+  cursor: not-allowed !important;
+}
+
+/* Base input focus standard */
+.theme-modal-input:focus,
+.theme-modaltextarea:focus {
+  border-color: #9854cb !important;
+  box-shadow: 0 0 0 3px rgba(152, 84, 203, 0.15) !important;
+}
+
+/* Amount Input Specifics */
+.theme-amount-input-group {
+  display: flex;
+  align-items: center;
+}
+.theme-amount-prefix {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-right: none;
+  padding: 8px 12px;
+  border-radius: 6px 0 0 6px;
+  font-weight: 600;
+  color: #475569;
+  font-size: 15px;
+}
+.theme-amount-field {
+  border-radius: 0 6px 6px 0 !important;
+  text-align: right;
+  font-weight: 600;
+  font-size: 16px;
+  color: #0f172a;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  outline: none;
+  width: 100%;
+  transition: all 0.2s;
+}
+.theme-amount-field:focus {
+  border-color: #9854cb !important;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05), 0 0 0 3px rgba(152, 84, 203, 0.15) !important;
+}
