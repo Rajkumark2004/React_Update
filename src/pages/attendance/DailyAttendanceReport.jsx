@@ -7,6 +7,66 @@ import AttendanceReportNav from './AttendanceReportNav';
 import { api } from '../../services/api';
 import '../../utils/include_files';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { useRef } from 'react';
+
+/**
+ * Reusable Column Visibility Dropdown Component
+ */
+const ColumnVisibility = ({ columns, visibleColumns, toggleColumn }) => {
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+        if (showDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showDropdown]);
+
+    return (
+        <div className="btn-group" ref={dropdownRef} style={{ position: 'relative' }}>
+            <button 
+                className="btn btn-default btn-sm" 
+                title="Columns" 
+                onClick={() => setShowDropdown(!showDropdown)}
+            >
+                <i className="fa fa-columns"></i>
+            </button>
+            {showDropdown && (
+                <div style={{ 
+                    position: 'absolute', 
+                    top: '100%', 
+                    right: 0, 
+                    zIndex: 1000, 
+                    background: '#fff', 
+                    border: '1px solid #ccc', 
+                    borderRadius: '4px', 
+                    padding: '8px 10px', 
+                    minWidth: '180px', 
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    marginTop: '2px'
+                }}>
+                    {columns.map(col => (
+                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', margin: 0, fontWeight: 'normal', color: '#333' }}>
+                            <input
+                                type="checkbox"
+                                checked={visibleColumns.has(col.key)}
+                                onChange={() => toggleColumn(col.key)}
+                                style={{ marginRight: '8px', verticalAlign: 'middle' }}
+                            />
+                            {col.label}
+                        </label>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const DailyAttendanceReport = () => {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
@@ -17,7 +77,7 @@ const DailyAttendanceReport = () => {
     const [resultList, setResultList] = useState([]);
     const [message, setMessage] = useState({ type: '', text: '' });
 
-    // New states for column visibility and dropdown
+    // Column Visibility State
     const columns = [
         { key: 'class_section', label: 'Class (Section)' },
         { key: 'total_present', label: 'Total Present' },
@@ -25,6 +85,19 @@ const DailyAttendanceReport = () => {
         { key: 'present_percent', label: 'Present %' },
         { key: 'absent_percent', label: 'Absent %' }
     ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (columnKey) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(columnKey)) {
+            if (newVisible.size > 1) {
+                newVisible.delete(columnKey);
+            }
+        } else {
+            newVisible.add(columnKey);
+        }
+        setVisibleColumns(newVisible);
+    };
 
 
     useEffect(() => {
@@ -108,7 +181,7 @@ const DailyAttendanceReport = () => {
     };
 
     const handleCopy = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+        const { headers, rows } = buildExportData(columns, visibleColumns, [...filteredList, { 
             class_section: 'Total', 
             total_present: totals.all_present, 
             total_absent: totals.all_absent, 
@@ -119,7 +192,7 @@ const DailyAttendanceReport = () => {
     };
 
     const handleCSV = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+        const { headers, rows } = buildExportData(columns, visibleColumns, [...filteredList, { 
             class_section: 'Total', 
             total_present: totals.all_present, 
             total_absent: totals.all_absent, 
@@ -130,7 +203,7 @@ const DailyAttendanceReport = () => {
     };
 
     const handleExcel = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+        const { headers, rows } = buildExportData(columns, visibleColumns, [...filteredList, { 
             class_section: 'Total', 
             total_present: totals.all_present, 
             total_absent: totals.all_absent, 
@@ -141,7 +214,7 @@ const DailyAttendanceReport = () => {
     };
 
     const handlePDF = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+        const { headers, rows } = buildExportData(columns, visibleColumns, [...filteredList, { 
             class_section: 'Total', 
             total_present: totals.all_present, 
             total_absent: totals.all_absent, 
@@ -152,7 +225,7 @@ const DailyAttendanceReport = () => {
     };
 
     const handlePrint = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), [...filteredList, { 
+        const { headers, rows } = buildExportData(columns, visibleColumns, [...filteredList, { 
             class_section: 'Total', 
             total_present: totals.all_present, 
             total_absent: totals.all_absent, 
@@ -267,6 +340,7 @@ const DailyAttendanceReport = () => {
                                                         <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print">
                                                             <i className="fa fa-print"></i>
                                                         </button>
+                                                        <ColumnVisibility columns={columns} visibleColumns={visibleColumns} toggleColumn={toggleColumn} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -274,22 +348,22 @@ const DailyAttendanceReport = () => {
                                             <table className="table table-striped table-bordered table-hover example">
                                                 <thead>
                                                     <tr>
-                                                        <th>Class (Section)</th>
-                                                        <th>Total Present</th>
-                                                        <th>Total Absent</th>
-                                                        <th>Present %</th>
-                                                        <th>Absent %</th>
+                                                        {visibleColumns.has('class_section') && <th>Class (Section)</th>}
+                                                        {visibleColumns.has('total_present') && <th>Total Present</th>}
+                                                        {visibleColumns.has('total_absent') && <th>Total Absent</th>}
+                                                        {visibleColumns.has('present_percent') && <th>Present %</th>}
+                                                        {visibleColumns.has('absent_percent') && <th>Absent %</th>}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {filteredList.length > 0 ? (
                                                         filteredList.map((value, index) => (
                                                             <tr key={index}>
-                                                                <td>{getClassSection(value)}</td>
-                                                                <td>{value.total_present}</td>
-                                                                <td>{value.total_absent}</td>
-                                                                <td>{value.present_percent}</td>
-                                                                <td>{value.absent_percent}</td>
+                                                                {visibleColumns.has('class_section') && <td>{getClassSection(value)}</td>}
+                                                                {visibleColumns.has('total_present') && <td>{value.total_present}</td>}
+                                                                {visibleColumns.has('total_absent') && <td>{value.total_absent}</td>}
+                                                                {visibleColumns.has('present_percent') && <td>{value.present_percent}</td>}
+                                                                {visibleColumns.has('absent_percent') && <td>{value.absent_percent}</td>}
                                                             </tr>
                                                         ))
                                                     ) : (
@@ -299,11 +373,11 @@ const DailyAttendanceReport = () => {
                                                     )}
                                                     {filteredList.length > 0 && (
                                                         <tr style={{ fontWeight: 'bold' }}>
-                                                            <td>Total</td>
-                                                            <td>{totals.all_present}</td>
-                                                            <td>{totals.all_absent}</td>
-                                                            <td>{all_present_percent}</td>
-                                                            <td>{all_absent_percent}</td>
+                                                            {visibleColumns.has('class_section') && <td>Total</td>}
+                                                            {visibleColumns.has('total_present') && <td>{totals.all_present}</td>}
+                                                            {visibleColumns.has('total_absent') && <td>{totals.all_absent}</td>}
+                                                            {visibleColumns.has('present_percent') && <td>{all_present_percent}</td>}
+                                                            {visibleColumns.has('absent_percent') && <td>{all_absent_percent}</td>}
                                                         </tr>
                                                     )}
                                                 </tbody>
@@ -316,31 +390,41 @@ const DailyAttendanceReport = () => {
                                                 {filteredList.length > 0 ? (
                                                     filteredList.map((value, index) => (
                                                         <div key={index} className="bgtgray">
-                                                            <div className="col-sm-3 col-lg-2 col-md-3">
-                                                                <div className="description-block">
-                                                                    <h5 className="description-header">Class (Section) : <span className="description-text">{getClassSection(value)}</span></h5>
+                                                            {visibleColumns.has('class_section') && (
+                                                                <div className="col-sm-3 col-lg-2 col-md-3">
+                                                                    <div className="description-block">
+                                                                        <h5 className="description-header">Class (Section) : <span className="description-text">{getClassSection(value)}</span></h5>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="col-sm-1 pull">
-                                                                <div className="description-block">
-                                                                    <h5 className="description-header">Total Present : <span className="description-text">{value.total_present}</span></h5>
+                                                            )}
+                                                            {visibleColumns.has('total_present') && (
+                                                                <div className="col-sm-1 pull">
+                                                                    <div className="description-block">
+                                                                        <h5 className="description-header">Total Present : <span className="description-text">{value.total_present}</span></h5>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="col-sm-1 pull">
-                                                                <div className="description-block">
-                                                                    <h5 className="description-header">Total Absent : <span className="description-text">{value.total_absent}</span></h5>
+                                                            )}
+                                                            {visibleColumns.has('total_absent') && (
+                                                                <div className="col-sm-1 pull">
+                                                                    <div className="description-block">
+                                                                        <h5 className="description-header">Total Absent : <span className="description-text">{value.total_absent}</span></h5>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="col-sm-4 col-lg-4 col-md-4 border-right">
-                                                                <div className="description-block">
-                                                                    <h5 className="description-header">Present % : <span className="description-text">{value.present_percent}</span></h5>
+                                                            )}
+                                                            {visibleColumns.has('present_percent') && (
+                                                                <div className="col-sm-4 col-lg-4 col-md-4 border-right">
+                                                                    <div className="description-block">
+                                                                        <h5 className="description-header">Present % : <span className="description-text">{value.present_percent}</span></h5>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                            <div className="col-sm-2 col-lg-2 col-md-2 border-right">
-                                                                <div className="description-block">
-                                                                    <h5 className="description-header">Absent % : <span className="description-text">{value.absent_percent}</span></h5>
+                                                            )}
+                                                            {visibleColumns.has('absent_percent') && (
+                                                                <div className="col-sm-2 col-lg-2 col-md-2 border-right">
+                                                                    <div className="description-block">
+                                                                        <h5 className="description-header">Absent % : <span className="description-text">{value.absent_percent}</span></h5>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
+                                                            )}
                                                         </div>
                                                     ))
                                                 ) : (

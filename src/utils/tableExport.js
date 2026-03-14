@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -223,65 +222,6 @@ export const buildExportData = (columns, visibleColumns, data, formatCell) => {
     return { headers, rows };
 };
 
-/**
- * Reusable Column Visibility Dropdown Component
- */
-export const ColumnVisibility = ({ columns, visibleColumns, toggleColumn }) => {
-    const [showDropdown, setShowDropdown] = useState(false);
-    const dropdownRef = useRef(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setShowDropdown(false);
-            }
-        };
-        if (showDropdown) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showDropdown]);
-
-    return (
-        <div className="btn-group" ref={dropdownRef} style={{ position: 'relative' }}>
-            <button 
-                className="btn btn-default btn-sm" 
-                title="Columns" 
-                onClick={() => setShowDropdown(!showDropdown)}
-            >
-                <i className="fa fa-columns"></i>
-            </button>
-            {showDropdown && (
-                <div style={{ 
-                    position: 'absolute', 
-                    top: '100%', 
-                    right: 0, 
-                    zIndex: 1000, 
-                    background: '#fff', 
-                    border: '1px solid #ccc', 
-                    borderRadius: '4px', 
-                    padding: '8px 10px', 
-                    minWidth: '180px', 
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    marginTop: '2px'
-                }}>
-                    {columns.map(col => (
-                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', margin: 0, fontWeight: 'normal', color: '#333' }}>
-                            <input
-                                type="checkbox"
-                                checked={visibleColumns.has(col.key)}
-                                onChange={() => toggleColumn(col.key)}
-                                style={{ marginRight: '8px', verticalAlign: 'middle' }}
-                            />
-                            {col.label}
-                        </label>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
-
 /* ---- internal helper ---- */
 function triggerDownload(blob, filename) {
     const url = URL.createObjectURL(blob);
@@ -293,3 +233,5 @@ function triggerDownload(blob, filename) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
+
+// No default export needed as all functions are exported individually
