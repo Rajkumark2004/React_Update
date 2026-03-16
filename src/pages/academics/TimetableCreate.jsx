@@ -34,6 +34,7 @@ const TimetableCreate = () => {
     const [searchLoading, setSearchLoading] = useState(false);
     const [showTimetable, setShowTimetable] = useState(false);
     const [dayLoading, setDayLoading] = useState(false);
+    const [validationErrors, setValidationErrors] = useState({});
 
     // Initial Data Fetch (Classes, Staff)
     useEffect(() => {
@@ -374,10 +375,13 @@ const TimetableCreate = () => {
         const rows = timetableByDay[currentDay] || [];
 
         // Validation
-        const isValid = rows.every(r => r.subject_id && r.staff_id && r.time_from && r.time_to);
+        const isValid = rows.every(r => r.subject_id && r.staff_id && r.time_from && r.time_to && r.room_no);
         if (!isValid) {
-            toast.error('Please fill all fields for all rows in the current day');
+            setValidationErrors(prev => ({ ...prev, [currentDay]: true }));
+            toast.error('Please fill all required fields for all rows in the current day');
             return;
+        } else {
+            setValidationErrors(prev => ({ ...prev, [currentDay]: false }));
         }
 
         const payload = {
@@ -574,7 +578,7 @@ const TimetableCreate = () => {
                                                                                         <th>Teacher</th>
                                                                                         <th>Time From<small className="astrike"> *</small></th>
                                                                                         <th>Time To<small className="astrike"> *</small></th>
-                                                                                        <th>Room No</th>
+                                                                                        <th>Room No<small className="astrike"> *</small></th>
                                                                                         <th className="text-right">Action</th>
                                                                                     </tr>
                                                                                 </thead>
@@ -617,6 +621,11 @@ const TimetableCreate = () => {
                                                                                             </td>
                                                                                             <td>
                                                                                                 <input type="text" className="form-control" value={row.room_no} onChange={(e) => handleInputChange(rIdx, 'room_no', e.target.value)} />
+                                                                                                {validationErrors[day] && !row.room_no && (
+                                                                                                    <div className="text-danger" style={{ fontSize: '12px', marginTop: '4px' }}>
+                                                                                                        Required
+                                                                                                    </div>
+                                                                                                )}
                                                                                             </td>
                                                                                             <td className="text-right">
                                                                                                 <button type="button" onClick={() => handleDeleteRow(rIdx)} className="btn btn-danger btn-sm">

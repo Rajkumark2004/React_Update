@@ -35,7 +35,7 @@ const StudentAdmission = () => {
         mobileno: '',
         email: '',
         admission_date: '',
-        student_photo: null,
+        image: null,
         blood_group: '',
         house: '',
         height: '',
@@ -347,7 +347,7 @@ const StudentAdmission = () => {
             // Append all fields from state
             Object.keys(formData).forEach(key => {
                 const value = formData[key];
-                
+
                 // Only append if value is not empty (null, undefined, empty string, or empty array)
                 const isEmpty = (val) => {
                     if (val === null || val === undefined) return true;
@@ -420,7 +420,7 @@ const StudentAdmission = () => {
                 mobileno: '',
                 email: '',
                 admission_date: '',
-                student_photo: null,
+                image: null,
                 blood_group: '',
                 house: '',
                 height: '',
@@ -465,8 +465,8 @@ const StudentAdmission = () => {
                 fees_discount: '0',
                 first_title: '', first_doc: null,
                 second_title: '', second_doc: null,
-                third_title: '', third_doc: null,
-                fourth_title: '', fourth_doc: null
+                fourth_title: '', fourth_doc: null,
+                fifth_title: '', fifth_doc: null
             });
             setAutofillCurrent(false);
             setAutofillPermanent(false);
@@ -740,7 +740,7 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Student Photo</label>
-                                                            <input className="dropify" type='file' name='student_photo' onChange={handleInputChange} />
+                                                            <input className="dropify" type='file' name='image' onChange={handleInputChange} />
                                                         </div>
                                                     </div>
                                                 )}
@@ -1499,16 +1499,16 @@ const StudentAdmission = () => {
                                                                                     </tr>
                                                                                     <tr>
                                                                                         <td>3.</td>
-                                                                                        <td><input type="text" name='third_title' className="form-control" value={formData.third_title} onChange={handleInputChange} /></td>
+                                                                                        <td><input type="text" name='fourth_title' className="form-control" value={formData.fourth_title} onChange={handleInputChange} /></td>
                                                                                         <td>
-                                                                                            <input className="dropify" data-height="92" type='file' name='third_doc' onChange={handleInputChange} />
+                                                                                            <input className="dropify" data-height="92" type='file' name='fourth_doc' onChange={handleInputChange} />
                                                                                         </td>
                                                                                     </tr>
                                                                                     <tr>
                                                                                         <td>4.</td>
-                                                                                        <td><input type="text" name='fourth_title' className="form-control" value={formData.fourth_title} onChange={handleInputChange} /></td>
+                                                                                        <td><input type="text" name='fifth_title' className="form-control" value={formData.fifth_title} onChange={handleInputChange} /></td>
                                                                                         <td>
-                                                                                            <input className="dropify" data-height="92" type='file' name='fourth_doc' onChange={handleInputChange} />
+                                                                                            <input className="dropify" data-height="92" type='file' name='fifth_doc' onChange={handleInputChange} />
                                                                                         </td>
                                                                                     </tr>
                                                                                 </tbody>

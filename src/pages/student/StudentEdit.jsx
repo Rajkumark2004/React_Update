@@ -36,7 +36,7 @@ const StudentEdit = () => {
         mobileno: '',
         email: '',
         admission_date: '',
-        student_photo: null,
+        image: null,
         blood_group: '',
         house: '',
         height: '',
@@ -370,7 +370,7 @@ const StudentEdit = () => {
             // Append all fields
             Object.keys(formData).forEach(key => {
                 const value = formData[key];
-                
+
                 // Only append if value is not empty (null, undefined, empty string, or empty array)
                 const isEmpty = (val) => {
                     if (val === null || val === undefined) return true;
@@ -650,7 +650,7 @@ const StudentEdit = () => {
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Student Photo</label>
-                                                        <input className="dropify" type='file' name='student_photo' onChange={handleInputChange} />
+                                                        <input className="dropify" type='file' name='image' onChange={handleInputChange} />
                                                     </div>
                                                 </div>
                                                 <div className="col-md-2">
@@ -1057,7 +1057,7 @@ const StudentEdit = () => {
                                                     </div>
 
                                                     {/* Upload Documents Details */}
-                                                    <h4 className="pagetitleh2">Upload Documents</h4>
+{/* <h4 className="pagetitleh2">Upload Documents</h4>
                                                     <div className="row">
                                                         <div className="col-md-3">
                                                             <div className="form-group">
@@ -1109,7 +1109,7 @@ const StudentEdit = () => {
                                                                 <input className="dropify" type="file" name="fourth_doc" onChange={handleInputChange} />
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </div> */}
                                                 </div>
                                             )}
                                         </div>

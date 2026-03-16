@@ -148,12 +148,10 @@ const VehicleRoute = () => {
 
             if (response.status === 'success' || response.status === true) {
                 toast.success(response.message || 'Record Saved Successfully');
+                fetchData(); // Refresh list on both create and edit
                 if (isEditMode) {
-                    // Wait for toast to be dismissed (if browser sync) or just navigate
-                    // Better to refetch list IF staying on same page, but we navigate
                     navigate('/admin/vehroute');
                 } else {
-                    fetchData(); // Refresh list only on create
                     resetForm();
                 }
             } else {
