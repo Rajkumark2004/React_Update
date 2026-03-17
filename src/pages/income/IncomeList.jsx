@@ -461,8 +461,13 @@ const IncomeList = () => {
                                                                     {formatCell(income, col.key)}
                                                                 </td>
                                                             ))}
-                                                            <td className="mailbox-date pull-right">
-                                                                <Link to={`/admin/income/edit/${income.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                            <td className="text-right white-space-nowrap">
+                                                                {income.documents && (
+                                                                    <a href={`https://newlayout.wisibles.com/admin/income/download/${income.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Download" style={{ marginRight: '2px' }}>
+                                                                        <i className="fa fa-download"></i>
+                                                                    </a>
+                                                                )}
+                                                                <Link to={`/admin/income/edit/${income.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit" style={{ marginRight: '2px' }}>
                                                                     <i className="fa fa-pencil"></i>
                                                                 </Link>
                                                                 <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(income.id) }} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">

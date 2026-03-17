@@ -135,7 +135,13 @@ const GenerateIdCard = () => {
 
             const response = await api.generateIdCards(payload);
             if (response.status && response.data) {
-                setGeneratedData(response.data);
+                // Map API response fields to what StudentIdCard component expects
+                const mappedData = {
+                    id_card: response.data.idcardResult || response.data.id_card || [],
+                    students: response.data.resultlist || response.data.students || [],
+                    sch_setting: response.data.sch_setting ? [response.data.sch_setting] : (response.data.sch_setting || [])
+                };
+                setGeneratedData(mappedData);
                 // PDF generation triggering is handled by useEffect
             } else {
                 alert(response.message || 'Failed to generate ID cards');
@@ -299,7 +305,6 @@ const GenerateIdCard = () => {
                                     <div className="box-body">
                                         <div style={{ borderTop: '1px solid #f4f4f4', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <h3 className="box-title" style={{ fontSize: '20px' }}>Student List</h3>
-                                            <h3 className="box-title" style={{ fontSize: '20px' }}>Student List</h3>
                                             <button
                                                 className="btn btn-info btn-sm"
                                                 onClick={handleGenerate}
@@ -344,6 +349,7 @@ const GenerateIdCard = () => {
                                                         <th>Class</th>
                                                         <th>Father Name</th>
                                                         <th>Date of Birth</th>
+                                                        <th>Mother Name</th>
                                                         <th>Gender</th>
                                                         <th>Category</th>
                                                         <th>Mobile No</th>
@@ -359,6 +365,7 @@ const GenerateIdCard = () => {
                                                             <td>{student.class} ({student.section})</td>
                                                             <td>{student.father_name}</td>
                                                             <td>{student.dob}</td>
+                                                            <td>{student.mother_name}</td>
                                                             <td>{student.gender}</td>
                                                             <td>{student.category}</td>
                                                             <td>{student.mobileno}</td>

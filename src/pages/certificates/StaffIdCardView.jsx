@@ -46,11 +46,11 @@ const StaffIdCardView = () => {
                                                     src={`https://newlayout.wisibles.com/uploads/staff_images/${staff.image}`}
                                                     style={{ width: '85px', height: '85px', borderRadius: '5px', border: '1px solid #ddd' }}
                                                     alt={staff.name}
-                                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://newlayout.wisibles.com/uploads/student_images/no_image.png"; }}
+                                                    onError={(e) => { e.target.onerror = null; e.target.src = "https://newlayout.wisibles.com/uploads/staff_images/no_image.png"; }}
                                                 />
                                             ) : (
                                                 <img
-                                                    src="https://newlayout.wisibles.com/uploads/student_images/no_image.png"
+                                                    src="https://newlayout.wisibles.com/uploads/staff_images/no_image.png"
                                                     style={{ width: '85px', height: '85px', borderRadius: '5px', border: '1px solid #ddd' }}
                                                     alt="No Image"
                                                 />

@@ -36,6 +36,7 @@ const GenerateStaffIdCard = () => {
 
     // Mock Data for Staff List
     const [staffList, setStaffList] = useState([]);
+    const [idCardSettings, setIdCardSettings] = useState(null); // Settings from generated ID card API hook
     const [searched, setSearched] = useState(false);
     const [generatedData, setGeneratedData] = useState(null); // To store data for PDF generation
     const [generatingPdf, setGeneratingPdf] = useState(false);
@@ -84,10 +85,14 @@ const GenerateStaffIdCard = () => {
         try {
             const data = await api.searchStaffForIdCard(formData.role_id, formData.id_card);
             if (data && data.status) {
-                setStaffList(data.data || []);
+                // Ensure array formats regardless if data wraps staffs / resultlist
+                const returnedStaffs = data.data.staffs || data.data.resultlist || [];
+                setStaffList(returnedStaffs);
+                setIdCardSettings(data.data.id_card && data.data.id_card.length > 0 ? data.data.id_card[0] : null);
                 setSearched(true);
             } else {
                 setStaffList([]);
+                setIdCardSettings(null);
                 setSearched(true);
                 // alert('No staff found');
             }
@@ -95,6 +100,7 @@ const GenerateStaffIdCard = () => {
         } catch (error) {
             console.error("Error searching staff:", error);
             setStaffList([]);
+            setIdCardSettings(null);
             setSearched(true);
         }
     };
@@ -114,35 +120,38 @@ const GenerateStaffIdCard = () => {
         );
     };
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         if (selectedStaff.length === 0) {
             alert('No record selected');
             return;
         }
 
-        const selectedStaffData = staffList.filter(staff => selectedStaff.includes(staff.id));
-        const selectedCardTemplate = idCards.find(card => card.id == formData.id_card);
+        setGeneratingPdf(true);
+        try {
+            const payload = {
+                id_card: formData.id_card,
+                data: selectedStaff.map(id => ({ staff_id: id }))
+            };
 
-        // Settings for the school (assuming first item from API response or hardcoded if not available in this scope)
-        // Since we don't have school settings in initial data here, we might need to fetch it or mock it.
-        // For now, let's look at the student implementation. It seems 'sch_setting' comes from the generate API response.
-        // For staff, the user didn't provide a 'generate' API, only 'search'. 
-        // The user asked to "add the same logic for generate".
-        // Use the selected template and staff data. For school settings, we'll try to find it or use defaults.
-
-        // Construct a data object similar to what we get for students to reuse logic if possible, 
-        // or just pass what we have.
-
-        const dataForPdf = {
-            staff: selectedStaffData,
-            id_card: selectedCardTemplate,
-            sch_setting: {
-                school_name: 'Wisibles School', // improved dynamic fetching would be better
-                school_address: 'Hyderabad, Telangana'
+            const response = await api.generateStaffIdCard(payload);
+            if (response.status && response.data) {
+                // Map API response to match what StaffIdCard component expects
+                const mappedData = {
+                    id_card: response.data.id_card && response.data.id_card.length > 0 ? response.data.id_card[0] : {},
+                    staff: response.data.staffs || [],
+                    sch_setting: response.data.sch_setting && response.data.sch_setting.length > 0 ? response.data.sch_setting[0] : {}
+                };
+                setGeneratedData(mappedData);
+                // PDF generation triggering is handled by useEffect
+            } else {
+                alert(response.message || 'Failed to generate ID cards');
+                setGeneratingPdf(false);
             }
-        };
-
-        setGeneratedData(dataForPdf);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('An error occurred during generation');
+            setGeneratingPdf(false);
+        }
     };
 
     useEffect(() => {
@@ -319,16 +328,16 @@ const GenerateStaffIdCard = () => {
                                                 <thead>
                                                     <tr>
                                                         <th className="text-center"><input type="checkbox" onChange={handleSelectAll} checked={staffList.length > 0 && selectedStaff.length === staffList.length} /></th>
-                                                        <th>Staff ID</th>
-                                                        <th>Staff Name</th>
-                                                        <th>Designation</th>
-                                                        <th>Department</th>
-                                                        <th>Father Name</th>
-                                                        <th>Mother Name</th>
-                                                        <th>Date of Joining</th>
-                                                        <th>Address</th>
-                                                        <th>Phone</th>
-                                                        <th>Date of Birth</th>
+                                                        {(!idCardSettings || idCardSettings.enable_staff_id == 1) && <th>Staff ID</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_name == 1) && <th>Staff Name</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_designation == 1) && <th>Designation</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_staff_department == 1) && <th>Department</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_fathers_name == 1) && <th>Father Name</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_mothers_name == 1) && <th>Mother Name</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_date_of_joining == 1) && <th>Date of Joining</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_permanent_address == 1) && <th>Address</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_staff_phone == 1) && <th>Phone</th>}
+                                                        {(!idCardSettings || idCardSettings.enable_staff_dob == 1) && <th>Date of Birth</th>}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -341,24 +350,38 @@ const GenerateStaffIdCard = () => {
                                                     ).map(staff => (
                                                         <tr key={staff.id}>
                                                             <td className="text-center"><input type="checkbox" checked={selectedStaff.includes(staff.id)} onChange={() => handleSelectStaff(staff.id)} /></td>
-                                                            <td>{staff.employee_id}</td>
-                                                            <td>
-                                                                <Link to={`/admin/staff/profile/${staff.id}`} style={{ color: '#000' }}>
-                                                                    {staff.name} {staff.surname}
-                                                                </Link>
-                                                            </td>
-                                                            <td>{staff.designation}</td>
-                                                            <td>{staff.department}</td>
-                                                            <td>{staff.father_name}</td>
-                                                            <td>{staff.mother_name}</td>
-                                                            <td>{staff.date_of_joining}</td>
-                                                            <td>{staff.local_address}</td>
-                                                            <td>{staff.contact_no}</td>
-                                                            <td>{staff.dob}</td>
+                                                            {(!idCardSettings || idCardSettings.enable_staff_id == 1) && <td>{staff.employee_id}</td>}
+                                                            {(!idCardSettings || idCardSettings.enable_name == 1) && (
+                                                                <td>
+                                                                    <Link to={`/admin/staff/profile/${staff.id}`} style={{ color: '#000' }}>
+                                                                        {staff.name} {staff.surname}
+                                                                    </Link>
+                                                                </td>
+                                                            )}
+                                                            {(!idCardSettings || idCardSettings.enable_designation == 1) && <td>{staff.designation}</td>}
+                                                            {(!idCardSettings || idCardSettings.enable_staff_department == 1) && <td>{staff.department}</td>}
+                                                            {(!idCardSettings || idCardSettings.enable_fathers_name == 1) && <td>{staff.father_name}</td>}
+                                                            {(!idCardSettings || idCardSettings.enable_mothers_name == 1) && <td>{staff.mother_name}</td>}
+                                                            {(!idCardSettings || idCardSettings.enable_date_of_joining == 1) && <td>{staff.date_of_joining}</td>}
+                                                            {(!idCardSettings || idCardSettings.enable_permanent_address == 1) && <td>{staff.local_address}</td>}
+                                                            {(!idCardSettings || idCardSettings.enable_staff_phone == 1) && <td>{staff.contact_no}</td>}
+                                                            {(!idCardSettings || idCardSettings.enable_staff_dob == 1) && <td>{staff.dob}</td>}
                                                         </tr>
                                                     )) : (
                                                         <tr>
-                                                            <td colSpan="11" className="text-center text-danger">No Record Found</td>
+                                                            {/* calculate dynamic colspan */}
+                                                            <td colSpan={1 + [
+                                                                !idCardSettings || idCardSettings.enable_staff_id == 1,
+                                                                !idCardSettings || idCardSettings.enable_name == 1,
+                                                                !idCardSettings || idCardSettings.enable_designation == 1,
+                                                                !idCardSettings || idCardSettings.enable_staff_department == 1,
+                                                                !idCardSettings || idCardSettings.enable_fathers_name == 1,
+                                                                !idCardSettings || idCardSettings.enable_mothers_name == 1,
+                                                                !idCardSettings || idCardSettings.enable_date_of_joining == 1,
+                                                                !idCardSettings || idCardSettings.enable_permanent_address == 1,
+                                                                !idCardSettings || idCardSettings.enable_staff_phone == 1,
+                                                                !idCardSettings || idCardSettings.enable_staff_dob == 1,
+                                                            ].filter(Boolean).length} className="text-center text-danger">No Record Found</td>
                                                         </tr>
                                                     )}
                                                 </tbody>

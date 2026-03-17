@@ -474,8 +474,13 @@ const ExpenseList = () => {
                                                             {visibleColumns.has('date') && <td className="mailbox-name">{expense.date}</td>}
                                                             {visibleColumns.has('exp_head') && <td className="mailbox-name">{expense.exp_head}</td>}
                                                             {visibleColumns.has('amount') && <td className="mailbox-name text-right">{expense.amount}</td>}
-                                                            <td className="mailbox-date pull-right">
-                                                                <Link to={`/admin/expense/edit/${expense.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                            <td className="text-right white-space-nowrap">
+                                                                {expense.documents && (
+                                                                    <a href={`https://newlayout.wisibles.com/admin/expense/download/${expense.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Download" style={{ marginRight: '2px' }}>
+                                                                        <i className="fa fa-download"></i>
+                                                                    </a>
+                                                                )}
+                                                                <Link to={`/admin/expense/edit/${expense.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit" style={{ marginRight: '2px' }}>
                                                                     <i className="fa fa-pencil"></i>
                                                                 </Link>
                                                                 <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(expense.id) }} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">

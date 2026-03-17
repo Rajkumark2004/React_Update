@@ -39,6 +39,8 @@ const StudentIdCard = () => {
                     enable_student_barcode: item.enable_student_barcode == 1,
                     enable_vertical_card: item.enable_vertical_card == 1,
                     vertical: item.enable_vertical_card == 1, // Map enable_vertical_card to vertical for display logic if needed
+                    background_image: item.background || item.background_image,
+                    logo_img: item.logo || item.logo_img,
                 }));
                 setIdCardList(formattedData);
             }
@@ -111,16 +113,24 @@ const StudentIdCard = () => {
     // Colorpicker useEffect removed as we are using native input type='color'
 
     const getImageUrl = (type, filename) => {
-        if (!filename) {
-            if (type === 'student') return "https://newlayout.wisibles.com/uploads/student_images/no_image.png";
-            return "";
-        }
         // If it's already an absolute URL, return it
-        if (filename.startsWith('http')) return filename;
+        if (filename && filename.startsWith('http')) return filename;
 
-        // Use the new API structure for paths
-        const uploadPath = `/uploads/student_id_card/${type}/${filename}`;
-        return `https://newlayout.wisibles.com${uploadPath}`;
+        // Make sure we don't double the upload path if the filename already contains it
+        if (filename && filename.startsWith('uploads/')) return `https://newlayout.wisibles.com/${filename}`;
+        if (filename && filename.startsWith('/uploads/')) return `https://newlayout.wisibles.com${filename}`;
+
+        switch (type) {
+            case 'background':
+                return filename ? `https://newlayout.wisibles.com/uploads/student_id_card/background/${filename}` : '';
+            case 'logo':
+                return filename ? `https://newlayout.wisibles.com/uploads/student_id_card/logo/${filename}` : '';
+            case 'signature':
+                return filename ? `https://newlayout.wisibles.com/uploads/student_id_card/signature/${filename}` : '';
+            case 'student':
+            default:
+                return "https://newlayout.wisibles.com/uploads/student_images/no_image.png";
+        }
     };
 
 
@@ -420,6 +430,11 @@ const StudentIdCard = () => {
                                                     onChange={handleInputChange}
                                                 />
                                             </div>
+                                            {(formData.background_image || (isEditing && formData.old_background)) && (
+                                                <div style={{ marginTop: '10px' }}>
+                                                    <img src={formData.background_image ? URL.createObjectURL(formData.background_image) : getImageUrl('background', formData.old_background)} alt="Background Preview" style={{ maxHeight: '60px' }} />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="form-group">
                                             <label>Logo</label>
@@ -439,6 +454,11 @@ const StudentIdCard = () => {
                                                     onChange={handleInputChange}
                                                 />
                                             </div>
+                                            {(formData.logo_img || (isEditing && formData.old_logo_img)) && (
+                                                <div style={{ marginTop: '10px' }}>
+                                                    <img src={formData.logo_img ? URL.createObjectURL(formData.logo_img) : getImageUrl('logo', formData.old_logo_img)} alt="Logo Preview" style={{ maxHeight: '60px' }} />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="form-group">
                                             <label>Signature</label>
@@ -458,6 +478,11 @@ const StudentIdCard = () => {
                                                     onChange={handleInputChange}
                                                 />
                                             </div>
+                                            {(formData.sign_image || (isEditing && formData.old_sign_image)) && (
+                                                <div style={{ marginTop: '10px' }}>
+                                                    <img src={formData.sign_image ? URL.createObjectURL(formData.sign_image) : getImageUrl('signature', formData.old_sign_image)} alt="Signature Preview" style={{ maxHeight: '60px' }} />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="form-group">
                                             <label>School Name <small className="req" style={{ color: 'red' }}> *</small></label>
