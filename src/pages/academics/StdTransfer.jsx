@@ -111,8 +111,8 @@ const StdTransfer = () => {
                     const results = {};
                     const nextWorking = {};
                     students.forEach(s => {
-                        results[s.student_session_id] = 'pass';
-                        nextWorking[s.student_session_id] = 'continue';
+                        results[s.id] = 'pass';
+                        nextWorking[s.id] = 'countinue';
                     });
                     setStudentResults(results);
                     setStudentNextSessionStatus(nextWorking);
@@ -135,26 +135,26 @@ const StdTransfer = () => {
     const handleSelectAll = (e) => {
         const checked = e.target.checked;
         if (checked) {
-            setSelectedStudentIds(studentList.map(s => s.student_session_id));
+            setSelectedStudentIds(studentList.map(s => s.id));
         } else {
             setSelectedStudentIds([]);
         }
     };
 
-    const handleStudentSelect = (studentSessionId) => {
+    const handleStudentSelect = (studentId) => {
         setSelectedStudentIds(prev =>
-            prev.includes(studentSessionId)
-                ? prev.filter(id => id !== studentSessionId)
-                : [...prev, studentSessionId]
+            prev.includes(studentId)
+                ? prev.filter(id => id !== studentId)
+                : [...prev, studentId]
         );
     };
 
-    const handleResultChange = (studentSessionId, value) => {
-        setStudentResults(prev => ({ ...prev, [studentSessionId]: value }));
+    const handleResultChange = (studentId, value) => {
+        setStudentResults(prev => ({ ...prev, [studentId]: value }));
     };
 
-    const handleNextWorkingChange = (studentSessionId, value) => {
-        setStudentNextSessionStatus(prev => ({ ...prev, [studentSessionId]: value }));
+    const handleNextWorkingChange = (studentId, value) => {
+        setStudentNextSessionStatus(prev => ({ ...prev, [studentId]: value }));
     };
 
     const handleSave = async () => {
@@ -331,14 +331,14 @@ const StdTransfer = () => {
                                                             <th>Next Session Status</th>
                                                         </tr>
                                                         {studentList.map(student => (
-                                                            <tr key={student.student_session_id}>
+                                                            <tr key={student.id}>
                                                                 <td>
                                                                     <input
                                                                         type="checkbox"
                                                                         className="checkbox student-checkbox"
-                                                                        value={student.student_session_id}
-                                                                        checked={selectedStudentIds.includes(student.student_session_id)}
-                                                                        onChange={() => handleStudentSelect(student.student_session_id)}
+                                                                        value={student.id}
+                                                                        checked={selectedStudentIds.includes(student.id)}
+                                                                        onChange={() => handleStudentSelect(student.id)}
                                                                     />
                                                                 </td>
                                                                 <td>{student.admission_no}</td>
@@ -350,10 +350,10 @@ const StdTransfer = () => {
                                                                         <label>
                                                                             <input
                                                                                 type="radio"
-                                                                                name={`result_${student.student_session_id}`}
+                                                                                name={`result_${student.id}`}
                                                                                 value="pass"
-                                                                                checked={studentResults[student.student_session_id] === 'pass'}
-                                                                                onChange={(e) => handleResultChange(student.student_session_id, e.target.value)}
+                                                                                checked={studentResults[student.id] === 'pass'}
+                                                                                onChange={(e) => handleResultChange(student.id, e.target.value)}
                                                                             /> Pass
                                                                         </label>
                                                                     </div>
@@ -361,10 +361,10 @@ const StdTransfer = () => {
                                                                         <label>
                                                                             <input
                                                                                 type="radio"
-                                                                                name={`result_${student.student_session_id}`}
+                                                                                name={`result_${student.id}`}
                                                                                 value="fail"
-                                                                                checked={studentResults[student.student_session_id] === 'fail'}
-                                                                                onChange={(e) => handleResultChange(student.student_session_id, e.target.value)}
+                                                                                checked={studentResults[student.id] === 'fail'}
+                                                                                onChange={(e) => handleResultChange(student.id, e.target.value)}
                                                                             /> Fail
                                                                         </label>
                                                                     </div>
@@ -374,10 +374,10 @@ const StdTransfer = () => {
                                                                         <label>
                                                                             <input
                                                                                 type="radio"
-                                                                                name={`next_working_${student.student_session_id}`}
-                                                                                value="continue"
-                                                                                checked={studentNextSessionStatus[student.student_session_id] === 'continue'}
-                                                                                onChange={(e) => handleNextWorkingChange(student.student_session_id, e.target.value)}
+                                                                                name={`next_working_${student.id}`}
+                                                                                value="countinue"
+                                                                                checked={studentNextSessionStatus[student.id] === 'countinue'}
+                                                                                onChange={(e) => handleNextWorkingChange(student.id, e.target.value)}
                                                                             /> Continue
                                                                         </label>
                                                                     </div>
@@ -385,10 +385,10 @@ const StdTransfer = () => {
                                                                         <label>
                                                                             <input
                                                                                 type="radio"
-                                                                                name={`next_working_${student.student_session_id}`}
+                                                                                name={`next_working_${student.id}`}
                                                                                 value="leave"
-                                                                                checked={studentNextSessionStatus[student.student_session_id] === 'leave'}
-                                                                                onChange={(e) => handleNextWorkingChange(student.student_session_id, e.target.value)}
+                                                                                checked={studentNextSessionStatus[student.id] === 'leave'}
+                                                                                onChange={(e) => handleNextWorkingChange(student.id, e.target.value)}
                                                                             /> Leave
                                                                         </label>
                                                                     </div>

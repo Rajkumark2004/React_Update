@@ -24,6 +24,7 @@ const IncomeEdit = () => {
         description: '',
         documents: null
     });
+    const [existingDocument, setExistingDocument] = useState(null);
 
     useEffect(() => {
         fetchInitialData();
@@ -31,19 +32,31 @@ const IncomeEdit = () => {
 
     const fetchInitialData = async () => {
         try {
-            // Fetch income heads
-            const headRes = await api.getIncomeHeadList();
+            // Fetch initial data using Promise.all
+            const [headRes, listRes, incomeDetail] = await Promise.all([
+                api.getIncomeHeadList(),
+                api.getIncomeList(),
+                api.fetchIncome(id)
+            ]);
+
             console.log('Income Head Response:', headRes);
+            console.log('Income List Response:', listRes);
+            console.log('Income Detail Response:', incomeDetail);
+
+            // Robust parsing for income heads
             let heads = [];
             if (headRes) {
                 heads = headRes.data || headRes.incheadlist || (Array.isArray(headRes) ? headRes : []);
             }
             setIncomeHeadList(heads);
 
-            // Fetch the specific income details
-            const incomeDetail = await api.fetchIncome(id);
-            console.log('Income Detail Response:', incomeDetail);
+            // Robust parsing for income list
+            if (listRes) {
+                const list = listRes.data || listRes.aaData || listRes.incomeList || listRes.income_list || listRes.incheadlist || (Array.isArray(listRes) ? listRes : []);
+                setIncomeList(Array.isArray(list) ? list : []);
+            }
 
+            // Populate form with current income detail
             if (incomeDetail && incomeDetail.data) {
                 const item = incomeDetail.data;
                 setFormData({
@@ -55,6 +68,7 @@ const IncomeEdit = () => {
                     description: item.note || item.description || '',
                     documents: null
                 });
+                setExistingDocument(item.documents || null);
             } else {
                 toast.error('Income not found');
                 navigate('/admin/income');
@@ -213,6 +227,20 @@ const IncomeEdit = () => {
                                                 className="form-control"
                                                 onChange={handleInputChange}
                                             />
+                                            {existingDocument && (
+                                                <div className="mt-2">
+                                                    <i className="fa fa-file-text-o text-muted"></i>
+                                                    <a
+                                                        href={`https://newlayout.wisibles.com/admin/income/download/${id}`}
+                                                        className="ml-2 text-info"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        style={{ marginLeft: '10px' }}
+                                                    >
+                                                        Download Existing Document
+                                                    </a>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="form-group">
                                             <label>Description</label>
@@ -262,13 +290,18 @@ const IncomeEdit = () => {
                                                     incomeList.map((income) => (
                                                         <tr key={income.id}>
                                                             <td className="mailbox-name">{income.name}</td>
-                                                            <td className="mailbox-name">{income.description}</td>
+                                                            <td className="mailbox-name">{income.note || income.description}</td>
                                                             <td className="mailbox-name">{income.invoice_no}</td>
                                                             <td className="mailbox-name">{income.date}</td>
                                                             <td className="mailbox-name">{income.income_category || getHeadName(income.inc_head_id)}</td>
                                                             <td className="mailbox-name text-right">{income.amount}</td>
-                                                            <td className="mailbox-date pull-right">
-                                                                <Link to={`/admin/income/edit/${income.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                            <td className="text-right white-space-nowrap">
+                                                                {income.documents && (
+                                                                    <a href={`https://newlayout.wisibles.com/admin/income/download/${income.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Download" style={{ marginRight: '2px' }}>
+                                                                        <i className="fa fa-download"></i>
+                                                                    </a>
+                                                                )}
+                                                                <Link to={`/admin/income/edit/${income.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit" style={{ marginRight: '2px' }}>
                                                                     <i className="fa fa-pencil"></i>
                                                                 </Link>
                                                                 <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(income.id) }} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">

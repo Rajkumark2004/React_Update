@@ -40,7 +40,6 @@ const StaffIdCard = () => {
         header_color: '#000000',
         enable_name: false,
         enable_staff_id: false,
-        enable_staff_role: false,
         enable_designation: false,
         enable_staff_department: false,
         enable_fathers_name: false,
@@ -96,13 +95,24 @@ const StaffIdCard = () => {
     }, []);
 
     const getImageUrl = (type, filename) => {
-        if (!filename) {
-            if (type === 'staff') return "https://newlayout.wisibles.com/uploads/staff_images/no_image.png";
-            return "";
+        // If it's already an absolute URL, return it
+        if (filename && filename.startsWith('http')) return filename;
+
+        // Make sure we don't double the upload path if the filename already contains it
+        if (filename && filename.startsWith('uploads/')) return `https://newlayout.wisibles.com/${filename}`;
+        if (filename && filename.startsWith('/uploads/')) return `https://newlayout.wisibles.com${filename}`;
+
+        switch (type) {
+            case 'background':
+                return filename ? `https://newlayout.wisibles.com/uploads/staff_id_card/background/${filename}` : '';
+            case 'logo':
+                return filename ? `https://newlayout.wisibles.com/uploads/staff_id_card/logo/${filename}` : '';
+            case 'signature':
+                return filename ? `https://newlayout.wisibles.com/uploads/staff_id_card/signature/${filename}` : '';
+            case 'staff':
+            default:
+                return "https://newlayout.wisibles.com/uploads/staff_images/no_image.png";
         }
-        if (filename.startsWith('http')) return filename;
-        const uploadPath = `/uploads/staff_id_card/${type}/${filename}`;
-        return `https://newlayout.wisibles.com${uploadPath}`;
     };
 
     const fetchIdCards = async () => {
@@ -193,7 +203,7 @@ const StaffIdCard = () => {
             setEditId(null);
             setFormData({
                 school_name: '', address: '', title: '', header_color: '#000000',
-                enable_name: false, enable_staff_id: false, enable_staff_role: false,
+                enable_name: false, enable_staff_id: false,
                 enable_designation: false, enable_staff_department: false, enable_fathers_name: false,
                 enable_mothers_name: false, enable_date_of_joining: false, enable_permanent_address: false,
                 enable_staff_phone: false, enable_staff_dob: false, enable_vertical_card: false,
@@ -241,7 +251,6 @@ const StaffIdCard = () => {
                     header_color: editData.header_color || '#000000',
                     enable_name: editData.enable_name == 1,
                     enable_staff_id: editData.enable_staff_id == 1,
-                    enable_staff_role: editData.enable_staff_role == 1,
                     enable_designation: editData.enable_designation == 1,
                     enable_staff_department: editData.enable_staff_department == 1,
                     enable_fathers_name: editData.enable_fathers_name == 1,
@@ -394,7 +403,6 @@ const StaffIdCard = () => {
                                         {[
                                             { label: 'Staff Name', name: 'enable_name' },
                                             { label: 'Staff ID', name: 'enable_staff_id' },
-                                            { label: 'Staff Role', name: 'enable_staff_role' },
                                             { label: 'Designation', name: 'enable_designation' },
                                             { label: 'Department', name: 'enable_staff_department' },
                                             { label: 'Father Name', name: 'enable_fathers_name' },
@@ -434,7 +442,7 @@ const StaffIdCard = () => {
                                                     setEditId(null);
                                                     setFormData({
                                                         school_name: '', address: '', title: '', header_color: '#000000',
-                                                        enable_name: false, enable_staff_id: false, enable_staff_role: false,
+                                                        enable_name: false, enable_staff_id: false,
                                                         enable_designation: false, enable_staff_department: false, enable_fathers_name: false,
                                                         enable_mothers_name: false, enable_date_of_joining: false, enable_permanent_address: false,
                                                         enable_staff_phone: false, enable_staff_dob: false, enable_vertical_card: false,
@@ -565,12 +573,12 @@ const StaffIdCard = () => {
                             </div>
                             <div className="modal-body" id="certificate_detail">
                                 <div style={{
-                                    width: activeViewItem.is_vertical ? '300px' : '500px',
-                                    height: activeViewItem.is_vertical ? '500px' : '300px',
+                                    width: activeViewItem.is_vertical ? '280px' : '462px',
+                                    height: activeViewItem.is_vertical ? '462px' : '280px',
                                     margin: '0 auto',
                                     border: '1px solid #ccc',
                                     position: 'relative',
-                                    backgroundImage: activeViewItem.background_image ? `url(https://newlayout.wisibles.com/${activeViewItem.background_image})` : 'none',
+                                    backgroundImage: activeViewItem.background_image ? `url(${getImageUrl('background', activeViewItem.background_image)})` : 'none',
                                     backgroundSize: 'cover'
                                 }}>
                                     <div style={{ padding: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -588,17 +596,17 @@ const StaffIdCard = () => {
                                             <div style={{ width: '100px', height: '120px', border: '1px solid #ddd', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                 <img src={getImageUrl('staff', null)} style={{ width: '90px', height: '110px', border: '1px solid #ccc', borderRadius: '4px' }} alt="staff" />
                                             </div>
-                                            <div style={{ flex: 1, fontSize: '12px' }}>
-                                                <h3 style={{ margin: '0 0 10px 0', fontSize: '18px', color: activeViewItem.header_color }}>{activeViewItem.title}</h3>
-                                                {activeViewItem.enable_name == 1 && <p><strong>Name:</strong> John Doe</p>}
-                                                {activeViewItem.enable_staff_id == 1 && <p><strong>Staff ID:</strong> 12345</p>}
-                                                {activeViewItem.enable_staff_role == 1 && <p><strong>Role:</strong> Teacher</p>}
-                                                {activeViewItem.enable_designation == 1 && <p><strong>Designation:</strong> Senior Teacher</p>}
-                                                {activeViewItem.enable_staff_department == 1 && <p><strong>Department:</strong> Academic</p>}
-                                                {activeViewItem.enable_fathers_name == 1 && <p><strong>Father's Name:</strong> Robert Doe</p>}
-                                                {activeViewItem.enable_mothers_name == 1 && <p><strong>Mother's Name:</strong> Mary Doe</p>}
-                                                {activeViewItem.enable_date_of_joining == 1 && <p><strong>Joining Date:</strong> 2020-01-01</p>}
-                                                {activeViewItem.enable_permanent_address == 1 && <p><strong>Address:</strong> High Street, City</p>}
+                                            <div style={{ flex: 1, fontSize: '11px', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
+                                                <h3 style={{ margin: 0, fontSize: '16px', color: activeViewItem.header_color }}>{activeViewItem.title}</h3>
+                                                {activeViewItem.enable_name == 1 && <p style={{ margin: 0 }}><strong>Name:</strong> John Doe</p>}
+                                                {activeViewItem.enable_staff_id == 1 && <p style={{ margin: 0 }}><strong>Staff ID:</strong> 12345</p>}
+
+                                                {activeViewItem.enable_designation == 1 && <p style={{ margin: 0 }}><strong>Designation:</strong> Senior Teacher</p>}
+                                                {activeViewItem.enable_staff_department == 1 && <p style={{ margin: 0 }}><strong>Department:</strong> Academic</p>}
+                                                {activeViewItem.enable_fathers_name == 1 && <p style={{ margin: 0 }}><strong>Father's Name:</strong> Robert Doe</p>}
+                                                {activeViewItem.enable_mothers_name == 1 && <p style={{ margin: 0 }}><strong>Mother's Name:</strong> Mary Doe</p>}
+                                                {activeViewItem.enable_date_of_joining == 1 && <p style={{ margin: 0 }}><strong>Joining Date:</strong> 2020-01-01</p>}
+                                                {activeViewItem.enable_permanent_address == 1 && <p style={{ margin: 0 }}><strong>Address:</strong> High Street, City</p>}
                                             </div>
                                         </div>
 

@@ -27,7 +27,7 @@ const CreateContent = () => {
     const [formData, setFormData] = useState({
         title: '',
         class: '',
-        section: '',
+        section: [],
         type: '',
         date: new Date().toISOString().split('T')[0],
         description: '',
@@ -37,6 +37,7 @@ const CreateContent = () => {
     const [contentList, setContentList] = useState([]);
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
+    const [isSectionOpen, setIsSectionOpen] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -59,7 +60,7 @@ const CreateContent = () => {
 
     const handleClassChange = async (e) => {
         const classId = e.target.value;
-        setFormData({ ...formData, class: classId, section: '' });
+        setFormData({ ...formData, class: classId, section: [] }); // Reset section when class changes
 
         if (classId) {
             try {
@@ -74,8 +75,27 @@ const CreateContent = () => {
         }
     };
 
+    const toggleSection = (id) => {
+        setFormData(prev => {
+            const sections = prev.section.includes(id)
+                ? prev.section.filter(sid => sid !== id)
+                : [...prev.section, id];
+            return { ...prev, section: sections };
+        });
+    };
+
+    const toggleSelectAll = () => {
+        setFormData(prev => {
+            const allIds = sectionList.map(s => s.section_id);
+            const sections = prev.section.length === sectionList.length ? [] : allIds;
+            return { ...prev, section: sections };
+        });
+    };
+
+
+
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value } = e.target; // Removed 'options' as it's not used for non-multi-selects
         if (name === 'class') {
             handleClassChange(e);
         } else {
@@ -98,8 +118,13 @@ const CreateContent = () => {
             // Hardcoded as per requirement/API expectation for now, or based on user role? 
             // The payload example showed ["student"].
             submitData.append('content_available[]', 'student');
+            submitData.append('content_available[]', 'Super Admin');
             submitData.append('class_id', formData.class);
-            submitData.append('section[]', formData.section); // Sending single section as array item
+            if (formData.section && formData.section.length > 0) {
+                formData.section.forEach(secId => {
+                    submitData.append('section[]', secId);
+                });
+            }
 
             // Format date to DD-MM-YYYY
             const dateObj = new Date(formData.date);
@@ -123,7 +148,7 @@ const CreateContent = () => {
             setFormData({
                 title: '',
                 class: '',
-                section: '',
+                section: [],
                 type: '',
                 date: new Date().toISOString().split('T')[0],
                 description: '',
@@ -205,12 +230,40 @@ const CreateContent = () => {
                                                 </div>
                                                 <div className="form-group">
                                                     <label>Section</label>
-                                                    <select className="form-control" name="section" value={formData.section} onChange={handleInputChange}>
-                                                        <option value="">Select</option>
-                                                        {sectionList.map((sec) => (
-                                                            <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
-                                                        ))}
-                                                    </select>
+                                                    <div id="checkbox-dropdown-container">
+                                                        <div className="custom-select" id="custom-select" onClick={() => setIsSectionOpen(!isSectionOpen)}>
+                                                            {formData.section.length > 0 ? `${formData.section.length} Selected` : "Select"}
+                                                        </div>
+                                                        {isSectionOpen && (
+                                                            <div className="custom-select-option-box" id="custom-select-option-box" style={{ display: 'block' }}>
+                                                                <div className="custom-select-option checkbox">
+                                                                    <label className="vertical-middle line-h-18">
+                                                                        <input
+                                                                            className="custom-select-option-checkbox select_all"
+                                                                            type="checkbox"
+                                                                            name="select_all"
+                                                                            id="select_all"
+                                                                            checked={sectionList.length > 0 && formData.section.length === sectionList.length}
+                                                                            onChange={toggleSelectAll}
+                                                                        /> Select All
+                                                                    </label>
+                                                                </div>
+                                                                {sectionList.map(s => (
+                                                                    <div key={s.section_id} className="custom-select-option checkbox">
+                                                                        <label className="vertical-middle line-h-18">
+                                                                            <input
+                                                                                className="custom-select-option-checkbox"
+                                                                                type="checkbox"
+                                                                                name="section[]"
+                                                                                checked={formData.section.includes(s.section_id)}
+                                                                                onChange={() => toggleSection(s.section_id)}
+                                                                            /> {s.section}
+                                                                        </label>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="form-group">
                                                     <label>Content Type</label> <small className="req"> *</small>
@@ -220,7 +273,7 @@ const CreateContent = () => {
                                                         <option value="Study Material">Study Material</option>
                                                         <option value="Syllabus">Syllabus</option>
                                                         <option value="Other Download">Other Download</option>
-                                                        <option value="Worksheets">Worksheets</option>
+                                                        <option value="work_sheets">Worksheets</option>
                                                     </select>
                                                 </div>
                                                 <div className="form-group">

@@ -24,6 +24,7 @@ const ExpenseEdit = () => {
         description: '',
         documents: null
     });
+    const [existingDocument, setExistingDocument] = useState(null);
 
     useEffect(() => {
         fetchInitialData();
@@ -31,19 +32,31 @@ const ExpenseEdit = () => {
 
     const fetchInitialData = async () => {
         try {
-            // Fetch expense heads
-            const headRes = await api.getExpenseHeadList();
+            // Fetch initial data using Promise.all
+            const [headRes, listRes, expenseDetail] = await Promise.all([
+                api.getExpenseHeadList(),
+                api.getExpenseList(),
+                api.fetchExpense(id)
+            ]);
+
             console.log('Expense Head Response:', headRes);
+            console.log('Expense List Response:', listRes);
+            console.log('Expense Detail Response:', expenseDetail);
+
+            // Robust parsing for expense heads
             let heads = [];
             if (headRes) {
                 heads = headRes.data || headRes.expheadlist || (Array.isArray(headRes) ? headRes : []);
             }
             setExpenseHeadList(heads);
 
-            // Fetch the specific expense details
-            const expenseDetail = await api.fetchExpense(id);
-            console.log('Expense Detail Response:', expenseDetail);
+            // Robust parsing for expense list
+            if (listRes) {
+                const list = listRes.data || listRes.aaData || listRes.expenseList || listRes.expense_list || listRes.expheadlist || (Array.isArray(listRes) ? listRes : []);
+                setExpenseList(Array.isArray(list) ? list : []);
+            }
 
+            // Populate form with current expense detail
             if (expenseDetail && expenseDetail.expense) {
                 const item = expenseDetail.expense;
                 setFormData({
@@ -55,6 +68,7 @@ const ExpenseEdit = () => {
                     description: item.note || item.description || '',
                     documents: null
                 });
+                setExistingDocument(item.documents || null);
             } else {
                 toast.error('Expense not found');
                 navigate('/admin/expense');
@@ -214,6 +228,20 @@ const ExpenseEdit = () => {
                                                 className="form-control"
                                                 onChange={handleInputChange}
                                             />
+                                            {existingDocument && (
+                                                <div className="mt-2">
+                                                    <i className="fa fa-file-text-o text-muted"></i>
+                                                    <a
+                                                        href={`https://newlayout.wisibles.com/admin/expense/download/${id}`}
+                                                        className="ml-2 text-info"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        style={{ marginLeft: '10px' }}
+                                                    >
+                                                        Download Existing Document
+                                                    </a>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="form-group">
                                             <label>Description</label>
@@ -263,13 +291,18 @@ const ExpenseEdit = () => {
                                                     expenseList.map((expense) => (
                                                         <tr key={expense.id}>
                                                             <td className="mailbox-name">{expense.name}</td>
-                                                            <td className="mailbox-name">{expense.description}</td>
+                                                            <td className="mailbox-name">{expense.note || expense.description}</td>
                                                             <td className="mailbox-name">{expense.invoice_no}</td>
                                                             <td className="mailbox-name">{expense.date}</td>
                                                             <td className="mailbox-name">{expense.exp_category || getHeadName(expense.exp_head_id)}</td>
                                                             <td className="mailbox-name text-right">{expense.amount}</td>
-                                                            <td className="mailbox-date pull-right">
-                                                                <Link to={`/admin/expense/edit/${expense.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                            <td className="text-right white-space-nowrap">
+                                                                {expense.documents && (
+                                                                    <a href={`https://newlayout.wisibles.com/admin/expense/download/${expense.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Download" style={{ marginRight: '2px' }}>
+                                                                        <i className="fa fa-download"></i>
+                                                                    </a>
+                                                                )}
+                                                                <Link to={`/admin/expense/edit/${expense.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit" style={{ marginRight: '2px' }}>
                                                                     <i className="fa fa-pencil"></i>
                                                                 </Link>
                                                                 <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(expense.id) }} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">

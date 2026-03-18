@@ -411,7 +411,7 @@ const ApproveLeave = () => {
                                                                 {visibleColumns.has('staff_name') && <td>{leave.staff_name} {leave.surname} {leave.staff_id ? `(${leave.staff_id})` : ''}</td>}
                                                                 <td className="text-right white-space-nowrap">
                                                                     {leave.docs && (
-                                                                        <a href={`${API_BASE}/admin/approve_leave/download/${leave.id}`} className="btn btn-default btn-xs" title="Download" target="_blank" rel="noopener noreferrer">
+                                                                        <a href={`https://newlayout.wisibles.com/admin/approve_leave/download/${leave.id}`} className="btn btn-default btn-xs" title="Download" target="_blank" rel="noopener noreferrer">
                                                                             <i className="fa fa-download"></i>
                                                                         </a>
                                                                     )}

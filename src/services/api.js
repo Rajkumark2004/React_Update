@@ -994,12 +994,10 @@ export const api = {
             console.log('Search Staff For ID Card Response:', data);
 
             if (!response.ok || !data.status) {
-                // If the search fails or no records found, return empty list or throw
-                // throw new Error(data.message || 'No staff found');
-                return { status: true, data: [] }; // Return empty data on failure to avoid breaking UI
+                return { status: true, data: { staffs: [] } }; // Return empty structure
             }
-            // The PHP API returns `resultlist` in `data`
-            return { status: true, data: data.data.resultlist };
+            // Return the full data payload which may contain staffs/resultlist, id_card, and sch_setting
+            return { status: true, data: data.data };
         } catch (error) {
             console.error('Search Staff For ID Card API Error:', error);
             throw error;

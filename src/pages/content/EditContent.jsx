@@ -28,7 +28,7 @@ const EditContent = () => {
     const [formData, setFormData] = useState({
         title: '',
         class: '',
-        section: '',
+        section: [],
         type: '',
         date: '',
         description: '',
@@ -37,6 +37,7 @@ const EditContent = () => {
 
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
+    const [isSectionOpen, setIsSectionOpen] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -56,7 +57,7 @@ const EditContent = () => {
                     setFormData({
                         title: item.title,
                         class: item.class_id,
-                        section: item.section || '', // Use section if available directly, or might need to be derived
+                        section: item.section ? (Array.isArray(item.section) ? item.section : [item.section]) : [],
                         type: item.type,
                         date: item.date, // Assuming date is in YYYY-MM-DD
                         description: item.note || '',
@@ -88,7 +89,7 @@ const EditContent = () => {
 
     const handleClassChange = async (e) => {
         const classId = e.target.value;
-        setFormData({ ...formData, class: classId, section: '' });
+        setFormData({ ...formData, class: classId, section: [] }); // Reset section when class changes
 
         if (classId) {
             try {
@@ -101,6 +102,23 @@ const EditContent = () => {
         } else {
             setSectionList([]);
         }
+    };
+
+    const toggleSection = (id) => {
+        setFormData(prev => {
+            const sections = prev.section.includes(id)
+                ? prev.section.filter(sid => sid !== id)
+                : [...prev.section, id];
+            return { ...prev, section: sections };
+        });
+    };
+
+    const toggleSelectAll = () => {
+        setFormData(prev => {
+            const allIds = sectionList.map(s => s.section_id);
+            const sections = prev.section.length === sectionList.length ? [] : allIds;
+            return { ...prev, section: sections };
+        });
     };
 
     const handleInputChange = (e) => {
@@ -125,15 +143,17 @@ const EditContent = () => {
             submitData.append('content_title', formData.title);
             submitData.append('content_type', formData.type);
             submitData.append('content_available[]', 'student'); // Hardcoded based on prev example/requirement
+            submitData.append('content_available[]', 'Super Admin');
             // Additional roles? "student", "parent" mentioned in prompt
             // submitData.append('content_available[]', 'parent');
 
             submitData.append('class_id', formData.class);
 
-            // Section logic might differ if multiple allowed, assuming single for now based on UI
-            // If multiple sections were selected in original data (cls_sec_id), we might need to handle that.
-            // For now, mapping simple single section selection.
-            submitData.append('section', formData.section);
+            if (formData.section && formData.section.length > 0) {
+                formData.section.forEach(secId => {
+                    submitData.append('section[]', secId);
+                });
+            }
 
             // Format date to DD-MM-YYYY
             const dateObj = new Date(formData.date);
@@ -199,12 +219,40 @@ const EditContent = () => {
                                         </div>
                                         <div className="form-group">
                                             <label>Section</label>
-                                            <select className="form-control" name="section" value={formData.section} onChange={handleInputChange}>
-                                                <option value="">Select</option>
-                                                {sectionList.map((sec) => (
-                                                    <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
-                                                ))}
-                                            </select>
+                                            <div id="checkbox-dropdown-container">
+                                                <div className="custom-select" id="custom-select" onClick={() => setIsSectionOpen(!isSectionOpen)}>
+                                                    {formData.section.length > 0 ? `${formData.section.length} Selected` : "Select"}
+                                                </div>
+                                                {isSectionOpen && (
+                                                    <div className="custom-select-option-box" id="custom-select-option-box" style={{ display: 'block' }}>
+                                                        <div className="custom-select-option checkbox">
+                                                            <label className="vertical-middle line-h-18">
+                                                                <input 
+                                                                    className="custom-select-option-checkbox select_all" 
+                                                                    type="checkbox" 
+                                                                    name="select_all" 
+                                                                    id="select_all" 
+                                                                    checked={sectionList.length > 0 && formData.section.length === sectionList.length} 
+                                                                    onChange={toggleSelectAll} 
+                                                                /> Select All
+                                                            </label>
+                                                        </div>
+                                                        {sectionList.map(s => (
+                                                            <div key={s.section_id} className="custom-select-option checkbox">
+                                                                <label className="vertical-middle line-h-18">
+                                                                    <input 
+                                                                        className="custom-select-option-checkbox" 
+                                                                        type="checkbox" 
+                                                                        name="section[]" 
+                                                                        checked={formData.section.includes(s.section_id)} 
+                                                                        onChange={() => toggleSection(s.section_id)} 
+                                                                    /> {s.section}
+                                                                </label>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="form-group">
                                             <label>Content Type</label> <small className="req"> *</small>
@@ -214,7 +262,7 @@ const EditContent = () => {
                                                 <option value="Study Material">Study Material</option>
                                                 <option value="Syllabus">Syllabus</option>
                                                 <option value="Other Download">Other Download</option>
-                                                <option value="Worksheets">Worksheets</option>
+                                                <option value="work_sheet">Worksheets</option>
                                             </select>
                                         </div>
                                         <div className="form-group">

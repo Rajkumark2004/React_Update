@@ -3,11 +3,11 @@ import React from 'react';
 
 const StaffIdCard = ({ staff, cardSettings, schoolSettings }) => {
 
-    const isVertical = cardSettings.enable_vertical_card === "1";
+    const isVertical = cardSettings.enable_vertical_card == 1;
 
     // Default styles for the container (CR80 size approximately)
-    const width = isVertical ? '200px' : '330px';
-    const height = isVertical ? '330px' : '200px';
+    const width = isVertical ? '280px' : '462px';
+    const height = isVertical ? '462px' : '280px';
 
     const cardStyles = {
         width: width,
@@ -84,9 +84,9 @@ const StaffIdCard = ({ staff, cardSettings, schoolSettings }) => {
                 </div>
 
                 {/* Right: Details */}
-                <div style={{ flex: 1, fontSize: '10px', lineHeight: '1.4', width: '100%', textAlign: isVertical ? 'center' : 'left' }}>
+                <div style={{ flex: 1, fontSize: '10px', lineHeight: '1.4', width: '100%', textAlign: isVertical ? 'center' : 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', overflow: 'hidden' }}>
 
-                    {cardSettings.enable_name === "1" && (
+                    {cardSettings.enable_name == 1 && (
                         <div style={{ marginBottom: '2px', fontWeight: 'bold', fontSize: '12px', color: headerColor }}>
                             {staff.name} {staff.surname}
                         </div>
@@ -96,46 +96,74 @@ const StaffIdCard = ({ staff, cardSettings, schoolSettings }) => {
                         {staff.designation || staff.role}
                     </div>
 
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: isVertical ? '5px' : '0' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: isVertical ? '5px' : '0', height: '100%' }}>
                         <tbody>
+                            {cardSettings.enable_name == 1 && (
+                                <tr>
+                                    <td style={{ width: isVertical ? '50%' : '75px', fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Name</td>
+                                    <td style={{ width: '10px' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{(staff.name || '') + ' ' + (staff.surname || '')}</td>
+                                </tr>
+                            )}
                             <tr>
-                                <td style={{ width: isVertical ? '50%' : '80px', fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: isVertical ? '5px' : '0' }}>Staff ID</td>
-                                <td style={{ textAlign: 'left', paddingLeft: isVertical ? '5px' : '0' }}>: {staff.employee_id}</td>
+                                <td style={{ width: isVertical ? '50%' : '75px', fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Staff ID</td>
+                                <td style={{ width: '10px' }}>:</td>
+                                <td style={{ textAlign: 'left' }}>{staff.employee_id || ''}</td>
                             </tr>
-                            {cardSettings.enable_father_name === "1" && (
+                            {cardSettings.enable_fathers_name == 1 && (
                                 <tr>
-                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: isVertical ? '5px' : '0' }}>Father Name</td>
-                                    <td style={{ textAlign: 'left', paddingLeft: isVertical ? '5px' : '0' }}>: {staff.father_name}</td>
+                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Father Name</td>
+                                    <td style={{ width: '10px' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{staff.father_name || ''}</td>
                                 </tr>
                             )}
-                            {cardSettings.enable_mother_name === "1" && (
+                            {cardSettings.enable_mothers_name == 1 && (
                                 <tr>
-                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: isVertical ? '5px' : '0' }}>Mother Name</td>
-                                    <td style={{ textAlign: 'left', paddingLeft: isVertical ? '5px' : '0' }}>: {staff.mother_name}</td>
+                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Mother Name</td>
+                                    <td style={{ width: '10px' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{staff.mother_name || ''}</td>
                                 </tr>
                             )}
-                            {cardSettings.enable_date_of_joining === "1" && (
+                            {cardSettings.enable_date_of_joining == 1 && (
                                 <tr>
-                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: isVertical ? '5px' : '0' }}>Date of Joining</td>
-                                    <td style={{ textAlign: 'left', paddingLeft: isVertical ? '5px' : '0' }}>: {staff.date_of_joining}</td>
+                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Date of Joining</td>
+                                    <td style={{ width: '10px' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{staff.date_of_joining || ''}</td>
                                 </tr>
                             )}
-                            {cardSettings.enable_permanent_address === "1" && (
+                            {cardSettings.enable_permanent_address == 1 && (
                                 <tr>
-                                    <td style={{ fontWeight: 'bold', verticalAlign: 'top', textAlign: isVertical ? 'right' : 'left', paddingRight: isVertical ? '5px' : '0' }}>Address</td>
-                                    <td style={{ textAlign: 'left', paddingLeft: isVertical ? '5px' : '0' }}>: {staff.local_address || staff.permanent_address}</td>
+                                    <td style={{ fontWeight: 'bold', verticalAlign: 'top', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Address</td>
+                                    <td style={{ width: '10px', verticalAlign: 'top' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{staff.local_address || staff.permanent_address || ''}</td>
                                 </tr>
                             )}
-                            {cardSettings.enable_phone === "1" && (
+                            {cardSettings.enable_designation == 1 && (
                                 <tr>
-                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: isVertical ? '5px' : '0' }}>Phone</td>
-                                    <td style={{ textAlign: 'left', paddingLeft: isVertical ? '5px' : '0' }}>: {staff.contact_no}</td>
+                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Designation</td>
+                                    <td style={{ width: '10px' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{staff.designation || ''}</td>
                                 </tr>
                             )}
-                            {cardSettings.enable_dob === "1" && (
+                            {cardSettings.enable_staff_department == 1 && (
                                 <tr>
-                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: isVertical ? '5px' : '0' }}>D.O.B</td>
-                                    <td style={{ textAlign: 'left', paddingLeft: isVertical ? '5px' : '0' }}>: {staff.dob}</td>
+                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Department</td>
+                                    <td style={{ width: '10px' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{staff.department || ''}</td>
+                                </tr>
+                            )}
+                            {cardSettings.enable_staff_phone == 1 && (
+                                <tr>
+                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>Phone</td>
+                                    <td style={{ width: '10px' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{staff.contact_no || ''}</td>
+                                </tr>
+                            )}
+                            {cardSettings.enable_staff_dob == 1 && (
+                                <tr>
+                                    <td style={{ fontWeight: 'bold', textAlign: isVertical ? 'right' : 'left', paddingRight: '3px', whiteSpace: 'nowrap' }}>D.O.B</td>
+                                    <td style={{ width: '10px' }}>:</td>
+                                    <td style={{ textAlign: 'left' }}>{staff.dob || ''}</td>
                                 </tr>
                             )}
                         </tbody>
