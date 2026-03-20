@@ -79,7 +79,7 @@ const ApproveLeave = () => {
     const [leaveList, setLeaveList] = useState([]);
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
-    const [filter, setFilter] = useState({ class_id: '', section_id: '', search: '' });
+    const [filter, setFilter] = useState({ class_id: '', section_id: '', search_text: '' });
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -171,7 +171,11 @@ const ApproveLeave = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await api.searchApproveLeave(filter);
+            const fd = new FormData();
+            fd.append('class_id', filter.class_id);
+            fd.append('section_id', filter.section_id);
+            
+            const response = await api.searchApproveLeave(fd);
             if (response && response.status) {
                 setLeaveList(Array.isArray(response.results) ? response.results : []);
             }
@@ -343,7 +347,7 @@ const ApproveLeave = () => {
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div className="col-md-3 col-lg-3 col-sm-6">
+                                            {/* <div className="col-md-3 col-lg-3 col-sm-6">
                                                 <div className="form-group">
                                                     <label>Search</label>
                                                     <input
@@ -354,7 +358,7 @@ const ApproveLeave = () => {
                                                         placeholder="Search by student name..."
                                                     />
                                                 </div>
-                                            </div>
+                                            </div> */}
                                         </div>
                                         <button type="submit" className="btn btn-primary btn-sm checkbox-toggle pull-right">
                                             <i className="fa fa-search"></i> Search
@@ -367,17 +371,30 @@ const ApproveLeave = () => {
                                         <div className="box-header with-border">
                                             <h3 className="box-title"><i className="fa fa-users"></i> Approve Leave List</h3>
                                             <div className="box-tools pull-right">
-                                                <div className="dt-buttons btn-group" style={{ marginRight: '5px', verticalAlign: 'middle' }}>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy"><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print"><i className="fa fa-print"></i></button>
-                                                    <ColumnVisibility columns={columns} visibleColumns={visibleColumns} toggleColumn={toggleColumn} />
-                                                </div>
                                                 <button type="button" onClick={handleAdd} className="btn btn-sm btn-primary" data-toggle="tooltip" title="Add">
                                                     <i className="fa fa-plus"></i> Add
                                                 </button>
+                                            </div>
+                                        </div>
+                                        <div className="box-header ptbnull clearfix" style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                            <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <label style={{ margin: 0, fontWeight: 'normal', fontSize: '13px' }}>Search:</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control input-sm"
+                                                    style={{ width: '180px' }}
+                                                    value={filter.search_text}
+                                                    onChange={(e) => setFilter(prev => ({ ...prev, search_text: e.target.value }))}
+                                                    placeholder="Search..."
+                                                />
+                                            </div>
+                                            <div className="dt-buttons btn-group pull-right" style={{ verticalAlign: 'middle' }}>
+                                                <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy"><i className="fa fa-files-o"></i></button>
+                                                <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel"><i className="fa fa-file-excel-o"></i></button>
+                                                <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV"><i className="fa fa-file-text-o"></i></button>
+                                                <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF"><i className="fa fa-file-pdf-o"></i></button>
+                                                <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print"><i className="fa fa-print"></i></button>
+                                                <ColumnVisibility columns={columns} visibleColumns={visibleColumns} toggleColumn={toggleColumn} />
                                             </div>
                                         </div>
                                         <div className="box-body table-responsive overflow-visible-lg">

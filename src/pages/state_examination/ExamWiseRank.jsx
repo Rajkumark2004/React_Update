@@ -102,7 +102,7 @@ const ExamWiseRank = () => {
       <div className="wrapper theme-white-skin">
         <Header appName={appName} userData={userData} />
         <Sidebar sessionYear={currentSession?.session} />
-        <div className="content-wrapper" style={{ marginTop: '17px' }}>
+        <div className="content-wrapper" style={{ marginTop: '0px' }}>
           <div className="text-center" style={{ padding: "100px" }}>
             <i className="fa fa-spinner fa-spin fa-3x"></i>
             <p>Loading...</p>
@@ -118,7 +118,7 @@ const ExamWiseRank = () => {
       <Header appName={appName} userData={userData} />
       <Sidebar sessionYear={currentSession?.session} />
 
-      <div className="content-wrapper" style={{ marginTop: '17px' }}>
+      <div className="content-wrapper" style={{ marginTop: '0px' }}>
         <section className="content">
           <div className="row">
             <div className="col-md-12">
@@ -127,6 +127,11 @@ const ExamWiseRank = () => {
                   <h3 className="box-title titlefix">
                     Generate Rank : {examDetails?.name}
                   </h3>
+                  <div className="box-tools pull-right">
+                      <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs" style={{ marginTop: '5px' }}>
+                          <i className="fa fa-arrow-left"></i> Back
+                      </button>
+                  </div>
                 </div>
 
                 <div className="box-body">

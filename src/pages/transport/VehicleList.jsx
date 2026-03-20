@@ -259,6 +259,15 @@ const VehicleList = () => {
 
     return (
         <div className="wrapper">
+            <style>{`
+                .modal-body-scroll::-webkit-scrollbar {
+                    display: none;
+                }
+                .modal-body-scroll {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+            `}</style>
             <Header
                 appName="School Management System"
                 userData={userData}
@@ -399,7 +408,7 @@ const VehicleList = () => {
                                 </div>
 
                                 <form id="addvehicleform" onSubmit={handleSubmit} encType="multipart/form-data">
-                                    <div className="modal-body pb0 ptt10">
+                                    <div className="modal-body pb0 ptt10 modal-body-scroll" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
                                         <div className="row">
                                             <div className="col-lg-12 col-md-12 col-sm-12">
                                                 <div className="row">
@@ -581,7 +590,7 @@ const VehicleList = () => {
                                     <button type="button" className="close" onClick={() => setIsViewModalOpen(false)}>&times;</button>
                                     <h4 className="box-title">Vehicle Details</h4>
                                 </div>
-                                <div className="modal-body pt0 pb0">
+                                <div className="modal-body pt0 pb0 modal-body-scroll" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
                                     <div className="row" style={{ padding: '15px' }}>
                                         <div className="col-md-3 col-sm-6" style={{ marginBottom: '15px' }}>
                                             <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Vehicle Photo</div>

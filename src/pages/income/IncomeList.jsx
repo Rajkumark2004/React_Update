@@ -124,7 +124,15 @@ const IncomeList = () => {
             dataToSend.append('inc_head_id', formData.inc_head_id);
             dataToSend.append('name', formData.name);
             dataToSend.append('invoice_no', formData.invoice_no);
-            dataToSend.append('date', formData.date);
+            
+            // Format date from yyyy-mm-dd to dd/mm/yyyy
+            let formattedDate = formData.date;
+            if (formData.date && formData.date.includes('-')) {
+                const [y, m, d] = formData.date.split('-');
+                formattedDate = `${d}/${m}/${y}`;
+            }
+            dataToSend.append('date', formattedDate);
+
             dataToSend.append('amount', formData.amount);
             dataToSend.append('description', formData.description);
             if (formData.documents) {

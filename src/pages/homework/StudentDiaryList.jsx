@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
@@ -7,10 +6,124 @@ import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
 import '../../utils/include_files';
 import { api } from '../../services/api';
-import FileUpload from '../../components/FileUpload';
+// FileUpload removed in favor of Dropify as per user request
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import toast from 'react-hot-toast';
+
+/**
+ * Reusable Column Visibility Dropdown Component
+ */
+const ColumnVisibility = ({ columns, visibleColumns, toggleColumn }) => {
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+        if (showDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showDropdown]);
+
+    return (
+        <div className="btn-group" ref={dropdownRef} style={{ position: 'relative' }}>
+            <button
+                className="btn btn-default btn-sm"
+                title="Columns"
+                onClick={() => setShowDropdown(!showDropdown)}
+            >
+                <i className="fa fa-columns"></i>
+            </button>
+            {showDropdown && (
+                <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    zIndex: 1000,
+                    background: '#fff',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    padding: '8px 10px',
+                    minWidth: '225px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    marginTop: '2px'
+                }}>
+                    {columns.map(col => (
+                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', margin: 0, fontWeight: 'normal', color: '#333' }}>
+                            <input
+                                type="checkbox"
+                                checked={visibleColumns.has(col.key)}
+                                onChange={() => toggleColumn(col.key)}
+                                style={{ marginRight: '8px', verticalAlign: 'middle' }}
+                            />
+                            <span style={{ verticalAlign: 'middle', fontSize: '13px' }}>{col.label}</span>
+                        </label>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const StudentDiaryList = () => {
     const navigate = useNavigate();
+
+    // Column Visibility State
+    const columns = [
+        { key: 'class', label: 'Class' },
+        { key: 'section', label: 'Section' },
+        { key: 'date', label: 'Date' },
+        { key: 'assigned_by', label: 'Created By' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (columnKey) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(columnKey)) {
+            if (newVisible.size > 1) {
+                newVisible.delete(columnKey);
+            } else {
+                toast.error('At least one column must be visible');
+            }
+        } else {
+            newVisible.add(columnKey);
+        }
+        setVisibleColumns(newVisible);
+    };
+
+    // Formatter for exports
+    const formatCell = (leave, key) => {
+        return leave[key] || '';
+    };
+
+    const handleCopy = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
+        copyToClipboard(headers, rows);
+    };
+
+    const handleCSV = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
+        downloadCSV(headers, rows, 'Student_Diary_List.csv');
+    };
+
+    const handleExcel = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
+        downloadExcel(headers, rows, 'Student_Diary_List.xls');
+    };
+
+    const handlePDF = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
+        downloadPDF(headers, rows, 'Student_Diary_List.pdf', 'Student Diary List');
+    };
+
+    const handlePrint = () => {
+        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
+        printTable(headers, rows, 'Student Diary List');
+    };
 
     // Search form state
     const [formData, setFormData] = useState({
@@ -79,6 +192,23 @@ const StudentDiaryList = () => {
         };
         fetchClasses();
     }, []);
+
+    // Initialize Dropify for Modals
+    useEffect(() => {
+        if (addModalOpen || editModalOpen) {
+            const timer = setTimeout(() => {
+                try {
+                    const $ = window.jQuery;
+                    if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                        $('.dropify').dropify();
+                    }
+                } catch (error) {
+                    console.error('Dropify initialization error:', error);
+                }
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [addModalOpen, editModalOpen]);
 
     const fetchSections = async (classId) => {
         try {
@@ -270,6 +400,17 @@ const StudentDiaryList = () => {
             await api.createStudentDiary(submitData);
 
             alert('Student diary saved successfully');
+            // Clear Dropify
+            try {
+                const $ = window.jQuery;
+                $('.dropify').each(function() {
+                    const dr = $(this).data('dropify');
+                    if (dr) {
+                        dr.resetPreview();
+                        dr.clearElement();
+                    }
+                });
+            } catch (e) {}
             closeAddModal();
             // Refresh list if search criteria matches
             if (formData.class_id && formData.section_id) {
@@ -358,6 +499,17 @@ const StudentDiaryList = () => {
             }
 
             alert('Student diary updated successfully');
+            // Clear Dropify
+            try {
+                const $ = window.jQuery;
+                $('.dropify').each(function() {
+                    const dr = $(this).data('dropify');
+                    if (dr) {
+                        dr.resetPreview();
+                        dr.clearElement();
+                    }
+                });
+            } catch (e) {}
             setEditModalOpen(false);
             if (formData.class_id && formData.section_id) {
                 handleSearch(e);
@@ -494,16 +646,43 @@ const StudentDiaryList = () => {
                                                     </button>
                                                 </div>
                                             </div>
+                                            <div className="box-header ptbnull clearfix" style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <label style={{ margin: 0, fontWeight: 'normal', fontSize: '13px' }}>Search:</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control input-sm"
+                                                        style={{ width: '180px' }}
+                                                        placeholder="Search..."
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.toLowerCase();
+                                                            const table = document.querySelector('.studentdairy-list');
+                                                            if (table) {
+                                                                table.querySelectorAll('tbody tr').forEach(row => {
+                                                                    row.style.display = row.textContent.toLowerCase().includes(val) ? '' : 'none';
+                                                                });
+                                                            }
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="dt-buttons btn-group pull-right" style={{ verticalAlign: 'middle' }}>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy"><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel"><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV"><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF"><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print"><i className="fa fa-print"></i></button>
+                                                    <ColumnVisibility columns={columns} visibleColumns={visibleColumns} toggleColumn={toggleColumn} />
+                                                </div>
+                                            </div>
                                             <div className="box-body table-responsive">
-                                                <div className="download_label"> Student Diary List</div>
                                                 <div>
                                                     <table className="table table-striped table-bordered table-hover studentdairy-list">
                                                         <thead>
                                                             <tr>
-                                                                <th>Class</th>
-                                                                <th>Section</th>
-                                                                <th>Date</th>
-                                                                <th>Created By</th>
+                                                                {visibleColumns.has('class') && <th>Class</th>}
+                                                                {visibleColumns.has('section') && <th>Section</th>}
+                                                                {visibleColumns.has('date') && <th>Date</th>}
+                                                                {visibleColumns.has('assigned_by') && <th>Created By</th>}
                                                                 <th className="text-right noExport">Action</th>
                                                             </tr>
                                                         </thead>
@@ -521,10 +700,10 @@ const StudentDiaryList = () => {
                                                             ) : (
                                                                 diaryList.map(item => (
                                                                     <tr key={item.id}>
-                                                                        <td>{item.class}</td>
-                                                                        <td>{item.section}</td>
-                                                                        <td>{item.date}</td>
-                                                                        <td>{item.assigned_by}</td>
+                                                                        {visibleColumns.has('class') && <td>{item.class}</td>}
+                                                                        {visibleColumns.has('section') && <td>{item.section}</td>}
+                                                                        {visibleColumns.has('date') && <td>{item.date}</td>}
+                                                                        {visibleColumns.has('assigned_by') && <td>{item.assigned_by}</td>}
                                                                         <td className="text-right">
                                                                             <button className="btn btn-default btn-xs" title="Edit" onClick={() => handleEdit(item.id)}>
                                                                                 <i className="fa fa-pencil"></i>
@@ -627,11 +806,13 @@ const StudentDiaryList = () => {
 
                                                     <div className="col-sm-4">
                                                         <div className="form-group">
-                                                            <FileUpload
-                                                                label="Attach Document"
+                                                            <label>Attach Document</label>
+                                                            <input
+                                                                type="file"
                                                                 name="userfile"
+                                                                className="dropify"
                                                                 onChange={handleAddInputChange}
-                                                                selectedFile={addFormData.file}
+                                                                data-height="95"
                                                             />
                                                         </div>
                                                     </div>
@@ -728,12 +909,14 @@ const StudentDiaryList = () => {
                                                     </div>
                                                     <div className="col-sm-4">
                                                         <div className="form-group">
-                                                            <FileUpload
-                                                                label="Attach Document"
+                                                            <label>Attach Document</label>
+                                                            <input
+                                                                type="file"
                                                                 name="userfile"
+                                                                className="dropify"
                                                                 onChange={handleEditInputChange}
-                                                                selectedFile={editFormData.file}
-                                                                existingFile={editFormData.existing_file}
+                                                                data-height="95"
+                                                                data-default-file={editFormData.existing_file ? `https://newlayout.wisibles.com/${editFormData.existing_file}` : ''}
                                                             />
                                                             {editFormData.existing_file && (
                                                                 <small className="help-block">Current: {editFormData.existing_file}</small>

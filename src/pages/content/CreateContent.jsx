@@ -77,16 +77,16 @@ const CreateContent = () => {
 
     const toggleSection = (id) => {
         setFormData(prev => {
-            const sections = prev.section.includes(id)
-                ? prev.section.filter(sid => sid !== id)
-                : [...prev.section, id];
+            const sections = prev.section.some(sid => String(sid) === String(id))
+                ? prev.section.filter(sid => String(sid) !== String(id))
+                : [...prev.section, String(id)];
             return { ...prev, section: sections };
         });
     };
 
     const toggleSelectAll = () => {
         setFormData(prev => {
-            const allIds = sectionList.map(s => s.section_id);
+            const allIds = sectionList.map(s => String(s.section_id));
             const sections = prev.section.length === sectionList.length ? [] : allIds;
             return { ...prev, section: sections };
         });
@@ -115,6 +115,14 @@ const CreateContent = () => {
             const submitData = new FormData();
             submitData.append('content_title', formData.title);
             submitData.append('content_type', formData.type);
+            
+            // Get user info from localStorage
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                submitData.append('created_by', user.id || '1');
+            }
+
             // Hardcoded as per requirement/API expectation for now, or based on user role? 
             // The payload example showed ["student"].
             submitData.append('content_available[]', 'student');
@@ -255,7 +263,7 @@ const CreateContent = () => {
                                                                                 className="custom-select-option-checkbox"
                                                                                 type="checkbox"
                                                                                 name="section[]"
-                                                                                checked={formData.section.includes(s.section_id)}
+                                                                                checked={formData.section.some(sec => String(sec) === String(s.section_id))}
                                                                                 onChange={() => toggleSection(s.section_id)}
                                                                             /> {s.section}
                                                                         </label>

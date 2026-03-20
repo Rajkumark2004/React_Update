@@ -126,7 +126,7 @@ const Source = () => {
             console.error('Submit Error:', error);
             toast.error(error.message || 'An error occurred while saving');
         } finally {
-            setTimeout(() => setLoading(false), 5000);
+            setLoading(false);
         }
     };
 

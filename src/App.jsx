@@ -24,6 +24,7 @@ import RoleList from './pages/settings/RoleList';
 import RolePermission from './pages/settings/RolePermission';
 import ModulePermissions from './pages/settings/ModulePermissions';
 import StudentSearch from './pages/student/StudentSearch';
+import BulkDelete from './pages/student/BulkDelete';
 
 import StudentAdmission from './pages/student/StudentAdmission';
 import OnlineStudentList from './pages/student/OnlineStudentList';
@@ -54,6 +55,7 @@ import StaffProfile from './pages/HR/StaffProfile';
 import StaffEdit from './pages/HR/StaffEdit';
 import StaffSearch from './pages/HR/StaffSearch';
 import StaffCreate from './pages/HR/StaffCreate';
+import StaffImport from './pages/HR/StaffImport';
 import CBSEExamList from './pages/state_examination/CBSEExamList';
 import CBSEGradeList from './pages/state_examination/CBSEGradeList';
 import CBSESettings from './pages/state_examination/CBSESettings';
@@ -414,6 +416,14 @@ function App() {
               }
             />
             <Route
+              path="/student/bulkdelete"
+              element={
+                <ProtectedRoute>
+                  <BulkDelete />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/search"
               element={
                 <ProtectedRoute>
@@ -650,6 +660,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <StaffCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/staff/import"
+              element={
+                <ProtectedRoute>
+                  <StaffImport />
                 </ProtectedRoute>
               }
             />

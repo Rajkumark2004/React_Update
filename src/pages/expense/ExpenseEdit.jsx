@@ -10,6 +10,7 @@ const ExpenseEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
+    const [isDragOver, setIsDragOver] = useState(false);
     const [expenseList, setExpenseList] = useState([]);
     const [expenseHeadList, setExpenseHeadList] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -92,6 +93,22 @@ const ExpenseEdit = () => {
         }
     };
 
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file) setFormData(prev => ({ ...prev, documents: file }));
+    };
+
+    const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+    const handleDragLeave = () => setIsDragOver(false);
+
+    const removeFile = () => {
+        setFormData(prev => ({ ...prev, documents: null }));
+        const el = document.getElementById('documents');
+        if (el) el.value = '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -100,7 +117,15 @@ const ExpenseEdit = () => {
             dataToSend.append('exp_head_id', formData.exp_head_id);
             dataToSend.append('name', formData.name);
             dataToSend.append('invoice_no', formData.invoice_no);
-            dataToSend.append('date', formData.date);
+            
+            // Format date from yyyy-mm-dd to dd/mm/yyyy
+            let formattedDate = formData.date;
+            if (formData.date && formData.date.includes('-')) {
+                const [y, m, d] = formData.date.split('-');
+                formattedDate = `${d}/${m}/${y}`;
+            }
+            dataToSend.append('date', formattedDate);
+
             dataToSend.append('amount', formData.amount);
             dataToSend.append('description', formData.description);
             if (formData.documents) {
@@ -221,14 +246,50 @@ const ExpenseEdit = () => {
                                         </div>
                                         <div className="form-group">
                                             <label>Attach Document</label>
-                                            <input
-                                                id="documents"
-                                                name="documents"
-                                                type="file"
-                                                className="form-control"
-                                                onChange={handleInputChange}
-                                            />
-                                            {existingDocument && (
+                                            <div
+                                                onDrop={handleDrop}
+                                                onDragOver={handleDragOver}
+                                                onDragLeave={handleDragLeave}
+                                                onClick={() => document.getElementById('documents').click()}
+                                                style={{
+                                                    border: `2px dashed ${isDragOver ? '#31708f' : '#aaa'}`,
+                                                    borderRadius: '6px',
+                                                    padding: '18px 12px',
+                                                    textAlign: 'center',
+                                                    cursor: 'pointer',
+                                                    background: isDragOver ? '#d9edf7' : '#fafafa',
+                                                    transition: 'background 0.2s, border-color 0.2s',
+                                                    userSelect: 'none'
+                                                }}
+                                            >
+                                                <input
+                                                    id="documents"
+                                                    name="documents"
+                                                    type="file"
+                                                    style={{ display: 'none' }}
+                                                    onChange={handleInputChange}
+                                                />
+                                                {formData.documents ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                                        <i className="fa fa-file-text-o" style={{ color: '#31708f' }}></i>
+                                                        <span style={{ fontSize: '13px', color: '#333' }}>{formData.documents.name}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); removeFile(); }}
+                                                            style={{ background: 'none', border: 'none', color: '#a94442', cursor: 'pointer', padding: '0 4px', fontSize: '14px' }}
+                                                            title="Remove file"
+                                                        >
+                                                            <i className="fa fa-times-circle"></i>
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <i className="fa fa-cloud-upload" style={{ fontSize: '22px', color: '#aaa', display: 'block', marginBottom: '6px' }}></i>
+                                                        <span style={{ fontSize: '13px', color: '#888' }}>Drag &amp; drop a file here, or <span style={{ color: '#31708f', textDecoration: 'underline' }}>click to browse</span></span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {existingDocument && !formData.documents && (
                                                 <div className="mt-2">
                                                     <i className="fa fa-file-text-o text-muted"></i>
                                                     <a

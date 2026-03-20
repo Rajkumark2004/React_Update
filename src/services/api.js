@@ -1965,7 +1965,7 @@ export const api = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ Id: id }),
+                body: JSON.stringify({ id: id }),
             });
 
             if (!response.ok) {
@@ -2018,6 +2018,20 @@ export const api = {
             throw error;
         }
     },
+    getContentById: async (id) => {
+        console.log('API Request: Get Content By ID', id, `${API_BASE}/admin/content/edit/${id}`);
+        try {
+            const response = await fetch(`${API_BASE}/admin/content/edit/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Content By ID Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Content By ID API Error:', error);
+            throw error;
+        }
+    },
 
     deleteContent: async (id) => {
         console.log('API Request: Delete Content', id);
@@ -2027,7 +2041,7 @@ export const api = {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ Id: id }),
+                body: JSON.stringify({ id: id }),
             });
             const data = await response.json();
             console.log('Delete Content Response:', data);
@@ -4047,28 +4061,43 @@ export const api = {
     },
 
     getEnquiryList: async () => {
-        const url = `${API_BASE}/admin/enquiry`; // Add timestamp to bust cache
+        const url = `${API_BASE}/admin/enquiry`;
 
         const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-            },
-            //credentials: 'include',
+            }
         });
 
-        //Check if response is JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             throw new Error('Server authentication error. Please re-login and try again.');
         }
 
         const data = await response.json();
+        console.log('GET Enquiry List Response:', data);
+        return data;
+    },
 
-        if (!response.ok || !data.status) {
-            throw new Error(data.message || 'Failed to fetch enquiry list');
+    searchEnquiryList: async (filters = {}) => {
+        const url = `${API_BASE}/admin/enquiry/index`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(filters)
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server error during search. Please try again.');
         }
 
+        const data = await response.json();
+        console.log('POST Search Enquiry Response:', data);
         return data;
     },
 
@@ -4894,13 +4923,18 @@ export const api = {
     searchApproveLeave: async (payload) => {
         console.log('API Request: Search Approve Leave', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/approve_leave`, {
+            const options = {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
+                body: payload
+            };
+            
+            // If payload is not FormData, treat as JSON
+            if (!(payload instanceof FormData)) {
+                options.headers = { 'Content-Type': 'application/json' };
+                options.body = JSON.stringify(payload);
+            }
+
+            const response = await fetch(`${API_BASE}/admin/approve_leave/index`, options);
 
             const data = await response.json();
             console.log('Search Approve Leave Response:', data);
@@ -5095,6 +5129,35 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Staff Create Meta Error:', error);
+            throw error;
+        }
+    },
+    getStaffImportMeta: async () => {
+        console.log('API Request: Get Staff Import Meta');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staff/import`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Staff Import Meta Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Staff Import Meta Error:', error);
+            throw error;
+        }
+    },
+    importStaff: async (formData) => {
+        console.log('API Request: Import Staff');
+        try {
+            const response = await fetch(`${API_BASE}/admin/staff/import`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Import Staff Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Import Staff Error:', error);
             throw error;
         }
     },
@@ -7788,13 +7851,19 @@ export const api = {
     updateNoticeBoard: async (id, roleId, payload) => {
         console.log('API Request: Update Notice Board', id, roleId);
         try {
-            const response = await fetch(`${API_BASE}/admin/notification/edit/${id}/${roleId}`, {
+            const isFormData = payload instanceof FormData;
+            const options = {
                 method: 'POST',
-                headers: {
+                body: isFormData ? payload : JSON.stringify(payload)
+            };
+
+            if (!isFormData) {
+                options.headers = {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+                };
+            }
+
+            const response = await fetch(`${API_BASE}/admin/notification/edit/${id}/${roleId}`, options);
             const data = await response.json();
             console.log('Update Notice Board Response:', data);
 
@@ -8401,6 +8470,64 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Get Class Notification Error:', error);
+            throw error;
+        }
+    },
+
+    getBulkDeleteClasses: async () => {
+        console.log('API Request: Get Bulk Delete Classes');
+        try {
+            const url = `${API_BASE}/student/bulkdelete`;
+            const response = await fetch(url, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Get Bulk Delete Classes Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Bulk Delete Classes API Error:', error);
+            throw error;
+        }
+    },
+
+    searchBulkDeleteStudents: async (classId, sectionId) => {
+        console.log('API Request: Search Bulk Delete Students', { classId, sectionId });
+        try {
+            // In typical cases, searching for bulk delete could be a POST to /student/bulkdelete 
+            // We use the same fetch pattern.
+            const url = `${API_BASE}/student/bulkdelete`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ class_id: Number(classId), section_id: Number(sectionId) })
+            });
+            const data = await response.json();
+            console.log('Search Bulk Delete Students Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Search Bulk Delete Students API Error:', error);
+            throw error;
+        }
+    },
+
+    deleteBulkStudents: async (studentIds) => {
+        console.log('API Request: Delete Bulk Students', { studentIds });
+        try {
+            const url = `${API_BASE}/student/ajax_delete`;
+            const formData = new FormData();
+            studentIds.forEach(id => formData.append('student[]', id));
+
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            console.log('Delete Bulk Students Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Delete Bulk Students API Error:', error);
             throw error;
         }
     },
