@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from '../../components/Footer';
 import { api_users } from '../../services/api_users';
+
 
 const MONTH_LABELS = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -179,37 +177,19 @@ const AttendanceUser = () => {
                                 const highlightColor = dayEvents.length > 0 ? (dayEvents[0].backgroundColor || defaultTodayColor) : defaultTodayColor;
 
                                 return (
-                                    <td key={di} style={{
-                                        backgroundColor: isToday ? '#faf6ff' : '#fff',
-                                        cursor: cell.currentMonth ? 'default' : 'default',
-                                        position: 'relative',
-                                        minHeight: '120px',
-                                        height: '120px',
-                                        verticalAlign: 'top',
-                                        padding: '5px'
-                                    }}>
-                                        <div className="cal-day-num" style={{ textAlign: 'center', marginBottom: '5px' }}>
-                                            <span className={cell.currentMonth ? '' : 'other-month'}
-                                                style={isToday
-                                                    ? { color: highlightColor, fontWeight: 700, fontSize: '15px' }
-                                                    : cell.currentMonth ? { color: '#333' } : { color: '#ccc' }}>
+                                    <td key={di} className={`au-cal-cell ${isToday ? 'today' : ''}`}>
+                                        <div className="cal-day-num au-day-num">
+                                            <span className={`au-day-text ${cell.currentMonth ? '' : 'other-month'} ${isToday ? 'today' : ''}`}
+                                                style={isToday ? { color: highlightColor } : {}}>
                                                 {cell.day}
                                             </span>
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <div className="au-event-list">
                                             {dayEvents.map((evt, idx) => (
-                                                <div key={idx} style={{
-                                                    backgroundColor: evt.backgroundColor || '#9854cb',
-                                                    color: '#fff',
-                                                    fontSize: '10px',
-                                                    padding: '2px 4px',
-                                                    borderRadius: '3px',
-                                                    textAlign: 'center',
-                                                    fontWeight: 600,
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
-                                                }}>
+                                                <div key={idx}
+                                                    title={evt.title || evt.event_type}
+                                                    className="au-event-item"
+                                                    style={{ backgroundColor: evt.backgroundColor || '#9854cb' }}>
                                                     {evt.title || evt.event_type}
                                                 </div>
                                             ))}
@@ -229,85 +209,112 @@ const AttendanceUser = () => {
     const stats = computeStats();
 
     return (
-        <div className="wrapper theme-white-skin">
+        <>
             <style>{`
-                /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
-                .content-wrapper, .main-footer {
-                    margin-left: 80px !important;
+                .content-wrapper {
+                    padding: 59px 0px 10px 5px !important;
                 }
 
-                .sidebar {
-                    height: calc(100vh - 50px) !important;
-                    overflow-y: auto !important;
-                    overflow-x: hidden !important;
-                    padding-bottom: 20px !important;
+                .cal-toolbar {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    position: relative;
+                    padding: 15px 10px;
+                }
+                .cal-nav-btns {
+                    position: absolute;
+                    left: 10px;
+                    display: flex;
+                    gap: 5px;
+                }
+                .cal-nav-btns .btn {
+                    padding: 5px 10px;
+                    background: #fff;
+                    border: 1px solid #ddd;
+                    font-size: 13px;
+                }
+                .cal-nav-btns .btn:hover {
+                    background: #f4f4f4;
+                }
+                .cal-title {
+                    margin: 0;
+                    text-align: center;
+                    font-weight: 400;
+                    font-size: 20px;
+                    color: #333;
                 }
 
-                .sidebar::-webkit-scrollbar {
-                    width: 5px;
+                @media (max-width: 767px) {
+                    .cal-toolbar {
+                        flex-direction: column;
+                        gap: 15px;
+                        padding: 15px 0;
+                    }
+                    .cal-nav-btns {
+                        position: static;
+                        justify-content: center;
+                        width: 100%;
+                        order: 2;
+                    }
+                    .cal-title {
+                        width: 100%;
+                        order: 1;
+                    }
+                    .content{
+                        padding:8px 8px 10px 2px !important;
+                    }
                 }
-                .sidebar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .sidebar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 10px;
+                .mobile-box-back-btn {
+                    display: flex !important;
+                    align-items: center;
+                    gap: 5px;
+                    background-color: #9c68e4 !important;
+                    color: #fff !important;
+                    border: none;
+                    padding: 6px 15px;
+                    margin-top: -3px !important;
+                    border-radius: 20px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-decoration: none !important;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    cursor: pointer;
                 }
 
-                .sidebar-menu > li > a {
-                    padding: 12px 5px !important;
-                    text-align: center !important;
-                }
-                
-                .sidebar-menu li img {
-                    filter: brightness(0) invert(1) !important;
-                    width: 24px !important;
-                    margin: 0 auto !important;
-                }
-
-                .sidebar-menu > li > a span {
-                    color: #ffffff !important;
-                    font-weight: 500 !important;
-                    margin-top: 5px !important;
-                    display: block !important;
-                    font-size: 10px !important;
-                    line-height: 1.2 !important;
-                }
-
-                .sidebar-menu > li:hover > a, .sidebar-menu > li.active > a {
-                    background: rgba(255, 255, 255, 0.1) !important;
-                }
-                
-                /* NAVBAR USER MENU DROPDOWN FIX */
-                .navbar-custom-menu {
-                   overflow: visible !important;
-                }
-                .navbar-custom-menu .nav {
-                   overflow: visible !important;
-                }
-                .navbar-custom-menu .nav > li:not(.user-menu) {
-                    display: none !important;
-                }
-                .navbar-custom-menu .nav > li.user-menu {
-                    display: block !important;
-                    overflow: visible !important;
-                }
-                
-                /* Ensure dropdown menu is on top of everything */
-                .dropdown-user {
-                    display: none;
-                    z-index: 9999 !important;
-                    position: absolute !important;
-                    right: 0 !important;
-                    top: 100% !important;
-                }
-                .user-menu.open .dropdown-user {
-                    display: block !important;
-                }
+                /* Refactored Internal Classes */
+                .au-cal-cell { position: relative; min-height: 150px; height: 150px; vertical-align: top; padding: 5px; cursor: default; background-color: #fff; }
+                .au-cal-cell.today { background-color: #faf6ff; }
+                .au-day-num { text-align: center; margin-bottom: 8px; }
+                .au-day-text { color: #333; }
+                .au-day-text.other-month { color: #ccc; }
+                .au-day-text.today { font-weight: 700; font-size: 15px; }
+                .au-event-list { display: flex; flex-direction: column; gap: 3px; }
+                .au-event-item { color: #fff; font-size: 11px; padding: 5px 4px; border-radius: 3px; text-align: center; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .au-stats-row { margin-bottom: 20px; }
+                .au-stat-col { margin-bottom: 10px; }
+                .au-stat-card { color: #fff; border-radius: 8px; padding: 15px; text-align: center; }
+                .au-stat-bg-present { background: #4CAF50; }
+                .au-stat-bg-absent { background: #f44336; }
+                .au-stat-bg-late { background: #FF9800; }
+                .au-stat-bg-halfday { background: #2196F3; }
+                .au-stat-bg-holiday { background: #9C27B0; }
+                .au-stat-bg-total { background: #607D8B; }
+                .au-stat-val { font-size: 28px; font-weight: 700; }
+                .au-stat-lbl { font-size: 12px; opacity: 0.9; }
+                .au-wrapper { min-height: 828px; }
+                .au-box { box-shadow: 0 0 10px rgba(0,0,0,0.1); border: none; position: relative; }
+                .au-box-header { padding: 10px 15px; border-bottom: 1px solid #f4f4f4; display: flex; align-items: center; }
+                .au-box-title { margin: 0; font-size: 18px; font-weight: 400; color: #333; flex: 1; }
+                .au-box-body { padding: 0px 10px 10px 10px; }
+                .au-loading-wrap { text-align: center; padding: 60px 20px; }
+                .au-loading-icon { font-size: 32px; color: #9854cb; }
+                .au-loading-text { margin-top: 15px; color: #999; }
+                .au-error-wrap { text-align: center; padding: 40px 20px; color: #f44336; }
+                .au-error-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+                .au-btn-retry { margin-top: 10px; }
             `}</style>
-            <Header />
-            <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '828px' }}>
+            <div className="content-wrapper au-wrapper">
                 <section className="content-header">
                     <h1><i className="fa fa-calendar-check-o"></i> {attendanceData?.title || 'Attendance'}</h1>
                 </section>
@@ -315,59 +322,41 @@ const AttendanceUser = () => {
                 <section className="content">
                     {/* Summary Stats Cards */}
                     {resultList.length > 0 && (
-                        <div className="row" style={{ marginBottom: '20px' }}>
-                            <div className="col-md-2 col-sm-4 col-xs-6" style={{ marginBottom: '10px' }}>
-                                <div style={{
-                                    background: '#4CAF50', color: '#fff', borderRadius: '8px',
-                                    padding: '15px', textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: '28px', fontWeight: 700 }}>{stats.present}</div>
-                                    <div style={{ fontSize: '12px', opacity: 0.9 }}>Present</div>
+                        <div className="row au-stats-row">
+                            <div className="col-md-2 col-sm-4 col-xs-6 au-stat-col">
+                                <div className="au-stat-card au-stat-bg-present">
+                                    <div className="au-stat-val">{stats.present}</div>
+                                    <div className="au-stat-lbl">Present</div>
                                 </div>
                             </div>
-                            <div className="col-md-2 col-sm-4 col-xs-6" style={{ marginBottom: '10px' }}>
-                                <div style={{
-                                    background: '#f44336', color: '#fff', borderRadius: '8px',
-                                    padding: '15px', textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: '28px', fontWeight: 700 }}>{stats.absent}</div>
-                                    <div style={{ fontSize: '12px', opacity: 0.9 }}>Absent</div>
+                            <div className="col-md-2 col-sm-4 col-xs-6 au-stat-col">
+                                <div className="au-stat-card au-stat-bg-absent">
+                                    <div className="au-stat-val">{stats.absent}</div>
+                                    <div className="au-stat-lbl">Absent</div>
                                 </div>
                             </div>
-                            <div className="col-md-2 col-sm-4 col-xs-6" style={{ marginBottom: '10px' }}>
-                                <div style={{
-                                    background: '#FF9800', color: '#fff', borderRadius: '8px',
-                                    padding: '15px', textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: '28px', fontWeight: 700 }}>{stats.late}</div>
-                                    <div style={{ fontSize: '12px', opacity: 0.9 }}>Late</div>
+                            <div className="col-md-2 col-sm-4 col-xs-6 au-stat-col">
+                                <div className="au-stat-card au-stat-bg-late">
+                                    <div className="au-stat-val">{stats.late}</div>
+                                    <div className="au-stat-lbl">Late</div>
                                 </div>
                             </div>
-                            <div className="col-md-2 col-sm-4 col-xs-6" style={{ marginBottom: '10px' }}>
-                                <div style={{
-                                    background: '#2196F3', color: '#fff', borderRadius: '8px',
-                                    padding: '15px', textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: '28px', fontWeight: 700 }}>{stats.halfDay}</div>
-                                    <div style={{ fontSize: '12px', opacity: 0.9 }}>Half Day</div>
+                            <div className="col-md-2 col-sm-4 col-xs-6 au-stat-col">
+                                <div className="au-stat-card au-stat-bg-halfday">
+                                    <div className="au-stat-val">{stats.halfDay}</div>
+                                    <div className="au-stat-lbl">Half Day</div>
                                 </div>
                             </div>
-                            <div className="col-md-2 col-sm-4 col-xs-6" style={{ marginBottom: '10px' }}>
-                                <div style={{
-                                    background: '#9C27B0', color: '#fff', borderRadius: '8px',
-                                    padding: '15px', textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: '28px', fontWeight: 700 }}>{stats.holiday}</div>
-                                    <div style={{ fontSize: '12px', opacity: 0.9 }}>Holiday</div>
+                            <div className="col-md-2 col-sm-4 col-xs-6 au-stat-col">
+                                <div className="au-stat-card au-stat-bg-holiday">
+                                    <div className="au-stat-val">{stats.holiday}</div>
+                                    <div className="au-stat-lbl">Holiday</div>
                                 </div>
                             </div>
-                            <div className="col-md-2 col-sm-4 col-xs-6" style={{ marginBottom: '10px' }}>
-                                <div style={{
-                                    background: '#607D8B', color: '#fff', borderRadius: '8px',
-                                    padding: '15px', textAlign: 'center'
-                                }}>
-                                    <div style={{ fontSize: '28px', fontWeight: 700 }}>{stats.total}</div>
-                                    <div style={{ fontSize: '12px', opacity: 0.9 }}>Total Days</div>
+                            <div className="col-md-2 col-sm-4 col-xs-6 au-stat-col">
+                                <div className="au-stat-card au-stat-bg-total">
+                                    <div className="au-stat-val">{stats.total}</div>
+                                    <div className="au-stat-lbl">Total Days</div>
                                 </div>
                             </div>
                         </div>
@@ -377,11 +366,16 @@ const AttendanceUser = () => {
 
                     <div className="row">
                         <div className="col-md-12 col-sm-12">
-                            <div className="box box-primary">
-                                <div className="box-body" style={{ padding: 0 }}>
-                                    {/* Toolbar */}
-                                    <div className="cal-toolbar" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative', padding: '15px 10px' }}>
-                                        <div className="cal-nav-btns" style={{ position: 'absolute', left: '10px' }}>
+                            <div className="box box-primary au-box">
+                                <div className="au-box-header">
+                                    <h3 className="au-box-title">Attendance</h3>
+                                    <button className="mobile-box-back-btn" onClick={() => window.location.href='/user/dashboard'}>
+                                        <i className="fa fa-arrow-left"></i> Back
+                                    </button>
+                                </div>
+                                <div className="box-body au-box-body">
+                                    <div className="cal-toolbar">
+                                        <div className="cal-nav-btns">
                                             <button className="btn btn-sm" onClick={handlePrev}>
                                                 <i className="fa fa-chevron-left"></i>
                                             </button>
@@ -390,25 +384,25 @@ const AttendanceUser = () => {
                                             </button>
                                             <button className="btn btn-sm" onClick={handleToday}>Today</button>
                                         </div>
-                                        <h3 className="cal-title" style={{ margin: 0, textAlign: 'center' }}>
+                                        <h3 className="cal-title">
                                             {`${MONTH_LABELS[month]} ${year}`}
                                         </h3>
                                     </div>
 
                                     {/* Loading State */}
                                     {loading && (
-                                        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                                            <i className="fa fa-spinner fa-spin" style={{ fontSize: '32px', color: '#9854cb' }}></i>
-                                            <p style={{ marginTop: '15px', color: '#999' }}>Loading attendance data...</p>
+                                        <div className="au-loading-wrap">
+                                            <i className="fa fa-spinner fa-spin au-loading-icon"></i>
+                                            <p className="au-loading-text">Loading attendance data...</p>
                                         </div>
                                     )}
 
                                     {/* Error State */}
                                     {!loading && error && (
-                                        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#f44336' }}>
-                                            <i className="fa fa-exclamation-triangle" style={{ fontSize: '32px', marginBottom: '10px', display: 'block' }}></i>
+                                        <div className="au-error-wrap">
+                                            <i className="fa fa-exclamation-triangle au-error-icon"></i>
                                             <p>{error}</p>
-                                            <button className="btn btn-sm btn-primary" onClick={fetchAttendance} style={{ marginTop: '10px' }}>
+                                            <button className="btn btn-sm btn-primary au-btn-retry" onClick={fetchAttendance}>
                                                 <i className="fa fa-refresh"></i> Retry
                                             </button>
                                         </div>
@@ -423,8 +417,7 @@ const AttendanceUser = () => {
 
                 </section>
             </div>
-            <Footer />
-        </div>
+        </>
     );
 };
 
