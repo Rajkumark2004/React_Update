@@ -176,7 +176,7 @@ const Header = ({
                                 }
                                 
                                 .custom-nav-item {
-                                    padding: 0 12px;
+                                    padding: 0 0px 0 30px;
                                     color: #555;
                                     font-size: 14px;
                                     display: flex;
@@ -433,12 +433,12 @@ const Header = ({
                             `}</style>
                             {/* Custom Nav Items (from UserDashboard) */}
                             <div className="custom-nav-right hide-mobile" style={{ display: 'flex', alignItems: 'center', height: '50px' }}>
-                                <div className="custom-nav-item" data-tooltip="English">
+                                {/* <div className="custom-nav-item" data-tooltip="English">
                                     <img src="https://flagcdn.com/w20/us.png" className="flag-icon" alt="English" />
                                 </div>
                                 <div className="custom-nav-item" data-tooltip="Currency" style={{ fontWeight: 'bold' }}>
                                     INR
-                                </div>
+                                </div> */}
                                 <div className="custom-nav-item" data-tooltip="Switch Class" onClick={handleSwitchClassClick} style={{ color: '#4CAF50' }}>
                                     <i className="fa fa-exchange"></i>
                                 </div>
@@ -539,7 +539,7 @@ const Header = ({
                                                             </div>
                                                             <div className="divider"></div>
                                                             <div className="sspass">
-                                                                <Link to="/user/user/profile" data-toggle="tooltip" title="My Profile">
+                                                                <Link to="/user/profile" data-toggle="tooltip" title="My Profile">
                                                                     <i className="fa fa-user"></i> Profile
                                                                 </Link>
                                                                 <a href="#" data-toggle="tooltip" title="Change Password (Coming Soon)" onClick={(e) => e.preventDefault()}>
@@ -600,8 +600,23 @@ const Header = ({
                         </Link>
                     </div>
 
-                    {/* Placeholder on right to keep logo centered */}
-                    <div style={{ width: '44px' }}></div>
+                    {/* Mobile Actions */}
+                    <div className="mobile-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div 
+                            onClick={handleSwitchClassClick} 
+                            style={{ color: '#000', cursor: 'pointer', fontSize: '20px' }}
+                            title="Switch Class"
+                        >
+                            <i className="fa fa-exchange"></i>
+                        </div>
+                        <div 
+                            onClick={() => navigate(-1)} 
+                            style={{ color: '#000', cursor: 'pointer', fontSize: '20px' }}
+                            title="Back"
+                        >
+                            {/* <i className="fa fa-arrow-left"></i> */}
+                        </div>
+                    </div>
                 </nav>
             </header>
 
@@ -675,3 +690,4 @@ const Header = ({
 };
 
 export default Header;
+
