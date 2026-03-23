@@ -26,6 +26,7 @@ import ApplyLeave from './pages/users/ApplyLeave';
 import CCAvenuePayment from './pages/users/gateway/CCAvenuePayment';
 import PaymentSuccess from './pages/users/gateway/PaymentSuccess';
 import PaymentFailed from './pages/users/gateway/PaymentFailed';
+import UserLayout from './pages/users/UserLayout'
 
 // A separate ProtectedRoute for users
 function UserProtectedRoute({ children }) {
