@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSession } from '../context/SessionContext';
 import api from '../services/api';
+import { useLocation } from 'react-router-dom';
 
 // FOOTER COMPONENT
 // Converted from wisibles_30_12_2025/application/views/layout/footer.php
@@ -11,6 +12,7 @@ const Footer = () => {
     // Static mock data
     const currentYear = new Date().getFullYear();
     const appName = 'School Management System';
+    const location = useLocation();
 
     // Session Context
     const { sessions, currentSession, setCurrentSession } = useSession();
@@ -92,66 +94,70 @@ const Footer = () => {
                 &copy; {currentYear} {appName}
             </footer>
 
-            {/* Mobile Footer Menu - shown on dashboard */}
-            <div className="col-lg-12 col-md-12 col-sm-12 col-xs-12 d-flex justify-content-center hide-desktop footer-menu">
-                <div className="pull-right">
-                    <div className="navbar-custom-menu">
-                        <ul className="nav navbar-nav headertopmenu">
-                            <li className="dropdown user-menu">
-                                <a
-                                    style={{ padding: '15px 12px' }}
-                                    href={`/admin/staff/profile/${userData.id}`}
-                                    data-original-title="My Profile"
-                                    className="profile-text"
-                                >
-                                    <img
-                                        src={userData.avatar}
-                                        className="topuser-image"
-                                        alt="User Image"
-                                    />
-                                    {' '}My Profile
-                                </a>
-                                <ul className="dropdown-menu dropdown-user menuboxshadow">
-                                    <li>
-                                        <div className="sstopuser">
-                                            <div className="ssuserleft">
-                                                <a href={`/admin/staff/profile/${userData.id}`}>
-                                                    <img src={userData.avatar} alt="User Image" />
-                                                </a>
+            {/* Mobile Footer Menu - shown ONLY on dashboard as requested */}
+            {location.pathname === '/user/dashboard' && (
+                <div className="col-lg-12 col-md-12 col-sm-12 col-xs-12 d-flex justify-content-center hide-desktop footer-menu">
+                    <div className="pull-right">
+                        <div className="navbar-custom-menu">
+                            <ul className="nav navbar-nav headertopmenu">
+                                <li className="dropdown user-menu">
+                                    <a
+                                        style={{ padding: '15px 12px' }}
+                                        href={`/admin/staff/profile/${userData.id}`}
+                                        data-original-title="My Profile"
+                                        className="profile-text"
+                                    >
+                                        <img
+                                            src={userData.avatar}
+                                            className="topuser-image"
+                                            alt="User Image"
+                                        />
+                                      
+                                      
+                                        {' '}My Profile
+                                    </a>
+                                    <ul className="dropdown-menu dropdown-user menuboxshadow">
+                                        <li>
+                                            <div className="sstopuser">
+                                                <div className="ssuserleft">
+                                                    <a href={`/admin/staff/profile/${userData.id}`}>
+                                                        <img src={userData.avatar} alt="User Image" />
+                                                    </a>
+                                                </div>
+                                                <div className="sstopuser-test">
+                                                    <h4 className="text-capitalize">{userData.name}</h4>
+                                                    <h5>{userData.role}</h5>
+                                                </div>
+                                                <div className="divider"></div>
+                                                <div className="sspass">
+                                                    <a
+                                                        href={`/admin/staff/profile/${userData.id}`}
+                                                        data-toggle="tooltip"
+                                                        title="My Profile"
+                                                    >
+                                                        <i className="fa fa-user"></i> Profile
+                                                    </a>
+                                                    <a
+                                                        className="pl25"
+                                                        href="/admin/admin/changepass"
+                                                        data-toggle="tooltip"
+                                                        title="Change Password"
+                                                    >
+                                                        <i className="fa fa-key"></i> Password
+                                                    </a>
+                                                    <a className="pull-right" href="/site/logout">
+                                                        <i className="fa fa-sign-out fa-fw"></i> Logout
+                                                    </a>
+                                                </div>
                                             </div>
-                                            <div className="sstopuser-test">
-                                                <h4 className="text-capitalize">{userData.name}</h4>
-                                                <h5>{userData.role}</h5>
-                                            </div>
-                                            <div className="divider"></div>
-                                            <div className="sspass">
-                                                <a
-                                                    href={`/admin/staff/profile/${userData.id}`}
-                                                    data-toggle="tooltip"
-                                                    title="My Profile"
-                                                >
-                                                    <i className="fa fa-user"></i> Profile
-                                                </a>
-                                                <a
-                                                    className="pl25"
-                                                    href="/admin/admin/changepass"
-                                                    data-toggle="tooltip"
-                                                    title="Change Password"
-                                                >
-                                                    <i className="fa fa-key"></i> Password
-                                                </a>
-                                                <a className="pull-right" href="/site/logout">
-                                                    <i className="fa fa-sign-out fa-fw"></i> Logout
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Control Sidebar Background */}
             <div className="control-sidebar-bg"></div>
@@ -219,7 +225,6 @@ const Footer = () => {
     );
 };
 
-
-
 export default Footer;
+
 
