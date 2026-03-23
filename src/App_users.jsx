@@ -26,7 +26,7 @@ import ApplyLeave from './pages/users/ApplyLeave';
 import CCAvenuePayment from './pages/users/gateway/CCAvenuePayment';
 import PaymentSuccess from './pages/users/gateway/PaymentSuccess';
 import PaymentFailed from './pages/users/gateway/PaymentFailed';
-import UserLayout from './pages/users/UserLayout'
+import UserLayout from './pages/users/UserLayout';
 
 // A separate ProtectedRoute for users
 function UserProtectedRoute({ children }) {
@@ -47,247 +47,81 @@ export default function AppUsers() {
             {/* Forgot Password: /user/forgot-password */}
             <Route path="forgot-password" element={<ForgotPassword />} />
 
-            {/* User Dashboard: /user/dashboard */}
-            <Route
-                path="dashboard"
-                element={
-                    <UserProtectedRoute>
-                        <UserDashboard />
-                    </UserProtectedRoute>
-                }
-            />
+            {/* All protected user routes share the UserLayout (persistent sidebar/header) */}
+            <Route element={<UserProtectedRoute><UserLayout /></UserProtectedRoute>}>
+                {/* User Dashboard: /user/dashboard */}
+                <Route path="dashboard" element={<UserDashboard />} />
 
-            {/* User Profile: /user/profile */}
-            <Route
-                path="profile"
-                element={
-                    <UserProtectedRoute>
-                        <UserProfile />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* User Profile: /user/profile */}
+                <Route path="profile" element={<UserProfile />} />
 
-            {/* User Fees: /user/getfees */}
-            <Route
-                path="getfees"
-                element={
-                    <UserProtectedRoute>
-                        <GetFees />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* User Fees: /user/getfees */}
+                <Route path="getfees" element={<GetFees />} />
 
-            {/* User Attendance: /user/attendance */}
-            <Route
-                path="attendance"
-                element={
-                    <UserProtectedRoute>
-                        <AttendanceUser />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* User Attendance: /user/attendance */}
+                <Route path="attendance" element={<AttendanceUser />} />
 
-            {/* User Circular/Notification: /user/notification */}
-            <Route
-                path="notification"
-                element={
-                    <UserProtectedRoute>
-                        <Notification />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* User Circular/Notification: /user/notification */}
+                <Route path="notification" element={<Notification />} />
 
-            {/* New Premium Notice Board: /user/notice_board */}
-            <Route
-                path="notice_board"
-                element={
-                    <UserProtectedRoute>
-                        <NoticeBoard_User />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* New Premium Notice Board: /user/notice_board */}
+                <Route path="notice_board" element={<NoticeBoard_User />} />
 
-            {/* User Homework: /user/homework */}
-            <Route
-                path="homework"
-                element={
-                    <UserProtectedRoute>
-                        <Homework />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* User Homework: /user/homework */}
+                <Route path="homework" element={<Homework />} />
 
-            {/* Daily Assignment: /user/daily_assignment */}
-            <Route
-                path="daily_assignment"
-                element={
-                    <UserProtectedRoute>
-                        <DailyAssignment />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Daily Assignment: /user/daily_assignment */}
+                <Route path="daily_assignment" element={<DailyAssignment />} />
 
-            {/* User Transport: /user/route */}
-            <Route
-                path="route"
-                element={
-                    <UserProtectedRoute>
-                        <TransportRoute />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* User Transport: /user/route */}
+                <Route path="route" element={<TransportRoute />} />
 
-            {/* User Hostel: /user/hostelroom */}
-            <Route
-                path="hostelroom"
-                element={
-                    <UserProtectedRoute>
-                        <UserHostelRoom />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* User Hostel: /user/hostelroom */}
+                <Route path="hostelroom" element={<UserHostelRoom />} />
 
-            {/* Student Assessment: /user/studentassessment */}
-            <Route
-                path="studentassessment"
-                element={
-                    <UserProtectedRoute>
-                        <StudentAssessment />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Student Assessment: /user/studentassessment */}
+                <Route path="studentassessment" element={<StudentAssessment />} />
 
-            {/* Timetable: /user/timetable */}
-            <Route
-                path="timetable"
-                element={
-                    <UserProtectedRoute>
-                        <Timetable />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Timetable: /user/timetable */}
+                <Route path="timetable" element={<Timetable />} />
 
-            {/* Syllabus (Lesson Plan): /user/syllabus */}
-            <Route
-                path="syllabus"
-                element={
-                    <UserProtectedRoute>
-                        <Syllabus />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Syllabus (Lesson Plan): /user/syllabus */}
+                <Route path="syllabus" element={<Syllabus />} />
 
-            {/* Syllabus Status: /user/syllabus/status */}
-            <Route
-                path="syllabus/status"
-                element={
-                    <UserProtectedRoute>
-                        <SyllabusStatus />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Syllabus Status: /user/syllabus/status */}
+                <Route path="syllabus/status" element={<SyllabusStatus />} />
 
-            {/* Visitors: /user/visitors */}
-            <Route
-                path="visitors"
-                element={
-                    <UserProtectedRoute>
-                        <Visitors />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Visitors: /user/visitors */}
+                <Route path="visitors" element={<Visitors />} />
 
-            {/* State Exam Result: /user/examresult */}
-            <Route
-                path="examresult"
-                element={
-                    <UserProtectedRoute>
-                        <StateExamResult />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* State Exam Result: /user/examresult */}
+                <Route path="examresult" element={<StateExamResult />} />
 
-            {/* Online Course Category: /user/onlinecourse */}
-            <Route
-                path="onlinecourse"
-                element={
-                    <UserProtectedRoute>
-                        <OnlineCourse />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Online Course Category: /user/onlinecourse */}
+                <Route path="onlinecourse" element={<OnlineCourse />} />
 
-            {/* Online Course Video List: /user/onlinecourse/list/:id */}
-            <Route
-                path="onlinecourse/list/:id"
-                element={
-                    <UserProtectedRoute>
-                        <OnlineCourseList />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Online Course Video List: /user/onlinecourse/list/:id */}
+                <Route path="onlinecourse/list/:id" element={<OnlineCourseList />} />
 
-            {/* Content List & Download Center / Gallery: /user/content/list */}
-            <Route
-                path="content/list"
-                element={
-                    <UserProtectedRoute>
-                        <ContentList />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Content List & Download Center / Gallery: /user/content/list */}
+                <Route path="content/list" element={<ContentList />} />
 
-            {/* Content View: /user/content/view/:id */}
-            <Route
-                path="content/view/:id"
-                element={
-                    <UserProtectedRoute>
-                        <ContentView />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Content View: /user/content/view/:id */}
+                <Route path="content/view/:id" element={<ContentView />} />
 
-            {/* Apply Leave: /user/apply_leave */}
-            <Route
-                path="apply_leave"
-                element={
-                    <UserProtectedRoute>
-                        <ApplyLeave />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Apply Leave: /user/apply_leave */}
+                <Route path="apply_leave" element={<ApplyLeave />} />
 
-            {/* CCAvenue Payment Gateway: /user/gateway/ccavenue */}
-            <Route
-                path="gateway/ccavenue"
-                element={
-                    <UserProtectedRoute>
-                        <CCAvenuePayment />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* CCAvenue Payment Gateway: /user/gateway/ccavenue */}
+                <Route path="gateway/ccavenue" element={<CCAvenuePayment />} />
 
-            {/* Payment Success: /user/gateway/payment/success */}
-            <Route
-                path="gateway/payment/success"
-                element={
-                    <UserProtectedRoute>
-                        <PaymentSuccess />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Payment Success: /user/gateway/payment/success */}
+                <Route path="gateway/payment/success" element={<PaymentSuccess />} />
 
-            {/* Payment Failed: /user/gateway/payment/failed */}
-            <Route
-                path="gateway/payment/failed"
-                element={
-                    <UserProtectedRoute>
-                        <PaymentFailed />
-                    </UserProtectedRoute>
-                }
-            />
+                {/* Payment Failed: /user/gateway/payment/failed */}
+                <Route path="gateway/payment/failed" element={<PaymentFailed />} />
+            </Route>
 
-            {/* Add more user routes here as needed (e.g., profile, settings) */}
         </Routes>
     );
 }
