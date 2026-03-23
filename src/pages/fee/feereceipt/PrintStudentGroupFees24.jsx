@@ -43,32 +43,10 @@ const PrintStudentGroupFees24 = () => {
     return (
         <div className="container" style={{ background: 'white', padding: '20px' }}>
             <style>{`
-                .print_header {
-                    border: 0.5px solid;
-                    border-radius: 8px;
-                    padding: 5px 10px;
-                    font-size: 12px;
-                }
-                .print_footer {
-                    border: 0.5px solid;
-                    border-radius: 8px;
-                    padding: 5px 10px;
-                    margin-left: -10px;
-                    width: 98%;
-                    font-size: 8pt;
-                }
                 @media print {
-                    .col-sm-6 { width: 50%; float: left; }
-                    .col-sm-1, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-12 { float: left; }
-                    .col-sm-12 { width: 100%; }
-                    .col-sm-3 { width: 25%; }
-                    .col-sm-4 { width: 33.33333333%; }
-                    .col-sm-2 { width: 16.66666667%; }
-                    .col-sm-1 { width: 8.33333333%; }
-                    .text-right { text-align: right; }
-                    .text-center { text-align: center; }
-                    td, th { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
+                    * { box-sizing: border-box; }
                     .no-print { display: none !important; }
+                    body { margin: 0; padding: 0; }
                 }
             `}</style>
             <div className="row no-print" style={{ marginBottom: '20px' }}>

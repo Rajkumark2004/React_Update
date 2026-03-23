@@ -32,7 +32,7 @@ const StudentCollectFeeModal = ({ show, handleClose, student, feeData, onSuccess
 
     // Compute per-row balance: amount - (paid + discounts) from amount_detail
     const getRowBalance = (item) => {
-        const feeAmount = parseFloat(item.amount || 0);
+        const feeAmount = parseFloat(item.amount || item.student_fees_master_amount || 0);
         let paid = 0;
         let discount = 0;
         let amountDetail = [];

@@ -124,7 +124,7 @@ const NoticeBoardEdit = () => {
 
             if (userStr) {
                 const user = JSON.parse(userStr);
-                createdId = parseInt(user.id) || 1;
+                createdId = user.id || 1;
 
                 if (user.roles && typeof user.roles === 'object') {
                     const roleValues = Object.values(user.roles);
@@ -139,39 +139,38 @@ const NoticeBoardEdit = () => {
                 return;
             }
 
-            // Format date from YYYY-MM-DD to MM/DD/YYYY
+            // Format date to yyyy/mm/dd
             const formatDate = (dateStr) => {
                 if (!dateStr) return '';
                 const [year, month, day] = dateStr.split('-');
-                return `${month}/${day}/${year}`;
+                return `${year}/${month}/${day}`;
             };
 
-            // Build visible array: ["student", "parent", roleId_as_number]
-            const visible = [];
+            // Build FormData (matching NoticeBoardAdd.jsx)
+            const formPayload = new FormData();
+            formPayload.append('title', formData.title);
+            formPayload.append('date', formatDate(formData.date));
+            formPayload.append('publish_date', formatDate(formData.publish_date));
+            formPayload.append('message', formData.message);
+            formPayload.append('created_by', createdId);
+
+            // Visibility
             if (formData.visible_student) {
-                visible.push('student');
+                formPayload.append('visible[]', 'student');
             }
             if (formData.visible_parent) {
-                visible.push('parent');
+                formPayload.append('visible[]', 'parent');
             }
             formData.roles.forEach(r => {
-                visible.push(parseInt(r) || r);
+                formPayload.append('visible[]', r);
             });
 
-            // Build prev_roles as number array
-            const prev_roles = formData.prev_roles.map(r => parseInt(r) || r);
+            // File Attachment
+            if (selectedFile) {
+                formPayload.append('file', selectedFile);
+            }
 
-            const payload = {
-                title: formData.title,
-                message: formData.message,
-                date: formatDate(formData.date),
-                publish_date: formatDate(formData.publish_date),
-                visible: visible,
-                prev_roles: prev_roles,
-                created_id: createdId
-            };
-
-            const response = await api.updateNoticeBoard(id, roleId, payload);
+            const response = await api.updateNoticeBoard(id, roleId, formPayload);
 
             if (response && (response.status === true || response.status === 'success')) {
                 toast.success('Message updated successfully');

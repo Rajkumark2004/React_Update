@@ -66,7 +66,7 @@ const Rank = () => {
             <Header appName={appName} userData={userData} />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ marginTop: '17px' }}>
+            <div className="content-wrapper" style={{ marginTop: '0px' }}>
                 <section className="content">
                     <div className="row">
                         {/* Left Sidebar (CBSE Submenu) */}
@@ -100,6 +100,11 @@ const Rank = () => {
                                     <h3 className="box-title titlefix">
                                         <i className="fa fa-list-alt"></i> Template Wise Rank
                                     </h3>
+                                    <div className="box-tools pull-right">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs" style={{ marginTop: '5px' }}>
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="box-body">
                                     <div className="download_label">Generate Rank</div>

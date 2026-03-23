@@ -47,37 +47,38 @@ const EditContent = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            // Fetch content list and class list from the same endpoint used in CreateContent
-            const response = await api.getContentList();
+            // Fetch content details by ID
+            const response = await api.getContentById(id);
 
-            if (response.data && response.data.list) {
-                const item = response.data.list.find(c => c.id == id);
-                if (item) {
-                    console.log('Found item:', item);
-                    setFormData({
-                        title: item.title,
-                        class: item.class_id,
-                        section: item.section ? (Array.isArray(item.section) ? item.section : [item.section]) : [],
-                        type: item.type,
-                        date: item.date, // Assuming date is in YYYY-MM-DD
-                        description: item.note || '',
-                        file: null // Files usually not pre-filled in file input
-                    });
+            if (response && response.status && response.data) {
+                const item = response.data;
+                console.log('Fetched content item:', item);
+                setFormData({
+                    title: item.title || '',
+                    class: item.class_id || '',
+                    // Note: API returns cls_sec_id, mapping it to section array
+                    section: item.cls_sec_id ? (String(item.cls_sec_id).split(',').map(s => s.trim())) : [],
+                    type: item.type || '',
+                    date: item.date || '',
+                    description: item.note || '',
+                    file: null
+                });
 
-                    // Fetch sections for the valid class
-                    if (item.class_id) {
-                        try {
-                            const sectionResponse = await api.getSectionsByClass(item.class_id);
-                            setSectionList(sectionResponse.data || []);
-                        } catch (err) {
-                            console.error('Error fetching sections for edit:', err);
-                        }
+                // Fetch sections for the class
+                if (item.class_id) {
+                    try {
+                        const sectionResponse = await api.getSectionsByClass(item.class_id);
+                        setSectionList(sectionResponse.data || []);
+                    } catch (err) {
+                        console.error('Error fetching sections for edit:', err);
                     }
                 }
             }
 
-            if (response.data && response.data.classlist) {
-                setClassList(response.data.classlist);
+            // Also need classList for the dropdown
+            const listResponse = await api.getContentList();
+            if (listResponse.data && listResponse.data.classlist) {
+                setClassList(listResponse.data.classlist);
             }
 
         } catch (error) {
@@ -106,16 +107,16 @@ const EditContent = () => {
 
     const toggleSection = (id) => {
         setFormData(prev => {
-            const sections = prev.section.includes(id)
-                ? prev.section.filter(sid => sid !== id)
-                : [...prev.section, id];
+            const sections = prev.section.some(sid => String(sid) === String(id))
+                ? prev.section.filter(sid => String(sid) !== String(id))
+                : [...prev.section, String(id)];
             return { ...prev, section: sections };
         });
     };
 
     const toggleSelectAll = () => {
         setFormData(prev => {
-            const allIds = sectionList.map(s => s.section_id);
+            const allIds = sectionList.map(s => String(s.section_id));
             const sections = prev.section.length === sectionList.length ? [] : allIds;
             return { ...prev, section: sections };
         });
@@ -142,6 +143,14 @@ const EditContent = () => {
             submitData.append('id', id);
             submitData.append('content_title', formData.title);
             submitData.append('content_type', formData.type);
+
+            // Get user info from localStorage
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                submitData.append('created_by', user.id || '1');
+            }
+
             submitData.append('content_available[]', 'student'); // Hardcoded based on prev example/requirement
             submitData.append('content_available[]', 'Super Admin');
             // Additional roles? "student", "parent" mentioned in prompt
@@ -244,7 +253,7 @@ const EditContent = () => {
                                                                         className="custom-select-option-checkbox" 
                                                                         type="checkbox" 
                                                                         name="section[]" 
-                                                                        checked={formData.section.includes(s.section_id)} 
+                                                                        checked={formData.section.some(sec => String(sec) === String(s.section_id))} 
                                                                         onChange={() => toggleSection(s.section_id)} 
                                                                     /> {s.section}
                                                                 </label>

@@ -184,31 +184,14 @@ const PrintMarksheet = () => {
         }
     };
 
-    const handlePrint = async (student) => {
+    const handlePrint = (student) => {
         if (!formData.template) {
             alert("Please select a template first.");
             return;
         }
 
-        try {
-            const payload = {
-                marksheet_template: formData.template,
-                student_session_id: [student.student_session_id],
-                type: "download",
-                image: "" // Placeholder as per current context
-            };
-
-            const response = await api.printMarksheet(payload);
-
-            if (response.status && response.file) {
-                window.open(response.file, '_blank');
-            } else {
-                alert("Failed to generate PDF.");
-            }
-        } catch (error) {
-            console.error("Print Error:", error);
-            alert("Error generating marksheet.");
-        }
+        const url = `https://newlayout.wisibles.com/welcome/printmarksheet/${student.student_session_id}/${formData.template}`;
+        window.open(url, '_blank');
     };
 
     const handleBulkDownload = async () => {
@@ -227,13 +210,20 @@ const PrintMarksheet = () => {
                 student_session_id: selectedStudents
             };
 
-            const response = await api.getMarksSuraj2(payload);
+            // Fetch marks and template data in parallel
+            const [marksResponse, templateResponse] = await Promise.all([
+                api.getMarksSuraj2(payload),
+                api.getCBSETemplateData(formData.template).catch(() => null)
+            ]);
 
-            if (response.status && response.data) {
-                // Response data is object { "id1": {...}, "id2": {...} }
-                // We store it as is, or normalize it here if needed.
-                // StudentMarksheetPrint handles Object.values(data) so raw object is fine.
-                localStorage.setItem('studentMarksheetData', JSON.stringify(response.data));
+            if (marksResponse.status && marksResponse.data) {
+                // Bundle marks + template + student list for the print page
+                const printData = {
+                    marks: marksResponse.data,
+                    template: templateResponse?.data || templateResponse || {},
+                    students: studentList || []
+                };
+                localStorage.setItem('studentMarksheetData', JSON.stringify(printData));
                 window.open('/cbseexam/result/print-suraj', '_blank');
             } else {
                 alert("Failed to fetch bulk marksheet data.");

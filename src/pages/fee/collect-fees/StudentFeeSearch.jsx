@@ -8,6 +8,7 @@ import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import '../../../utils/include_files';
 
 const amountFormat = (amount) => {
     return parseFloat(amount || 0).toLocaleString('en-IN', {
@@ -72,7 +73,6 @@ const StudentFeeSearch = () => {
     // Student List State
     const [students, setStudents] = useState([]);
     const [csvFile, setCsvFile] = useState(null);
-    const [isDragging, setIsDragging] = useState(false);
     const [loading, setLoading] = useState(false);
     const [importing, setImporting] = useState(false);
     const [downloading, setDownloading] = useState(false);
@@ -128,6 +128,25 @@ const StudentFeeSearch = () => {
         };
         fetchData();
     }, []);
+
+    // Initialize Dropify
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            try {
+                const $ = window.jQuery;
+                if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                    const drEvent = $('.dropify').dropify();
+                    drEvent.on('change', function (event, element) {
+                        // The native onChange on the input usually handles state, 
+                        // but if not we could manually setCsvFile here.
+                    });
+                }
+            } catch (error) {
+                console.error('Dropify initialization error:', error);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [initialLoading]);
 
     const handleClassChange = async (e) => {
         const classId = e.target.value;
@@ -220,6 +239,12 @@ const StudentFeeSearch = () => {
             if (response.status === true || response.status === 'success') {
                 toast.success(response.message || 'Payments imported successfully');
                 setCsvFile(null);
+                // Clear Dropify
+                try {
+                    const $ = window.jQuery;
+                    $('.dropify').data('dropify').resetPreview();
+                    $('.dropify').data('dropify').clearElement();
+                } catch (e) { }
             } else {
                 toast.error(response.message || 'Import failed. Please check the file format.');
             }
@@ -424,59 +449,16 @@ const StudentFeeSearch = () => {
                                                         <label htmlFor="csvFileInput">
                                                             Select CSV File <small className="req">*</small>
                                                         </label>
-                                                        <div
-                                                            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                                                            onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
-                                                            onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
-                                                            onDrop={(e) => {
-                                                                e.preventDefault();
-                                                                setIsDragging(false);
-                                                                const file = e.dataTransfer.files[0];
-                                                                if (file && file.name.endsWith('.csv')) {
-                                                                    setCsvFile(file);
-                                                                } else {
-                                                                    toast.error('Please drop a valid .csv file');
-                                                                }
-                                                            }}
-                                                            onClick={() => document.getElementById('csvFileInput').click()}
-                                                            style={{
-                                                                border: `2px dashed ${isDragging ? '#3c8dbc' : (csvFile ? '#00a65a' : '#ccc')}`,
-                                                                borderRadius: '8px',
-                                                                padding: '10px 15px',
-                                                                textAlign: 'center',
-                                                                cursor: 'pointer',
-                                                                background: isDragging ? 'rgba(60,141,188,0.06)' : (csvFile ? 'rgba(0,166,90,0.04)' : '#fafafa'),
-                                                                transition: 'all 0.25s ease'
-                                                            }}
-                                                        >
                                                             <input
                                                                 id="csvFileInput"
+                                                                className="dropify"
                                                                 type="file"
                                                                 name="file"
+                                                                data-height="92"
                                                                 accept=".csv"
-                                                                style={{ display: 'none' }}
                                                                 onChange={(e) => setCsvFile(e.target.files[0] || null)}
+                                                                required
                                                             />
-                                                            {csvFile ? (
-                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                                                                    <i className="fa fa-file-text-o" style={{ fontSize: 20, color: '#00a65a' }}></i>
-                                                                    <span style={{ fontWeight: 600, color: '#333' }}>{csvFile.name}</span>
-                                                                    <small className="text-muted">({(csvFile.size / 1024).toFixed(1)} KB)</small>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="btn btn-xs btn-danger"
-                                                                        onClick={(e) => { e.stopPropagation(); setCsvFile(null); document.getElementById('csvFileInput').value = ''; }}
-                                                                    >
-                                                                        <i className="fa fa-times"></i> Remove
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                                                    <i className="fa fa-cloud-upload" style={{ fontSize: 20, color: isDragging ? '#3c8dbc' : '#aaa', transition: 'color 0.25s' }}></i>
-                                                                    <span style={{ color: '#666', fontSize: '13px' }}>Drag & drop your CSV file here or <span style={{ color: '#3c8dbc', textDecoration: 'underline' }}>browse</span></span>
-                                                                </div>
-                                                            )}
-                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6 pt20">

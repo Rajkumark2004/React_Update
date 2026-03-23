@@ -90,13 +90,17 @@ const EnquiryView = () => {
     const { sortedData: sortedEnquiries, requestSort: handleSort, getSortIcon } = useTableSort(enquiryList);
 
     // Fetch enquiry list from API
-    const fetchEnquiryList = async () => {
+    const fetchEnquiryList = async (filters = null) => {
         try {
             setError('');
             setLoading(true);
-            // Fetch ALL data initially (pass empty filters to get everything)
-            const response = await api.getEnquiryList({});
-            console.log('DEBUG: Full Enquiry API Response:', response);
+            
+            // Use POST search if filters are provided, otherwise GET initial list
+            const response = filters 
+                ? await api.searchEnquiryList(filters) 
+                : await api.getEnquiryList();
+                
+            console.log('DEBUG: Enquiry API Response:', response);
 
             // Handle different response formats and ensure array
             // The API response can be directly the object or wrapped in .data
@@ -157,7 +161,7 @@ const EnquiryView = () => {
     };
 
     useEffect(() => {
-        fetchEnquiryList();
+        fetchEnquiryList(); // Hits GET /admin/enquiry
     }, []);
 
     const handleFilterChange = (e) => {
@@ -195,12 +199,14 @@ const EnquiryView = () => {
             return;
         }
 
-        console.log('Search with filters (Internal):', filterForm);
-        setLoading(true); // Show loader briefly for UX
-        const results = filterEnquiries(masterEnquiryList, filterForm);
-        setEnquiryList(results);
+        const searchFilters = { 
+            ...filterForm, 
+            status: filterForm.status === 'all' ? '' : filterForm.status 
+        };
+
+        console.log('Search with API:', searchFilters);
+        fetchEnquiryList(searchFilters);
         setCurrentPage(1); // Reset to first page
-        setTimeout(() => setLoading(false), 5000);
     };
 
     const handleFollowUp = (enquiry) => {

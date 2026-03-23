@@ -228,7 +228,12 @@ const NoticeBoard = () => {
                                                         {notification.publish_date}
                                                     </div>
                                                 </div>
-                                                <div className="" style={{ marginLeft: '10px', display: 'inline-flex', gap: '5px', alignItems: 'center' }}>
+                                                <div className="" style={{ marginLeft: '10px', display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                                                    {notification.attachment && (
+                                                        <a href={`https://newlayout.wisibles.com/admin/notification/download/${notification.id}`} target="_blank" rel="noreferrer" style={{ color: '#0084B4' }} onClick={(e) => e.stopPropagation()}>
+                                                            <i className="fa fa-download"></i>
+                                                        </a>
+                                                    )}
                                                     {(notification.created_id == user_id || roleId === '7') && (
                                                         <>
                                                             <Link to={`/admin/notification/edit/${notification.id}`} className="" data-toggle="tooltip" title="Edit" style={{ color: '#0084B4' }} onClick={(e) => e.stopPropagation()}>
@@ -269,7 +274,7 @@ const NoticeBoard = () => {
 
                         {selectedNotification.attachment && (
                             <div style={{ marginBottom: '15px' }}>
-                                <a href={`https://newlayout.wisibles.com/uploads/school_content/material/${selectedNotification.attachment}`} target="_blank" rel="noreferrer" style={{ color: '#0084B4', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                <a href={`https://newlayout.wisibles.com/admin/notification/download/${selectedNotification.id}`} target="_blank" rel="noreferrer" style={{ color: '#0084B4', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
                                     <i className="fa fa-download"></i> Download Attachment
                                 </a>
                             </div>
@@ -291,24 +296,20 @@ const NoticeBoard = () => {
                         <div>
                             <h4 style={{ fontSize: '15px', marginBottom: '15px', fontWeight: 500, color: '#333' }}>Message To</h4>
                             <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                                {selectedNotification.visible_staff === 'Yes' && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#555' }}>
-                                        <i className="fa fa-users"></i>
-                                        <span>Admin</span>
-                                    </div>
-                                )}
-                                {selectedNotification.visible_student === 'Yes' && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#555' }}>
-                                        <i className="fa fa-user"></i>
-                                        <span>Student</span>
-                                    </div>
-                                )}
-                                {selectedNotification.visible_parent === 'Yes' && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#555' }}>
-                                        <i className="fa fa-user"></i>
-                                        <span>Parent</span>
-                                    </div>
-                                )}
+                                {Object.keys(selectedNotification)
+                                    .filter(key => key.startsWith('visible_') && selectedNotification[key] === 'Yes')
+                                    .map(key => {
+                                        const roleName = key.replace('visible_', '');
+                                        // Capitalize and handle 'staff' as 'Admin' specifically if needed
+                                        const displayName = roleName === 'staff' ? 'Admin' : (roleName.charAt(0).toUpperCase() + roleName.slice(1));
+                                        return (
+                                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#555' }}>
+                                                <i className={`fa fa-${roleName === 'staff' ? 'users' : 'user'}`}></i>
+                                                <span>{displayName}</span>
+                                            </div>
+                                        );
+                                    })
+                                }
                             </div>
                         </div>
                     </div>

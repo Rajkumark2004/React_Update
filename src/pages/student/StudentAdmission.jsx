@@ -615,8 +615,14 @@ const StudentAdmission = () => {
                                                 )}
                                                 <div className="col-md-3">
                                                     <div className="form-group">
-                                                        <label>Class <small className="req"> *</small></label>
-                                                        <select name="class_id" className={`form-control ${formErrors.class_id ? 'border-danger' : ''}`} value={formData.class_id} onChange={handleInputChange}>
+                                                        <label>Class</label><small className="req"> *</small>
+                                                        <select 
+                                                            id="class_id"
+                                                            name="class_id" 
+                                                            className={`form-control ${formErrors.class_id ? 'border-danger' : ''}`} 
+                                                            value={formData.class_id} 
+                                                            onChange={handleInputChange}
+                                                        >
                                                             <option value="">Select</option>
                                                             {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.class}</option>)}
                                                         </select>
@@ -625,8 +631,14 @@ const StudentAdmission = () => {
                                                 </div>
                                                 <div className="col-md-3">
                                                     <div className="form-group">
-                                                        <label>Section <small className="req"> *</small></label>
-                                                        <select name="section_id" className={`form-control ${formErrors.section_id ? 'border-danger' : ''}`} value={formData.section_id} onChange={handleInputChange}>
+                                                        <label>Section</label><small className="req"> *</small>
+                                                        <select 
+                                                            id="section_id"
+                                                            name="section_id" 
+                                                            className={`form-control ${formErrors.section_id ? 'border-danger' : ''}`} 
+                                                            value={formData.section_id} 
+                                                            onChange={handleInputChange}
+                                                        >
                                                             <option value="">Select</option>
                                                             {sections.map(sec => <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>)}
                                                         </select>

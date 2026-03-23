@@ -45,57 +45,54 @@ export const ReceiptContent = ({ student, sch_setting }) => {
     const currencySymbol = sch_setting.currency_symbol || '₹';
     const formatAmount = (amount) => parseFloat(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    const renderReceipt = (copyType) => (
-        <div className="col-sm-6" style={{ width: '50%', float: 'left', padding: '15px' }}>
-            <div className="row header">
-                <div className="col-sm-12">
-                    <img
-                        src={sch_setting.receipt_header_url || `https://newlayout.wisibles.com/api_admin//uploads/print_headerfooter/student_receipt/${sch_setting.image}`}
-                        style={{ height: '100px', width: '100%' }}
-                        alt="Header"
-                    />
-                </div>
+    const renderReceipt = (copyType, index) => {
+        const sidePadding = index === 0 ? { paddingRight: '10px' } : { paddingLeft: '10px' };
+
+        return (
+            <div style={{ width: '50%', float: 'left', boxSizing: 'border-box', ...sidePadding }}>
+            <div>
+                <img
+                    src={sch_setting.receipt_header_url || `https://newlayout.wisibles.com/api_admin//uploads/print_headerfooter/student_receipt/${sch_setting.image}`}
+                    style={{ height: '100px', width: '100%', display: 'block' }}
+                    alt="Header"
+                />
             </div>
-            <div className="row">
-                <div className="col-md-12 text text-center" style={{ textAlign: 'center', margin: '10px 0' }}>{copyType}</div>
+            <div>
+                <div style={{ textAlign: 'center', margin: '6px 0', fontWeight: '600', fontSize: '10pt' }}>{copyType}</div>
             </div>
-            <div className="row table table-striped table-bordered" style={{ width: '100%', marginBottom: '10px' }}>
-                <div className="col-xs-12 text-left">
-                    <br />
-                    <div className="row" style={{ display: 'flex', flexWrap: 'wrap' }}>
-                        <div className="col-sm-3" style={{ width: '25%' }}>Receipt No &nbsp;:</div>
-                        <div className="col-sm-3" style={{ width: '25%' }}>{sch_setting.session.split('-')[0] + '/' + sch_setting.session.split('-')[1].substring(2) + '-' + String(student.id).padStart(5, '0')}</div>
-                        <div className="col-sm-2" style={{ width: '16.66%' }}>Date</div>
-                        <div className="col-sm-1" style={{ width: '8.33%' }}>:</div>
-                        <div className="col-sm-3" style={{ width: '25%' }}>{student.created_at.split('-').reverse().join('/')}</div>
+            <div style={{ border: '1px solid #ddd', padding: '6px 8px', marginBottom: '0', fontSize: '9pt', lineHeight: '1.7' }}>
+                    <div style={{ display: 'flex' }}>
+                        <div style={{ width: '25%' }}>Receipt No :</div>
+                        <div style={{ width: '25%' }}>{sch_setting.session.split('-')[0] + '/' + sch_setting.session.split('-')[1].substring(2) + '-' + String(student.id).padStart(5, '0')}</div>
+                        <div style={{ width: '17%' }}>Date</div>
+                        <div style={{ width: '8%' }}>:</div>
+                        <div style={{ width: '25%' }}>{student.created_at.split('-').reverse().join('/')}</div>
                     </div>
-                    <div className="row" style={{ display: 'flex', flexWrap: 'wrap' }}>
-                        <div className="col-sm-3" style={{ width: '25%' }}>Admin No &nbsp;&nbsp;&nbsp;:</div>
-                        <div className="col-sm-3" style={{ width: '25%' }}>{student.admission_no}</div>
-                        <div className="col-sm-2" style={{ width: '16.66%' }}>Roll No.</div>
-                        <div className="col-sm-1" style={{ width: '8.33%' }}>:</div>
-                        <div className="col-sm-3" style={{ width: '25%' }}>{student.roll_no}</div>
+                    <div style={{ display: 'flex' }}>
+                        <div style={{ width: '25%' }}>Admin No :</div>
+                        <div style={{ width: '25%' }}>{student.admission_no}</div>
+                        <div style={{ width: '17%' }}>Roll No.</div>
+                        <div style={{ width: '8%' }}>:</div>
+                        <div style={{ width: '25%' }}>{student.roll_no}</div>
                     </div>
-                    <div className="row" style={{ display: 'flex', flexWrap: 'wrap' }}>
-                        <div className="col-sm-4" style={{ width: '33.33%' }}>Student's Name</div>
-                        <div className="col-sm-1" style={{ width: '8.33%' }}>:</div>
-                        <div className="col-sm-6" style={{ width: '50%' }}>{student.firstname} {student.lastname}</div>
+                    <div style={{ display: 'flex' }}>
+                        <div style={{ width: '33%' }}>Student's Name</div>
+                        <div style={{ width: '8%' }}>:</div>
+                        <div style={{ width: '59%' }}>{student.firstname} {student.lastname}</div>
                     </div>
-                    <div className="row" style={{ display: 'flex', flexWrap: 'wrap' }}>
-                        <div className="col-sm-4" style={{ width: '33.33%' }}>Father's Name</div>
-                        <div className="col-sm-1" style={{ width: '8.33%' }}>:</div>
-                        <div className="col-sm-6" style={{ width: '50%' }}>{student.father_name}</div>
+                    <div style={{ display: 'flex' }}>
+                        <div style={{ width: '33%' }}>Father's Name</div>
+                        <div style={{ width: '8%' }}>:</div>
+                        <div style={{ width: '59%' }}>{student.father_name}</div>
                     </div>
-                    <div className="row" style={{ display: 'flex', flexWrap: 'wrap' }}>
-                        <div className="col-sm-4" style={{ width: '33.33%' }}>Class & Sec</div>
-                        <div className="col-sm-1" style={{ width: '8.33%' }}>:</div>
-                        <div className="col-sm-6" style={{ width: '50%' }}>{student.class} ({student.section})</div>
+                    <div style={{ display: 'flex' }}>
+                        <div style={{ width: '33%' }}>Class & Sec</div>
+                        <div style={{ width: '8%' }}>:</div>
+                        <div style={{ width: '59%' }}>{student.class} ({student.section})</div>
                     </div>
-                </div>
             </div>
-            <hr style={{ marginTop: '0px', marginBottom: '0px', borderTop: '1px solid #eee' }} />
-            <div className="row">
-                <table className="table table-striped table-bordered" style={{ fontSize: '8pt', width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd' }}>
+            <div>
+                <table style={{ fontSize: '8pt', width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd', tableLayout: 'fixed' }}>
                     <thead>
                         <tr>
                             <th style={{ width: '20px', border: '1px solid #ddd', padding: '8px' }}>S.No.</th>
@@ -126,31 +123,30 @@ export const ReceiptContent = ({ student, sch_setting }) => {
                     </tbody>
                 </table>
             </div>
-            <div className="print_footer" style={{ marginTop: '10px', border: '0.5px solid', borderRadius: '8px', padding: '5px 10px', fontSize: '8pt' }}>
-                <div className="row header">
-                    <div className="col-sm-12">
-                        In Words: {convertToWords(student.amount)}
-                    </div>
+            <div style={{ marginTop: '6px', border: '1px solid #999', borderRadius: '4px', padding: '5px 8px', fontSize: '8pt' }}>
+                <div>
+                    In Words: {convertToWords(student.amount)}
                 </div>
-                <div className="row header" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between' }}>
-                    <div className="col-sm-8">
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                    <div style={{ flex: 1 }}>
                         {sch_setting.receipt_footer_content ? (
                             <div dangerouslySetInnerHTML={{ __html: sch_setting.receipt_footer_content }} />
                         ) : (
                             "Note: Fee once paid is not refundable"
                         )}
                     </div>
-                    <div className="col-sm-4 text-right" style={{ textAlign: 'right' }}>Signature</div>
+                    <div style={{ textAlign: 'right', minWidth: '80px' }}>Signature</div>
                 </div>
             </div>
         </div>
     );
+    };
 
     return (
-        <div style={{ padding: '20px', background: 'white' }}>
-            <div className="row" style={{ display: 'flex' }}>
-                {renderReceipt("Office Copy")}
-                {renderReceipt("Student Copy")}
+        <div style={{ padding: '10px', background: 'white' }}>
+            <div style={{ overflow: 'hidden' }}>
+                {renderReceipt("Office Copy", 0)}
+                {renderReceipt("Student Copy", 1)}
             </div>
         </div>
     );

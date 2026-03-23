@@ -189,12 +189,13 @@ const Template = () => {
             if (response.status && response.data && response.data.template) {
                 const tmpl = response.data.template;
                 const classId = response.data.selected_class_id || tmpl.class_id || '';
-                const secs = response.data.selected_section_id || response.data.sections || [];
+                const rawSecs = response.data.selected_section_id || response.data.sections || [];
+                const secs = Array.isArray(rawSecs) ? rawSecs : (typeof rawSecs === 'string' ? rawSecs.split(',').filter(Boolean) : []);
 
-                // Map sections to IDs (using section_id to match api.getSections generic list)
+                // Map sections to IDs (using class_section_id/section_id to match api.getSections generic list)
                 // Handle objects or direct IDs
                 const selectedSecs = secs.map(s => {
-                    if (typeof s === 'object') return s.id || s.section_id || s.class_section_id;
+                    if (typeof s === 'object' && s !== null) return s.class_section_id || s.section_id || s.id;
                     return s;
                 });
 
@@ -831,7 +832,7 @@ const Template = () => {
                                                             {sectionList.map(s => (
                                                                 <div key={s.id} className="custom-select-option checkbox">
                                                                     <label className="vertical-middle line-h-18">
-                                                                        <input className="custom-select-option-checkbox" type="checkbox" name="section[]" checked={selectedSections.includes(s.id)} onChange={() => toggleSection(s.id)} /> {s.section}
+                                                                        <input className="custom-select-option-checkbox" type="checkbox" name="section[]" checked={selectedSections.some(sid => String(sid) === String(s.id))} onChange={() => toggleSection(s.id)} /> {s.section}
                                                                     </label>
                                                                 </div>
                                                             ))}
@@ -861,33 +862,22 @@ const Template = () => {
                                     </div>
 
                                     <div className="row">
-                                        <div className="col-md-3">
+                                        <div className="col-md-4">
                                             <div className="form-group">
                                                 <label>School Name</label>
                                                 <input autoFocus id="line" name="school_name" placeholder="" type="text" className="form-control" value={formData.school_name} onChange={handleInputChange} />
                                             </div>
                                         </div>
-                                        <div className="col-md-3">
+                                        <div className="col-md-4">
                                             <div className="form-group">
                                                 <label>Exam Center</label>
                                                 <input id="exam_center" name="exam_center" placeholder="" type="text" className="form-control" value={formData.exam_center} onChange={handleInputChange} />
                                             </div>
                                         </div>
-                                        <div className="col-md-3">
+                                        <div className="col-md-4">
                                             <div className="form-group">
                                                 <label>Printing Date</label>
                                                 <input id="date" name="date" placeholder="" type="text" className="form-control date" value={formData.date} onChange={handleInputChange} />
-                                            </div>
-                                        </div>
-                                        <div className="col-md-3">
-                                            <div className="form-group">
-                                                <label>Marksheet Type</label>
-                                                <select name="marksheet_type" className="form-control" value={formData.marksheet_type} onChange={handleInputChange}>
-                                                    <option value="exam_wise">Single Exam Without Term</option>
-                                                    <option value="all_term">All Terms</option>
-                                                    <option value="term_wise">Term Wise</option>
-                                                    <option value="without_term">Multiple Exams Without Term</option>
-                                                </select>
                                             </div>
                                         </div>
                                     </div>

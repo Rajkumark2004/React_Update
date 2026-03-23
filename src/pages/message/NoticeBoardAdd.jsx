@@ -84,14 +84,14 @@ const NoticeBoardAdd = () => {
 
             if (userStr) {
                 const user = JSON.parse(userStr);
-                createdBy = user.username || 'Super Admin';
-                createdId = user.id || '1';
+                createdBy = user.username || 'it is not dynamic';
+                createdId = user.id || 'it is not dynamic';
             }
 
             const formatDate = (dateStr) => {
                 if (!dateStr) return '';
                 const [year, month, day] = dateStr.split('-');
-                return `${day}-${month}-${year}`;
+                return `${year}/${month}/${day}`;
             };
 
             // Create FormData
@@ -100,8 +100,8 @@ const NoticeBoardAdd = () => {
             formPayload.append('date', formatDate(formData.date)); // Notice Date formatted as dd-mm-yyyy
             formPayload.append('publish_date', formatDate(formData.publish_date)); // Publish Date formatted as dd-mm-yyyy
             formPayload.append('message', formData.message);
-            formPayload.append('created_by', createdBy);
-            formPayload.append('created_id', createdId);
+            formPayload.append('created_by', createdId);
+            // formPayload.append('created_id', createdId);
 
 
 

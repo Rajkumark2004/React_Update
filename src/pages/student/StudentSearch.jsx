@@ -216,8 +216,8 @@ const StudentSearch = () => {
                                         <li><Link to="/student/create"><img src="/images/student_admission.png" alt="icon2" className="img-fluid" style={{ width: '20px' }} /> Student Admission</Link></li>
                                         <li><Link to="/admin/onlinestudent"><img src="/images/online_admission.png" alt="icon3" className="img-fluid" style={{ width: '20px' }} /> Online Admission</Link></li>
                                         <li><Link to="/student/disabled"><img src="/images/disabled_students.png" alt="icon4" className="img-fluid" style={{ width: '20px' }} /> Disabled Students</Link></li>
+                                        <li><Link to="/student/bulkdelete"><img src="/images/bulk_delete.png" alt="icon6" className="img-fluid" style={{ width: '20px' }} /> Bulk Delete</Link></li>
                                         {/* <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/student_details.png" alt="icon5" className="img-fluid" style={{ width: '20px' }} /> Multi Class Student</a></li>
-                                        <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/bulk_delete.png" alt="icon6" className="img-fluid" style={{ width: '20px' }} /> Bulk Delete</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/student_category.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Student Categories</a></li>
                                         <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/student_house.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Student House</a></li>*/}
                                         <li><Link to="/admin/disable-reason"><img src="/images/disabled_reason.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Disable Reason</Link></li>
