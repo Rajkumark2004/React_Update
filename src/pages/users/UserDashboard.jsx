@@ -577,8 +577,10 @@ const UserDashboard = () => {
                         margin-bottom: 5px;
                         text-transform: uppercase;
                         letter-spacing: 0.5px;
+                        margin-left: -30px !important;
                     }
                     .mob-details {
+                    margin-left: -30px !important;
                         display: flex;
                         justify-content: space-between;
                         font-size: 13px;
