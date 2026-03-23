@@ -7,17 +7,11 @@ import { useSession } from '../../context/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import { api_users } from '../../services/api_users';
 
-/**
- * UserLayout - Shared layout component for all user pages.
- * Renders Header and Sidebar ONCE and uses <Outlet> for child page content.
- * This prevents the sidebar/header from remounting on every navigation.
- */
 const UserLayout = () => {
     const navigate = useNavigate();
     const { currentSession, clearSession } = useSession();
     const sessionYear = currentSession?.session || '2024-25';
 
-    // Sidebar toggle state for mobile
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
