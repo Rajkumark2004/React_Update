@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import '../../utils/include_files.js';
 import { api_users } from '../../services/api_users';
@@ -31,6 +28,14 @@ const UserDashboard = () => {
     });
 
     const [isLoading, setIsLoading] = useState(true);
+    const [permissions, setPermissions] = useState(new Set());
+    const [permissionsLoaded, setPermissionsLoaded] = useState(false);
+
+    // Switch Class Modal State
+    const [isSwitchClassModalOpen, setIsSwitchClassModalOpen] = useState(false);
+    const [availableClasses, setAvailableClasses] = useState([]);
+    const [selectedClassId, setSelectedClassId] = useState('');
+    const [isSwitchingClass, setIsSwitchingClass] = useState(false);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -71,7 +76,8 @@ const UserDashboard = () => {
                         subjects_progress: Array.isArray(d.subjects_progress) ? d.subjects_progress : [],
                         timetable: d.timetable || {},
                         homework: Array.isArray(d.homework) ? d.homework : [],
-                        attendance_percentage: d.attendance_percentage || 0
+                        attendance_percentage: d.attendance_percentage || 0,
+                        class_name: d.student ? `${d.student.class || ''} (${d.student.section || ''})` : ""
                     });
                 }
             } catch (error) {
@@ -81,8 +87,35 @@ const UserDashboard = () => {
             }
         };
 
+        const fetchPermissions = async () => {
+            try {
+                const data = await api_users.getModulePermissions();
+                const set = new Set();
+                const storedUser = localStorage.getItem('user');
+                let userRole = 'student';
+                if (storedUser) {
+                    try {
+                        const parsed = JSON.parse(storedUser);
+                        userRole = (parsed.role || parsed.usertype || 'student').toLowerCase();
+                    } catch (e) { /* fallback */ }
+                }
+                const isParent = userRole === 'parent';
+                const list = isParent ? data.parentpermissionList : data.studentpermissionList;
+                (list || []).forEach(p => {
+                    const field = isParent ? p.parent : p.student;
+                    if (field === '1') set.add(p.short_code);
+                });
+                setPermissions(set);
+            } catch (err) {
+                console.error('Failed to fetch module permissions:', err);
+            } finally {
+                setPermissionsLoaded(true);
+            }
+        };
+
         fetchDashboardData();
-    }, []);
+        fetchPermissions();
+    }, [userData.student_id]);
 
     const sessionYear = currentSession?.session || '2024-25';
 
@@ -100,22 +133,70 @@ const UserDashboard = () => {
         }
     };
 
-
-
     const themeColor = "#9c68e4";
 
-    const MobileIcons = {
-        Homework: () => <i className="fa fa-pencil-square-o" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Attendance: () => <i className="fa fa-calendar-check-o" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Fees: () => <i className="fa fa-laptop" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Leave: () => <i className="fa fa-id-badge" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Timetable: () => <i className="fa fa-calendar" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Lesson: () => <i className="fa fa-clipboard" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Download: () => <i className="fa fa-download" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Notice: () => <i className="fa fa-envelope-o" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Transport: () => <i className="fa fa-map-marker" style={{ fontSize: '30px', color: '#000' }}></i>,
-        Examination: () => <i className="fa fa-file-text-o" style={{ fontSize: '30px', color: '#000' }}></i>
+    const allMobileMenus = [
+        { label: 'My Profile', url: '/user/profile', icon: 'student.png', alwaysVisible: true },
+        { label: 'Attendance', url: '/user/attendance', icon: 'attendance.png', permission: 'attendance' },
+        { label: 'Fees', url: '/user/getfees', icon: 'Fees.png', permission: 'fees' },
+        { label: 'Circular', url: '/user/notification', icon: 'noticeboard.png', permission: 'notice_board' },
+        { label: 'Student Assessment', url: '/user/studentassessment', icon: 'homework.png', permission: 'examinations' },
+        { label: 'Class Timetable', url: '/user/timetable', icon: 'timetable.png', alwaysVisible: true },
+        { label: 'Lesson Plan', url: '/user/syllabus', icon: 'homework.png', permission: 'lesson_plan' },
+        { label: 'Syllabus Status', url: '/user/syllabus/status', icon: 'syllabus.png', permission: 'syllabus_status' },
+        { label: 'Homework', url: '/user/homework', icon: 'homework.png', permission: 'homework' },
+        { label: 'Daily Assignment', url: '/user/daily_assignment', icon: 'homework.png', permission: 'homework' },
+        { label: 'Courses', url: '/user/onlinecourse', icon: 'courses.png', permission: 'online_course' },
+        { label: 'Apply Leave', url: '/user/apply_leave', icon: 'applyleave.png', permission: 'apply_leave' },
+        { label: 'Visitor Book', url: '/user/visitors', icon: 'visitorbook.png', permission: 'visitor_book' },
+        { label: 'Download Center', url: '/user/content/list', icon: 'download_resouces.png', permission: 'download_center' },
+        { label: 'State Examination', url: '/user/examresult', icon: 'helpdesk.png', permission: 'cbseexam' },
+        { label: 'Notice Board', url: '/user/notice_board', icon: 'noticeboard.png', permission: 'notice_board' },
+        { label: 'Transport Route', url: '/user/route', icon: 'transport.png', permission: 'transport_routes' },
+        { label: 'Hostel Rooms', url: '/user/hostelroom', icon: 'hostle.png', permission: 'hostel_rooms' }
+    ];
+
+    const filteredMenus = allMobileMenus.filter(menu => {
+        if (menu.alwaysVisible) return true;
+        if (!menu.permission) return true;
+        return permissions.has(menu.permission);
+    });
+
+    // Switch Class Handlers
+    const handleSwitchClassClick = async () => {
+        try {
+            const res = await api_users.getStudentSessionClasses();
+            if (res.status && res.data && res.data.studentclasses) {
+                setAvailableClasses(res.data.studentclasses);
+                if (res.data.studentclasses.length > 0) {
+                    const active = res.data.studentclasses.find(c => c.is_active === 'yes');
+                    setSelectedClassId(active ? active.student_session_id : res.data.studentclasses[0].student_session_id);
+                }
+                setIsSwitchClassModalOpen(true);
+            }
+        } catch (error) {
+            console.error('Failed to fetch class options:', error);
+            alert('Could not load class options. Please try again.');
+        }
     };
+
+    const handleUpdateClass = async () => {
+        if (!selectedClassId) return;
+        const selectedClass = availableClasses.find(c => String(c.student_session_id) === String(selectedClassId));
+        if (!selectedClass) return;
+
+        setIsSwitchingClass(true);
+        try {
+            await api_users.updateStudentClass(selectedClass.student_session_id, selectedClass.student_id);
+            setIsSwitchClassModalOpen(false);
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to update class:', error);
+            alert('Failed to switch class. Please try again.');
+            setIsSwitchingClass(false);
+        }
+    };
+
 
     // Get Today's classes
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -123,20 +204,17 @@ const UserDashboard = () => {
     const todayClasses = dashboardData.timetable[todayName] || [];
 
     return (
-        <div className="wrapper">
+        <>
             <style>{`
                 /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
                 .content-wrapper {
-                    background-color: #f4f4f4 !important;
-                    background-image: none !important;
                     margin-left: 80px !important;
-                    padding: 5px !important;
-                    min-height: calc(100vh - 50px) !important;
+                    padding: 0px 0px 0px 5px;
                 }
                 .main-footer {
                     margin-left: 80px !important;
                     padding-left: 5px !important;
-                }
+                }    
 
                 .sidebar {
                     height: calc(100vh - 50px) !important;
@@ -224,8 +302,7 @@ const UserDashboard = () => {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
-                    border: 1px solid #ddd;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.02);
                     margin-bottom: 25px;
                     min-height: 230px;
                 }
@@ -266,8 +343,7 @@ const UserDashboard = () => {
                 .notice-board-card {
                     background: #ffffff;
                     border-radius: 12px;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
-                    border: 1px solid #ddd;
+                    box-shadow: 0 2px 12px rgba(0,0,0,0.02);
                     min-height: 200px;
                     width: 100%;
                 }
@@ -318,8 +394,7 @@ const UserDashboard = () => {
                 .dashboard-card {
                     background: #ffffff;
                     border-radius: 8px;
-                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
-                    border: 1px solid #ddd;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
                     margin-bottom: 25px;
                     min-height: 290px;
                 }
@@ -420,7 +495,7 @@ const UserDashboard = () => {
                 }
 
                 /* MOBILE DASHBOARD UI */
-                @media (min-width: 50px) and (max-width: 766px) {
+                @media (min-width: 50px) and (max-width: 770px) {
                     .main-header, .main-sidebar, .content-wrapper, .main-footer, .mobile-bottom-nav, #bottom-menu {
                         display: none !important;
                     }
@@ -446,38 +521,38 @@ const UserDashboard = () => {
                         z-index: 10;
                     }
                     .mob-logo {
-                        height: 40px;
+                        height: 30px;
                         object-fit: contain;
                     }
                     .mob-header-icon {
                         position: absolute;
                         right: 20px;
                         font-size: 20px;
-                        color: #555;
+                        color: #000;
                     }
                     .mob-profile-section {
                         position: relative;
                         min-height: 110px;
                         padding-top: 20px;
-                        margin-bottom: 5px;
+                        margin-bottom: 20px;
                         z-index: 5;
                     }
                     .mob-profile-bar {
                         background: #cfcfcf;
-                        height: 60px;
+                        height: 70px;
                         display: flex;
                         flex-direction: column;
                         justify-content: center;
-                        padding-left: 110px;
+                        padding-left: 180px;
                         padding-right: 20px;
                         margin-top: 25px;
                     }
                     .mob-avatar-wrapper {
                         position: absolute;
-                        top: 15px;
-                        left: 25px;
-                        width: 70px;
-                        height: 70px;
+                        top: 20px;
+                        left: 35px;
+                        width: 80px;
+                        height: 80px;
                         background-color: #ffefba; 
                         border-radius: 50%;
                         display: flex;
@@ -486,8 +561,8 @@ const UserDashboard = () => {
                         z-index: 10;
                     }
                     .mob-avatar-wrapper i {
-                        font-size: 40px;
-                        color: #fbbc04;
+                        font-size: 45px;
+                        color: #000;
                     }
                     .mob-profile-content {
                         display: flex;
@@ -496,17 +571,17 @@ const UserDashboard = () => {
                     }
                     .mob-name {
                         text-align: left;
-                        font-size: 16px;
+                        font-size: 20px;
                         font-weight: 600;
                         color: #333;
-                        margin-bottom: 2px;
+                        margin-bottom: 5px;
                         text-transform: uppercase;
                         letter-spacing: 0.5px;
                     }
                     .mob-details {
                         display: flex;
                         justify-content: space-between;
-                        font-size: 12px;
+                        font-size: 13px;
                         color: #444;
                     }
                     .mob-details span {
@@ -560,7 +635,7 @@ const UserDashboard = () => {
                         bottom: 0;
                         left: 0;
                         right: 0;
-                        height: 60px;
+                        height: 50px;
                         background: #ffffff;
                         display: flex;
                         justify-content: center;
@@ -585,37 +660,217 @@ const UserDashboard = () => {
                     }
                     .mob-footer-icon-wrapper i {
                         font-size: 16px;
-                        color: #fbbc04;
+                        color: #000;
+                    }
+
+                    /* Switch Class Modal Styles */
+                    .child-modal-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.6);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 10000;
+                        backdrop-filter: blur(4px);
+                    }
+
+                    .child-modal-card {
+                        background: white;
+                        width: 90%;
+                        max-width: 440px;
+                        border-radius: 24px;
+                        overflow: hidden;
+                        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                    }
+
+                    .child-modal-header {
+                        background: linear-gradient(135deg, #8f46d8 0%, #7b3fe4 100%);
+                        padding: 30px 20px;
+                        color: white;
+                        text-align: center;
+                    }
+
+                    .child-modal-header h3 {
+                        margin: 0;
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: #fff;
+                    }
+
+                    .child-modal-header p {
+                        margin: 8px 0 0;
+                        opacity: 0.9;
+                        font-size: 14px;
+                        color: #fff;
+                    }
+
+                    .child-list {
+                        padding: 20px;
+                        max-height: 400px;
+                        overflow-y: auto;
+                    }
+
+                    .child-item {
+                        display: flex;
+                        align-items: center;
+                        padding: 16px;
+                        margin-bottom: 12px;
+                        border: 2px solid #f3f4f6;
+                        border-radius: 16px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        position: relative;
+                        text-align: left;
+                    }
+
+                    .child-item:hover {
+                        border-color: #8f46d8;
+                        background: #f9f5ff;
+                    }
+
+                    .child-item.active {
+                        border-color: #8f46d8;
+                        background: #f9f5ff;
+                    }
+
+                    .child-avatar {
+                        width: 50px;
+                        height: 50px;
+                        background: #f3e8ff;
+                        color: #8f46d8;
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 16px;
+                        flex-shrink: 0;
+                    }
+
+                    .child-info {
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                    }
+
+                    .child-name {
+                        font-weight: 600;
+                        font-size: 17px;
+                        color: #111827;
+                    }
+
+                    .child-class {
+                        font-size: 14px;
+                        color: #6b7280;
+                    }
+
+                    .current-badge {
+                        position: absolute;
+                        top: 12px;
+                        right: 40px;
+                        background: #ecfdf5;
+                        color: #059669;
+                        font-size: 11px;
+                        font-weight: 600;
+                        padding: 2px 8px;
+                        border-radius: 20px;
+                    }
+
+                    .child-select-indicator {
+                        color: #d1d5db;
+                    }
+
+                    .child-item.active .child-select-indicator {
+                        color: #8f46d8;
+                    }
+
+                    .child-modal-footer {
+                        padding: 24px 20px 30px;
+                        display: flex;
+                        gap: 12px;
+                    }
+
+                    .modal-submit-btn {
+                        flex: 2;
+                        padding: 14px;
+                        background: #8f46d8;
+                        color: white;
+                        border: none;
+                        border-radius: 14px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                    }
+
+                    .modal-submit-btn:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                    }
+
+                    .modal-cancel-btn {
+                        flex: 1;
+                        padding: 14px;
+                        background: #f3f4f6;
+                        color: #4b5563;
+                        border: none;
+                        border-radius: 14px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;    
                     }
                 }
-                @media (min-width: 767px) {
+                @media (min-width: 770px) {
                     .mobile-dashboard-ui {
                         display: none !important;
                     }
                 }
+                
+                /* Extracted UserDashboard Classes */
+                .ud-content-top-margin { margin-top: 40px; }
+                .ud-welcome-heading { margin-left: 25px !important; }
+                .ud-dashboard-card-flex { display: flex; flex-direction: column; }
+                .ud-shrink-0 { flex-shrink: 0; }
+                .ud-notice-body-scroll { flex: 1; overflow-y: auto; max-height: 180px; }
+                .ud-notice-no-data { margin-top: 20px; }
+                .ud-notice-item-border { border-bottom: 1px solid #f1f1f1; }
+                .ud-notice-item-no-border { border-bottom: none; }
+                .ud-flex-1 { flex: 1; }
+                .ud-card-body-nopad { flex: 1; padding: 0; }
+                .ud-subject-prog-span { margin-right: 85px; }
+                .ud-subject-prog-scroll { max-height: 240px; overflow-y: auto; }
+                .ud-card-body-scroll { flex: 1; overflow-y: auto; max-height: 240px; padding: 15px 20px; }
+                
+                .ud-day-heading { font-size: 14px; font-weight: bold; padding-left: 8px; margin-bottom: 12px; }
+                .ud-timetable-card { background-color: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #f1f1f1; padding: 7px 12px; margin-bottom: 10px; }
+                .ud-tt-avatar-wrap { flex-shrink: 0; margin-right: 12px; }
+                .ud-tt-avatar-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #f8f9fa; }
+                .ud-tt-info-wrap { flex: 1; min-width: 0; }
+                .ud-tt-subject { color: #333; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .ud-tt-teacher { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+                .ud-tt-right-info { flex-shrink: 0; text-align: right; margin-left: 10px; }
+                .ud-tt-room { font-size: 12px; font-weight: bold; }
+                .ud-tt-time { font-size: 11px; color: #999; margin-top: 2px; }
+                
+                .ud-hw-subject { color: #333; }
+                
+                .ud-mob-header-actions { position: absolute; right: 15px; }
+                .ud-mob-exchange-icon { cursor: pointer; font-size: 20px; color: #000; }
+                .ud-mob-loading { width: 100%; text-align: center; grid-column: 1 / -1; padding: 40px 0; color: #999; }
+                .ud-mob-spinner { font-size: 24px; }
+                .ud-mob-menu-icon { width: 28px; height: auto; filter: brightness(0); }
+                .ud-mob-child-user-icon { font-size: 24px; }
             `}</style>
-
-
-
-            <Header
-                userData={userData}
-                handleLogout={handleLogout}
-                sessionYear={sessionYear}
-                headerLogoUrl={userData.adminLogoUrl}
-            />
-
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/user/dashboard"
-            />
-
-            <div className="content-wrapper" style={{ marginTop: '40px' }}>
+            <div className="content-wrapper ud-content-top-margin">
                 <section className="content">
                     <div className="row">
                         <div className="col-lg-8 col-md-8">
                             <div className="welcome-card">
                                 <div className="welcome-text">
-                                    <h3 style={{ marginLeft: '25px' }}>Hello {userData.name}</h3>
+                                    <h3 className="ud-welcome-heading">Hello {userData.name}</h3>
                                     <p>Check your personalized profile</p>
                                     <Link to="/user/profile" className="btn-check-now">Check Now</Link>
                                 </div>
@@ -626,23 +881,22 @@ const UserDashboard = () => {
                         </div>
                         <div className="col-lg-4 col-md-4">
                             <div className="notice-board-container">
-                                <div className="notice-board-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <div className="notice-header" style={{ flexShrink: 0 }}>
+                                <div className="notice-board-card ud-dashboard-card-flex">
+                                    <div className="notice-header ud-shrink-0">
                                         <h3>Notice Board</h3>
                                     </div>
-                                    <div className="notice-body" style={{ flex: 1, overflowY: 'auto', maxHeight: '180px' }}>
+                                    <div className="notice-body ud-notice-body-scroll">
                                         {dashboardData.notifications.length === 0 ? (
-                                            <p className="text-muted text-center" style={{ marginTop: '20px' }}>No new notifications</p>
+                                            <p className="text-muted text-center ud-notice-no-data">No new notifications</p>
                                         ) : (
                                             dashboardData.notifications.map((note, idx) => (
                                                 <div
-                                                    className="notice-item"
+                                                    className={`notice-item ${idx !== dashboardData.notifications.length - 1 ? 'ud-notice-item-border' : 'ud-notice-item-no-border'}`}
                                                     key={idx}
-                                                    style={{ borderBottom: idx !== dashboardData.notifications.length - 1 ? '1px solid #f1f1f1' : 'none' }}
                                                     onClick={() => navigate('/user/notice_board')}
                                                 >
                                                     <i className="fa fa-envelope-o"></i>
-                                                    <span style={{ flex: 1 }}>{note.title} <br /><small className="text-muted">{note.date}</small></span>
+                                                    <span className="ud-flex-1">{note.title} <br /><small className="text-muted">{note.date}</small></span>
                                                 </div>
                                             ))
                                         )}
@@ -654,18 +908,18 @@ const UserDashboard = () => {
 
                     <div className="row">
                         <div className="col-lg-4 col-md-4">
-                            <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                                <div className="card-title-bar" style={{ flexShrink: 0 }}>
+                            <div className="dashboard-card ud-dashboard-card-flex">
+                                <div className="card-title-bar ud-shrink-0">
                                     <h3>Subject Progress</h3>
                                 </div>
-                                <div className="card-body" style={{ flex: 1, padding: 0 }}>
+                                <div className="card-body ud-card-body-nopad">
                                     {dashboardData.subjects_progress.length > 0 && (
                                         <div className="subject-progress-header">
                                             <span>Subject</span>
-                                            <span style={{ marginRight: '85px' }}>Progress</span>
+                                            <span className="ud-subject-prog-span">Progress</span>
                                         </div>
                                     )}
-                                    <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                                    <div className="ud-subject-prog-scroll">
                                         {dashboardData.subjects_progress.length === 0 ? (
                                             <div className="empty-state">
                                                 <img src="/images/addnewitem.svg" alt="No data" />
@@ -701,11 +955,11 @@ const UserDashboard = () => {
                             </div>
                         </div>
                         <div className="col-lg-4 col-md-4">
-                            <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                                <div className="card-title-bar" style={{ flexShrink: 0 }}>
+                            <div className="dashboard-card ud-dashboard-card-flex">
+                                <div className="card-title-bar ud-shrink-0">
                                     <h3>Upcoming Classes</h3>
                                 </div>
-                                <div className="card-body" style={{ flex: 1, overflowY: 'auto', maxHeight: '240px', padding: '15px 20px' }}>
+                                <div className="card-body ud-card-body-scroll">
                                     {Object.keys(dashboardData.timetable).length === 0 ? (
                                         <div className="empty-state">
                                             <p className="text-muted">No classes scheduled.</p>
@@ -716,30 +970,30 @@ const UserDashboard = () => {
                                             if (dayClasses.length === 0) return null;
                                             return (
                                                 <div key={day} className="mb-4">
-                                                    <h5 style={{ fontSize: '14px', fontWeight: 'bold', color: themeColor, borderLeft: `3px solid ${themeColor}`, paddingLeft: '8px', marginBottom: '12px' }}>{day}</h5>
+                                                    <h5 className="ud-day-heading" style={{ color: themeColor, borderLeft: `3px solid ${themeColor}` }}>{day}</h5>
                                                     {dayClasses.map((cls, idx) => (
-                                                        <div key={idx} className="timetable-card d-flex align-items-center" style={{ backgroundColor: '#fff', borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', border: '1px solid #f1f1f1', padding: '7px 12px', marginBottom: '10px' }}>
+                                                        <div key={idx} className="timetable-card d-flex align-items-center ud-timetable-card">
 
                                                             {/* Teacher Avatar */}
-                                                            <div style={{ flexShrink: 0, marginRight: '12px' }}>
+                                                            <div className="ud-tt-avatar-wrap">
                                                                 <img
                                                                     src={cls.image && userData.baseUrl ? `${userData.baseUrl}uploads/staff_images/${cls.image}` : "/images/default_image.jpg"}
                                                                     alt="Teacher"
-                                                                    style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #f8f9fa' }}
+                                                                    className="ud-tt-avatar-img"
                                                                     onError={(e) => { e.target.src = "/images/default_image.jpg"; }}
                                                                 />
                                                             </div>
 
                                                             {/* Left Info: Subject & Teacher */}
-                                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                                                <h6 className="m-0 font-weight-bold" style={{ color: '#333', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cls.subject_name}</h6>
-                                                                <small className="text-muted" style={{ fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>{cls.name} {cls.surname}</small>
+                                                            <div className="ud-tt-info-wrap">
+                                                                <h6 className="m-0 font-weight-bold ud-tt-subject">{cls.subject_name}</h6>
+                                                                <small className="text-muted ud-tt-teacher">{cls.name} {cls.surname}</small>
                                                             </div>
 
                                                             {/* Right Info: Room & Time */}
-                                                            <div style={{ flexShrink: 0, textAlign: 'right', marginLeft: '10px' }}>
-                                                                <div style={{ fontSize: '12px', fontWeight: 'bold', color: themeColor }}>{cls.room_no ? `Room: ${cls.room_no}` : '--'}</div>
-                                                                <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>{cls.time_from} - {cls.time_to}</div>
+                                                            <div className="ud-tt-right-info">
+                                                                <div className="ud-tt-room" style={{ color: themeColor }}>{cls.room_no ? `Room: ${cls.room_no}` : '--'}</div>
+                                                                <div className="ud-tt-time">{cls.time_from} - {cls.time_to}</div>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -751,11 +1005,11 @@ const UserDashboard = () => {
                             </div>
                         </div>
                         <div className="col-lg-4 col-md-4">
-                            <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                                <div className="card-title-bar" style={{ flexShrink: 0 }}>
+                            <div className="dashboard-card ud-dashboard-card-flex">
+                                <div className="card-title-bar ud-shrink-0">
                                     <h3>Pending Homework</h3>
                                 </div>
-                                <div className="card-body" style={{ flex: 1, overflowY: 'auto', maxHeight: '240px', padding: '15px 20px' }}>
+                                <div className="card-body ud-card-body-scroll">
                                     {dashboardData.homework.length === 0 ? (
                                         <div className="empty-state">
                                             <img src="/images/addnewitem.svg" alt="No data" />
@@ -764,7 +1018,7 @@ const UserDashboard = () => {
                                     ) : (
                                         dashboardData.homework.map((hw, idx) => (
                                             <div key={idx} className="mb-3 border-bottom pb-2">
-                                                <h6 className="font-weight-bold mb-1" style={{ color: '#333' }}>{hw.subject_name}</h6>
+                                                <h6 className="font-weight-bold mb-1 ud-hw-subject">{hw.subject_name}</h6>
                                                 <small className="text-muted d-block"><i className="fa fa-calendar"></i> Due: {hw.homework_date}</small>
                                             </div>
                                         ))
@@ -775,22 +1029,22 @@ const UserDashboard = () => {
                     </div>
                 </section>
             </div>
-            <Footer />
-
             {/* MOBILE DASHBOARD UI */}
             <div className="mobile-dashboard-ui">
                 <div className="mob-header">
                     <img src={userData.adminLogoUrl || "/images/wisibles_logo.png"} alt="Wisibles" className="mob-logo" />
-                    <i className="fa fa-exchange mob-header-icon"></i>
+                    <div className="mob-header-actions ud-mob-header-actions">
+                        <i className="fa fa-exchange ud-mob-exchange-icon" onClick={handleSwitchClassClick}></i>
+                    </div>
                 </div>
 
                 <div className="mob-profile-section">
                     <div className="mob-profile-bar">
                         <div className="mob-profile-content">
-                            <div className="mob-name">{userData.name}</div>
+                            <div className="mob-name">{userData.name || 'User'}</div>
                             <div className="mob-details">
-                                <span>Adm No: {userData.admission_no || '1005'}</span>
-                                <span>Class: {dashboardData.class_name || 'Nursery (A)'}</span>
+                                <span>Adm No: {userData.admission_no || ''}</span>
+                                <span>Class: {dashboardData.class_name || ''}</span>
                             </div>
                         </div>
                     </div>
@@ -800,46 +1054,24 @@ const UserDashboard = () => {
                 </div>
 
                 <div className="mob-grid-container">
-                    <Link to="/user/homework" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Homework /> </div>
-                        <span>Homework</span>
-                    </Link>
-                    <Link to="/user/attendance" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Attendance /> </div>
-                        <span>Attendance</span>
-                    </Link>
-                    <Link to="/user/getfees" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Fees /> </div>
-                        <span>Fees</span>
-                    </Link>
-                    <Link to="/user/apply_leave" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Leave /> </div>
-                        <span>Leave</span>
-                    </Link>
-                    <Link to="/user/timetable" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Timetable /> </div>
-                        <span>Timetable</span>
-                    </Link>
-                    <Link to="/user/syllabus" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Lesson /> </div>
-                        <span>Lesson</span>
-                    </Link>
-                    <Link to="/user/content/list" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Download /> </div>
-                        <span>Download</span>
-                    </Link>
-                    <Link to="/user/notice_board" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Notice /> </div>
-                        <span>Notice</span>
-                    </Link>
-                    <Link to="/user/route" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Transport /> </div>
-                        <span>Transport</span>
-                    </Link>
-                    <Link to="/user/examresult" className="mob-grid-card">
-                        <div className="mob-icon"> <MobileIcons.Examination /> </div>
-                        <span>Examination</span>
-                    </Link>
+                    {!permissionsLoaded ? (
+                        <div className="ud-mob-loading">
+                            <i className="fa fa-spinner fa-spin ud-mob-spinner"></i>
+                        </div>
+                    ) : (
+                        filteredMenus.map((menu, idx) => (
+                            <Link key={idx} to={menu.url} className="mob-grid-card">
+                                <div className="mob-icon">
+                                    <img
+                                        src={`/images/${menu.icon}`}
+                                        alt={menu.label}
+                                        className="ud-mob-menu-icon"
+                                    />
+                                </div>
+                                <span>{menu.label}</span>
+                            </Link>
+                        ))
+                    )}
                 </div>
 
                 <Link to="/user/profile" className="mob-footer">
@@ -849,7 +1081,60 @@ const UserDashboard = () => {
                     <span>My Profile</span>
                 </Link>
             </div>
-        </div>
+
+            {/* Switch Class Modal */}
+            {isSwitchClassModalOpen && (
+                <div className="child-modal-overlay">
+                    <div className="child-modal-card">
+                        <div className="child-modal-header">
+                            <h3>Switch Class</h3>
+                            <p>Please select a student profile to continue</p>
+                        </div>
+
+                        <div className="child-list">
+                            {availableClasses.map((cl) => (
+                                <div
+                                    key={cl.student_session_id}
+                                    className={`child-item ${String(selectedClassId) === String(cl.student_session_id) ? 'active' : ''}`}
+                                    onClick={() => setSelectedClassId(cl.student_session_id)}
+                                >
+                                    <div className="child-avatar">
+                                        <i className="fa fa-user ud-mob-child-user-icon"></i>
+                                    </div>
+                                    <div className="child-info">
+                                        <div className="child-name">{cl.firstname} {cl.lastname}</div>
+                                        <div className="child-class">{cl.class} ({cl.section})</div>
+                                    </div>
+                                    {cl.is_active === 'yes' && <span className="current-badge">Active</span>}
+                                    <div className="child-select-indicator">
+                                        <i className="fa fa-chevron-right"></i>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="child-modal-footer">
+                            <button className="modal-cancel-btn" onClick={() => setIsSwitchClassModalOpen(false)}>
+                                Cancel
+                            </button>
+                            <button
+                                className="modal-submit-btn"
+                                onClick={handleUpdateClass}
+                                disabled={isSwitchingClass}
+                            >
+                                {isSwitchingClass ? (
+                                    <>
+                                        <i className="fa fa-spinner fa-spin"></i> Switching...
+                                    </>
+                                ) : (
+                                    'Save Changes'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 
