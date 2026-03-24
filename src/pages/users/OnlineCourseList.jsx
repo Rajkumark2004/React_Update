@@ -1,9 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from './user_components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { api_users } from '../../services/api_users';
 import '../../utils/include_files.js';
@@ -106,104 +102,14 @@ const OnlineCourseList = () => {
     };
 
     return (
-        <div className="wrapper">
+        <>
             <style>{`
-                /* Hide standard search and session UI */
-                .sessionul, .search-form2, .search-form {
-                    display: none !important;
-                }
-
-                /* NAVBAR USER MENU DROPDOWN FIX */
-                .navbar-custom-menu {
-                   overflow: visible !important;
-                }
-                .navbar-custom-menu .nav {
-                   overflow: visible !important;
-                }
-                .navbar-custom-menu .nav > li:not(.user-menu) {
-                    display: none !important;
-                }
-                .navbar-custom-menu .nav > li.user-menu {
-                    display: block !important;
-                    overflow: visible !important;
-                }
-                
-                /* Ensure dropdown menu is on top of everything */
-                .dropdown-user {
-                    display: none;
-                    z-index: 9999 !important;
-                    position: absolute !important;
-                    right: 0 !important;
-                    top: 100% !important;
-                }
-                .user-menu.open .dropdown-user {
-                    display: block !important;
-                }
-
-                /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
-                .content-wrapper, .main-footer {
-                    margin-left: 80px !important;
-                }
-
-                .sidebar {
-                    height: calc(100vh - 50px) !important;
-                    overflow-y: auto !important;
-                    overflow-x: hidden !important;
-                    padding-bottom: 20px !important;
-                }
-
-                .sidebar::-webkit-scrollbar {
-                    width: 5px;
-                }
-                .sidebar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .sidebar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.2);
-                    border-radius: 10px;
-                }
-
-                .sidebar-menu > li > a {
-                    padding: 12px 5px !important;
-                    text-align: center !important;
-                }
-                
-                .sidebar-menu li img {
-                    filter: brightness(0) invert(1) !important;
-                    width: 24px !important;
-                    margin: 0 auto !important;
-                }
-
-                .sidebar-menu > li > a span {
-                    color: #ffffff !important;
-                    font-weight: 500 !important;
-                    margin-top: 5px !important;
-                    display: block !important;
-                    font-size: 10px !important;
-                    line-height: 1.2 !important;
-                }
-
-                .sidebar-menu > li:hover > a, .sidebar-menu > li.active > a {
-                    background: rgba(255, 255, 255, 0.1) !important;
-                }
-
-                .content-wrapper {
-                    background-color: #f7f8fa !important;
-                    padding-top: 25px !important;
-                    margin-top: 50px !important;
-                    min-height: calc(100vh - 50px);
-                }
-
-                .box-title{
-                    font-size: 18px !important;
-                    font-weight: 200 !important;
-                }
                 /* Online Course Page Styles */
                 .oc-box {
                     background: #fff;
                     border-radius: 4px;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                    margin: 25px 10px 15px 10px;
+                    margin: 25px 5px 15px 10px;
                 }
                 .oc-header {
                     display: flex;
@@ -253,6 +159,10 @@ const OnlineCourseList = () => {
                     align-items: center;
                     z-index: 2000;
                 }
+                    .content-wrapper {
+                        margin-left: 80px !important;
+                         padding:40px 0px 10px 2px !important;
+                    }
                 .modal-content {
                     margin-top: 60px;
                     background: #fff;
@@ -304,34 +214,75 @@ const OnlineCourseList = () => {
                     border: 0;
                 }
 
-                @media (max-width: 991px) {
+                @media (max-width: 769px) {
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
+                    /* Padding balancing for mobile */
+                    .content-wrapper { padding-left: 0px !important; padding-right: 0px !important; }
+                    .content { padding-left: 10px !important; padding-right: 10px !important; }
+                    /* Top padding reduction */
+                    .content-wrapper { margin-top: 10px !important; padding-top: 0px !important; }
+                    .oc-box { margin-top: 5px !important; }
+                    
+                    .mobile-box-back-btn {
+                        display: flex !important;
+                        align-items: center;
+                        gap: 5px;
+                        background: ${themeColor};
+                        color: #fff !important;
+                        padding: 6px 15px;
+                        border: none;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        position: absolute !important;
+                        top: 8px !important;
+                        right: 10px !important;
+                        z-index: 100 !important;
+                        text-decoration: none !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .content {
+                         padding:53px 5px 10px 0px !important;
+                    }
+                    .oc-header {
+                        padding-right: 80px !important;
+                    }
+                    .ocl-th-action,
+                    .ocl-td-action {
+                        padding-right: 8px !important;
+                        white-space: nowrap !important;
+                    }
+                    .table-responsive {
+                        overflow-x: hidden !important;
+                    }
+                }
+                @media (min-width: 770px) {
+                    .mobile-box-back-btn { display: none !important; }
                 }
 
                 /* Sidebar mega menu cards logic override if needed */
                 .fixedmenu { display: none !important; }
+
+                /* OnlineCourseList page specific */
+                .ocl-content { padding: 3px; }
+                .ocl-header-wrap { position: relative; }
+                .ocl-th-full { width: 100%; }
+                .ocl-th-action { text-align: right; padding-right: 15px; }
+                .ocl-td-action { text-align: right; padding-right: 15px; }
+                .ocl-view-btn { color: #0084b5; background: none; border: none; cursor: pointer; }
+                .ocl-empty-cell { text-align: center; padding: 20px; }
             `}</style>
-
-            <Header
-                userData={userData}
-                handleLogout={handleLogout}
-                sessionYear={sessionYear}
-                headerLogoUrl={userData.adminLogoUrl}
-            />
-
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/user/onlinecourse"
-            />
-
             <div className="content-wrapper">
-                <section className="content" style={{ padding: "3px" }}>
+                <section className="content ocl-content">
 
                     <div className="oc-box">
-                        <div className="oc-header">
+                        <div className="oc-header ocl-header-wrap">
+                            <button className="mobile-box-back-btn" onClick={() => navigate('/user/onlinecourse')}>
+                                <i className="fa fa-arrow-left"></i> Back
+                            </button>
                             <h3 className="box-title">Video List</h3>
                         </div>
                         <div className="oc-table-wrapper">
@@ -339,8 +290,8 @@ const OnlineCourseList = () => {
                                 <table className="oc-table">
                                     <thead>
                                         <tr>
-                                            <th style={{ width: '100%' }}>Title</th>
-                                            <th style={{ textAlign: 'right', paddingRight: '15px' }}>Action</th>
+                                            <th className="ocl-th-full">Title</th>
+                                            <th className="ocl-th-action">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -348,17 +299,10 @@ const OnlineCourseList = () => {
                                             videoList.map((video) => (
                                                 <tr key={video.id}>
                                                     <td>{video.title}</td>
-                                                    <td style={{ textAlign: 'right', paddingRight: '15px' }}>
+                                                    <td className="ocl-td-action">
                                                         <button
                                                             onClick={() => openVideo(video.url)}
-                                                            style={{
-                                                                color: '#0084b5',
-                                                                background: 'none',
-                                                                border: 'none',
-                                                                cursor: 'pointer',
-                                                                position: 'relative',
-                                                                left: '10px'
-                                                            }}
+                                                            className="ocl-view-btn"
                                                         >
                                                             <i className="fa fa-eye"></i>
                                                         </button>
@@ -367,7 +311,7 @@ const OnlineCourseList = () => {
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan="2" style={{ textAlign: 'center', padding: '20px' }}>No videos found</td>
+                                                <td colSpan="2" className="ocl-empty-cell">No videos found</td>
                                             </tr>
                                         )}
                                     </tbody>
@@ -398,9 +342,7 @@ const OnlineCourseList = () => {
                     </div>
                 </div>
             )}
-
-            <Footer />
-        </div>
+        </>
     );
 };
 
