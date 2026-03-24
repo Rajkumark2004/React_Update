@@ -527,19 +527,20 @@ const UserHostelRoom = () => {
                     .export-icons {
                         order: 1 !important;
                         justify-content: center !important;
-                        width: 50% !important;
+                        width: 170px !important;
                         border-bottom: 1px solid #ccc !important;
                     }
                     .search-box {
                         order: 2 !important;
-                        width: 50% !important;
+                        width: 170px !important;
                         display: flex !important;
                         justify-content: center !important;
+                       
                     }
                     .search-box input {
                         width: 100% !important;
                         max-width: 320px !important;
-                        text-align: center !important;
+                        text-align: start !important;
                     }
                 }
                 @media (min-width: 770px) {
