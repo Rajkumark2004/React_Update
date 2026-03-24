@@ -1,14 +1,10 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from './user_components/Footer';
-import TopSidebar from './user_components/TopSidebar';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSession } from '../../context/SessionContext';
 import { api_users } from '../../services/api_users';
 import '../../utils/include_files.js';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport.js';
 
 const ApplyLeave = () => {
     const navigate = useNavigate();
@@ -284,8 +280,85 @@ const ApplyLeave = () => {
         }
     };
 
+    const columns = [
+        { key: 'class', label: 'Class' },
+        { key: 'section', label: 'Section' },
+        { key: 'apply_date', label: 'Apply Date' },
+        { key: 'from_date', label: 'From Date' },
+        { key: 'to_date', label: 'To Date' },
+        { key: 'reason', label: 'Reason' },
+        { key: 'status', label: 'Status' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowColumnDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getFormattedData = () => {
+        return buildExportData(
+            columns,
+            visibleColumns,
+            sortedList,
+            (row, key) => {
+                if (key === 'status') {
+                    return getStatusInfo(row[key])?.label || '';
+                }
+                return row[key];
+            }
+        );
+    };
+
+    const handleCopy = () => {
+        const { headers, rows } = getFormattedData();
+        copyToClipboard(headers, rows);
+    };
+
+    const handleExportCSV = () => {
+        const { headers, rows } = getFormattedData();
+        downloadCSV(headers, rows, 'ApplyLeave.csv');
+    };
+
+    const handleExportExcel = () => {
+        const { headers, rows } = getFormattedData();
+        downloadExcel(headers, rows, 'ApplyLeave.xls');
+    };
+
+    const handleExportPDF = () => {
+        const { headers, rows } = getFormattedData();
+        downloadPDF(headers, rows, 'ApplyLeave.pdf', 'Leave List');
+    };
+
+    const handlePrint = () => {
+        const { headers, rows } = getFormattedData();
+        printTable(headers, rows, 'Leave List');
+    };
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) {
+            newVisible.delete(key);
+        } else {
+            newVisible.add(key);
+        }
+        setVisibleColumns(newVisible);
+    };
+
+    const handleRestoreVisibility = () => {
+        setVisibleColumns(new Set(columns.map(c => c.key)));
+    };
+
     return (
-        <div className="wrapper">
+        <>
             <style>{`
                 /* Hide standard search and session UI */
                 .sessionul, .search-form2, .search-form {
@@ -320,9 +393,14 @@ const ApplyLeave = () => {
                 }
 
                 /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
-                .content-wrapper, .main-footer {
+                .content-wrapper{
                     margin-left: 80px !important;
+                    padding-right: 0px !important;
                 }
+                .main-footer {
+                margin-left: 80px !important;
+                padding-right: 15px !important;
+                }    
 
                 .sidebar {
                     height: calc(100vh - 50px) !important;
@@ -367,53 +445,60 @@ const ApplyLeave = () => {
                 }
 
                 .content-wrapper {
-                    background-color: #f7f8fa !important;
-                    padding-top: 25px !important;
-                    margin-top: 50px !important;
+                    background-color: #f4f4f4 !important;
+                    background-image: none !important;
+                    padding: 5px !important;
+                    margin-left: 80px !important;
+                    margin-top: 40px !important;
                     min-height: calc(100vh - 50px);
                 }
 
                 /* TABLE BOX STYLING */
                 .box-leave {
-                    background: #fff;
-                    border-radius: 4px;
-                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                    margin: 25px 10px 15px 10px;
+                    background: #fff !important;
+                    border-radius: 8px !important;
+                    margin: 25px 5px 15px 10px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+                    border: 1px solid #ddd !important;
+                    overflow: hidden;
                 }
-
                 .box-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     padding: 10px 15px;
-                    border-bottom: 1px solid #f4f4f4;
+                    background: #fff !important;
+                    border-bottom: 2px solid #eee !important;
+                    border-radius: 4px 4px 0 0;
                 }
 
                 .box-title {
-                    margin: 0;
-                    font-size: 18px;
+                   margin: 0;
+                    font-size: 20px;
                     font-weight: 500;
                     color: #333;
-                    flex: 1; 
+                    flex: 1;
                 }
-
                 .add-btn {
-                    background: ${themeColor};
-                    color: #fff;
-                    border: none;
-                    border-radius: 20px;
-                    padding: 6px 15px;
-                    font-size: 13px;
+                    background: ${themeColor} !important;
+                    color: #fff !important;
+                    border: none !important;
+                    border-radius: 25px !important;
+                    padding: 5px 12px !important;
+                    font-size: 13px !important;
                     display: flex;
                     align-items: center;
                     gap: 5px;
-                   
                     cursor: pointer;
                     font-weight: 500;
+                    text-decoration: none;
+                    white-space: nowrap;
                 }
 
                 .box-body {
                     padding: 5px 5px 0px 5px;
+                    background: #fff !important;
+                    border-radius: 0 0 4px 4px;
                 }
 
                 .table-controls {
@@ -459,6 +544,66 @@ const ApplyLeave = () => {
                     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                     background: #e7e7e7;
                     border-radius: 2px;
+                }
+
+                .column-dropdown {
+                    position: absolute;
+                    right: 0;
+                    top: 100%;
+                    background: #7d7d7d;
+                    border-radius: 4px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    min-width: 180px;
+                    overflow: hidden;
+                    padding: 0;
+                    margin-top: 5px;
+                    border: 1px solid rgba(0,0,0,0.1);
+                }
+
+                .column-item {
+                    padding: 4px 15px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    color: #fff;
+                    background: #7d7d7d;
+                    transition: all 0.2s;
+                    display: block;
+                    width: 100%;
+                    text-align: left;
+                    border: none;
+                    border-bottom: 1px solid rgba(255,255,255,0.1);
+                }
+
+                .column-item:hover {
+                    background: #6e6e6e;
+                }
+
+                .column-item.active-col {
+                    background: #7d7d7d;
+                    color: #fff;
+                }
+
+                .column-item.hidden-col {
+                    background: #fff;
+                    color: #555;
+                }
+
+                .restore-visibility {
+                    background: #fff;
+                    color: #555;
+                    padding: 4px 15px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    text-align: left;
+                    font-weight: 400;
+                    display: block;
+                    width: 100%;
+                    border: none;
+                }
+                
+                .restore-visibility:hover {
+                    background: #f9f9f9;
                 }
 
                 .table {
@@ -593,24 +738,27 @@ const ApplyLeave = () => {
                     border-radius: 6px;
                     width: 90%;
                     max-width: 600px;
+                    max-height: 90vh; /* Replicated from DailyAssignment */
+                    overflow: auto; /* Allow scrolling if needed, but remove forced overflow-y: auto if it was there */
                     box-shadow: 0 5px 30px rgba(0,0,0,0.2);
                     position: relative;
                 }
 
-                .modal-header {
-                    background: #fff !important;
-                    padding: 18px 25px 12px 25px;
-                    border-bottom: 1px solid #000;
+                              .modal-header {
+                    background: ${themeColor} !important;
+                    padding: 10px 25px;
+                    border-bottom: 1px solid #eee;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    border-radius: 6px 6px 0 0;
                 }
 
                 .modal-header h4 {
                     margin: 0;
                     font-size: 17px;
                     font-weight: 600;
-                    color: #333;
+                    color: #fff;
                 }
 
                 .modal-close-icon {
@@ -618,11 +766,18 @@ const ApplyLeave = () => {
                     border: none;
                     font-size: 22px;
                     cursor: pointer;
-                    color: #333;
+                    color: #fff;
                     font-weight: bold;
                     padding: 0;
                     line-height: 1;
+                    transition: transform 0.3s ease;
                 }
+
+                .modal-close-icon:hover {
+                    transform: rotate(90deg);
+                }
+
+
 
                 .modal-body {
                     padding: 10px 25px 0 25px;
@@ -640,7 +795,7 @@ const ApplyLeave = () => {
                     color: #333;
                 }
 
-                .form-group label span {
+                .form-group label > span {
                     color: #dd4b39;
                     margin-left: 2px;
                 }
@@ -697,7 +852,7 @@ const ApplyLeave = () => {
                 .file-upload-container {
                     border: none;
                     border-bottom: 1px solid #ddd;
-                    padding: 0px 0 4px 0;
+                    padding: 0px 0 0px 0;
                     text-align: left;
                     cursor: pointer;
                     border-radius: 0;
@@ -724,6 +879,103 @@ const ApplyLeave = () => {
                     color: #bbb;
                 }
 
+                .file-selected-box {
+                    position: relative;
+                    background: transparent;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    margin-top: 5px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    min-height: 70px; /* Replicated from DailyAssignment */
+                    overflow: hidden;
+                    cursor: pointer;
+                    width: 100%;
+                }
+
+                .file-preview-img {
+                    max-height: 34px;
+                    max-width: 100%;
+                    object-fit: contain;
+                }
+
+                .file-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.75);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 0;
+                    opacity: 0;
+                    transition: opacity 0.2s;
+                }
+
+                .file-selected-box:hover .file-overlay {
+                    opacity: 1;
+                }
+                
+                .file-info-col {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    justify-content: flex-end !important; /* Replicated from DailyAssignment */
+                    flex-grow: 1;
+                    min-width: 0;
+                    cursor: pointer;
+                    height: 100%;
+                    padding: 10px 70px 0px !important; /* User's preferred padding */
+                    margin-top: 20px !important; /* User's preferred margin */
+                }
+                
+                .file-name-text {
+                    font-weight: 500 !important;
+                    font-size: 13px !important;
+                    color: #ffffff !important;
+                    white-space: nowrap !important;
+                    overflow: hidden !important;
+                    text-overflow: ellipsis !important;
+                    max-width: 100% !important;
+                    display: block !important;
+                    line-height: normal !important;
+                    margin: 0px 0 0px 0 !important; /* Replicated from DailyAssignment */
+                }
+                
+                .file-replace-text {
+                
+                    font-size: 10px !important;
+                    color: #cccccc !important;
+                    margin-top: 0px !important;
+                    font-weight: 400 !important;
+                    display: block !important;
+                    line-height: normal !important;
+                }
+                
+                .btn-remove-file {
+                    position: absolute !important;
+                    right: 8px;
+                    top: 50% !important;
+                    transform: translateY(-50%) !important; /* Replicated from DailyAssignment */
+                    background: transparent;
+                    border: 1px solid #777;
+                    color: #fff;
+                    padding: 3px 8px;
+                    font-size: 10px;
+                    cursor: pointer;
+                    border-radius: 2px;
+                    font-weight: 500;
+                    transition: all 0.2s;
+                }
+                
+                .btn-remove-file:hover {
+                    background: rgba(255,255,255,0.1);
+                    border-color: #fff;
+                }
+
                 .modal-footer {
                     padding: 8px 25px;
                     display: flex;
@@ -743,44 +995,157 @@ const ApplyLeave = () => {
                     box-shadow: 0 2px 4px rgba(156, 104, 228, 0.3);
                 }
 
-                @media (max-width: 991px) {
+                @media (max-width: 769px) {
+              
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
+                    .content-wrapper { padding: 10px 5px 0px 10px !important; margin: 0 !important; background: #f4f4f4 !important; }
+                    .box-leave { margin: 60px 0px 15px 0px !important; border-radius: 0 !important; border: none !important; box-shadow: none !important; background: transparent !important; }
+                    .leave-back-btn { display: inline-flex !important; }
+                    
+                    /* Responsive Card Layout */
+                    .hide-on-mobile { display: none !important; }
+                    .leave-card-list { display: block !important; padding: 10px 5px !important; }
+                    .box-header { background: #fff !important; border-radius: 0 !important; border-bottom: 2px solid #eee !important; padding: 10px 15px !important; }
+                    .box-title { font-size: 22px !important; font-weight: 500 !important; color: #333 !important; }
                 }
 
-                /* Sidebar mega menu cards logic override if needed */
-                .fixedmenu { display: none !important; }
+                .leave-card-list { display: none; }
+                
+                .leave-card {
+                    background: #fff;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                    border: 1px solid #e0e0e0;
+                    overflow: hidden;
+                    box-shadow: none !important;
+                }
+
+                .leave-card-header {
+                    background: #efefef;
+                    padding: 12px 15px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .leave-card-title {
+                    font-size: 18px;
+                    font-weight: 500;
+                    color: #444;
+                    margin: 0;
+                }
+
+                .leave-card-actions {
+                    display: flex;
+                    gap: 10px;
+                }
+
+                .card-action-btn {
+                    width: 34px;
+                    height: 34px;
+                    background: #fff;
+                    border: 1px solid #eee;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #555;
+                    font-size: 14px;
+                    cursor: pointer;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+
+                .leave-card-body {
+                    padding: 20px 15px;
+                    position: relative;
+                }
+
+                .leave-card-row {
+                    margin-bottom: 10px;
+                    font-size: 14px;
+                    color: #333;
+                    font-weight: 400;
+                }
+
+                .leave-card-status {
+                    position: absolute;
+                    right: 15px;
+                    bottom: 20px;
+                }
+
+                .status-badge-custom {
+                    padding: 4px 15px;
+                    border-radius: 5px;
+                    color: #fff;
+                    font-size: 13px;
+                    font-weight: 500;
+                }
+
+                .leave-back-btn { 
+                    display: none; 
+                    background: #9c68e4;
+                    color: #fff !important;
+                    border: none;
+                    padding: 5px 12px !important;
+                    border-radius: 25px !important;
+                    font-size: 13px !important;
+                    cursor: pointer;
+                    font-weight: 500;
+                    text-decoration: none;
+                    white-space: nowrap;
+                    margin-left: 8px;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .leave-back-btn:hover { opacity: 0.9; }
+
+                /* ApplyLeave Specific CSS */
+                .al-content { padding: 0px 6px 0px 0px; }
+                .al-header-actions { display: flex; gap: 0px; align-items: center; }
+                .al-export-icons-wrap { position: relative; }
+                .al-th-sortable { cursor: pointer; }
+                .al-sort-icon { color: #ccc; margin-left: 4px; }
+                .al-th-action { text-align: right; }
+                .al-td-loading { text-align: center; padding: 20px; }
+                .al-status-badge { color: #fff; padding: 2px 8px; border-radius: 2px; font-size: 11px; }
+                .al-td-action { text-align: right; white-space: nowrap; }
+                .al-action-btn-edit { margin-right: 5px; }
+                .al-td-empty { text-align: center; padding: 20px; border-bottom: 1px solid #dee2e6; }
+                .al-empty-img { width: 200px; height: 170px; }
+                .al-add-record-hint { cursor: pointer; }
+                .al-modal-row { display: flex; gap: 10px; justify-content: flex-start; }
+                .al-modal-grp-half { width: 265px; }
+                .al-file-preview-wrap { padding: 2px; display: flex; justify-content: center; align-items: center; }
+                .al-file-text-wrap { color: #666; text-align: center; }
+                .al-file-text-icon { font-size: 24px; margin-right: 8px; vertical-align: middle; }
+                .al-file-text-name { vertical-align: middle; font-size: 13px; }
+                .al-file-info { margin: 0; width: 100%; color: #777777; }
+                .al-file-input { display: none; }
+                .al-file-upload-lbl { display: block; }
+                .al-file-upload-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; color: #ababab !important; }
+                .al-card-loading { text-align: center; padding: 20px; }
             `}</style>
 
-            <Header
-                userData={userData}
-                handleLogout={handleLogout}
-                sessionYear={sessionYear}
-                headerLogoUrl={userData.adminLogoUrl}
-            />
-
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/user/apply_leave"
-            />
-
             <div className="content-wrapper">
-                <section className="content" style={{ padding: "5px" }}>
-                    <div className="hide-mobile" style={{ marginBottom: '10px' }}>
-                        <TopSidebar sessionYear={sessionYear} />
-                    </div>
+                <section className="content al-content">
 
                     <div className="box-leave">
                         <div className="box-header">
                             <h3 className="box-title">Leave List</h3>
-                            <button className="add-btn" onClick={() => setShowAddModal(true)}>
-                                <i className="fa fa-plus"></i> Add
-                            </button>
+                            <div className="al-header-actions">
+                                <button className="add-btn" onClick={() => setShowAddModal(true)}>
+                                    <i className="fa fa-plus"></i> Add
+                                </button>
+                                <Link to="/user/dashboard" className="leave-back-btn">
+                                    <i className="fa fa-arrow-left"></i> Back
+                                </Link>
+                            </div>
                         </div>
                         <div className="box-body">
-                            <div className="table-controls">
+                            <div className="table-controls hide-on-mobile">
                                 <div className="search-box">
                                     <input
                                         type="text"
@@ -790,59 +1155,72 @@ const ApplyLeave = () => {
                                         className="search-input"
                                     />
                                 </div>
-                                <div className="export-icons">
-                                    <button className="export-btn" title="Copy"><i className="fa fa-copy"></i></button>
-                                    <button className="export-btn" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                    <button className="export-btn" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                    <button className="export-btn" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                    <button className="export-btn" title="Print"><i className="fa fa-print"></i></button>
-                                    <button className="export-btn" title="Columns"><i className="fa fa-columns"></i></button>
+                                <div className="export-icons al-export-icons-wrap" ref={dropdownRef}>
+                                    <button className="export-btn" title="Copy" onClick={handleCopy}><i className="fa fa-copy"></i></button>
+                                    <button className="export-btn" title="Excel" onClick={handleExportExcel}><i className="fa fa-file-excel-o"></i></button>
+                                    <button className="export-btn" title="CSV" onClick={handleExportCSV}><i className="fa fa-file-text-o"></i></button>
+                                    <button className="export-btn" title="PDF" onClick={handleExportPDF}><i className="fa fa-file-pdf-o"></i></button>
+                                    <button className="export-btn" title="Print" onClick={handlePrint}><i className="fa fa-print"></i></button>
+                                    <button className="export-btn" title="Columns" onClick={() => setShowColumnDropdown(!showColumnDropdown)}><i className="fa fa-columns"></i></button>
+
+                                    {showColumnDropdown && (
+                                        <div className="column-dropdown">
+                                            {columns.map(col => (
+                                                <button
+                                                    key={col.key}
+                                                    className={`column-item ${visibleColumns.has(col.key) ? 'active-col' : 'hidden-col'}`}
+                                                    onClick={() => toggleColumn(col.key)}
+                                                >
+                                                    {col.label}
+                                                </button>
+                                            ))}
+                                            <button className="restore-visibility" onClick={handleRestoreVisibility}>
+                                                Restore visibility
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="table-responsive">
+                            <div className="table-responsive hide-on-mobile">
                                 <table className="table">
                                     <thead>
                                         <tr>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('class')}>Class <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('section')}>Section <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('apply_date')}>Apply Date <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('from_date')}>From Date <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('to_date')}>To Date <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('reason')}>Reason <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('status')}>Status <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ textAlign: 'right' }}>Action</th>
+                                            {visibleColumns.has('class') && <th className="al-th-sortable" onClick={() => handleSort('class')}>Class <i className="fa fa-caret-down al-sort-icon"></i></th>}
+                                            {visibleColumns.has('section') && <th className="al-th-sortable" onClick={() => handleSort('section')}>Section <i className="fa fa-caret-down al-sort-icon"></i></th>}
+                                            {visibleColumns.has('apply_date') && <th className="al-th-sortable" onClick={() => handleSort('apply_date')}>Apply Date <i className="fa fa-caret-down al-sort-icon"></i></th>}
+                                            {visibleColumns.has('from_date') && <th className="al-th-sortable" onClick={() => handleSort('from_date')}>From Date <i className="fa fa-caret-down al-sort-icon"></i></th>}
+                                            {visibleColumns.has('to_date') && <th className="al-th-sortable" onClick={() => handleSort('to_date')}>To Date <i className="fa fa-caret-down al-sort-icon"></i></th>}
+                                            {visibleColumns.has('reason') && <th className="al-th-sortable" onClick={() => handleSort('reason')}>Reason <i className="fa fa-caret-down al-sort-icon"></i></th>}
+                                            {visibleColumns.has('status') && <th className="al-th-sortable" onClick={() => handleSort('status')}>Status <i className="fa fa-caret-down al-sort-icon"></i></th>}
+                                            <th className="al-th-action">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {loading ? (
                                             <tr>
-                                                <td colSpan="8" style={{ textAlign: 'center', padding: '20px' }}>Loading...</td>
+                                                <td colSpan={visibleColumns.size + 1} className="al-td-loading">Loading...</td>
                                             </tr>
                                         ) : sortedList.length > 0 ? (
                                             sortedList.map((leave, index) => {
                                                 const statusInfo = getStatusInfo(leave.status);
                                                 return (
                                                     <tr key={index}>
-                                                        <td>{leave.class}</td>
-                                                        <td>{leave.section}</td>
-                                                        <td>{leave.apply_date}</td>
-                                                        <td>{leave.from_date}</td>
-                                                        <td>{leave.to_date}</td>
-                                                        <td>{leave.reason}</td>
-                                                        <td>
-                                                            <span style={{
-                                                                background: statusInfo.color,
-                                                                color: '#fff',
-                                                                padding: '2px 8px',
-                                                                borderRadius: '2px',
-                                                                fontSize: '11px'
-                                                            }}>
-                                                                {statusInfo.label}
-                                                            </span>
-                                                        </td>
-                                                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                                            <button title="Edit" className="action-btn" style={{ marginRight: '5px' }} onClick={() => handleEditClick(leave)}>
+                                                        {visibleColumns.has('class') && <td>{leave.class}</td>}
+                                                        {visibleColumns.has('section') && <td>{leave.section}</td>}
+                                                        {visibleColumns.has('apply_date') && <td>{leave.apply_date}</td>}
+                                                        {visibleColumns.has('from_date') && <td>{leave.from_date}</td>}
+                                                        {visibleColumns.has('to_date') && <td>{leave.to_date}</td>}
+                                                        {visibleColumns.has('reason') && <td>{leave.reason}</td>}
+                                                        {visibleColumns.has('status') && (
+                                                            <td>
+                                                                <span className="al-status-badge" style={{ background: statusInfo.color }}>
+                                                                    {statusInfo.label}
+                                                                </span>
+                                                            </td>
+                                                        )}
+                                                        <td className="al-td-action">
+                                                            <button title="Edit" className="action-btn al-action-btn-edit" onClick={() => handleEditClick(leave)}>
                                                                 <i className="fa fa-pencil"></i>
                                                             </button>
                                                             <button title="Delete" className="action-btn" onClick={() => handleDelete(leave.id)}>
@@ -854,13 +1232,13 @@ const ApplyLeave = () => {
                                             })
                                         ) : (
                                             <tr>
-                                                <td colSpan="8" style={{ textAlign: 'center', padding: '20px', borderBottom: '1px solid #dee2e6' }}>
+                                                <td colSpan={visibleColumns.size + 1} className="al-td-empty">
                                                     <div className="empty-state">
                                                         <div className="empty-state-text">No data available in table</div>
                                                         <div className="empty-illustration">
-                                                            <img src="/images/addnewitem.svg" alt="empty" style={{ width: '200px', height: '170px' }} />
+                                                            <img src="/images/addnewitem.svg" alt="empty" className="al-empty-img" />
                                                         </div>
-                                                        <div className="add-record-text" onClick={() => setShowAddModal(true)} style={{ cursor: 'pointer' }}>
+                                                        <div className="add-record-text al-add-record-hint" onClick={() => setShowAddModal(true)}>
                                                             ← Add new record or search with different criteria.
                                                         </div>
                                                     </div>
@@ -885,6 +1263,46 @@ const ApplyLeave = () => {
                                 </div>
                             </div>
 
+                            {/* Mobile Card List */}
+                            <div className="leave-card-list">
+                                {loading ? (
+                                    <div className="al-card-loading">Loading...</div>
+                                ) : sortedList.length > 0 ? (
+                                    sortedList.map((leave, index) => {
+                                        const statusInfo = getStatusInfo(leave.status);
+                                        return (
+                                            <div className="leave-card" key={index}>
+                                                <div className="leave-card-header">
+                                                    <h4 className="leave-card-title">Apply Date: {leave.apply_date}</h4>
+                                                    <div className="leave-card-actions">
+                                                        <button className="card-action-btn" onClick={() => handleEditClick(leave)} title="Edit">
+                                                            <i className="fa fa-pencil"></i>
+                                                        </button>
+                                                        <button className="card-action-btn" onClick={() => handleDelete(leave.id)} title="Delete">
+                                                            <i className="fa fa-remove"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="leave-card-body">
+                                                    <div className="leave-card-row">From Date : {leave.from_date}</div>
+                                                    <div className="leave-card-row">To Date : {leave.to_date}</div>
+                                                    <div className="leave-card-row">Reason : {leave.reason}</div>
+                                                    <div className="leave-card-status">
+                                                        <span className="status-badge-custom" style={{ background: statusInfo.color }}>
+                                                            {statusInfo.label} {leave.status === '1' ? '(16/03/2026)' : ''}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="empty-state">
+                                        <div className="empty-state-text">No Leave Records Found</div>
+                                    </div>
+                                )}
+                            </div>
+
                         </div>
                     </div>
                 </section>
@@ -903,8 +1321,8 @@ const ApplyLeave = () => {
                                     <label>Apply Date <span>*</span></label>
                                     <div className="form-value-text">{leaveData.apply_date}</div>
                                 </div>
-                                <div className="row" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-start' }}>
-                                    <div className="form-group" style={{ width: '265px' }}>
+                                <div className="al-modal-row">
+                                    <div className="form-group al-modal-grp-half">
                                         <label>From Date <span>*</span></label>
                                         <input
                                             type="date"
@@ -915,7 +1333,7 @@ const ApplyLeave = () => {
                                             onChange={(e) => setLeaveData({ ...leaveData, from_date: e.target.value })}
                                         />
                                     </div>
-                                    <div className="form-group" style={{ width: '265px' }}>
+                                    <div className="form-group al-modal-grp-half">
                                         <label>To Date <span>*</span></label>
                                         <input
                                             type="date"
@@ -938,13 +1356,50 @@ const ApplyLeave = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Attach Document</label>
-                                    <div className="file-upload-container">
-                                        <div className="file-upload-content">
-                                            <i className="fa fa-cloud-upload"></i>
-                                            <span>Drag and drop a file here or click</span>
+                                    {leaveData.file ? (
+                                        <div className="file-selected-box" title={leaveData.file.name}>
+                                            <div className="al-file-preview-wrap">
+                                                {leaveData.file.type && leaveData.file.type.startsWith('image/') ? (
+                                                    <img src={URL.createObjectURL(leaveData.file)} alt="Preview" className="file-preview-img" />
+                                                ) : (
+                                                    <div className="al-file-text-wrap">
+                                                        <i className="fa fa-file-text-o al-file-text-icon"></i>
+                                                        <span className="al-file-text-name">{leaveData.file.name}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="file-overlay">
+                                                <label className="file-info-col al-file-info">
+                                                    <span className="file-name-text">{leaveData.file.name}</span>
+                                                    <span className="file-replace-text">Drag and drop or click to replace</span>
+                                                    <input type="file" className="al-file-input" onChange={(e) => setLeaveData({ ...leaveData, file: e.target.files[0] })} />
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    className="btn-remove-file"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setLeaveData({ ...leaveData, file: null });
+                                                        const fileInputs = document.querySelectorAll('input[type="file"]');
+                                                        fileInputs.forEach(input => input.value = '');
+                                                    }}
+                                                >
+                                                    REMOVE
+                                                </button>
+                                            </div>
                                         </div>
-                                        <input type="file" style={{ display: 'none' }} onChange={(e) => setLeaveData({ ...leaveData, file: e.target.files[0] })} />
-                                    </div>
+                                    ) : (
+                                        <label className="file-upload-container al-file-upload-lbl">
+                                            <div className="file-upload-content">
+                                                <i className="fa fa-cloud-upload"></i>
+                                                <span className="al-file-upload-txt">
+                                                    Drag and drop a file here or click
+                                                </span>
+                                            </div>
+                                            <input type="file" className="al-file-input" onChange={(e) => setLeaveData({ ...leaveData, file: e.target.files[0] })} />
+                                        </label>
+                                    )}
                                 </div>
                             </div>
                             <div className="modal-footer">
@@ -968,8 +1423,8 @@ const ApplyLeave = () => {
                                     <label>Apply Date <span>*</span></label>
                                     <div className="form-value-text">{leaveData.apply_date}</div>
                                 </div>
-                                <div className="row" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-start' }}>
-                                    <div className="form-group" style={{ width: '265px' }}>
+                                <div className="al-modal-row">
+                                    <div className="form-group al-modal-grp-half">
                                         <label>From Date <span>*</span></label>
                                         <input
                                             type="date"
@@ -980,7 +1435,7 @@ const ApplyLeave = () => {
                                             onChange={(e) => setLeaveData({ ...leaveData, from_date: e.target.value })}
                                         />
                                     </div>
-                                    <div className="form-group" style={{ width: '265px' }}>
+                                    <div className="form-group al-modal-grp-half">
                                         <label>To Date <span>*</span></label>
                                         <input
                                             type="date"
@@ -1003,13 +1458,50 @@ const ApplyLeave = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Attach Document</label>
-                                    <div className="file-upload-container">
-                                        <div className="file-upload-content">
-                                            <i className="fa fa-cloud-upload"></i>
-                                            <span>Drag and drop a file here or click</span>
+                                    {leaveData.file ? (
+                                        <div className="file-selected-box" title={leaveData.file.name}>
+                                            <div className="al-file-preview-wrap">
+                                                {leaveData.file.type && leaveData.file.type.startsWith('image/') ? (
+                                                    <img src={URL.createObjectURL(leaveData.file)} alt="Preview" className="file-preview-img" />
+                                                ) : (
+                                                    <div className="al-file-text-wrap">
+                                                        <i className="fa fa-file-text-o al-file-text-icon"></i>
+                                                        <span className="al-file-text-name">{leaveData.file.name}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="file-overlay">
+                                                <label className="file-info-col al-file-info">
+                                                    <span className="file-name-text">{leaveData.file.name}</span>
+                                                    <span className="file-replace-text">Drag and drop or click to replace</span>
+                                                    <input type="file" className="al-file-input" onChange={(e) => setLeaveData({ ...leaveData, file: e.target.files[0] })} />
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    className="btn-remove-file"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setLeaveData({ ...leaveData, file: null });
+                                                        const fileInputs = document.querySelectorAll('input[type="file"]');
+                                                        fileInputs.forEach(input => input.value = '');
+                                                    }}
+                                                >
+                                                    REMOVE
+                                                </button>
+                                            </div>
                                         </div>
-                                        <input type="file" style={{ display: 'none' }} onChange={(e) => setLeaveData({ ...leaveData, file: e.target.files[0] })} />
-                                    </div>
+                                    ) : (
+                                        <label className="file-upload-container al-file-upload-lbl">
+                                            <div className="file-upload-content">
+                                                <i className="fa fa-cloud-upload"></i>
+                                                <span className="al-file-upload-txt">
+                                                    Drag and drop a file here or click
+                                                </span>
+                                            </div>
+                                            <input type="file" className="al-file-input" onChange={(e) => setLeaveData({ ...leaveData, file: e.target.files[0] })} />
+                                        </label>
+                                    )}
                                 </div>
                             </div>
                             <div className="modal-footer">
@@ -1020,8 +1512,7 @@ const ApplyLeave = () => {
                 )
             }
 
-            <Footer />
-        </div >
+        </>
     );
 };
 
