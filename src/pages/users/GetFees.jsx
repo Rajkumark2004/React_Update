@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from '../../components/Footer';
 import { api_users } from '../../services/api_users';
 import { useSession } from '../../context/SessionContext';
 import '../../utils/include_files.js';
@@ -247,43 +244,39 @@ const GetFees = () => {
             const allFees = [];
             (studentDueFee || []).forEach(group => {
                 (group.fees || []).forEach(fee => {
-                    const balance = parseFloat(fee.balance);
-                    if (balance > 0) {
-                        allFees.push({
-                            uniqueId: fee.uniqueId,
-                            balance: balance,
-                            fee_category: 'fees',
-                            student_fees_master_id: fee.student_fees_master_id || fee.id || 0,
-                            fee_groups_feetype_id: fee.fee_groups_feetype_id || 0,
-                            fee_session_group_id: fee.fee_session_group_id || 0,
-                            groupName: group.name || 'Fee Group',
-                            feeTypeName: fee.type || '',
-                            feeTypeCode: fee.code || '',
-                            fine_amount: fee.fine_amount_display || 0
-                        });
-                    }
+                    const balance = parseFloat(fee.balance || 0);
+                    allFees.push({
+                        uniqueId: fee.uniqueId,
+                        balance: balance,
+                        fee_category: 'fees',
+                        student_fees_master_id: fee.student_fees_master_id || fee.id || 0,
+                        fee_groups_feetype_id: fee.fee_groups_feetype_id || 0,
+                        fee_session_group_id: fee.fee_session_group_id || 0,
+                        groupName: group.name || 'Fee Group',
+                        feeTypeName: fee.type || '',
+                        feeTypeCode: fee.code || '',
+                        fine_amount: fee.fine_amount_display || 0
+                    });
                 });
             });
             (transportFees || []).forEach(fee => {
                 let amountDetail = fee.amount_detail || [];
                 let paid = 0; let discount = 0;
                 amountDetail.forEach(d => { paid += parseFloat(d.amount || 0); discount += parseFloat(d.amount_discount || 0); });
-                const balance = parseFloat(fee.fees) - (paid + discount);
-                if (balance > 0) {
-                    allFees.push({
-                        uniqueId: fee.uniqueId,
-                        balance: balance,
-                        fee_category: 'transport',
-                        student_fees_master_id: 0,
-                        fee_groups_feetype_id: 0,
-                        fee_session_group_id: 0,
-                        trans_fee_id: fee.id || 0,
-                        groupName: 'Transport Fees',
-                        feeTypeName: fee.month || 'Transport',
-                        feeTypeCode: fee.month || '',
-                        fine_amount: fee.fine_amount_display || 0
-                    });
-                }
+                const balance = parseFloat(fee.fees || 0) - (paid + discount);
+                allFees.push({
+                    uniqueId: fee.uniqueId,
+                    balance: balance,
+                    fee_category: 'transport',
+                    student_fees_master_id: 0,
+                    fee_groups_feetype_id: 0,
+                    fee_session_group_id: 0,
+                    trans_fee_id: fee.id || 0,
+                    groupName: 'Transport Fees',
+                    feeTypeName: fee.month || 'Transport',
+                    feeTypeCode: fee.month || '',
+                    fine_amount: fee.fine_amount_display || 0
+                });
             });
             setSelectedFeesList(allFees);
         } else {
@@ -389,7 +382,7 @@ const GetFees = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <>
             <style>{`
                 /* Hide standard search and session UI */
                 .sessionul, .search-form2, .search-form { display: none !important; }
@@ -410,7 +403,14 @@ const GetFees = () => {
                 .user-menu.open .dropdown-user { display: block !important; }
 
                 /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
-                .content-wrapper, .main-footer { margin-left: 80px !important; }
+                .content-wrapper {
+                    margin-left: 80px !important;
+                    padding: 0px 0px 0px 5px;
+                }
+                .main-footer {
+                    margin-left: 80px !important;
+                    padding-left: 5px !important;
+                }
                 .sidebar { height: calc(100vh - 50px) !important; overflow-y: auto !important; overflow-x: hidden !important; padding-bottom: 20px !important; }
                 .sidebar::-webkit-scrollbar { width: 5px; }
                 .sidebar::-webkit-scrollbar-track { background: transparent; }
@@ -421,21 +421,190 @@ const GetFees = () => {
                 .sidebar-menu > li:hover > a, .sidebar-menu > li.active > a { background: rgba(255, 255, 255, 0.1) !important; }
                 .fixedmenu { display: none !important; }
 
-                @media (max-width: 991px) {
+                @media (max-width: 769px) {
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
+                    .content-wrapper { padding: 5px !important; margin: 0 !important; background: #f7f8fa !important; }
+                    .box-primary {
+                        margin: 60px 0px 15px 0px !important;
+                        border-radius: 0 !important;
+                        background: #fff !important;
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+                        border: 1px solid #ddd !important;
+                        overflow: hidden !important;
+                    }
+                    .custom-fee-header {
+                        display: flex !important;
+                        justify-content: space-between !important;
+                        align-items: center !important;
+                        width: 100% !important;
+                    }
+                    
+                    .hide-on-mobile { display: none !important; }
+                    
+                    .fee-card-list {
+                        display: block !important;
+                        padding: 10px 10px !important;
+                    }
+                    .fee-card {
+                        background: #fff !important;
+                        border: 1px solid #ddd !important;
+                        border-radius: 8px !important;
+                        margin-bottom: 20px !important;
+                        overflow: hidden !important;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+                    }
+                    .fee-card-header {
+                        background: #eee !important;
+                        padding: 10px 15px !important;
+                        display: flex !important;
+                        justify-content: space-between !important;
+                        align-items: center !important;
+                        border-bottom: 1px solid #ddd !important;
+                    }
+                    .fee-card-header h4 {
+                        margin: 0 !important;
+                        font-size: 19px !important;
+                        font-weight: 400 !important;
+                        color: #333 !important;
+                        padding-right: 10px !important;
+                    }
+                    .fee-card-print-btn {
+                        background: #9854cb !important;
+                        color: #fff !important;
+                        border: none !important;
+                        padding: 4px 18px !important;
+                        border-radius: 20px !important;
+                        font-size: 13px !important;
+                        flex-shrink: 0 !important;
+                    }
+                    .fee-card-body {
+                        padding: 18px 15px !important;
+                        position: relative !important;
+                    }
+                    .fee-card-row {
+                        display: block !important;
+                        margin-bottom: 6px !important;
+                        font-size: 15px !important;
+                        color: #333 !important;
+                    }
+                    .fee-card-row .label {
+                        font-weight: 400 !important;
+                        color: #333 !important;
+                        background: none !important;
+                        padding: 0 !important;
+                        display: inline !important;
+                        font-size: 13px !important;
+                    }
+                    .fee-card-row .value {
+                        color: #333 !important;
+                        margin-left: 3px !important;
+                        font-size: 13px !important;
+                    }
+                    .fee-card-row .fine-text {
+                        color: #ff0000 !important;
+                        font-weight: 500 !important;
+                    }
+                    .fee-card-status {
+                        position: absolute !important;
+                        right: 15px !important;
+                        top: 45px !important;
+                    }
+                    .fee-status-badge {
+                        padding: 3px 8px !important;
+                        border-radius: 4px !important;
+                        color: #fff !important;
+                        font-size: 12px !important;
+                        font-weight: 500 !important;
+                    }
+                    .fee-status-badge.paid { background: #5cb85c !important; }
+                    .fee-status-badge.unpaid { background: #d9534f !important; }
+                    .fee-status-badge.partial { background: #f0ad4e !important; }
+
+                    .payment-details-section {
+                        margin-top: 25px !important;
+                        padding-top: 5px !important;
+                    }
+                    .payment-details-title {
+                        font-size: 20px !important;
+                        color: #333 !important;
+                        margin-bottom: 15px !important;
+                        text-align: left !important;
+                        border-bottom: 1px solid #ddd !important;
+                        padding-bottom: 8px !important;
+                        font-weight: 400 !important;
+                    }
                 }
+                
+                @media (min-width: 770px) {
+                    .fee-card-list { display: none !important; }
+                }
+
+                /* Fees Page Header Styles */
+                .custom-fee-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    background-color: #fff !important;
+                    border-bottom: 1px solid #eee !important;
+                    padding: 12px 15px !important;
+                    width: 100% !important;
+                    margin: 0 !important;
+                    float: none !important;
+                }
+                .custom-fee-title {
+                    margin: 0 !important;
+                    font-size: 20px !important;
+                    font-weight: 500 !important;
+                    color: #333 !important;
+                    text-align: left !important;
+                    flex: 1 !important;
+                }
+                .custom-back-btn {
+                    background-color: #9854cb !important;
+                    color: #fff !important;
+                    border: none !important;
+                    padding: 4px 10px !important;
+                    border-radius: 20px !important;
+                    font-size: 14px !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    gap: 6px !important;
+                    flex-shrink: 0 !important;
+                    transition: all 0.3s ease !important;
+                    margin-left: auto !important;
+                }
+                .custom-back-btn:hover {
+                    background-color: #7b3da1 !important;
+                    color: #fff !important;
+                    transform: scale(1.02);
+                }
+                .custom-back-btn i {
+                    font-size: 11px !important;
+                }
+
+                /* General GetFees CSS */
+                .gf-content-wrapper { min-height: 850px; }
+                .gf-loader-container { padding: 100px; }
+                .gf-box-body { padding-top: 0; }
+                .gf-profile-col { width: 150px; }
+                .gf-profile-img { width: 115px; height: 115px; object-fit: cover; }
+                .gf-divider { background: #dadada; height: 1px; width: 100%; clear: both; margin-bottom: 10px; }
+                .gf-btn-primary { background-color: #9854cb; color: #fff; border: none; }
+                .gf-btn-primary-ml { background-color: #9854cb; color: #fff; border: none; margin-left: 5px; }
+                .gf-th-check { width: 10px; }
+                .gf-icon-gray { color: #999; }
+                .gf-tr-footer { background-color: #f4f4f4; font-weight: bold; }
+                .gf-payment-item { margin-bottom: 15px; }
+
             `}</style>
 
-            <Header userData={userData} handleLogout={handleLogout} sessionYear={sessionYear} headerLogoUrl={userData.adminLogoUrl} />
-            <Sidebar sessionYear={sessionYear} currentUrl="/user/getfees" />
-
-            <div className="content-wrapper" style={{ minHeight: '850px' }}>
+            <div className="content-wrapper gf-content-wrapper">
                 <section className="content">
                     {loading ? (
-                        <div className="text-center" style={{ padding: "100px" }}>
+                        <div className="text-center gf-loader-container">
                             <Loader />
                         </div>
                     ) : !student ? (
@@ -444,19 +613,21 @@ const GetFees = () => {
                         <div className="row">
                             <div className="col-md-12">
                                 <div className="box box-primary">
-                                    <div className="box-header">
-                                        <h3 className="box-title">Student Fees</h3>
+                                    <div className="custom-fee-header">
+                                        <h3 className="custom-fee-title">Student Fees</h3>
+                                        <button className="btn btn-sm custom-back-btn" onClick={() => navigate('/user/dashboard')}>
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
                                     </div>
-                                    <div className="box-body" style={{ paddingTop: 0 }}>
-                                        <div className="row">
+                                    <div className="box-body gf-box-body">
+                                        <div className="row hide-on-mobile">
                                             <div className="col-md-12">
                                                 <div className="sfborder-top-border">
-                                                    <div className="col-md-2" style={{ width: '150px' }}>
+                                                    <div className="col-md-2 gf-profile-col">
                                                         <img
                                                             src={getImageUrl(student.image)}
-                                                            className="img-responsive img-rounded img-thumbnail mt5 mb10"
+                                                            className="img-responsive img-rounded img-thumbnail mt5 mb10 gf-profile-img"
                                                             alt="User"
-                                                            style={{ width: '115px', height: '115px', objectFit: 'cover' }}
                                                         />
                                                     </div>
                                                     <div className="col-md-10">
@@ -498,17 +669,17 @@ const GetFees = () => {
                                                 </div>
                                             </div>
                                             <div className="col-md-12">
-                                                <div style={{ background: '#dadada', height: '1px', width: '100%', clear: 'both', marginBottom: '10px' }}></div>
+                                                <div className="gf-divider"></div>
                                             </div>
                                         </div>
 
-                                        <div className="row no-print mb10">
+                                        <div className="row no-print mb10 hide-on-mobile">
                                             <div className="col-md-6 mDMb10">
                                                 <div className="btn-group">
-                                                    <button type="button" className="btn btn-sm" style={{ backgroundColor: '#9854cb', color: '#fff', border: 'none' }} onClick={handlePrintSelected}>
+                                                    <button type="button" className="btn btn-sm gf-btn-primary" onClick={handlePrintSelected}>
                                                         <i className="fa fa-print"></i> Print Selected
                                                     </button>
-                                                    <button type="button" className="btn btn-sm" style={{ backgroundColor: '#9854cb', color: '#fff', border: 'none', marginLeft: '5px' }} onClick={handlePaySelected}>
+                                                    <button type="button" className="btn btn-sm gf-btn-primary-ml" onClick={handlePaySelected}>
                                                         <i className="fa fa-money"></i> Pay Selected
                                                     </button>
                                                 </div>
@@ -518,12 +689,12 @@ const GetFees = () => {
                                             </div>
                                         </div>
 
-                                        <div className="table-responsive">
+                                        <div className="table-responsive hide-on-mobile">
                                             <div className="download_label">Student Fees: {student.firstname} {student.lastname} ({student.admission_no})</div>
                                             <table className="table table-striped table-bordered table-hover example table-fixed-header">
                                                 <thead className="header">
                                                     <tr>
-                                                        <th style={{ width: '10px' }}>
+                                                        <th className="gf-th-check">
                                                             <input type="checkbox" id="select_all" onChange={handleSelectAll} />
                                                         </th>
                                                         <th align="left">Fees Group</th>
@@ -553,9 +724,7 @@ const GetFees = () => {
                                                                 <React.Fragment key={`${groupIndex}-${feeIndex}`}>
                                                                     <tr className={status === 'Paid' ? "dark-gray" : "danger font12"}>
                                                                         <td>
-                                                                            {balance > 0 && (
-                                                                                <input type="checkbox" className="checkbox checkboxes" checked={isSelected} onChange={() => toggleFeeSelection(uniqueId, { balance: balance, fee_category: 'fees', student_fees_master_id: fee.student_fees_master_id || fee.id || 0, fee_groups_feetype_id: fee.fee_groups_feetype_id || 0, fee_session_group_id: fee.fee_session_group_id || 0, groupName: group.name || 'Fee Group', feeTypeName: fee.type || '', feeTypeCode: fee.code || '', fine_amount: fee.fine_amount_display || 0 })} />
-                                                                            )}
+                                                                            <input type="checkbox" className="checkbox checkboxes" checked={isSelected} onChange={() => toggleFeeSelection(uniqueId, { balance: balance, fee_category: 'fees', student_fees_master_id: fee.student_fees_master_id || fee.id || 0, fee_groups_feetype_id: fee.fee_groups_feetype_id || 0, fee_session_group_id: fee.fee_session_group_id || 0, groupName: group.name || 'Fee Group', feeTypeName: fee.type || '', feeTypeCode: fee.code || '', fine_amount: fee.fine_amount_display || 0 })} />
                                                                         </td>
                                                                         <td align="left">{fee.is_system ? `${fee.name} (${fee.type})` : `${fee.name} (${fee.type})`}</td>
                                                                         <td align="left">{fee.code}</td>
@@ -574,14 +743,14 @@ const GetFees = () => {
                                                                         <td className="text-right">{balance > 0 ? amountFormat(balance) : ""}</td>
                                                                         <td className="text-right">
                                                                             {balance > 0 && (
-                                                                                <button className="btn btn-xs" style={{ backgroundColor: '#9854cb', color: '#fff', border: 'none' }} onClick={() => handlePayClick(fee)}><i className="fa fa-money"></i> Pay</button>
+                                                                                <button className="btn btn-xs gf-btn-primary" onClick={() => handlePayClick(fee)}><i className="fa fa-money"></i> Pay</button>
                                                                             )}
                                                                         </td>
                                                                     </tr>
                                                                     {(fee.amount_detail || []).map((deposit, dIndex) => (
                                                                         <tr key={`dep-${dIndex}`} className="white-td">
                                                                             <td colSpan="5"></td>
-                                                                            <td className="text-right"><i className="fa fa-level-up fa-rotate-90" style={{ color: '#999' }}></i></td>
+                                                                            <td className="text-right"><i className="fa fa-level-up fa-rotate-90 gf-icon-gray"></i></td>
                                                                             <td className="text-left">{fee.student_fees_deposite_id}/{deposit.inv_no}</td>
                                                                             <td className="text-left">{deposit.payment_mode}</td>
                                                                             <td className="text-left">{deposit.date}</td>
@@ -619,7 +788,7 @@ const GetFees = () => {
                                                             <React.Fragment key={uniqueId}>
                                                                 <tr className={status === 'Paid' ? "dark-gray" : "danger font12"}>
                                                                     <td>
-                                                                        {balance > 0 && <input type="checkbox" className="checkbox" checked={isSelected} onChange={() => toggleFeeSelection(uniqueId, { balance: balance, fee_category: 'transport', student_fees_master_id: 0, fee_groups_feetype_id: 0, fee_session_group_id: 0, trans_fee_id: fee.id || 0, groupName: 'Transport Fees', feeTypeName: fee.month || 'Transport', feeTypeCode: fee.month || '', fine_amount: fee.fine_amount_display || 0 })} />}
+                                                                        <input type="checkbox" className="checkbox" checked={isSelected} onChange={() => toggleFeeSelection(uniqueId, { balance: balance, fee_category: 'transport', student_fees_master_id: 0, fee_groups_feetype_id: 0, fee_session_group_id: 0, trans_fee_id: fee.id || 0, groupName: 'Transport Fees', feeTypeName: fee.month || 'Transport', feeTypeCode: fee.month || '', fine_amount: fee.fine_amount_display || 0 })} />
                                                                     </td>
                                                                     <td align="left">Transport Fees</td>
                                                                     <td align="left">{fee.month}</td>
@@ -634,13 +803,13 @@ const GetFees = () => {
                                                                     <td className="text-right">{amountFormat(feePaid)}</td>
                                                                     <td className="text-right">{balance > 0 ? amountFormat(balance) : ""}</td>
                                                                     <td className="text-right">
-                                                                        {balance > 0 && <button className="btn btn-xs" style={{ backgroundColor: '#9854cb', color: '#fff', border: 'none' }} onClick={() => handlePayClick(fee)}><i className="fa fa-money"></i> Pay</button>}
+                                                                        {balance > 0 && <button className="btn btn-xs gf-btn-primary" onClick={() => handlePayClick(fee)}><i className="fa fa-money"></i> Pay</button>}
                                                                     </td>
                                                                 </tr>
                                                                 {amountDetail.map((deposit, dIndex) => (
                                                                     <tr key={`trans-dep-${dIndex}`} className="white-td">
                                                                         <td colSpan="5"></td>
-                                                                        <td className="text-right"><i className="fa fa-level-up fa-rotate-90" style={{ color: '#999' }}></i></td>
+                                                                        <td className="text-right"><i className="fa fa-level-up fa-rotate-90 gf-icon-gray"></i></td>
                                                                         <td className="text-left">{fee.student_fees_deposite_id}/{deposit.inv_no}</td>
                                                                         <td className="text-left">{deposit.payment_mode}</td>
                                                                         <td className="text-left">{deposit.date}</td>
@@ -679,7 +848,7 @@ const GetFees = () => {
                                                         </tr>
                                                     ))}
 
-                                                    <tr style={{ backgroundColor: '#f4f4f4', fontWeight: 'bold' }}>
+                                                    <tr className="gf-tr-footer">
                                                         <td colSpan="5" className="text-right">Grand Total</td>
                                                         <td className="text-right">
                                                             {currencySymbol}{amountFormat(totals.total_amount)}
@@ -696,6 +865,172 @@ const GetFees = () => {
                                             </table>
                                         </div>
 
+                                        <div className="fee-card-list visible-xs">
+                                            {studentDueFee.map((group, gIdx) =>
+                                                group.fees.map((fee, fIdx) => (
+                                                    <div className="fee-card" key={`card-${gIdx}-${fIdx}`}>
+                                                        <div className="fee-card-header">
+                                                            <h5>{group.name} ({fee.code})</h5>
+                                                            <button className="fee-card-print-btn" onClick={() => handlePrintFee('fees', fee.student_fees_deposite_id || fee.id, 'all')}>Print</button>
+                                                        </div>
+                                                        <div className="fee-card-body">
+                                                            <div className="fee-card-status">
+                                                                <span className={`fee-status-badge ${fee.status.toLowerCase()}`}>
+                                                                    {fee.status}
+                                                                </span>
+                                                            </div>
+                                                            <div className="fee-card-row">
+                                                                <span className="label">Fees Code :</span>
+                                                                <span className="value">{fee.code}</span>
+                                                            </div>
+                                                            <div className="fee-card-row">
+                                                                <span className="label">Due Date :</span>
+                                                                <span className="value">{fee.due_date === "0000-00-00" ? "" : fee.due_date}</span>
+                                                            </div>
+                                                            <div className="fee-card-row">
+                                                                <span className="label">Amount :</span>
+                                                                <span className="value">
+                                                                    {amountFormat(fee.amount)}
+                                                                    {fee.fine_amount_display > 0 && <span className="fine-text"> + {amountFormat(fee.fine_amount_display)}</span>}
+                                                                </span>
+                                                            </div>
+                                                            <div className="fee-card-row">
+                                                                <span className="label">Fine :</span>
+                                                                <span className="value">{amountFormat(fee.total_fine)}</span>
+                                                            </div>
+                                                            <div className="fee-card-row">
+                                                                <span className="label">Discount :</span>
+                                                                <span className="value">{amountFormat(fee.total_discount)}</span>
+                                                            </div>
+                                                            <div className="fee-card-row">
+                                                                <span className="label">Paid Amt :</span>
+                                                                <span className="value">{amountFormat(fee.total_paid)}</span>
+                                                            </div>
+                                                            <div className="fee-card-row">
+                                                                <span className="label">Balance :</span>
+                                                                <span className="value">{fee.balance > 0 ? amountFormat(fee.balance) : ""}</span>
+                                                            </div>
+
+                                                            {fee.amount_detail && fee.amount_detail.length > 0 && (
+                                                                <div className="payment-details-section">
+                                                                    <h4 className="payment-details-title">Payment Details</h4>
+                                                                    {fee.amount_detail.map((deposit, dIdx) => (
+                                                                        <div key={`dep-card-${dIdx}`} className="payment-item gf-payment-item">
+                                                                            <div className="fee-card-row">
+                                                                                <span className="label">Payment ID :</span>
+                                                                                <span className="value">{fee.student_fees_deposite_id}/{deposit.inv_no}</span>
+                                                                            </div>
+                                                                            <div className="fee-card-row">
+                                                                                <span className="label">Mode :</span>
+                                                                                <span className="value">{deposit.payment_mode}</span>
+                                                                            </div>
+                                                                            <div className="fee-card-row">
+                                                                                <span className="label">Payment Date :</span>
+                                                                                <span className="value">{deposit.date}</span>
+                                                                            </div>
+                                                                            <div className="fee-card-row">
+                                                                                <span className="label">Discount :</span>
+                                                                                <span className="value">{amountFormat(deposit.amount_discount)}</span>
+                                                                            </div>
+                                                                            <div className="fee-card-row">
+                                                                                <span className="label">Fine :</span>
+                                                                                <span className="value">{amountFormat(deposit.amount_fine)}</span>
+                                                                            </div>
+                                                                            <div className="fee-card-row">
+                                                                                <span className="label">Amount :</span>
+                                                                                <span className="value">{amountFormat(deposit.amount)}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+
+                                            {transportFees.map((fee, tIdx) => (
+                                                <div className="fee-card" key={`trans-card-${tIdx}`}>
+                                                    <div className="fee-card-header">
+                                                        <h4>Transport Fees ({fee.month})</h4>
+                                                        <button className="fee-card-print-btn" onClick={() => handlePrintFee('transport', fee.student_fees_deposite_id || fee.id, 'all')}>Print</button>
+                                                    </div>
+                                                    <div className="fee-card-body">
+                                                        <div className="fee-card-status">
+                                                            <span className={`fee-status-badge ${parseFloat(fee.fees) - (fee.total_paid + fee.total_discount) <= 0 ? 'paid' : 'unpaid'}`}>
+                                                                {parseFloat(fee.fees) - (fee.total_paid + fee.total_discount) <= 0 ? 'Paid' : 'Unpaid'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="fee-card-row">
+                                                            <span className="label">Fees Code :</span>
+                                                            <span className="value">{fee.month}</span>
+                                                        </div>
+                                                        <div className="fee-card-row">
+                                                            <span className="label">Due Date :</span>
+                                                            <span className="value">{fee.due_date}</span>
+                                                        </div>
+                                                        <div className="fee-card-row">
+                                                            <span className="label">Amount :</span>
+                                                            <span className="value">
+                                                                {amountFormat(fee.fees)}
+                                                                {fee.fine_amount_display > 0 && <span className="fine-text"> + {amountFormat(fee.fine_amount_display)}</span>}
+                                                            </span>
+                                                        </div>
+                                                        <div className="fee-card-row">
+                                                            <span className="label">Fine :</span>
+                                                            <span className="value">{amountFormat(fee.total_fine)}</span>
+                                                        </div>
+                                                        <div className="fee-card-row">
+                                                            <span className="label">Discount :</span>
+                                                            <span className="value">{amountFormat(fee.total_discount)}</span>
+                                                        </div>
+                                                        <div className="fee-card-row">
+                                                            <span className="label">Paid Amt :</span>
+                                                            <span className="value">{amountFormat(fee.total_paid)}</span>
+                                                        </div>
+                                                        <div className="fee-card-row">
+                                                            <span className="label">Balance :</span>
+                                                            <span className="value">{amountFormat(parseFloat(fee.fees) - (fee.total_paid + fee.total_discount))}</span>
+                                                        </div>
+
+                                                        {fee.amount_detail && fee.amount_detail.length > 0 && (
+                                                            <div className="payment-details-section">
+                                                                <h3 className="payment-details-title">Payment Details</h3>
+                                                                {fee.amount_detail.map((deposit, dIdx) => (
+                                                                    <div key={`trans-dep-card-${dIdx}`} className="payment-item gf-payment-item">
+                                                                        <div className="fee-card-row">
+                                                                            <span className="label">Payment ID :</span>
+                                                                            <span className="value">{fee.student_fees_deposite_id}/{deposit.inv_no}</span>
+                                                                        </div>
+                                                                        <div className="fee-card-row">
+                                                                            <span className="label">Mode :</span>
+                                                                            <span className="value">{deposit.payment_mode}</span>
+                                                                        </div>
+                                                                        <div className="fee-card-row">
+                                                                            <span className="label">Payment Date :</span>
+                                                                            <span className="value">{deposit.date}</span>
+                                                                        </div>
+                                                                        <div className="fee-card-row">
+                                                                            <span className="label">Discount :</span>
+                                                                            <span className="value">{amountFormat(deposit.amount_discount)}</span>
+                                                                        </div>
+                                                                        <div className="fee-card-row">
+                                                                            <span className="label">Fine :</span>
+                                                                            <span className="value">{amountFormat(deposit.amount_fine)}</span>
+                                                                        </div>
+                                                                        <div className="fee-card-row">
+                                                                            <span className="label">Amount :</span>
+                                                                            <span className="value">{amountFormat(deposit.amount)}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -703,8 +1038,7 @@ const GetFees = () => {
                     )}
                 </section>
             </div>
-            <Footer />
-        </div>
+        </>
     );
 };
 
