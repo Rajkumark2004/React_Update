@@ -1,9 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from './user_components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { api_users } from '../../services/api_users';
 import '../../utils/include_files.js';
@@ -126,7 +123,7 @@ const TransportRoute = () => {
     const isNextDisabled = listroute.pickup_point.length < 3 || counter >= listroute.pickup_point.length - 2;
 
     return (
-        <div className="wrapper">
+        <>
             <style>{`
                 /* Hide standard search and session UI */
                 .sessionul, .search-form2, .search-form {
@@ -209,13 +206,16 @@ const TransportRoute = () => {
 
                 .content-wrapper {
                     background-color: #f7f8fa !important;
-                    padding-top: 25px !important;
-                    margin-top: 50px !important;
+              padding-top: 0px !important;
+                    margin-top: 40px !important;
                     min-height: calc(100vh - 50px);
                 }
                 .box-title{
-                    font-size: 18px !important;
-                    font-weight: 300 !important;
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 400;
+                    color: #333;
+                    flex: 1;
                 }
 
                 /* Transport Route Specific CSS */
@@ -283,13 +283,41 @@ const TransportRoute = () => {
                 .route-wrap .arrows button:hover:not(:disabled) { background: #000; }
                 .route-wrap .arrows button:disabled { opacity: 0.5; cursor: not-allowed; }
                 
-                @media (max-width: 991px) {
+                @media (max-width: 769px) {
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
+                    /* Padding balancing for mobile */
+                    .content-wrapper { padding-left: 0px !important; padding-right: 0px !important; }
+                    .content { padding-left: 10px !important; padding-right: 10px !important; }
                     .route-bus-icon { width: 120px; }
-                    .hide-mobile { display: none !important; }
+                    .content-wrapper { padding-top: 0px !important; }
+
+                    .mobile-box-back-btn {
+                        display: flex !important;
+                        align-items: center;
+                        gap: 5px;
+                        background-color: #9c68e4 !important;
+                        color: #fff !important;
+                        border: none;
+                        padding: 6px 15px;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        position: absolute !important;
+                        top: 5px !important;
+                        right: 10px !important;
+                        z-index: 100 !important;
+                        text-decoration: none !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .content{
+                        padding:28px 8px 0px 8px !important;
+                    }
+                }
+                @media (min-width: 770px) {
+                    .mobile-box-back-btn { display: none !important; }
                 }
 
                 /* Sidebar mega menu cards logic override if needed */
@@ -301,29 +329,28 @@ const TransportRoute = () => {
                     .timeline-route ol li:not(:first-child) { margin-left: 0; }
                     .timeline-route ol li::after, .timeline-route .arrows { display: none; }
                 }
+
+                /* TransportRoute page specific */
+                .tr-content { padding: 28px 10px 13px 10px; display: flex; flex-direction: column; }
+                .tr-box-wrapper { position: relative; background: #fff; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+                .tr-box-header { padding: 10px 15px; border-bottom: 1px solid #f4f4f4; }
+                .tr-box-body { padding: 15px; }
+                .tr-route-title { margin-top: 0; }
+                .tr-timeline-list { transform: translateX(0px); visibility: hidden; }
+                .tr-timeline-visible { visibility: visible; }
             `}</style>
-
-            <Header
-                userData={userData}
-                handleLogout={handleLogout}
-                sessionYear={sessionYear}
-                headerLogoUrl={userData.adminLogoUrl}
-            />
-
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/user/route"
-            />
-
             <div className="content-wrapper">
-                <section className="content" style={{ padding: '13px', display: 'flex', flexDirection: 'column' }}>
+                <section className="content tr-content">
                     <div className="row">
                         <div className="col-md-12">
-                            <div className="box box-primary" style={{ background: '#fff', borderRadius: '4px', boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}>
-                                <div className="box-header ptbnull" style={{ padding: '10px 15px', borderBottom: '1px solid #f4f4f4' }}>
-                                    <h3 className="box-title titlefix">Transport Routes</h3>
+                            <div className="box box-primary tr-box-wrapper">
+                                <div className="box-header ptbnull tr-box-header">
+                                    <h3 className="box-title">Transport Routes</h3>
+                                    <button className="mobile-box-back-btn" onClick={() => navigate('/user/dashboard')}>
+                                        <i className="fa fa-arrow-left"></i> Back
+                                    </button>
                                 </div>
-                                <div className="box-body" style={{ padding: '15px' }}>
+                                <div className="box-body tr-box-body">
                                     <div className="row">
                                         <div className="col-lg-12 col-md-12 col-sm-12">
                                             <div className="row">
@@ -336,7 +363,7 @@ const TransportRoute = () => {
                                                 </div>
 
                                                 <div className="col-lg-10 col-md-10 col-sm-9">
-                                                    <h4 style={{ marginTop: 0 }}><b>Route Title: {listroute.route_title}</b></h4>
+                                                    <h4 className="tr-route-title"><b>Route Title: {listroute.route_title}</b></h4>
                                                     <div className="row">
                                                         <div className="col-lg-4 col-md-4 col-sm-4">
                                                             <div className="route-text"><b>Vehicle Number: </b><span>{listroute.vehicle_no}</span></div>
@@ -382,7 +409,7 @@ const TransportRoute = () => {
                                                 </div>
 
                                                 <section className="timeline-route">
-                                                    <ol ref={timelineRef} style={{ transform: 'translateX(0px)', visibility: listroute.pickup_point.length > 0 ? 'visible' : 'hidden' }}>
+                                                    <ol ref={timelineRef} className={`tr-timeline-list ${listroute.pickup_point.length > 0 ? 'tr-timeline-visible' : ''}`}>
                                                         {listroute.pickup_point.map((point, index) => {
                                                             const isActive = listroute.pickup_point_name === point.pickup_point;
                                                             return (
@@ -407,8 +434,7 @@ const TransportRoute = () => {
                     </div>
                 </section>
             </div>
-            <Footer />
-        </div>
+        </>
     );
 };
 
