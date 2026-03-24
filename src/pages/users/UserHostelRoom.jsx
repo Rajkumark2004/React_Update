@@ -1,13 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from './user_components/Footer';
-import TopSidebar from './user_components/TopSidebar';
 import { useSession } from '../../context/SessionContext';
 import { api_users } from '../../services/api_users';
 import '../../utils/include_files.js';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport.js';
 
 const UserHostelRoom = () => {
     const navigate = useNavigate();
@@ -139,8 +136,82 @@ const UserHostelRoom = () => {
     const amountFormat = (n) =>
         Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+    const columns = [
+        { key: 'hostel_name', label: 'Hostel' },
+        { key: 'room_type', label: 'Room Type' },
+        { key: 'room_no', label: 'Room Number / Name' },
+        { key: 'no_of_bed', label: 'No Of Bed' },
+        { key: 'status', label: 'Status' },
+        { key: 'cost_per_bed', label: 'Cost Per Bed' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowColumnDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getFormattedData = () => {
+        return buildExportData(
+            columns,
+            visibleColumns,
+            sortedRooms,
+            (row, key) => {
+                if (key === 'cost_per_bed') return `₹${amountFormat(row[key])}`;
+                return row[key];
+            }
+        );
+    };
+
+    const handleCopy = () => {
+        const { headers, rows } = getFormattedData();
+        copyToClipboard(headers, rows);
+    };
+
+    const handleExportCSV = () => {
+        const { headers, rows } = getFormattedData();
+        downloadCSV(headers, rows, 'HostelRooms.csv');
+    };
+
+    const handleExportExcel = () => {
+        const { headers, rows } = getFormattedData();
+        downloadExcel(headers, rows, 'HostelRooms.xls');
+    };
+
+    const handleExportPDF = () => {
+        const { headers, rows } = getFormattedData();
+        downloadPDF(headers, rows, 'HostelRooms.pdf', 'Hostel Rooms List');
+    };
+
+    const handlePrint = () => {
+        const { headers, rows } = getFormattedData();
+        printTable(headers, rows, 'Hostel Rooms List');
+    };
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) {
+            newVisible.delete(key);
+        } else {
+            newVisible.add(key);
+        }
+        setVisibleColumns(newVisible);
+    };
+
+    const handleRestoreVisibility = () => {
+        setVisibleColumns(new Set(columns.map(c => c.key)));
+    };
+
     return (
-        <div className="wrapper">
+        <>
             <style>{`
                 /* Hide standard search and session UI */
                 .sessionul, .search-form2, .search-form {
@@ -223,8 +294,9 @@ const UserHostelRoom = () => {
 
                 .content-wrapper {
                     background-color: #f7f8fa !important;
-                    padding-top: 25px !important;
-                    margin-top: 50px !important;
+                    padding-top: 8px !important;
+                    margin-top: 40px !important;
+                    padding-right: 20px;
                     min-height: calc(100vh - 50px);
                 }
 
@@ -233,7 +305,7 @@ const UserHostelRoom = () => {
                     border-radius: 4px;
                     border: 1px solid #eee !important;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1) !important;
-                    margin: 25px 10px 15px 10px;
+                    margin: 5px 80px 200px 10px;
                 }
 
                 .box-header {
@@ -245,15 +317,15 @@ const UserHostelRoom = () => {
                 }
 
                 .box-title {
-                    margin: 0;
-                    font-size: 18px;
-                    font-weight: 500;
+                   margin: 0;
+                    font-size: 20px;
+                    font-weight: 400;
                     color: #333;
                     flex: 1;
                 }
 
                 .box-body {
-                    padding: 15px;
+                    padding: 5px 5px 15px 5px;
                 }
 
                 /* Table Styling */
@@ -283,12 +355,13 @@ const UserHostelRoom = () => {
                 .export-icons {
                     display: flex;
                     gap: 0;
+                    border-bottom: 1px solid #ccc;
                 }
 
                 .export-btn {
                     background: transparent;
                     border: none;
-                    padding: 8px 10px;
+                    padding: 8px 6px;
                     cursor: pointer;
                     font-size: 14px;
                     color: #555;
@@ -298,6 +371,66 @@ const UserHostelRoom = () => {
                 .export-btn:hover {
                     color: #000;
                     background: #f0f0f0;
+                }
+
+                .column-dropdown {
+                    position: absolute;
+                    right: 0;
+                    top: 100%;
+                    background: #7d7d7d;
+                    border-radius: 4px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    min-width: 180px;
+                    overflow: hidden;
+                    padding: 0;
+                    margin-top: 5px;
+                    border: 1px solid rgba(0,0,0,0.1);
+                }
+
+                .column-item {
+                    padding: 4px 15px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    color: #fff;
+                    background: #7d7d7d;
+                    transition: all 0.2s;
+                    display: block;
+                    width: 100%;
+                    text-align: left;
+                    border: none;
+                    border-bottom: 1px solid rgba(255,255,255,0.1);
+                }
+
+                .column-item:hover {
+                    background: #6e6e6e;
+                }
+
+                .column-item.active-col {
+                    background: #7d7d7d;
+                    color: #fff;
+                }
+
+                .column-item.hidden-col {
+                    background: #fff;
+                    color: #555;
+                }
+
+                .restore-visibility {
+                    background: #fff;
+                    color: #555;
+                    padding: 4px 15px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    text-align: left;
+                    font-weight: 400;
+                    display: block;
+                    width: 100%;
+                    border: none;
+                }
+                
+                .restore-visibility:hover {
+                    background: #f9f9f9;
                 }
 
                 .table-responsive {
@@ -310,13 +443,13 @@ const UserHostelRoom = () => {
                     font-size: 13px;
                 }
                 .hr-table thead th {
-                    padding: 8px 12px;
+                    padding: 6px 10px;
                     border-bottom: 1px solid #ddd;
                     font-weight: 600;
                     position: relative;
                 }
                 .hr-table tbody td {
-                    padding: 4px 12px;
+                    padding: 6px 10px;
                     border-bottom: 1px solid #eee;
                     color: #555;
                 }
@@ -350,40 +483,97 @@ const UserHostelRoom = () => {
                     min-width: 20px;
                     text-align: center;
                 }
-
-                @media (max-width: 991px) {
+                
+                @media (max-width: 769px) {
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
-                    .hide-mobile { display: none !important; }
+                    /* Padding balancing for mobile */
+                    .content-wrapper { padding-left: 0px !important; padding-right: 0px !important; }
+                    .content { padding-left: 10px !important; padding-right: 10px !important; }
+                    .content-wrapper { padding-top:18px !important; }
+                    .box-primary { margin: 10px 10px 50px 10px !important; }
+
+                    .mobile-box-back-btn {
+                        display: flex !important;
+                        align-items: center;
+                        gap: 5px;
+                        background-color: #9c68e4 !important;
+                        color: #fff !important;
+                        border: none;
+                        padding: 6px 15px;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        position: absolute !important;
+                        top: 4px !important;
+                        right: 10px !important;
+                        z-index: 100 !important;
+                        text-decoration: none !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .content{
+                        padding:0px 20px 0px 0px !important;
+                    }
+
+                    /* Center toolbar and search bar on mobile, one row each */
+                    .table-controls {
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        gap: 6px !important;
+                    }
+                    .export-icons {
+                        order: 1 !important;
+                        justify-content: center !important;
+                        width: 50% !important;
+                        border-bottom: 1px solid #ccc !important;
+                    }
+                    .search-box {
+                        order: 2 !important;
+                        width: 50% !important;
+                        display: flex !important;
+                        justify-content: center !important;
+                    }
+                    .search-box input {
+                        width: 100% !important;
+                        max-width: 320px !important;
+                        text-align: center !important;
+                    }
+                }
+                @media (min-width: 770px) {
+                    .mobile-box-back-btn { display: none !important; }
+                }
+
+                @media (min-width: 992px) {
+                    .hide-desktop { display: none !important; }
                 }
 
                 /* Sidebar mega menu cards logic override if needed */
                 .fixedmenu { display: none !important; }
+
+                /* Hostel page specific */
+                .hostel-content { padding: 0px; display: flex; flex-direction: column; }
+                .hostel-hide-mobile-spacer { margin-bottom: 10px; }
+                .hostel-box-wrapper { position: relative; flex: 1; margin: 10px; }
+                .hostel-export-icons-wrap { position: relative; }
+                .hr-table-th-sortable { cursor: pointer; }
+                .hr-table-th-right { text-align: right; cursor: pointer; }
+                .hr-table-sort-icon { color: #ccc; margin-left: 4px; }
+                .hr-table-td-right { text-align: right; }
+                .hr-table-empty-cell { text-align: center; padding: 20px; }
             `}</style>
-
-            <Header
-                userData={userData}
-                handleLogout={handleLogout}
-                sessionYear={sessionYear}
-                headerLogoUrl={userData.adminLogoUrl}
-            />
-
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/user/hostelroom"
-            />
-
             <div className="content-wrapper">
-                <section className="content" style={{ padding: "4px", display: "flex", flexDirection: "column" }}>
-                    <div className="hide-mobile" style={{ marginBottom: '10px' }}>
-                        <TopSidebar sessionYear={sessionYear} />
-                    </div>
+                <section className="content hostel-content">
+                    <div className="hide-mobile hostel-hide-mobile-spacer">                    </div>
 
-                    <div className="box box-primary" style={{ flex: 1, margin: '10px' }}>
+                    <div className="box box-primary hostel-box-wrapper">
                         <div className="box-header">
                             <h3 className="box-title">Hostel Rooms</h3>
+                            <button className="mobile-box-back-btn" onClick={() => navigate('/user/dashboard')}>
+                                <i className="fa fa-arrow-left"></i> Back
+                            </button>
                         </div>
                         <div className="box-body">
                             <div className="table-controls">
@@ -395,13 +585,30 @@ const UserHostelRoom = () => {
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
-                                <div className="export-icons">
-                                    <button className="export-btn" title="Copy"><i className="fa fa-copy"></i></button>
-                                    <button className="export-btn" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                    <button className="export-btn" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                    <button className="export-btn" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                    <button className="export-btn" title="Print"><i className="fa fa-print"></i></button>
-                                    <button className="export-btn" title="Columns"><i className="fa fa-columns"></i></button>
+                                <div className="export-icons hostel-export-icons-wrap" ref={dropdownRef}>
+                                    <button className="export-btn" title="Copy" onClick={handleCopy}><i className="fa fa-copy"></i></button>
+                                    <button className="export-btn" title="Excel" onClick={handleExportExcel}><i className="fa fa-file-excel-o"></i></button>
+                                    <button className="export-btn" title="CSV" onClick={handleExportCSV}><i className="fa fa-file-text-o"></i></button>
+                                    <button className="export-btn" title="PDF" onClick={handleExportPDF}><i className="fa fa-file-pdf-o"></i></button>
+                                    <button className="export-btn" title="Print" onClick={handlePrint}><i className="fa fa-print"></i></button>
+                                    <button className="export-btn" title="Columns" onClick={() => setShowColumnDropdown(!showColumnDropdown)}><i className="fa fa-columns"></i></button>
+
+                                    {showColumnDropdown && (
+                                        <div className="column-dropdown">
+                                            {columns.map(col => (
+                                                <button
+                                                    key={col.key}
+                                                    className={`column-item ${visibleColumns.has(col.key) ? 'active-col' : 'hidden-col'}`}
+                                                    onClick={() => toggleColumn(col.key)}
+                                                >
+                                                    {col.label}
+                                                </button>
+                                            ))}
+                                            <button className="restore-visibility" onClick={handleRestoreVisibility}>
+                                                Restore visibility
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -409,29 +616,43 @@ const UserHostelRoom = () => {
                                 <table className="hr-table">
                                     <thead>
                                         <tr>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('hostel_name')}>Hostel <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('room_type')}>Room Type <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('room_no')}>Room Number / Name <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('no_of_bed')}>No Of Bed <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('status')}>Status <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
-                                            <th style={{ textAlign: 'right', cursor: 'pointer' }} onClick={() => handleSort('cost_per_bed')}>Cost Per Bed <i className="fa fa-caret-down" style={{ color: '#ccc', marginLeft: '4px' }}></i></th>
+                                            {visibleColumns.has('hostel_name') && (
+                                                <th className="hr-table-th-sortable" onClick={() => handleSort('hostel_name')}>Hostel <i className="fa fa-caret-down hr-table-sort-icon"></i></th>
+                                            )}
+                                            {visibleColumns.has('room_type') && (
+                                                <th className="hr-table-th-sortable" onClick={() => handleSort('room_type')}>Room Type <i className="fa fa-caret-down hr-table-sort-icon"></i></th>
+                                            )}
+                                            {visibleColumns.has('room_no') && (
+                                                <th className="hr-table-th-sortable" onClick={() => handleSort('room_no')}>Room Number / Name <i className="fa fa-caret-down hr-table-sort-icon"></i></th>
+                                            )}
+                                            {visibleColumns.has('no_of_bed') && (
+                                                <th className="hr-table-th-sortable" onClick={() => handleSort('no_of_bed')}>No Of Bed <i className="fa fa-caret-down hr-table-sort-icon"></i></th>
+                                            )}
+                                            {visibleColumns.has('status') && (
+                                                <th className="hr-table-th-sortable" onClick={() => handleSort('status')}>Status <i className="fa fa-caret-down hr-table-sort-icon"></i></th>
+                                            )}
+                                            {visibleColumns.has('cost_per_bed') && (
+                                                <th className="hr-table-th-right" onClick={() => handleSort('cost_per_bed')}>Cost Per Bed <i className="fa fa-caret-down hr-table-sort-icon"></i></th>
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {sortedRooms.length > 0 ? (
                                             sortedRooms.map((room) => (
                                                 <tr key={room.id}>
-                                                    <td>{room.hostel_name}</td>
-                                                    <td>{room.room_type}</td>
-                                                    <td>{room.room_no}</td>
-                                                    <td>{room.no_of_bed}</td>
-                                                    <td>{room.status}</td>
-                                                    <td style={{ textAlign: 'right' }}>₹{amountFormat(room.cost_per_bed)}</td>
+                                                    {visibleColumns.has('hostel_name') && <td>{room.hostel_name}</td>}
+                                                    {visibleColumns.has('room_type') && <td>{room.room_type}</td>}
+                                                    {visibleColumns.has('room_no') && <td>{room.room_no}</td>}
+                                                    {visibleColumns.has('no_of_bed') && <td>{room.no_of_bed}</td>}
+                                                    {visibleColumns.has('status') && <td>{room.status}</td>}
+                                                    {visibleColumns.has('cost_per_bed') && (
+                                                        <td className="hr-table-td-right">₹{amountFormat(room.cost_per_bed)}</td>
+                                                    )}
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>No rooms found</td>
+                                                <td colSpan={visibleColumns.size} className="hr-table-empty-cell">No rooms found</td>
                                             </tr>
                                         )}
                                     </tbody>
@@ -456,8 +677,7 @@ const UserHostelRoom = () => {
                     </div>
                 </section>
             </div>
-            <Footer />
-        </div>
+        </>
     );
 };
 
