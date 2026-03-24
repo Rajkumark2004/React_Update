@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { api_users } from '../../services/api_users';
 import '../../utils/include_files.js';
@@ -79,7 +76,7 @@ const Notification = () => {
     };
 
     return (
-        <div className="wrapper">
+        <>
             <style>{`
                 /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
                 .content-wrapper, .main-footer {
@@ -157,9 +154,21 @@ const Notification = () => {
 
                 .content-wrapper {
                     background-color: #f7f8fa !important;
-                    padding-top: 25px !important;
-                    min-height: calc(100vh - 50px);
+                    padding: 15px 0px 0px 0px !important;
+                    min-height: calc(100vh - 100px);
                     position: relative;
+                    margin-top: 40px !important;
+                }
+
+                .main-footer {
+                    background: #ececec !important;
+                    padding: 3px 15px 0px 15px !important;
+                    border-top: 1px solid #d2d6de !important;
+                    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+                    font-size: 10px;
+                    text-align: right !important;
+                    color: #44494f;
+                    line-height: 1.2 !important;
                 }
 
                 /* Circular Page Styles */
@@ -167,17 +176,18 @@ const Notification = () => {
                     background: #fff;
                     border-radius: 4px;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                    margin-bottom: 20px;
+                    margin-bottom: 10px;
                 }
                 .box-header {
                     padding: 10px 15px;
                     border-bottom: 1px solid #f4f4f4;
                 }
                 .box-title {
-                    margin: 0;
-                    font-size: 18px;
-                    font-weight: 500;
-                    color: #333;
+                   margin: 0 !important;
+                    font-size: 20px !important;
+                    font-weight: 400 !important;
+                    color: #333 !important;
+                    flex: 1 !important;
                 }
                 .box-body {
                     padding: 15px;
@@ -245,7 +255,7 @@ const Notification = () => {
                     gap: 10px;
                 }
                 .dividerhr {
-                    border-top: 1px solid #f4f4f4;
+                    border-top: 1px solid black;
                     margin: 10px 0;
                 }
                 
@@ -263,32 +273,57 @@ const Notification = () => {
                     display: none !important;
                 }
 
-                @media (max-width: 991px) {
+                @media (max-width: 769px) {
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
+                    /* Padding balancing for mobile */
+                    .content-wrapper { padding-left: 0px !important; padding-right: 0px !important; }
+                    .content { padding-left: 10px !important; padding-right: 10px !important; }
                     .side-panel { width: 100%; right: -100%; }
                 }
+
+                @media (max-width: 769px) {
+                    .mobile-box-back-btn {
+                        display: flex !important;
+                        align-items: center;
+                        gap: 5px;
+                        background-color: #9c68e4 !important;
+                        color: #fff !important;
+                        border: none;
+                        padding: 6px 15px;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        position: absolute !important;
+                        top: 6px !important;
+                        right: 10px !important;
+                        z-index: 100 !important;
+                        text-decoration: none !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                }
+                @media (min-width: 770px) {
+                    .mobile-box-back-btn { display: none !important; }
+                }
+
+                /* Notification page specific */
+                .notif-content { padding: 15px 10px 0px 15px; }
+                .notif-box-wrapper { position: relative; }
+                .notif-panel-header { display: flex; align-items: center; gap: 10px; }
+                .notif-panel-back { cursor: pointer; font-size: 16px; }
+                .notif-panel-message { font-size: 14px; color: #555; line-height: 1.6; }
+                .notif-attachment-link { color: #3c8dbc; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; }
             `}</style>
-
-            <Header
-                userData={userData}
-                handleLogout={handleLogout}
-                sessionYear={sessionYear}
-                headerLogoUrl={userData.adminLogoUrl}
-            />
-
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/user/notification"
-            />
-
-            <div className="content-wrapper" style={{ marginTop: '30px' }}>
-                <section className="content" style={{ padding: '15px' }}>
-                    <div className="box-solid">
+            <div className="content-wrapper">
+                <section className="content notif-content">
+                    <div className="box-solid notif-box-wrapper">
                         <div className="box-header">
                             <h3 className="box-title">Circular</h3>
+                            <button className="mobile-box-back-btn" onClick={() => navigate('/user/dashboard')}>
+                                <i className="fa fa-arrow-left"></i> Back
+                            </button>
                         </div>
 
                         <div className="box-body">
@@ -316,15 +351,15 @@ const Notification = () => {
                     </div>
                     {selectedNotification && (
                         <>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <i className="fa fa-arrow-left" style={{ cursor: 'pointer', fontSize: '16px' }} onClick={closePanel}></i>
+                            <div className="notif-panel-header">
+                                <i className="fa fa-arrow-left notif-panel-back" onClick={closePanel}></i>
                                 <h4 className="box-title">{selectedNotification.title}</h4>
                             </div>
                             <div className="dividerhr"></div>
-                            <div style={{ fontSize: '14px', color: '#555', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedNotification.message }} />
+                            <div className="notif-panel-message" dangerouslySetInnerHTML={{ __html: selectedNotification.message }} />
 
                             {selectedNotification.attachment && (
-                                <a href={`https://newlayout.wisibles.com/uploads/school_content/material/${selectedNotification.attachment}`} target="_blank" rel="noreferrer" className="attachment-link" style={{ color: '#3c8dbc', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '10px' }}>
+                                <a href={`https://newlayout.wisibles.com/uploads/school_content/material/${selectedNotification.attachment}`} target="_blank" rel="noreferrer" className="attachment-link notif-attachment-link">
                                     <i className="fa fa-download"></i>
                                     Download Attachment
                                 </a>
@@ -338,14 +373,11 @@ const Notification = () => {
                                 )}
                             </ul>
                             <div className="dividerhr"></div>
-                        </>
-                    )}
+        </>)}
                 </div>
 
-                <div style={{ height: '40px' }}></div>
             </div>
-            <Footer />
-        </div>
+        </>
     );
 };
 
