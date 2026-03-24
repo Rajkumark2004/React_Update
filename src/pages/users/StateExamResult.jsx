@@ -1,9 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from './user_components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { api_users } from '../../services/api_users';
 import '../../utils/include_files.js';
@@ -143,7 +140,7 @@ const StateExamResult = () => {
     }, []);
 
     return (
-        <div className="wrapper">
+        <>
             <style>{`
                 /* Hide standard search and session UI */
                 .sessionul, .search-form2, .search-form {
@@ -226,8 +223,9 @@ const StateExamResult = () => {
 
                 .content-wrapper {
                     background-color: #f7f8fa !important;
-                    padding-top: 25px !important;
-                    margin-top: 50px !important;
+                    padding-top: 20px !important;
+                    margin-top: 40px !important;
+                    padding-right: 16px;
                     min-height: calc(100vh - 50px);
                 }
 
@@ -236,11 +234,11 @@ const StateExamResult = () => {
                     border-radius: 4px;
                     border: 1px solid #eee !important;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1) !important;
-                    margin: 25px 10px 15px 10px;
+                    margin: 5px 80px 30px 10px;
                 }
 
                 .box-header {
-                    padding: 10px 15px 5px 15px;
+                    padding: 10px 17px 10px 17px;
                     border-bottom: 1px solid #f4f4f4;
                     display: flex;
                     justify-content: space-between;
@@ -248,19 +246,19 @@ const StateExamResult = () => {
                 }
 
                 .box-title {
-                    margin: 0;
-                    font-size: 13px;
-                    font-weight: 200;
+                   margin: 0;
+                    font-size: 20px;
+                    font-weight: 400;
                     color: #333;
                     flex: 1;
                 }
 
                 .box-body {
-                    padding: 5px 15px 0px 15px;
+                    padding: 0px 15px 0px 15px;
                 }
 
                 .shadow-sm {
-                    margin-bottom: 30px;
+                    margin-bottom: 0px;
                     border-radius: 4px;
                 }
 
@@ -271,6 +269,7 @@ const StateExamResult = () => {
                     padding: 10px 15px;
                     margin: 10px 0 0 0;
                     color: #444;
+                    text-align: center;
                 }
 
                 .table-bordered {
@@ -302,14 +301,19 @@ const StateExamResult = () => {
                 }
                 
                 .btn-print {
-                    background: #fff;
+                    background: #f2f2f2;
                     border: 1px solid #ccc;
-                    padding: 4px 10px;
-                    border-radius: 20px;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
                     cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: background 0.2s;
                 }
                 .btn-print:hover {
-                    background: #f4f4f4;
+                    background: #e7e7e7;
                 }
 
                 .alert-info-custom {
@@ -321,49 +325,84 @@ const StateExamResult = () => {
                     text-align: left;
                 }
 
-                @media (max-width: 991px) {
+                @media (max-width: 769px) {
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
-                    .hide-mobile { display: none !important; }
+                    /* Padding balancing for mobile */
+                    .content-wrapper { padding-left: 0px !important; padding-right: 0px !important; }
+                    .content { padding-left: 10px !important; padding-right: 10px !important; }
+                    .content-wrapper { 
+                        padding-top: 18px !important; 
+                        padding-bottom:0px !important; 
+                        margin-top: 40px !important;
+                    }
+                    .box-primary { margin: 10px 10px 15px 10px !important; }
+
+                    .mobile-box-back-btn {
+                        display: flex !important;
+                        align-items: center;
+                        gap: 5px;
+                        background-color: #9c68e4 !important;
+                        color: #fff !important;
+                        border: none;
+                        padding: 6px 15px;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        position: absolute !important;
+                        top: 10px !important;
+                        right: 10px !important;
+                        z-index: 100 !important;
+                        text-decoration: none !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .btn-print {
+                        margin-right: 80px !important;
+                    }
+                    .content{
+                        padding:0px 20px 0px 0px !important;
+                    }
+                }
+                @media (min-width: 770px) {
+                    .mobile-box-back-btn { display: none !important; }
                 }
 
                 /* Sidebar mega menu cards logic override if needed */
                 .fixedmenu { display: none !important; }
+
+                /* StateExamResult page specific */
+                .ser-content { padding: 4px; display: flex; flex-direction: column; }
+                .ser-box-wrapper { position: relative; }
+                .ser-header-actions { display: flex; gap: 10px; align-items: center; }
+                .ser-body-padded { padding-bottom: 30px; }
+                .ser-loading { padding: 20px; }
+                .ser-summary-table { margin-top: -1px; }
+                .ser-col-33 { width: 33%; }
+                .ser-col-35 { width: 35%; }
+                .ser-col-15 { width: 15%; }
+                .ser-route-title { margin-top: 0; }
             `}</style>
-
-            <Header
-                userData={userData}
-                handleLogout={handleLogout}
-                sessionYear={sessionYear}
-                headerLogoUrl={userData.adminLogoUrl}
-            />
-
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/user/cbse/result"
-            />
-
             <div className="content-wrapper">
-                <section className="content" style={{ padding: "5px" }}>
+                <section className="content ser-content">
 
-                    <div className="box box-primary">
+                    <div className="box box-primary ser-box-wrapper">
                         <div className="box-header">
                             <h3 className="box-title">State Exam Result</h3>
-                            <div className="pull-right">
-                                <button className="btn-print" title="Print"><i className="fa fa-print"></i></button>
-                                <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm margin-l-5 hide-desktop">
+                            <div className="pull-right ser-header-actions">
+                                <button className="mobile-box-back-btn" onClick={() => navigate('/user/dashboard')}>
                                     <i className="fa fa-arrow-left"></i> Back
                                 </button>
+                                <button className="btn-print" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
                             </div>
                         </div>
-                        <div className="box-body">
+                        <div className="box-body ser-body-padded">
                             {loading ? (
-                                <div className="text-center" style={{ padding: '20px' }}>Loading...</div>
+                                <div className="text-center ser-loading">Loading...</div>
                             ) : exams.length === 0 ? (
                                 <div className="alert-info-custom">
-                                    No Record Found
+                                    No Exam Assigned
                                 </div>
                             ) : (
                                 exams.map(exam => (
@@ -396,12 +435,12 @@ const StateExamResult = () => {
                                                     ))}
                                                 </tbody>
                                             </table>
-                                            <table className="table table-bordered mb0 bg-gray-light" style={{ marginTop: '-1px' }}>
+                                            <table className="table table-bordered mb0 bg-gray-light ser-summary-table">
                                                 <tbody>
                                                     <tr>
-                                                        <td className="bolds" style={{ width: '33%' }}>Total Marks : {exam.total_marks}</td>
-                                                        <td className="bolds" style={{ width: '35%' }}>Percentage (%) : {exam.percentage}</td>
-                                                        <td className="bolds" style={{ width: '15%' }}>Grade : {exam.grade}</td>
+                                                        <td className="bolds ser-col-33">Total Marks : {exam.total_marks}</td>
+                                                        <td className="bolds ser-col-35">Percentage (%) : {exam.percentage}</td>
+                                                        <td className="bolds ser-col-15">Grade : {exam.grade}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -413,9 +452,7 @@ const StateExamResult = () => {
                     </div>
                 </section>
             </div>
-
-            <Footer />
-        </div>
+        </>
     );
 };
 
