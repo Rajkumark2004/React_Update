@@ -1,30 +1,37 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './user_components/Header_user';
-import Sidebar from './user_components/Sidebar_user';
-import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
+import { api_users } from '../../services/api_users';
 import '../../utils/include_files.js';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport.js';
 
 const Homework = () => {
     const navigate = useNavigate();
     const { currentSession, clearSession } = useSession();
 
     const [userData, setUserData] = useState({
-        name: "T. Srinivasulu",
+        name: "User",
         role: "Student",
-        id: "12345",
-        avatar: "/uploads/student_images/1.jpg"
+        id: "",
+        avatar: "/uploads/student_images/no_image.png",
+        adminLogoUrl: ""
     });
 
     const sessionYear = currentSession?.session || '2024-25';
+    const [loading, setLoading] = useState(true);
 
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            await api_users.userLogout();
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            clearSession();
+            localStorage.removeItem('user');
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('token');
+            navigate('/user/login');
+        }
     };
 
     const themeColor = "#9c68e4";
@@ -35,9 +42,45 @@ const Homework = () => {
     // Search state
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Mock data - empty arrays for now
+    // Homework data from API
     const [upcomingHomework, setUpcomingHomework] = useState([]);
     const [closedHomework, setClosedHomework] = useState([]);
+
+    // Fetch data on mount
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+
+                // Fetch user info
+                const userRes = await api_users.getUserDashboard();
+                if (userRes && userRes.status && userRes.data && userRes.data.student) {
+                    setUserData(prev => ({
+                        ...prev,
+                        name: userRes.data.student.name || prev.name,
+                        id: userRes.data.student.id || prev.id,
+                        avatar: userRes.data.student.image ? `${userRes.data.sch_setting?.base_url || ''}uploads/student_images/${userRes.data.student.image}` : prev.avatar,
+                        adminLogoUrl: userRes.data.sch_setting?.admin_logo && userRes.data.sch_setting?.base_url
+                            ? `${userRes.data.sch_setting.base_url}uploads/school_content/admin_logo/${userRes.data.sch_setting.admin_logo}`
+                            : ""
+                    }));
+                }
+
+                // Fetch homework list
+                const hwRes = await api_users.getHomework();
+                console.log('Homework full response:', hwRes);
+                if (hwRes && hwRes.data) {
+                    setUpcomingHomework(hwRes.data.open_homework || []);
+                    setClosedHomework(hwRes.data.closed_homework || []);
+                }
+            } catch (error) {
+                console.error('Failed to fetch homework data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -74,11 +117,6 @@ const Homework = () => {
         setSortConfig({ key, direction });
     };
 
-    const getSortIcon = (key) => {
-        if (sortConfig.key !== key) return '↕';
-        return sortConfig.direction === 'asc' ? '↑' : '↓';
-    };
-
     const currentData = activeTab === 'upcoming' ? upcomingHomework : closedHomework;
 
     const filteredData = currentData.filter(hw => {
@@ -105,6 +143,76 @@ const Homework = () => {
         { key: 'status', label: 'Status' },
     ];
 
+    const [visibleColumns, setVisibleColumns] = useState(new Set(tableColumns.map(c => c.key)));
+    const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowColumnDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const getFormattedData = () => {
+        return buildExportData(
+            tableColumns,
+            visibleColumns,
+            filteredData,
+            (row, key) => {
+                if (key === 'status') {
+                    return getStatusInfo(row).label || '';
+                }
+                if (key === 'subject_name') {
+                    return `${row.subject_name}${row.subject_code ? ` (${row.subject_code})` : ''}`;
+                }
+                return row[key] || '';
+            }
+        );
+    };
+
+    const handleCopy = () => {
+        const { headers, rows } = getFormattedData();
+        copyToClipboard(headers, rows);
+    };
+
+    const handleExportCSV = () => {
+        const { headers, rows } = getFormattedData();
+        downloadCSV(headers, rows, 'HomeworkList.csv');
+    };
+
+    const handleExportExcel = () => {
+        const { headers, rows } = getFormattedData();
+        downloadExcel(headers, rows, 'HomeworkList.xls');
+    };
+
+    const handleExportPDF = () => {
+        const { headers, rows } = getFormattedData();
+        downloadPDF(headers, rows, 'HomeworkList.pdf', 'Homework List');
+    };
+
+    const handlePrint = () => {
+        const { headers, rows } = getFormattedData();
+        printTable(headers, rows, 'Homework List');
+    };
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) {
+            newVisible.delete(key);
+        } else {
+            newVisible.add(key);
+        }
+        setVisibleColumns(newVisible);
+    };
+
+    const handleRestoreVisibility = () => {
+        setVisibleColumns(new Set(tableColumns.map(c => c.key)));
+    };
+
     const renderTable = (data) => (
         <div className="hw-table-wrapper">
             <div className="hw-table-top">
@@ -117,13 +225,30 @@ const Homework = () => {
                         className="hw-search-input"
                     />
                 </div>
-                <div className="hw-export-icons">
-                    <button className="hw-export-btn" title="Copy"><i className="fa fa-copy"></i></button>
-                    <button className="hw-export-btn" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                    <button className="hw-export-btn" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                    <button className="hw-export-btn" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                    <button className="hw-export-btn" title="Print"><i className="fa fa-print"></i></button>
-                    <button className="hw-export-btn" title="Columns"><i className="fa fa-columns"></i></button>
+                <div className="hw-export-icons hw-export-wrap" ref={dropdownRef}>
+                    <button className="hw-export-btn" title="Copy" onClick={handleCopy}><i className="fa fa-copy"></i></button>
+                    <button className="hw-export-btn" title="Excel" onClick={handleExportExcel}><i className="fa fa-file-excel-o"></i></button>
+                    <button className="hw-export-btn" title="CSV" onClick={handleExportCSV}><i className="fa fa-file-text-o"></i></button>
+                    <button className="hw-export-btn" title="PDF" onClick={handleExportPDF}><i className="fa fa-file-pdf-o"></i></button>
+                    <button className="hw-export-btn" title="Print" onClick={handlePrint}><i className="fa fa-print"></i></button>
+                    <button className="hw-export-btn" title="Columns" onClick={() => setShowColumnDropdown(!showColumnDropdown)}><i className="fa fa-columns"></i></button>
+
+                    {showColumnDropdown && (
+                        <div className="column-dropdown">
+                            {tableColumns.map(col => (
+                                <button
+                                    key={col.key}
+                                    className={`column-item ${visibleColumns.has(col.key) ? 'active-col' : 'hidden-col'}`}
+                                    onClick={() => toggleColumn(col.key)}
+                                >
+                                    {col.label}
+                                </button>
+                            ))}
+                            <button className="restore-visibility" onClick={handleRestoreVisibility}>
+                                Restore visibility
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -132,9 +257,11 @@ const Homework = () => {
                     <thead>
                         <tr>
                             {tableColumns.map((col) => (
-                                <th key={col.key} onClick={() => handleSort(col.key)}>
-                                    {col.label} <span className="sort-icon">{getSortIcon(col.key)}</span>
-                                </th>
+                                visibleColumns.has(col.key) && (
+                                    <th key={col.key} onClick={() => handleSort(col.key)} className="hw-th-sortable">
+                                        {col.label} <i className="fa fa-caret-down hw-sort-icon"></i>
+                                    </th>
+                                )
                             ))}
                             <th className="th-action">Action</th>
                         </tr>
@@ -142,11 +269,11 @@ const Homework = () => {
                     <tbody>
                         {filteredData.length === 0 ? (
                             <tr>
-                                <td colSpan={tableColumns.length + 1} className="hw-empty-td">
+                                <td colSpan={visibleColumns.size + 1} className="hw-empty-td">
                                     <div className="hw-empty-state">
                                         <div className="hw-empty-text">No data available in table</div>
                                         <div className="hw-empty-illustration">
-                                            <img src="/images/addnewitem.svg" alt="empty" style={{ width: '130px', height: 'auto', opacity: '0.8' }} />
+                                            <img src="/images/addnewitem.svg" alt="empty" className="hw-empty-img" />
                                         </div>
                                         <div className="hw-empty-hint">
                                             ← Add new record or search with different criteria.
@@ -159,20 +286,22 @@ const Homework = () => {
                                 const statusInfo = getStatusInfo(hw);
                                 return (
                                     <tr key={index}>
-                                        <td>{hw.class}</td>
-                                        <td>{hw.section}</td>
-                                        <td>{hw.subject_name}{hw.subject_code ? ` (${hw.subject_code})` : ''}</td>
-                                        <td>{hw.homework_date}</td>
-                                        <td>{hw.submit_date}</td>
-                                        <td>{hw.evaluation_date || ''}</td>
-                                        <td>{hw.marks}</td>
-                                        <td>{hw.evaluation_marks}</td>
-                                        <td>{hw.note}</td>
-                                        <td>
-                                            <span className={`hw-status-badge ${statusInfo.className}`}>
-                                                {statusInfo.label}
-                                            </span>
-                                        </td>
+                                        {visibleColumns.has('class') && <td>{hw.class}</td>}
+                                        {visibleColumns.has('section') && <td>{hw.section}</td>}
+                                        {visibleColumns.has('subject_name') && <td>{hw.subject_name}{hw.subject_code ? ` (${hw.subject_code})` : ''}</td>}
+                                        {visibleColumns.has('homework_date') && <td>{hw.homework_date}</td>}
+                                        {visibleColumns.has('submit_date') && <td>{hw.submit_date}</td>}
+                                        {visibleColumns.has('evaluation_date') && <td>{hw.evaluation_date || ''}</td>}
+                                        {visibleColumns.has('marks') && <td>{hw.marks}</td>}
+                                        {visibleColumns.has('evaluation_marks') && <td>{hw.evaluation_marks}</td>}
+                                        {visibleColumns.has('note') && <td>{hw.note}</td>}
+                                        {visibleColumns.has('status') && (
+                                            <td>
+                                                <span className={`hw-status-badge ${statusInfo.className}`}>
+                                                    {statusInfo.label}
+                                                </span>
+                                            </td>
+                                        )}
                                         <td className="td-action">
                                             <button
                                                 className="hw-action-btn"
@@ -192,7 +321,7 @@ const Homework = () => {
 
             <div className="hw-table-footer">
                 <div className="hw-records-info">
-                    Records: 0 to 0 of 0
+                    Records: {filteredData.length > 0 ? `1 to ${filteredData.length} of ${filteredData.length}` : '0 of 0'}
                 </div>
                 <div className="hw-pagination">
                     <button className="hw-page-arrow" disabled>
@@ -208,7 +337,7 @@ const Homework = () => {
     );
 
     return (
-        <div className="wrapper">
+        <>
             <style>{`
                 /* Hide standard search and session UI */
                 .sessionul, .search-form2, .search-form {
@@ -243,10 +372,11 @@ const Homework = () => {
                 }
 
                 /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
-                .content-wrapper, .main-footer {
+                .content-wrapper {
                     margin-left: 80px !important;
+                    padding: 0px !important;
                 }
-
+                
                 .sidebar {
                     height: calc(100vh - 50px) !important;
                     overflow-y: auto !important;
@@ -291,8 +421,8 @@ const Homework = () => {
 
                 .content-wrapper {
                     background-color: #f7f8fa !important;
-                    padding-top: 25px !important;
-                    margin-top: 50px !important;
+                       padding:2px 4px 0px 4px !important;
+                    margin-top: 40px !important;
                     min-height: calc(100vh - 50px);
                 }
 
@@ -302,14 +432,14 @@ const Homework = () => {
                     border-radius: 4px;
                     border: 1px solid #eee !important;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1) !important;
-                    margin: 25px 10px 15px 10px;
+                    margin: 25px 5px 15px 10px;
                 }
 
                 .hw-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    padding: 10px 17px;
+                    padding: 5px 17px;
                     border-bottom: 1px solid #f4f4f4;
                 }
 
@@ -365,7 +495,7 @@ const Homework = () => {
 
                 /* Table wrapper */
                 .hw-table-wrapper {
-                    padding: 15px;
+                    padding: 5px 15px 5px 15px;
                 }
 
                 .hw-table-top {
@@ -400,7 +530,8 @@ const Homework = () => {
                 .hw-export-btn {
                     background: transparent;
                     border: none;
-                    padding: 8px 10px;
+                    border-bottom: 1px solid #ccc;
+                    padding: 4px 6px;
                     cursor: pointer;
                     font-size: 14px;
                     color: #555;
@@ -410,6 +541,66 @@ const Homework = () => {
                 .hw-export-btn:hover {
                     color: #000;
                     background: #f0f0f0;
+                }
+
+                .column-dropdown {
+                    position: absolute;
+                    right: 0;
+                    top: 100%;
+                    background: #7d7d7d;
+                    border-radius: 4px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    min-width: 180px;
+                    overflow: hidden;
+                    padding: 0;
+                    margin-top: 5px;
+                    border: 1px solid rgba(0,0,0,0.1);
+                }
+
+                .column-item {
+                    padding: 4px 15px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    color: #fff;
+                    background: #7d7d7d;
+                    transition: all 0.2s;
+                    display: block;
+                    width: 100%;
+                    text-align: left;
+                    border: none;
+                    border-bottom: 1px solid rgba(255,255,255,0.1);
+                }
+
+                .column-item:hover {
+                    background: #6e6e6e;
+                }
+
+                .column-item.active-col {
+                    background: #7d7d7d;
+                    color: #fff;
+                }
+
+                .column-item.hidden-col {
+                    background: #fff;
+                    color: #555;
+                }
+
+                .restore-visibility {
+                    background: #fff;
+                    color: #555;
+                    padding: 4px 15px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    text-align: left;
+                    font-weight: 400;
+                    display: block;
+                    width: 100%;
+                    border: none;
+                }
+                
+                .restore-visibility:hover {
+                    background: #f9f9f9;
                 }
 
                 /* Table */
@@ -426,7 +617,7 @@ const Homework = () => {
 
                 .hw-table thead th {
                     background: transparent;
-                    padding: 8px 12px;
+                    padding: 7px 12px;
                     border: none;
                     border-bottom: 1px solid #ddd;
                     font-weight: 600;
@@ -434,7 +625,13 @@ const Homework = () => {
                     white-space: nowrap;
                     text-align: left;
                 }
-
+                .box-title {
+                   margin: 0 !important;
+                    font-size: 18px !important;
+                    font-weight: 400 !important;
+                    color: #333 !important;
+                    flex: 1 !important;
+                }
                 .hw-table tbody td {
                     padding: 4px 12px;
                     border: none;
@@ -483,9 +680,8 @@ const Homework = () => {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    padding: 10px 10px;
+                    padding: 12px 10px 7px 10px;
                     font-size: 10px;
-                    border-bottom: 1px solid #eee;
                 }
 
                 .hw-records-info { font-weight: 500; }
@@ -509,38 +705,68 @@ const Homework = () => {
                     text-align: center;
                 }
 
-                @media (max-width: 991px) {
+                @media (max-width: 769px) {
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
-                    .hw-header { flex-direction: column; gap: 10px; align-items: flex-start; }
-                    .hw-table-top { flex-direction: column; }
-                    .hw-search-input { width: 100%; }
-                    .hide-mobile { display: none !important; }
+                    /* Padding balancing for mobile */
+                    .content-wrapper { padding-left: 0px !important; padding-right: 0px !important; }
+                    .content { padding-left: 10px !important; padding-right: 10px !important; }
+                    .content-wrapper { padding-top: 18px !important; }
+                    .hw-box { margin: 10px 10px 20px 10px !important; }
                 }
 
                 /* Sidebar mega menu cards logic override if needed */
                 .fixedmenu { display: none !important; }
+
+                @media (max-width: 769px) {
+                    .mobile-box-back-btn {
+                        display: flex !important;
+                        align-items: center;
+                        gap: 5px;
+                        background-color: #9c68e4 !important;
+                        color: #fff !important;
+                        border: none;
+                        padding: 6px 15px;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        position: absolute !important;
+                        top: 5px !important;
+                        right: 10px !important;
+                        z-index: 100 !important;
+                        text-decoration: none !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .hw-daily-btn {
+                        margin-right: 80px !important;
+                    }
+                    .content{
+                        padding:0px 0px 0px 0px !important;
+                    }
+                }
+                @media (min-width: 770px) {
+                    .mobile-box-back-btn { display: none !important; }
+                }
+
+                /* Homework page specific */
+                .hw-content { padding: 1px; }
+                .hw-box-wrapper { position: relative; }
+                .hw-export-wrap { position: relative; }
+                .hw-th-sortable { cursor: pointer; }
+                .hw-sort-icon { color: #ccc; margin-left: 4px; }
+                .hw-empty-img { width: 130px; height: auto; opacity: 0.8; }
             `}</style>
-
-            <Header
-                userData={userData}
-                handleLogout={handleLogout}
-                sessionYear={sessionYear}
-            />
-
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/user/homework"
-            />
-
             <div className="content-wrapper">
-                <section className="content" style={{ padding: "1px" }}>
-                    <div className="hw-box">
+                <section className="content hw-content">
+                    <div className="hw-box hw-box-wrapper">
                         {/* Header */}
                         <div className="hw-header">
-                            <h3>Homework</h3>
+                            <h3 className="box-title">Homework</h3>
+                            <button className="mobile-box-back-btn" onClick={() => navigate('/user/dashboard')}>
+                                <i className="fa fa-arrow-left"></i> Back
+                            </button>
                             <button className="hw-daily-btn" onClick={() => navigate('/user/daily_assignment')}>
                                 Daily Assignment
                             </button>
@@ -594,9 +820,7 @@ const Homework = () => {
                     </div>
                 </div>
             )}
-
-            <Footer />
-        </div>
+        </>
     );
 };
 
