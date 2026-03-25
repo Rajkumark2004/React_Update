@@ -50,6 +50,16 @@ const Designation = () => {
             return;
         }
 
+        const isDuplicate = designations.some(desig => 
+            desig.name.toLowerCase() === formData.name.trim().toLowerCase() && 
+            (!isEditing || desig.id !== formData.id)
+        );
+
+        if (isDuplicate) {
+            toast.error('Designation name already exists');
+            return;
+        }
+
         setLoading(true);
         try {
             if (isEditing) {
