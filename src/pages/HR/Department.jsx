@@ -52,6 +52,16 @@ const Department = () => {
             return;
         }
 
+        const isDuplicate = departments.some(dept =>
+            dept.name.toLowerCase() === formData.name.trim().toLowerCase() &&
+            (!isEditing || dept.id !== formData.id)
+        );
+
+        if (isDuplicate) {
+            toast.error('Department name already exists');
+            return;
+        }
+
         setLoading(true);
         try {
             if (isEditing) {
@@ -163,6 +173,7 @@ const Department = () => {
                                 </form>
                             </div>
                         </div>
+
 
                         <div className="col-md-8">
                             <div className="box box-primary">
