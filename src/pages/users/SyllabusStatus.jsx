@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Header_user from './user_components/Header_user';
-import Sidebar_user from './user_components/Sidebar_user';
-import Footer from './user_components/Footer';
 import { api_users } from '../../services/api_users';
 import { Loader2, BookOpen, CheckCircle2, ChevronRight, Download, Printer } from 'lucide-react';
 
@@ -16,38 +13,10 @@ const SyllabusStatus = () => {
     const fetchSyllabusStatus = async () => {
         setLoading(true);
         try {
-            // API not created yet, using mock data for UI testing
             const mockData = {
-                "1": {
-                    "lebel": "Mathematics (101)",
-                    "complete": 0,
-                    "incomplete": 0,
-                    "id": "1_101",
-                    "total": 0,
-                    "name": "Mathematics",
-                    "graph_id": "112345",
-                    "lesson_summary": []
-                },
-                "2": {
-                    "lebel": "Science (102)",
-                    "complete": 0,
-                    "incomplete": 0,
-                    "id": "2_102",
-                    "total": 0,
-                    "name": "Science",
-                    "graph_id": "212345",
-                    "lesson_summary": []
-                },
-                "3": {
-                    "lebel": "History (103)",
-                    "complete": 0,
-                    "incomplete": 0,
-                    "id": "3_103",
-                    "total": 0,
-                    "name": "History",
-                    "graph_id": "312345",
-                    "lesson_summary": []
-                }
+                "1": { "name": "Telugu", "complete": 0, "lesson_summary": [] },
+                "2": { "name": "Hindi", "complete": 0, "lesson_summary": [] },
+                "3": { "name": "English", "complete": 0, "lesson_summary": [] }
             };
 
             let d = mockData;
@@ -70,9 +39,50 @@ const SyllabusStatus = () => {
         return 'No Status';
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const handleExportCSV = () => {
+        const headers = ["Subject Name", "Completion Percentage (%)"];
+        const rows = subjectsData.map(subject => [
+            subject.name,
+            `${subject.complete}%`
+        ]);
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "syllabus_status_report.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
-        <div className="wrapper">
+        <>
             <style>{`
+                /* Global Footer Fix */
+                html, body {
+                    margin: 0;
+                    padding: 0;
+                    height: 100%;
+                }
+
+                .wrapper {
+                    display: flex;
+                    flex-direction: column;
+                    min-height: 100vh;
+                    background: #f7f8fa;
+                }
+
                 /* Hide standard search and session UI */
                 .sessionul, .search-form2, .search-form {
                     display: none !important;
@@ -106,8 +116,22 @@ const SyllabusStatus = () => {
                 }
 
                 /* REVERTING SIDEBAR TO THE GOOD PREVIOUS STATE */
-                .content-wrapper, .main-footer {
+                .content-wrapper {
                     margin-left: 80px !important;
+                    padding-top: 0px !important;
+                }
+
+                .main-footer {
+                    margin-left: 10px !important;
+                }
+
+                .main-header {
+                    z-index: 1030 !important;
+                    position: relative;
+                }
+
+                .main-sidebar {
+                    z-index: 1020 !important;
                 }
 
                 .sidebar {
@@ -115,6 +139,7 @@ const SyllabusStatus = () => {
                     overflow-y: auto !important;
                     overflow-x: hidden !important;
                     padding-bottom: 20px !important;
+                    z-index: 1021 !important;
                 }
 
                 .sidebar::-webkit-scrollbar {
@@ -152,163 +177,270 @@ const SyllabusStatus = () => {
                     background: rgba(255, 255, 255, 0.1) !important;
                 }
 
-                .content-wrapper {
-                    background-color: #f7f8fa !important;
-                    padding-top: 25px !important;
-                    margin-top: 50px !important;
-                    min-height: calc(100vh - 50px);
+              .content-wrapper {
+                    margin-left: 80px !important;
+                    margin-top: 40px !important;
+                    padding-top: 20px !important;
+                    background: #f7f8fa !important;
+                    width: calc(100% - 80px) !important;
+                    display: block !important;
+                    min-height: calc(100vh - 100px);
                 }
 
-                @media (max-width: 991px) {
+                .syllabus-card {
+                    background: #fff;
+                    border-radius: 4px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    padding: 0;
+                    border: 1px solid #dcdcdc;
+                    width: 100%;
+                }
+
+                .syllabus-header {
+                    padding: 15px 15px 0px;
+                    font-size: 18px;
+                    font-weight: 500;
+                    color: #444;
+                }
+
+                .charts-row {
+                    display: flex;
+                    justify-content: flex-start;
+                    gap: 120px;
+                    padding: 30px 40px 40px;
+                    flex-wrap: wrap;
+                }
+
+                .chart-item {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    width: 150px;
+                }
+
+                .subject-name {
+                    font-size: 16px;
+                    font-weight: 600;
+                    margin-bottom: 25px;
+                    color: #000;
+                }
+
+                .donut-container {
+                    position: relative;
+                    width: 110px;
+                    height: 110px;
+                    margin-bottom: 15px;
+                }
+
+                /* Circular Motion Animation */
+                .progress-circle {
+                    stroke-dasharray: 100;
+                    stroke-dashoffset: 100;
+                    animation: fillProgress 1.5s ease-out forwards;
+                    stroke-linecap: butt;
+                }
+
+                @keyframes fillProgress {
+                    to {
+                        /* stroke-dashoffset will be set via inline style based on completion */
+                    }
+                }
+
+                .complete-badge {
+                    background: #111;
+                    color: #fff;
+                    font-size: 10px;
+                    padding: 3px 5px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                }
+
+                .action-icons-row {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 8px;
+                    padding: 0px 15px 10px;
+                }
+
+                .icon-btn {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    background: #fdfdfd;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #999;
+                    cursor: pointer;
+                    border: 1px solid #e0e0e0;
+                    transition: all 0.2s;
+                }
+
+                .icon-btn:hover {
+                    background: #f5f5f5;
+                    color: #333;
+                }
+
+                .report-header {
+                    padding: 10px 15px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #333;
+                    border-top: 1px solid #f0f0f0;
+                    background: #fff;
+                }
+
+                .report-list {
+                    background: #fff;
+                    padding: 0;
+                }
+
+                .report-item {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 10px 15px;
+                    border-top: 1px solid #f9f9f9;
+                    font-size: 14px;
+                    color: #444;
+                }
+
+                .report-percent {
+                    color: #555;
+                    font-weight: 500;
+                }
+
+                .main-footer {
+                    margin-left: 80px !important;
+                    background: #ececec !important;
+                    border-top: 1px solid #d2d6de !important;
+                    text-align: right;
+                    padding: 2px 15px;
+                    color: #5f5249;
+                    font-size: 10px;
+                }
+                
+                .report-list {
+                    background: #fff;
+                    padding: 0;
+                    border-top: 1px dashed #ddd;
+                }
+
+                @media (max-width: 769px) {
                     .main-sidebar { width: 0 !important; }
                     .content-wrapper, .main-header .navbar, .main-footer { margin-left: 0 !important; }
                     .main-header .logo { width: 120px !important; }
                     .main-header .logo img { width: 100px !important; }
+                    /* Padding balancing for mobile */
+                    .content-wrapper { padding-left: 0px !important; padding-right: 0px !important; }
+                    .content { padding-left: 10px !important; padding-right: 10px !important; }
+                    .content-wrapper { 
+                        width: 100% !important; 
+                        padding-top: 60px !important; 
+                        margin-top: 0 !important;
+                    }
                 }
 
-                /* Sidebar mega menu cards logic override if needed */
-                .fixedmenu { display: none !important; }
-            `}</style>
-            <Header_user />
-            <Sidebar_user currentUrl="/user/syllabus/status" />
+                @media (max-width: 769px) {
+                    .mobile-box-back-btn {
+                        display: flex !important;
+                        align-items: center;
+                        gap: 5px;
+                        background-color: #9c68e4 !important;
+                        color: #fff !important;
+                        border: none;
+                        padding: 6px 15px;
+                        border-radius: 20px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        position: absolute !important;
+                        top: 8px !important;
+                        right: 10px !important;
+                        z-index: 100 !important;
+                        text-decoration: none !important;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                }
+                @media (min-width: 770px) {
+                    .mobile-box-back-btn { display: none !important; }
+                }
 
-            <div className="content-wrapper" style={{ minHeight: 'calc(100vh - 100px)', background: '#f4f6f9' }}>
-                <section className="content-header" style={{ padding: '15px' }}>
-                    <div className="container-fluid">
-                        <div className="row mb-2">
-                            <div className="col-sm-6">
-                                <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
-                                    <BookOpen className="inline-block mr-2" size={24} />
-                                    Syllabus Status
-                                </h1>
+                /* Syllabus page specific */
+                .syllabus-content { padding: 8px 10px 10px 10px; }
+                .syllabus-card-wrapper { position: relative; }
+                .syllabus-donut-rotate { transform: rotate(-90.3deg); }
+                .syllabus-action-row { display: flex; justify-content: flex-end; gap: 5px; padding: 0 15px 10px; }
+                .syllabus-icon-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background: #f9f9f9; cursor: pointer; }
+                .syllabus-icon-btn-icon { font-size: 14px; color: #666; }
+            `}</style>
+
+            <div className="content-wrapper">
+                <section className="content syllabus-content">
+                    <div className="syllabus-card syllabus-card-wrapper">
+                        <div className="syllabus-header">
+                            Syllabus Status
+                            <button className="mobile-box-back-btn" onClick={() => window.location.href='/user/dashboard'}>
+                                <i className="fa fa-arrow-left"></i> Back
+                            </button>
+                        </div>
+
+                        <div className="charts-row">
+                            {subjectsData.map((subject, idx) => (
+                                <div key={idx} className="chart-item">
+                                    <div className="subject-name">{subject.name}</div>
+                                    <div className="donut-container">
+                                        {/* rotate starts slightly off to center the 0.5 gap at 12 o'clock */}
+                                        <svg width="100%" height="100%" viewBox="0 0 42 42" className="syllabus-donut-rotate">
+                                            <circle
+                                                cx="21"
+                                                cy="21"
+                                                r="15.915"
+                                                fill="transparent"
+                                                stroke="#d3d3d3"
+                                                strokeWidth="10"
+                                                strokeDasharray="99.5 0.5"
+                                                strokeDashoffset="0"
+                                            ></circle>
+                                            {subject.complete >= 0 && (
+                                                <circle
+                                                    className="progress-circle"
+                                                    cx="21"
+                                                    cy="21"
+                                                    r="15.915"
+                                                    fill="transparent"
+                                                    stroke="#4CAF50"
+                                                    strokeWidth="10"
+                                                    strokeDashoffset={100 - subject.complete}
+                                                ></circle>
+                                            )}
+                                        </svg>
+                                    </div>
+                                    <div className="complete-badge">Complete {subject.complete} %</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="action-icons-row syllabus-action-row">
+                            <div className="icon-btn syllabus-icon-btn" title="Export" onClick={handleExportCSV}>
+                                <i className="fa fa-file-excel-o syllabus-icon-btn-icon"></i>
+                            </div>
+                            <div className="icon-btn syllabus-icon-btn" title="Print" onClick={handlePrint}>
+                                <i className="fa fa-print syllabus-icon-btn-icon"></i>
                             </div>
                         </div>
-                    </div>
-                </section>
 
-                <section className="content" style={{ padding: '0 15px' }}>
-                    <div className="card" style={{ borderTop: '3px solid #3c8dbc', boxShadow: '0 1px 1px rgba(0,0,0,0.1)' }}>
-                        <div className="card-body">
-                            {loading ? (
-                                <div className="d-flex justify-content-center align-items-center p-5">
-                                    <Loader2 className="animate-spin text-primary" size={40} />
+                        <div className="report-header">Subject - Lesson - Topic Status</div>
+                        <div className="report-list">
+                            {subjectsData.map((subject, idx) => (
+                                <div key={idx} className="report-item">
+                                    <div className="report-subject">{subject.name}</div>
+                                    <div className="report-percent">{subject.complete}% Complete</div>
                                 </div>
-                            ) : subjectsData.length === 0 ? (
-                                <div className="alert alert-danger" style={{ background: '#f2dede', borderColor: '#ebccd1', color: '#a94442', padding: '15px', borderRadius: '4px' }}>
-                                    No Record Found
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="row mb-4">
-                                        <div className="col-12 text-center" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                            {subjectsData.map((subject, idx) => {
-                                                const complete = parseFloat(subject.complete || 0);
-                                                const incomplete = complete === 0 && parseFloat(subject.incomplete || 0) === 0 ? 100 : 100 - complete;
-
-                                                return (
-                                                    <div key={idx} className="col-md-2 col-xs-6 text-center mb-4" style={{ minWidth: '150px' }}>
-                                                        <b style={{ display: 'block', marginBottom: '15px', color: '#333' }}>{subject.label || subject.lebel}</b>
-                                                        <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto' }}>
-                                                            {/* SVG Doughnut Chart */}
-                                                            <svg width="100%" height="100%" viewBox="0 0 42 42" className="donut" style={{ transform: 'rotate(-90deg)' }}>
-                                                                <circle className="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
-                                                                <circle className="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#cfcfcf" strokeWidth="6"></circle>
-                                                                {complete > 0 && (
-                                                                    <circle className="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#4CAF50" strokeWidth="6"
-                                                                        strokeDasharray={`${complete} ${100 - complete}`}
-                                                                        strokeDashoffset="0"></circle>
-                                                                )}
-                                                            </svg>
-                                                            {/* Text inside Doughnut */}
-                                                            <div style={{
-                                                                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                fontSize: '12px', fontWeight: 'bold', color: '#333'
-                                                            }}>
-                                                                {complete}%
-                                                            </div>
-                                                        </div>
-                                                        <span className="label lbcolor" style={{ display: 'inline-block', marginTop: '10px', backgroundColor: complete === 0 ? '#cfcfcf' : '#4CAF50', color: complete === 0 ? '#333' : 'white', padding: '0.2em 0.6em 0.3em', fontSize: '75%', fontWeight: 700, lineHeight: 1, textAlign: 'center', whiteSpace: 'nowrap', verticalAlign: 'baseline', borderRadius: '0.25em' }}>
-                                                            Complete {complete} %
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-
-                                    <div className="d-flex justify-content-between align-items-center mb-4 border-top pt-4">
-                                        <h5 className="font-weight-bold">Syllabus Status Report</h5>
-                                        <div className="btn-group">
-                                            <button className="btn btn-sm btn-outline-secondary" title="Print"><Printer size={16} /></button>
-                                            <button className="btn btn-sm btn-outline-secondary" title="Download"><Download size={16} /></button>
-                                        </div>
-                                    </div>
-
-                                    <div className="table-responsive">
-                                        <table className="table table-bordered table-striped">
-                                            <thead style={{ background: '#f8f9fa' }}>
-                                                <tr>
-                                                    <th>Subject Lesson Topic</th>
-                                                    <th className="text-right" style={{ width: '120px' }}>Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {subjectsData.map((subject, sIdx) => (
-                                                    <tr key={sIdx}>
-                                                        <td>
-                                                            <div className="d-flex justify-content-between mb-2">
-                                                                <h6 className="font-weight-bold text-primary mb-0">{subject.label}</h6>
-                                                                <span className="badge badge-info">{subject.complete}% Complete</span>
-                                                            </div>
-                                                            {subject.lesson_summary?.map((lesson, lIdx) => (
-                                                                <div key={lIdx} className="ml-3 mt-3">
-                                                                    <div className="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2">
-                                                                        <span className="font-weight-bold text-dark">{lIdx + 1}. {lesson.name}</span>
-                                                                        <small className="text-muted">{lesson.complete_percent}% Complete</small>
-                                                                    </div>
-                                                                    <ul className="list-unstyled ml-4">
-                                                                        {lesson.topics?.map((topic, tIdx) => (
-                                                                            <li key={tIdx} className="d-flex justify-content-between align-items-center mb-1">
-                                                                                <span style={{ fontSize: '13px' }}>
-                                                                                    <ChevronRight size={12} className="inline mr-1" />
-                                                                                    {lIdx + 1}.{tIdx + 1} {topic.name}
-                                                                                </span>
-                                                                                <small className={`px-2 py-0 rounded ${String(topic.status) === '1' ? 'bg-success text-white' : 'bg-light text-muted'}`} style={{ fontSize: '11px' }}>
-                                                                                    {getStatusLabel(topic.status)}
-                                                                                    {String(topic.status) === '1' && topic.complete_date ? ` (${topic.complete_date})` : ''}
-                                                                                </small>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
-                                                                </div>
-                                                            ))}
-                                                        </td>
-                                                        <td className="text-right align-middle">
-                                                            <div className="progress progress-sm" style={{ height: '10px' }}>
-                                                                <div
-                                                                    className="progress-bar bg-success"
-                                                                    role="progressbar"
-                                                                    style={{ width: `${subject.complete}%` }}
-                                                                    aria-valuenow={subject.complete}
-                                                                    aria-valuemin="0"
-                                                                    aria-valuemax="100"
-                                                                ></div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </>
-                            )}
+                            ))}
                         </div>
                     </div>
                 </section>
             </div>
-            <Footer />
-        </div>
+        </>
     );
 };
 
