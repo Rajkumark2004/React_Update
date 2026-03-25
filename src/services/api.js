@@ -50,6 +50,8 @@ const appendSessionToUrl = (url, includeSession = true) => {
 };
 
 export const api = {
+    baseUrl: API_BASE,
+    baseHost: 'https://newlayout.wisibles.com',
     getStudentIdCard: async () => {
         console.log('API Request: Get Student ID Card');
         try {
@@ -1812,20 +1814,32 @@ export const api = {
             throw error;
         }
     },
-    updateStaff: async (id, staffData) => {
-        console.log('API Request: Update Staff', id, staffData);
+    getStaffEditDetails: async (id) => {
+        console.log('API Request: Get Staff Edit Details', id);
         try {
             const response = await fetch(`${API_BASE}/admin/staff/edit/${id}`, {
-                method: 'POST',
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(staffData),
             });
+            const data = await response.json();
+            console.log('Get Staff Edit Details Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Get Staff Edit Details Error:', error);
+            throw error;
+        }
+    },
+
+    updateStaff: async (id, staffData) => {
+        console.log('API Request: Update Staff', id, staffData);
+        try {
+            const response = await fetch(`${API_BASE}/admin/staff/edit/${id}`, createFetchOptions('POST', staffData));
             const data = await response.json();
             console.log('Update Staff Response:', data);
 
-            if (!response.ok || data.status !== 'success') { // Check for both response.ok and api specific status if applicable
+            if (!response.ok || (data.status !== 'success' && data.status !== true)) {
                 // Some legacy endpoints might return 200 with {status: false}
                 if (data.status === 0 || data.success === false) {
                     throw new Error(data.message || 'Failed to update staff');
@@ -1864,13 +1878,7 @@ export const api = {
     addStaffLeaveRequest: async (payload) => {
         console.log('API Request: Add Staff Leave', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/leaverequest/add_staff_leave`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await fetch(`${API_BASE}/admin/leaverequest/add_staff_leave`, createFetchOptions('POST', payload));
             const data = await response.json();
             console.log('Add Staff Leave Response:', data);
 
@@ -5149,10 +5157,7 @@ export const api = {
     importStaff: async (formData) => {
         console.log('API Request: Import Staff');
         try {
-            const response = await fetch(`${API_BASE}/admin/staff/import`, {
-                method: 'POST',
-                body: formData,
-            });
+            const response = await fetch(`${API_BASE}/admin/staff/import`, createFetchOptions('POST', formData));
             const data = await response.json();
             console.log('Import Staff Response:', data);
             return data;
@@ -5206,10 +5211,7 @@ export const api = {
     createStaff: async (formData) => {
         console.log('API Request: Create Staff');
         try {
-            const response = await fetch(`${API_BASE}/admin/staff/create`, {
-                method: 'POST',
-                body: formData,
-            });
+            const response = await fetch(`${API_BASE}/admin/staff/create`, createFetchOptions('POST', formData));
             const data = await response.json();
             console.log('Create Staff Response:', data);
             return data;
@@ -7390,13 +7392,7 @@ export const api = {
     searchStaffAttendance: async (payload) => {
         console.log('API Request: Search Staff Attendance', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/staffattendance/index`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await fetch(`${API_BASE}/admin/staffattendance/index`, createFetchOptions('POST', payload));
             const data = await response.json();
             console.log('Search Staff Attendance Response:', data);
             return data;
@@ -7656,13 +7652,7 @@ export const api = {
     addStaffLeave: async (payload) => {
         console.log('API Request: Add Staff Leave', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/leaverequest/addLeave`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await fetch(`${API_BASE}/admin/leaverequest/addLeave`, createFetchOptions('POST', payload));
             const data = await response.json();
             console.log('Add Staff Leave Response:', data);
             return data;
@@ -7674,13 +7664,7 @@ export const api = {
     getStaffLeaveRecord: async (payload) => {
         console.log('API Request: Get Staff Leave Record', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/leaverequest/leaveRecord`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await fetch(`${API_BASE}/admin/leaverequest/leaveRecord`, createFetchOptions('POST', payload));
             const data = await response.json();
             console.log('Staff Leave Record Response:', data);
             return data;
@@ -7706,13 +7690,7 @@ export const api = {
     updateStaffLeaveStatus: async (payload) => {
         console.log('API Request: Update Staff Leave Status', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/leaverequest/leaveStatus`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
+            const response = await fetch(`${API_BASE}/admin/leaverequest/leaveStatus`, createFetchOptions('POST', payload));
             const data = await response.json();
             console.log('Update Staff Leave Status Response:', data);
             return data;

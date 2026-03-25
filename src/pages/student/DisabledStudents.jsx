@@ -195,7 +195,7 @@ const DisabledStudents = () => {
 
     // Enable student handler
     const handleEnableStudent = async (studentId, studentName) => {
-        if (!window.confirm(`Are you sure you want to enable student "${studentName}"?`)) {
+        if (!window.confirm("Are you sure you want to enable this student? Yes or No")) {
             return;
         }
         try {

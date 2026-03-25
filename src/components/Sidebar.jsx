@@ -37,11 +37,49 @@ const Sidebar = ({
             currentPath.startsWith('/admin/disable_reason')
         )) return true;
 
-        // Attendance - active for /student-attendance paths
-        if (menuUrl === '/student-attendance' && currentPath.startsWith('/student-attendance')) return true;
+        // Attendance - active for /student-attendance and submenus
+        if (menuUrl === '/student-attendance' && (
+            currentPath.startsWith('/student-attendance') ||
+            currentPath.startsWith('/attendance-by-date') ||
+            currentPath.startsWith('/approve_leave')
+        )) return true;
+ 
+        // Fees - active for /studentfee and its submenus
+        if (menuUrl === '/studentfee' && (
+            currentPath.startsWith('/studentfee') ||
+            currentPath.startsWith('/admin/feemaster') ||
+            currentPath.startsWith('/admin/feegroup') ||
+            currentPath.startsWith('/admin/feetype') ||
+            currentPath.startsWith('/admin/feesforward') ||
+            currentPath.startsWith('/admin/feereminder') ||
+            currentPath.startsWith('/admin/feesreceipt') ||
+            currentPath.startsWith('/fee/')
+        )) return true;
+ 
+        // Transport - active for /admin/route and submenus
+        if (menuUrl === '/admin/route' && (
+            currentPath.startsWith('/admin/route') ||
+            currentPath.startsWith('/admin/vehicle') ||
+            currentPath.startsWith('/admin/vehroute') ||
+            currentPath.startsWith('/admin/pickuppoint') ||
+            currentPath.startsWith('/admin/routepickuppoint')
+        )) return true;
 
-        // Human Resource - active for /admin/staff paths
-        if (menuUrl === '/admin/staff/search' && currentPath.startsWith('/admin/staff')) return true;
+        // Income - active for /admin/income and /admin/incomehead
+        if (menuUrl === '/admin/income' && (currentPath.startsWith('/admin/income') || currentPath.startsWith('/admin/incomehead'))) return true;
+
+        // Expense - active for /admin/expense and /admin/expensehead
+        if (menuUrl === '/admin/expense' && (currentPath.startsWith('/admin/expense') || currentPath.startsWith('/admin/expensehead'))) return true;
+
+        // Human Resource - active for /admin/staff and HR related paths
+        if (menuUrl === '/admin/staff/search' && (
+            currentPath.startsWith('/admin/staff') ||
+            currentPath.startsWith('/admin/leaverequest') ||
+            currentPath.startsWith('/admin/leavetypes') ||
+            currentPath.startsWith('/admin/designation') ||
+            currentPath.startsWith('/admin/department') ||
+            currentPath.startsWith('/admin/payroll')
+        )) return true;
 
         // State Examination - active for /cbseexam and /admin/rank paths
         if (menuUrl === '/cbseexam/exam' && (currentPath.startsWith('/cbseexam') || currentPath.startsWith('/admin/rank') || currentPath.startsWith('/admin/cbseexam'))) return true;
@@ -52,11 +90,21 @@ const Sidebar = ({
         // Courses - active for /admin/onlinecourse
         if (menuUrl === '/admin/onlinecourse' && currentPath.startsWith('/admin/onlinecourse')) return true;
 
-        // Messages - active for /admin/notification and related paths
-        if (menuUrl === '/admin/notification' && (currentPath.startsWith('/admin/notification') || currentPath.startsWith('/admin/mail'))) return true;
+        // Messages - active for /admin/notification and related paths (Mail, SMS, WhatsApp)
+        if (menuUrl === '/admin/notification' && (
+            currentPath.startsWith('/admin/notification') ||
+            currentPath.startsWith('/admin/mail') ||
+            currentPath.startsWith('/admin/mailsms') ||
+            currentPath.startsWith('/admin/sendwhatsapp')
+        )) return true;
 
-        // Hostel - active for /admin/hostelroom and /admin/studenthostelreport paths
-        if (menuUrl === '/admin/hostelroom' && (currentPath.startsWith('/admin/hostelroom') || currentPath.startsWith('/admin/studenthostelreport'))) return true;
+        // Hostel - active for /admin/hostelroom and related paths
+        if (menuUrl === '/admin/hostelroom' && (
+            currentPath.startsWith('/admin/hostelroom') ||
+            currentPath.startsWith('/admin/studenthostelreport') ||
+            currentPath.startsWith('/admin/roomtype') ||
+            currentPath.startsWith('/admin/hostel')
+        )) return true;
 
         // Download Center - active for its sub-routes
         if (menuUrl === '/admin/content/assignment' && (currentPath.startsWith('/admin/content/') || currentPath.startsWith('/admin/video_tutorial'))) return true;
@@ -70,6 +118,12 @@ const Sidebar = ({
             currentPath.startsWith('/admin/classes') ||
             currentPath.startsWith('/admin/section')
         )) return true;
+
+        // Certificate - active for /admin/certificate submenus
+        if (menuUrl === '/admin/certificate/student_id_card' && currentPath.startsWith('/admin/certificate')) return true;
+
+        // Reports - active for all /admin/reports paths
+        if (menuUrl === '/admin/reports/student_information' && currentPath.startsWith('/admin/reports/')) return true;
 
         // Exact match for any other routes
         return currentPath === menuUrl;

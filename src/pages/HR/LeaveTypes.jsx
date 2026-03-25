@@ -65,8 +65,12 @@ const LeaveTypes = () => {
             } else {
                 const response = await api.createLeaveType({ type: formData.type });
                 if (response && response.status === 'success') {
-                    toast.success('Leave Type added successfully');
-                    fetchLeaveTypes(); // Refresh the list
+                    if (response.id === null) {
+                        toast.error('Leave type already exists');
+                    } else {
+                        toast.success('Leave Type added successfully');
+                        fetchLeaveTypes(); // Refresh the list
+                    }
                 } else {
                     toast.error(response?.message || 'Failed to add leave type');
                 }

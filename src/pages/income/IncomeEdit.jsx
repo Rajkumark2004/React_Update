@@ -10,7 +10,6 @@ const IncomeEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
-    const [isDragOver, setIsDragOver] = useState(false);
     const [incomeList, setIncomeList] = useState([]);
     const [incomeHeadList, setIncomeHeadList] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -84,29 +83,28 @@ const IncomeEdit = () => {
         }
     };
 
+    // Initialize Dropify
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            try {
+                const $ = window.jQuery;
+                if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                    $('.dropify').dropify();
+                }
+            } catch (error) {
+                console.error('Dropify initialization error:', error);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, []);
+
     const handleInputChange = (e) => {
-        const { name, value, files } = e.target;
-        if (name === 'documents') {
-            setFormData({ ...formData, documents: files[0] });
+        const { name, value, type, files } = e.target;
+        if (type === 'file') {
+            setFormData(prev => ({ ...prev, [name]: files[0] }));
         } else {
-            setFormData({ ...formData, [name]: value });
+            setFormData(prev => ({ ...prev, [name]: value }));
         }
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        setIsDragOver(false);
-        const file = e.dataTransfer.files[0];
-        if (file) setFormData(prev => ({ ...prev, documents: file }));
-    };
-
-    const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
-    const handleDragLeave = () => setIsDragOver(false);
-
-    const removeFile = () => {
-        setFormData(prev => ({ ...prev, documents: null }));
-        const el = document.getElementById('documents');
-        if (el) el.value = '';
     };
 
     const handleSubmit = async (e) => {
@@ -245,49 +243,14 @@ const IncomeEdit = () => {
                                         </div>
                                         <div className="form-group">
                                             <label>Attach Document</label>
-                                            <div
-                                                onDrop={handleDrop}
-                                                onDragOver={handleDragOver}
-                                                onDragLeave={handleDragLeave}
-                                                onClick={() => document.getElementById('documents').click()}
-                                                style={{
-                                                    border: `2px dashed ${isDragOver ? '#31708f' : '#aaa'}`,
-                                                    borderRadius: '6px',
-                                                    padding: '18px 12px',
-                                                    textAlign: 'center',
-                                                    cursor: 'pointer',
-                                                    background: isDragOver ? '#d9edf7' : '#fafafa',
-                                                    transition: 'background 0.2s, border-color 0.2s',
-                                                    userSelect: 'none'
-                                                }}
-                                            >
-                                                <input
-                                                    id="documents"
-                                                    name="documents"
-                                                    type="file"
-                                                    style={{ display: 'none' }}
-                                                    onChange={handleInputChange}
-                                                />
-                                                {formData.documents ? (
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                                        <i className="fa fa-file-text-o" style={{ color: '#31708f' }}></i>
-                                                        <span style={{ fontSize: '13px', color: '#333' }}>{formData.documents.name}</span>
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => { e.stopPropagation(); removeFile(); }}
-                                                            style={{ background: 'none', border: 'none', color: '#a94442', cursor: 'pointer', padding: '0 4px', fontSize: '14px' }}
-                                                            title="Remove file"
-                                                        >
-                                                            <i className="fa fa-times-circle"></i>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <div>
-                                                        <i className="fa fa-cloud-upload" style={{ fontSize: '22px', color: '#aaa', display: 'block', marginBottom: '6px' }}></i>
-                                                        <span style={{ fontSize: '13px', color: '#888' }}>Drag &amp; drop a file here, or <span style={{ color: '#31708f', textDecoration: 'underline' }}>click to browse</span></span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <input
+                                                id="documents"
+                                                name="documents"
+                                                type="file"
+                                                className="dropify"
+                                                onChange={handleInputChange}
+                                                data-default-file={existingDocument ? `https://newlayout.wisibles.com/admin/income/download/${id}` : ''}
+                                            />
                                             {existingDocument && !formData.documents && (
                                                 <div className="mt-2">
                                                     <i className="fa fa-file-text-o text-muted"></i>

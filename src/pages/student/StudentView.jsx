@@ -786,7 +786,7 @@ const StudentView = () => {
                       Timeline
                     </a>
                   </li>
-                  <li
+                  {/*  <li
                     className={activeTab === "behavioural_note" ? "active" : ""}
                   >
                     <a
@@ -796,7 +796,7 @@ const StudentView = () => {
                     >
                       Behavioural Note
                     </a>
-                  </li>
+                  </li>*/}
 
                   {/* Action Buttons */}
                   {!isDisabled && (

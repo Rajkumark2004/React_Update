@@ -13,6 +13,8 @@ const StaffSearch = () => {
     const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRole, setSelectedRole] = useState('');
+    const [appliedSearchTerm, setAppliedSearchTerm] = useState('');
+    const [appliedSelectedRole, setAppliedSelectedRole] = useState('');
     const [staffList, setStaffList] = useState([]);
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -33,8 +35,10 @@ const StaffSearch = () => {
         console.log("Logout clicked");
     };
 
-    const handleSearch = (term) => {
-        console.log("Search term:", term);
+    const handleSearch = (e) => {
+        if (e) e.preventDefault();
+        setAppliedSearchTerm(searchTerm);
+        setAppliedSelectedRole(selectedRole);
     };
 
     // Fetch staff list from API
@@ -80,12 +84,12 @@ const StaffSearch = () => {
 
     // Filter Logic
     const filteredStaff = staffList.filter(staff => {
-        const matchesRole = selectedRole ? staff.role_id === selectedRole : true;
-        const matchesSearch = searchTerm ? (
-            staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            staff.surname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            staff.employee_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            staff.email.toLowerCase().includes(searchTerm.toLowerCase())
+        const matchesRole = appliedSelectedRole ? staff.role_id === appliedSelectedRole : true;
+        const matchesSearch = appliedSearchTerm ? (
+            staff.name.toLowerCase().includes(appliedSearchTerm.toLowerCase()) ||
+            staff.surname.toLowerCase().includes(appliedSearchTerm.toLowerCase()) ||
+            staff.employee_id.toLowerCase().includes(appliedSearchTerm.toLowerCase()) ||
+            staff.email.toLowerCase().includes(appliedSearchTerm.toLowerCase())
         ) : true;
         return matchesRole && matchesSearch;
     });
@@ -149,7 +153,7 @@ const StaffSearch = () => {
                                 <div className="box-body">
                                     <div className="row">
                                         <div className="col-md-6">
-                                            <form onSubmit={(e) => e.preventDefault()}>
+                                            <form onSubmit={handleSearch}>
                                                 <div className="row">
                                                     <div className="col-sm-8">
                                                         <div className="form-group">
@@ -177,7 +181,7 @@ const StaffSearch = () => {
                                             </form>
                                         </div>
                                         <div className="col-md-6">
-                                            <form onSubmit={(e) => e.preventDefault()}>
+                                            <form onSubmit={handleSearch}>
                                                 <div className="row">
                                                     <div className="col-sm-12">
                                                         <div className="form-group">

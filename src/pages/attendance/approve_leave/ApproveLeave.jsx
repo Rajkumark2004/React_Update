@@ -264,28 +264,45 @@ const ApproveLeave = () => {
         }
     };
 
+    const filteredLeaveList = leaveList.filter(leave => {
+        const searchText = filter.search_text.toLowerCase();
+        if (!searchText) return true;
+
+        const studentName = `${leave.firstname || ''} ${leave.lastname || ''} (${leave.admission_no || ''})`.toLowerCase();
+        const className = (leave.class || '').toLowerCase();
+        const sectionName = (leave.section || '').toLowerCase();
+        const staffName = `${leave.staff_name || ''} ${leave.surname || ''} ${leave.staff_id ? `(${leave.staff_id})` : ''}`.toLowerCase();
+        const statusStr = (leave.status == 1 ? `Approved (${formatDate(leave.approve_date)})` : leave.status == 2 ? "Disapproved" : "Pending").toLowerCase();
+
+        return studentName.includes(searchText) ||
+            className.includes(searchText) ||
+            sectionName.includes(searchText) ||
+            staffName.includes(searchText) ||
+            statusStr.includes(searchText);
+    });
+
     const handleCopy = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, leaveList, formatCell);
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
         copyToClipboard(headers, rows);
     };
 
     const handleCSV = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, leaveList, formatCell);
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
         downloadCSV(headers, rows, 'Approve_Leave_Report.csv');
     };
 
     const handleExcel = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, leaveList, formatCell);
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
         downloadExcel(headers, rows, 'Approve_Leave_Report.xls');
     };
 
     const handlePDF = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, leaveList, formatCell);
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
         downloadPDF(headers, rows, 'Approve_Leave_Report.pdf', 'Approve Leave List');
     };
 
     const handlePrint = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, leaveList, formatCell);
+        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
         printTable(headers, rows, 'Approve Leave List');
     };
 
@@ -415,8 +432,8 @@ const ApproveLeave = () => {
                                                 <tbody>
                                                     {loading ? (
                                                         <tr><td colSpan="9" className="text-center">Loading...</td></tr>
-                                                    ) : leaveList.length > 0 ? (
-                                                        leaveList.map(leave => (
+                                                    ) : filteredLeaveList.length > 0 ? (
+                                                        filteredLeaveList.map(leave => (
                                                             <tr key={leave.id}>
                                                                 {visibleColumns.has('firstname') && <td>{leave.firstname} {leave.lastname} ({leave.admission_no})</td>}
                                                                 {visibleColumns.has('class') && <td>{leave.class}</td>}

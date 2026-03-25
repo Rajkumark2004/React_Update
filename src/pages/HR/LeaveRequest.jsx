@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
+import '../../utils/include_files';
 
 const LeaveRequest = () => {
     const navigate = useNavigate();
@@ -24,7 +25,7 @@ const LeaveRequest = () => {
         leave_from_date: '',
         leave_to_date: '',
         reason: '',
-        filename: ''
+        file: null
     });
 
     const [statusData, setStatusData] = useState({
@@ -53,6 +54,23 @@ const LeaveRequest = () => {
         fetchInitialData();
     }, []);
 
+    // Initialize Dropify
+    useEffect(() => {
+        if (showAddModal) {
+            const timer = setTimeout(() => {
+                try {
+                    const $ = window.jQuery;
+                    if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                        $('.dropify').dropify();
+                    }
+                } catch (error) {
+                    console.error('Dropify initialization error:', error);
+                }
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [showAddModal]);
+
     const handleAddLeave = () => {
         setIsEdit(false);
         setFormData({
@@ -62,7 +80,7 @@ const LeaveRequest = () => {
             leave_from_date: '',
             leave_to_date: '',
             reason: '',
-            filename: ''
+            file: null
         });
         setShowAddModal(true);
     };
@@ -70,7 +88,9 @@ const LeaveRequest = () => {
     const handleViewDetails = async (id) => {
         setLoading(true);
         try {
-            const response = await api.getStaffLeaveRecord({ id });
+            const data = new FormData();
+            data.append('id', id);
+            const response = await api.getStaffLeaveRecord(data);
             if (response) {
                 setSelectedRecord(response);
                 setStatusData({
@@ -112,16 +132,18 @@ const LeaveRequest = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const payload = {
-                applieddate: formData.applieddate.split('-').reverse().join('/'),
-                leave_type: formData.leave_type,
-                leave_from_date: formData.leave_from_date.split('-').reverse().join('/'),
-                leave_to_date: formData.leave_to_date.split('-').reverse().join('/'),
-                reason: formData.reason,
-                leaverequestid: formData.id
-            };
+            const data = new FormData();
+            data.append('applieddate', formData.applieddate.split('-').reverse().join('/'));
+            data.append('leave_type', formData.leave_type);
+            data.append('leave_from_date', formData.leave_from_date.split('-').reverse().join('/'));
+            data.append('leave_to_date', formData.leave_to_date.split('-').reverse().join('/'));
+            data.append('reason', formData.reason);
+            data.append('leaverequestid', formData.id);
+            if (formData.file) {
+                data.append('userfile', formData.file);
+            }
 
-            const response = await api.addStaffLeaveRequest(payload);
+            const response = await api.addStaffLeaveRequest(data);
             if (response && response.status === 'success') {
                 toast.success('Leave saved successfully');
                 setShowAddModal(false);
@@ -141,7 +163,12 @@ const LeaveRequest = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await api.updateStaffLeaveStatus(statusData);
+            const data = new FormData();
+            data.append('leave_request_id', statusData.leave_request_id);
+            data.append('status', statusData.status);
+            data.append('remark', statusData.remark);
+
+            const response = await api.updateStaffLeaveStatus(data);
             if (response && response.status === 'success') {
                 toast.success('Status updated successfully');
                 setShowDetailModal(false);
@@ -247,6 +274,16 @@ const LeaveRequest = () => {
                                                                         <i className="fa fa-remove"></i>
                                                                     </button>
                                                                 )}
+                                                                {value.document_file && (
+                                                                    <a
+                                                                        href={`https://newlayout.wisibles.com/admin/leaverequest/downloadleaverequestdoc/${value.staff_id}/${value.id}`}
+                                                                        className="btn btn-default btn-xs"
+                                                                        title="Download"
+                                                                        style={{ marginLeft: '3px' }}
+                                                                    >
+                                                                        <i className="fa fa-download"></i>
+                                                                    </a>
+                                                                )}
                                                             </td>
                                                         </tr>
                                                     );
@@ -293,7 +330,7 @@ const LeaveRequest = () => {
                                             >
                                                 <option value="">Select</option>
                                                 {leaveTypes.map((type, idx) => (
-                                                    <option key={idx} value={type.typeid}>
+                                                    <option key={idx} value={type.id}>
                                                         {type.type} {type.alloted_leave ? `(${type.alloted_leave})` : ''}
                                                     </option>
                                                 ))}
@@ -331,7 +368,12 @@ const LeaveRequest = () => {
                                         </div>
                                         <div className="form-group col-md-12">
                                             <label>Attach Document</label>
-                                            <input type="file" className="form-control" />
+                                            <input
+                                                type="file"
+                                                className="dropify"
+                                                data-height="92"
+                                                onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -382,9 +424,13 @@ const LeaveRequest = () => {
                                                     <th>Download</th>
                                                     <td>
                                                         {selectedRecord.document_file && (
-                                                            <button className="btn btn-default btn-xs">
+                                                            <a
+                                                                href={`https://newlayout.wisibles.com/admin/leaverequest/downloadleaverequestdoc/${selectedRecord.staff_id}/${selectedRecord.id}`}
+                                                                className="btn btn-default btn-xs"
+                                                                title="Download"
+                                                            >
                                                                 <i className="fa fa-download"></i>
-                                                            </button>
+                                                            </a>
                                                         )}
                                                     </td>
                                                 </tr>

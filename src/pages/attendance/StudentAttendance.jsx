@@ -26,6 +26,7 @@ const StudentAttendance = () => {
     const [holidayId, setHolidayId] = useState(5);
     const [presentId, setPresentId] = useState(1);
     const [selectedStudents, setSelectedStudents] = useState([]);
+    const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
 
     useEffect(() => {
         fetchClasses();
@@ -136,6 +137,10 @@ const StudentAttendance = () => {
                 setStudentList(data.students);
                 setIsHoliday(isHolidayFound);
                 setSelectedStudents([]); // Reset selection on new search
+
+                // Check if any student already has attendance ID
+                const alreadyMarked = data.students.some(student => student.attendence_id && student.attendence_id !== "0");
+                setIsAttendanceMarked(alreadyMarked);
                 if (data.students.length === 0) {
                     toast.error('No attendance records found');
                 } else {
@@ -375,6 +380,11 @@ const StudentAttendance = () => {
 
                                     {studentList.length > 0 && (
                                         <>
+                                            {isAttendanceMarked && (
+                                                <div className="alert alert-success alert-dismissible">
+                                                    Attendance is already marked, you can update it.
+                                                </div>
+                                            )}
                                             <div className="box-header with-border">
                                                 <h3 className="box-title"><i className="fa fa-users"></i> Student List</h3>
                                             </div>

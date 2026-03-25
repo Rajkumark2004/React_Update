@@ -27,6 +27,7 @@ const StaffAttendanceList = () => {
     const [isHoliday, setIsHoliday] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchPerformed, setSearchPerformed] = useState(false);
+    const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
@@ -63,11 +64,10 @@ const StaffAttendanceList = () => {
 
         setLoading(true);
         try {
-            const payload = {
-                user_id: roleType,
-                date: formattedDate
-            };
-            const response = await api.searchStaffAttendance(payload);
+            const formData = new FormData();
+            formData.append('user_id', roleType);
+            formData.append('date', formattedDate);
+            const response = await api.searchStaffAttendance(formData);
             if (response && response.status === 'success') {
                 if (response.attendencetypeslist) {
                     setAttendanceTypes(response.attendencetypeslist.map(t => ({
@@ -85,6 +85,10 @@ const StaffAttendanceList = () => {
 
                 setResultlist(mappedResults);
                 setSearchPerformed(true);
+
+                // Check if any staff member has attendance already marked
+                const attendanceMarked = (response.resultlist || []).some(staff => staff.staff_attendance_type_id !== null && staff.staff_attendance_type_id !== undefined);
+                setIsAttendanceMarked(attendanceMarked);
             } else {
                 toast.error(response?.message || 'Failed to fetch attendance');
             }
@@ -131,27 +135,24 @@ const StaffAttendanceList = () => {
         const formattedDate = `${day}/${month}/${year}`;
 
         try {
-            const student_session = [];
-            const payload = {
-                search: 'saveattendence',
-                user_id: roleType,
-                date: formattedDate,
-                student_session: student_session
-            };
+            const formData = new FormData();
+            formData.append('search', 'saveattendence');
+            formData.append('user_id', roleType);
+            formData.append('date', formattedDate);
 
             resultlist.forEach(staff => {
                 const sId = staff.staff_id;
-                student_session.push(sId);
+                formData.append('student_session[]', sId); // Use [] for array field
 
                 // If isHoliday is true, all should be set to Holiday type ID (usually 5)
                 // Otherwise use the selected staff_attendance_type_id or default to 1 (Present)
                 const attendanceType = isHoliday ? 5 : (staff.staff_attendance_type_id || 1);
 
-                payload[`attendencetype${sId}`] = attendanceType.toString();
-                payload[`remark${sId}`] = staff.remark || '';
+                formData.append(`attendencetype${sId}`, attendanceType.toString());
+                formData.append(`remark${sId}`, staff.remark || '');
             });
 
-            const response = await api.searchStaffAttendance(payload);
+            const response = await api.searchStaffAttendance(formData);
             if (response && response.status === 'success') {
                 toast.success('Attendance saved successfully');
             } else {
@@ -250,6 +251,11 @@ const StaffAttendanceList = () => {
                                             <h3 className="box-title"><i className="fa fa-users"></i> Staff List</h3>
                                         </div>
                                         <div className="box-body">
+                                            {isAttendanceMarked && (
+                                                <div className="alert alert-success alert-dismissible">
+                                                    Staff attendance is already marked. You can update it.
+                                                </div>
+                                            )}
                                             <form onSubmit={handleSaveAttendance}>
                                                 <div className="mailbox-controls">
                                                     <span className="button-checkbox">

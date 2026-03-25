@@ -8,6 +8,7 @@ import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
 import { ReceiptContent } from './ReceiptContent';
+import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
 
 const FeesReceipt24 = () => {
@@ -49,7 +50,8 @@ const FeesReceipt24 = () => {
     // Data State
     const [feePayments, setFeePayments] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const [printSettings, setPrintSettings] = useState(null);
+ 
     const receiptPrefix = "24/25-";
 
     // States for DataTable functionality
@@ -60,6 +62,23 @@ const FeesReceipt24 = () => {
     // Sorting State
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
+    const fetchPrintSettings = async () => {
+        try {
+            const res = await api.getPrintHeaderFooterSettings();
+            if (res.status === 'success' && res.result) {
+                const receiptSetting = res.result.find(item => item.print_type === 'student_receipt');
+                if (receiptSetting) {
+                    setPrintSettings({
+                        header_image: receiptSetting.header_image ? `https://newlayout.wisibles.com/uploads/print_headerfooter/student_receipt/${receiptSetting.header_image}` : null,
+                        footer_content: receiptSetting.footer_content || ''
+                    });
+                }
+            }
+        } catch (e) {
+            console.error("Error fetching print settings", e);
+        }
+    };
+ 
     // Fetch Data
     useEffect(() => {
         const fetchData = async () => {
@@ -75,8 +94,9 @@ const FeesReceipt24 = () => {
                 setLoading(false);
             }
         };
-
+ 
         fetchData();
+        fetchPrintSettings();
     }, []);
 
     // Helpers
@@ -92,11 +112,16 @@ const FeesReceipt24 = () => {
         try {
             const response = await api.printStudentGroupFees24(payment.id);
             if (response && response.status === 1) {
-                const { student, sch_setting } = response.data;
+                const { student: studentData, sch_setting } = response.data;
+                const enriched_sch_setting = {
+                    ...sch_setting,
+                    receipt_header_url: printSettings?.header_image || sch_setting?.receipt_header_url || '',
+                    receipt_footer_content: printSettings?.footer_content || sch_setting?.receipt_footer_content || ''
+                };
                 const receiptHtml = renderToStaticMarkup(
-                    <ReceiptContent student={student} sch_setting={sch_setting} />
+                    <ReceiptContent student={studentData} sch_setting={enriched_sch_setting} />
                 );
-
+ 
                 const iframe = document.createElement('iframe');
                 iframe.style.position = 'absolute';
                 iframe.style.width = '0px';
@@ -143,11 +168,11 @@ const FeesReceipt24 = () => {
                 }, 500);
 
             } else {
-                alert('Failed to fetch receipt data');
+                toast.error('Failed to fetch receipt data');
             }
         } catch (error) {
             console.error('Error printing receipt:', error);
-            alert('An error occurred while printing');
+            toast.error('An error occurred while printing');
         }
     };
 
