@@ -110,6 +110,7 @@ const StudentSearch = () => {
         }));
     };
 
+
     const handleSearch = async (e, type) => {
         e.preventDefault();
         setError('');
@@ -154,12 +155,34 @@ const StudentSearch = () => {
                 studentData = response;
             }
 
-            const mappedStudents = studentData.map(student => ({
+            // Fetch full details for each student in batches to avoid rate limits
+            const BATCH_SIZE = 5;
+            const enrichedStudents = [...studentData];
+            for (let i = 0; i < studentData.length; i += BATCH_SIZE) {
+                const batch = studentData.slice(i, i + BATCH_SIZE);
+                await Promise.all(batch.map(async (student) => {
+                    const sid = student.id || student.student_id;
+                    if (!sid) return;
+                    try {
+                        const detailResponse = await api.getStudentView(sid);
+                        if (detailResponse.status && detailResponse.data && detailResponse.data.student) {
+                            const index = enrichedStudents.findIndex(s => (s.id || s.student_id) === sid);
+                            if (index !== -1) {
+                                enrichedStudents[index] = { ...enrichedStudents[index], ...detailResponse.data.student };
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`Failed to fetch details for student ${sid}`, e);
+                    }
+                }));
+            }
+
+            const mappedStudents = enrichedStudents.map(student => ({
                 id: student.id,
                 student_session_id: student.student_session_id,
                 admission_no: student.admission_no,
                 // Handle different name fields if API varies
-                name: student.full_name || student.firstname + ' ' + (student.lastname || ''),
+                name: student.full_name || (student.firstname ? student.firstname + ' ' + (student.lastname || '') : ''),
                 class: student.class_section || student.class,
                 father_name: student.father_name,
                 dob: student.dob,
@@ -167,6 +190,10 @@ const StudentSearch = () => {
                 category: student.category || '',
                 mobile: student.mobile_no || student.mobileno,
                 image: student.image || '',
+                samagra_id: student.samagra_id || student.local_identification_no || student.local_id || '-',
+                guardian_name: student.guardian_name || '-',
+                guardian_phone: student.guardian_phone || student.guardian_phone_no || '-',
+                current_address: student.current_address || student.address || '-',
                 custom_fields: student.custom_fields || []
             }));
 
@@ -483,8 +510,10 @@ const StudentSearch = () => {
                                                                         </address>
                                                                     </div>
                                                                     <div className="col-xs-6 col-md-6">
-                                                                        <b>Father Name:&nbsp;</b>{student.father_name}<br />
-                                                                        <b>Mobile Number: </b> <abbr title="Phone"><i className="fa fa-phone-square"></i>&nbsp;</abbr> {student.mobile}<br />
+                                                                        <b>Local Identification Number:&nbsp;</b>{student.samagra_id}<br />
+                                                                        <b>Guardian Name:&nbsp;</b>{student.guardian_name}<br />
+                                                                        <b>Guardian Phone:&nbsp;</b><i className="fa fa-phone-square"></i> {student.guardian_phone}<br />
+                                                                        <b>Current Address:&nbsp;</b>{student.current_address}<br />
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -499,7 +528,6 @@ const StudentSearch = () => {
                                                                     <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Collect Fees">
                                                                         ₹
                                                                     </Link>
-
                                                                 </span>
                                                             </div>
                                                         </div>
