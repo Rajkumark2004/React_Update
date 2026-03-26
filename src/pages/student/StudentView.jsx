@@ -330,9 +330,12 @@ const StudentView = () => {
           timeline_title: timelineFormData.title || "",
           timeline_desc: timelineFormData.description || "",
           timeline_date: moment(timelineFormData.date, ["DD/MM/YYYY", "YYYY-MM-DD", "D/M/YYYY"]).format("DD/MM/YYYY"),
-          visible_check: timelineFormData.visible_check ? "yes" : "no",
           timeline_doc: "", // Aligned with user's JSON example
         };
+        // PHP checkbox: only include visible_check when checked (present = yes, absent = no)
+        if (timelineFormData.visible_check) {
+          payload.visible_check = "yes";
+        }
 
         console.log("Timeline Edit Submit (JSON):", payload);
         await api.editTimeline(payload);
@@ -344,10 +347,10 @@ const StudentView = () => {
         formData.append("timeline_title", timelineFormData.title || "");
         formData.append("timeline_desc", timelineFormData.description || "");
         formData.append("timeline_date", moment(timelineFormData.date, ["DD/MM/YYYY", "YYYY-MM-DD", "D/M/YYYY"]).format("DD/MM/YYYY"));
-        formData.append(
-          "visible_check",
-          timelineFormData.visible_check ? "yes" : "no"
-        );
+        // PHP checkbox: only append visible_check when checked (present = yes, absent = no)
+        if (timelineFormData.visible_check) {
+          formData.append("visible_check", "yes");
+        }
 
         if (timelineFormData.file) {
           formData.append("timeline_doc", timelineFormData.file);
