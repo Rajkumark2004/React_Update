@@ -1181,7 +1181,7 @@ const StudentAdmission = () => {
 
                                             {/* Parent Guardian Detail */}
                                             <h4 className="pagetitleh2">Parent Guardian Details</h4>
-                                            <div className="row">
+                                            <div className="row" style={{ marginTop: '10px' }}>
                                                 {/* Father */}
                                                 {schSetting && schSetting.father_name === '1' && (
                                                     <div className="col-md-3">
@@ -1211,7 +1211,7 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Father Photo</label>
-                                                            <input className="dropify" data-height="92" type='file' name='father_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="27" type='file' name='father_pic' onChange={handleInputChange} />
                                                         </div>
                                                     </div>
                                                 )}
@@ -1247,7 +1247,7 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Mother Photo</label>
-                                                            <input className="dropify" data-height="92" type='file' name='mother_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="27" type='file' name='mother_pic' onChange={handleInputChange} />
                                                         </div>
                                                     </div>
                                                 )}
@@ -1322,7 +1322,7 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Guardian Photo</label>
-                                                            <input className="dropify" data-height="92" type='file' name='guardian_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="27" type='file' name='guardian_pic' onChange={handleInputChange} />
                                                         </div>
                                                     </div>
                                                 )}
