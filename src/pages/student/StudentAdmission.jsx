@@ -172,7 +172,27 @@ const StudentAdmission = () => {
             setFormErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
         }
         if (type === 'file') {
-            setFormData(prev => ({ ...prev, [name]: files[0] }));
+            const file = files[0];
+            if (IMAGE_FIELDS.includes(name)) {
+                const error = validateImageFile(file, name);
+                if (error) {
+                    setImageErrors(prev => ({ ...prev, [name]: error }));
+                    e.target.value = '';
+                    setFormData(prev => ({ ...prev, [name]: null }));
+                    // Reset dropify preview if applicable
+                    const $ = window.jQuery;
+                    if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                        const dropify = $(e.target).data('dropify');
+                        if (dropify) {
+                            dropify.resetPreview();
+                            dropify.clearElement();
+                        }
+                    }
+                    return;
+                }
+                setImageErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
+            }
+            setFormData(prev => ({ ...prev, [name]: file }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
 
@@ -300,6 +320,26 @@ const StudentAdmission = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [createdStudent, setCreatedStudent] = useState(null);
     const [formErrors, setFormErrors] = useState({});
+    const [imageErrors, setImageErrors] = useState({});
+
+    const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg'];
+    const MIN_IMAGE_SIZE = 30 * 1024;
+    const MAX_IMAGE_SIZE = 200 * 1024;
+    const IMAGE_FIELDS = ['image', 'father_pic', 'mother_pic', 'guardian_pic'];
+
+    const validateImageFile = (file, fieldName) => {
+        if (!file) return null;
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            return 'Invalid format. Only PNG, JPG and JPEG are allowed.';
+        }
+        if (file.size < MIN_IMAGE_SIZE) {
+            return `Minimum size is 30 KB. Selected file is ${(file.size / 1024).toFixed(1)} KB.`;
+        }
+        if (file.size > MAX_IMAGE_SIZE) {
+            return `Maximum size is 200 KB. Selected file is ${(file.size / 1024).toFixed(1)} KB.`;
+        }
+        return null;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -752,7 +792,8 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Student Photo</label>
-                                                            <input className="dropify" type='file' name='image' onChange={handleInputChange} />
+                                                            <input className="dropify" type='file' name='image' accept=".png,.jpg,.jpeg" onChange={handleInputChange} />
+                                                            {imageErrors.image && <span style={{ color: '#f44336', fontSize: '11px', display: 'block', marginTop: '4px' }}>{imageErrors.image}</span>}
                                                         </div>
                                                     </div>
                                                 )}
@@ -1211,7 +1252,8 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Father Photo</label>
-                                                            <input className="dropify" data-height="27" type='file' name='father_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="27" type='file' name='father_pic' accept=".png,.jpg,.jpeg" onChange={handleInputChange} />
+                                                            {imageErrors.father_pic && <span style={{ color: '#f44336', fontSize: '11px', display: 'block', marginTop: '4px' }}>{imageErrors.father_pic}</span>}
                                                         </div>
                                                     </div>
                                                 )}
@@ -1247,7 +1289,8 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Mother Photo</label>
-                                                            <input className="dropify" data-height="27" type='file' name='mother_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="27" type='file' name='mother_pic' accept=".png,.jpg,.jpeg" onChange={handleInputChange} />
+                                                            {imageErrors.mother_pic && <span style={{ color: '#f44336', fontSize: '11px', display: 'block', marginTop: '4px' }}>{imageErrors.mother_pic}</span>}
                                                         </div>
                                                     </div>
                                                 )}
@@ -1322,7 +1365,8 @@ const StudentAdmission = () => {
                                                     <div className="col-md-3">
                                                         <div className="form-group">
                                                             <label>Guardian Photo</label>
-                                                            <input className="dropify" data-height="27" type='file' name='guardian_pic' onChange={handleInputChange} />
+                                                            <input className="dropify" data-height="27" type='file' name='guardian_pic' accept=".png,.jpg,.jpeg" onChange={handleInputChange} />
+                                                            {imageErrors.guardian_pic && <span style={{ color: '#f44336', fontSize: '11px', display: 'block', marginTop: '4px' }}>{imageErrors.guardian_pic}</span>}
                                                         </div>
                                                     </div>
                                                 )}
