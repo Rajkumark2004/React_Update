@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../context/SessionContext';
 import { api_users } from '../../services/api_users';
+import { api } from '../../services/api';
 import '../../utils/include_files.js';
 
 const Profile = () => {
@@ -38,6 +39,7 @@ const Profile = () => {
     const [documentsData, setDocumentsData] = useState([]);
     const [behaviouralNotes, setBehaviouralNotes] = useState([]);
     const [timelineData, setTimelineData] = useState([]);
+    const [categoryList, setCategoryList] = useState([]);
 
 
     const sessionYear = currentSession?.session || '2024-25';
@@ -82,6 +84,19 @@ const Profile = () => {
                     setDocumentsData(profileRes.data.student_documents || profileRes.data.student?.student_documents || []);
                     setBehaviouralNotes(profileRes.data.behavioural_notes || profileRes.data.student?.behavioural_notes || []);
                     setTimelineData(profileRes.data.timeline || profileRes.data.student?.timeline || []);
+                    
+                    let currentCats = profileRes.data.category_list || profileRes.data.categorylist || [];
+                    if (currentCats.length === 0) {
+                        try {
+                            const preDataRes = await api.getStudentCreatePreData();
+                            if (preDataRes && preDataRes.data && preDataRes.data.categorylist) {
+                                currentCats = preDataRes.data.categorylist;
+                            }
+                        } catch (preErr) {
+                            console.error("Failed to fetch pre-data categories:", preErr);
+                        }
+                    }
+                    setCategoryList(currentCats);
                 }
 
                 // Fetch detailed Fees data
@@ -653,11 +668,13 @@ const Profile = () => {
                                                     <tbody>
                                                         <tr><td>Admission Date</td><td>{studentObj.admission_date || '-'}</td></tr>
                                                         <tr><td>Date of Birth</td><td>{studentObj.dob || '-'}</td></tr>
-                                                        <tr><td>Category</td><td>{studentObj.category || studentObj.category_id || '-'}</td></tr>
+                                                        <tr><td>Category</td><td>{(categoryList.find(c => String(c.id) === String(studentObj.category_id) || String(c.id) === String(studentObj.category))?.category) || studentObj.category_name || (isNaN(studentObj.category) ? studentObj.category : null) || studentObj.category || '-'}</td></tr>
                                                         <tr><td>Mobile Number</td><td>{studentObj.mobileno || '-'}</td></tr>
                                                         <tr><td>Caste</td><td>{studentObj.cast || '-'}</td></tr>
                                                         <tr><td>Religion</td><td>{studentObj.religion || '-'}</td></tr>
                                                         <tr><td>Email</td><td>{studentObj.email || '-'}</td></tr>
+                                                        <tr><td>Class of Admission</td><td>{studentObj.class_of_admission || studentObj.class_of_admin || '-'}</td></tr>
+                                                        <tr><td>Child ID</td><td>{studentObj.child_id || '-'}</td></tr>
                                                         <tr><td>Note</td><td>{studentObj.note || '-'}</td></tr>
                                                     </tbody>
                                                 </table>
