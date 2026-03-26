@@ -84,7 +84,7 @@ const Profile = () => {
                     setDocumentsData(profileRes.data.student_documents || profileRes.data.student?.student_documents || []);
                     setBehaviouralNotes(profileRes.data.behavioural_notes || profileRes.data.student?.behavioural_notes || []);
                     setTimelineData(profileRes.data.timeline || profileRes.data.student?.timeline || []);
-                    
+
                     let currentCats = profileRes.data.category_list || profileRes.data.categorylist || [];
                     if (currentCats.length === 0) {
                         try {
@@ -673,8 +673,6 @@ const Profile = () => {
                                                         <tr><td>Caste</td><td>{studentObj.cast || '-'}</td></tr>
                                                         <tr><td>Religion</td><td>{studentObj.religion || '-'}</td></tr>
                                                         <tr><td>Email</td><td>{studentObj.email || '-'}</td></tr>
-                                                        <tr><td>Class of Admission</td><td>{studentObj.class_of_admission || studentObj.class_of_admin || '-'}</td></tr>
-                                                        <tr><td>Child ID</td><td>{studentObj.child_id || '-'}</td></tr>
                                                         <tr><td>Note</td><td>{studentObj.note || '-'}</td></tr>
                                                     </tbody>
                                                 </table>
