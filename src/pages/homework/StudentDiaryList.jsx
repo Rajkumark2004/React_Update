@@ -151,6 +151,7 @@ const StudentDiaryList = () => {
     // Modal states
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [evaluateModalOpen, setEvaluateModalOpen] = useState(false);
+    const [evaluateData, setEvaluateData] = useState(null);
     const [docsModalOpen, setDocsModalOpen] = useState(false);
 
     // Add Modal Form Data
@@ -403,14 +404,14 @@ const StudentDiaryList = () => {
             // Clear Dropify
             try {
                 const $ = window.jQuery;
-                $('.dropify').each(function() {
+                $('.dropify').each(function () {
                     const dr = $(this).data('dropify');
                     if (dr) {
                         dr.resetPreview();
                         dr.clearElement();
                     }
                 });
-            } catch (e) {}
+            } catch (e) { }
             closeAddModal();
             // Refresh list if search criteria matches
             if (formData.class_id && formData.section_id) {
@@ -502,14 +503,14 @@ const StudentDiaryList = () => {
             // Clear Dropify
             try {
                 const $ = window.jQuery;
-                $('.dropify').each(function() {
+                $('.dropify').each(function () {
                     const dr = $(this).data('dropify');
                     if (dr) {
                         dr.resetPreview();
                         dr.clearElement();
                     }
                 });
-            } catch (e) {}
+            } catch (e) { }
             setEditModalOpen(false);
             if (formData.class_id && formData.section_id) {
                 handleSearch(e);
@@ -539,6 +540,29 @@ const StudentDiaryList = () => {
                 console.error("Failed to delete diary record:", error);
                 alert('An error occurred while deleting the record');
             }
+        }
+    };
+
+    const handleEvaluate = async (id) => {
+        try {
+            const response = await api.getStudentDiary(id);
+            if (response && response.status && response.data) {
+                const data = response.data;
+                // Find class/section names from the diaryList or classes array
+                const diaryItem = diaryList.find(d => String(d.id) === String(id));
+                setEvaluateData({
+                    ...data,
+                    class_name: diaryItem?.class || data.class || '',
+                    section_name: diaryItem?.section || data.section || '',
+                    assigned_by: diaryItem?.assigned_by || data.assigned_by || ''
+                });
+                setEvaluateModalOpen(true);
+            } else {
+                toast.error('Failed to fetch diary details');
+            }
+        } catch (error) {
+            console.error('Failed to fetch diary for evaluation:', error);
+            toast.error('Error fetching diary details');
         }
     };
 
@@ -683,7 +707,7 @@ const StudentDiaryList = () => {
                                                                 {visibleColumns.has('section') && <th>Section</th>}
                                                                 {visibleColumns.has('date') && <th>Date</th>}
                                                                 {visibleColumns.has('assigned_by') && <th>Created By</th>}
-                                                                <th className="text-right noExport">Action</th>
+                                                                <th className="text-right noExport" style={{ minWidth: '120px' }}>Action</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -705,7 +729,10 @@ const StudentDiaryList = () => {
                                                                         {visibleColumns.has('date') && <td>{item.date}</td>}
                                                                         {visibleColumns.has('assigned_by') && <td>{item.assigned_by}</td>}
                                                                         <td className="text-right">
-                                                                            <button className="btn btn-default btn-xs" title="Edit" onClick={() => handleEdit(item.id)}>
+                                                                            <button className="btn btn-default btn-xs" title="Evaluation" onClick={() => handleEvaluate(item.id)} style={{ marginRight: '2px' }}>
+                                                                                <i className="fa fa-reorder"></i>
+                                                                            </button>
+                                                                            <button className="btn btn-default btn-xs" title="Edit" onClick={() => handleEdit(item.id)} style={{ marginRight: '2px' }}>
                                                                                 <i className="fa fa-pencil"></i>
                                                                             </button>
                                                                             <button className="btn btn-default btn-xs" title="Delete" onClick={() => handleDelete(item.id)}>
@@ -916,10 +943,16 @@ const StudentDiaryList = () => {
                                                                 className="dropify"
                                                                 onChange={handleEditInputChange}
                                                                 data-height="95"
-                                                                data-default-file={editFormData.existing_file ? `https://newlayout.wisibles.com/${editFormData.existing_file}` : ''}
+                                                                data-default-file={editFormData.existing_file ? window.location.origin + `/external-files/${editFormData.existing_file.split('/').map(s => encodeURIComponent(s)).join('/')}` : ''}
                                                             />
                                                             {editFormData.existing_file && (
-                                                                <small className="help-block">Current: {editFormData.existing_file}</small>
+                                                                <small className="help-block">
+                                                                    Current: {(() => {
+                                                                        const raw = editFormData.existing_file.split('/').pop();
+                                                                        const parts = raw.split('!');
+                                                                        return parts.length > 1 ? parts.slice(1).join('!') : raw;
+                                                                    })()}
+                                                                </small>
                                                             )}
                                                         </div>
                                                     </div>
@@ -949,6 +982,75 @@ const StudentDiaryList = () => {
                         </div>
                     </div>
                     <div className="modal-backdrop fade in"></div>
+                </>
+            )}
+
+            {/* Evaluation Modal - Full Screen */}
+            {evaluateModalOpen && evaluateData && (
+                <>
+                    <div className="modal fade in" style={{ display: 'block', zIndex: 1050, overflow: 'hidden' }}>
+                        <div className="modal-dialog" style={{ width: '98%', maxWidth: '1400px', margin: '20px auto' }} role="document">
+                            <div className="modal-content" style={{ borderRadius: '4px', overflow: 'hidden', height: 'calc(100vh - 40px)', display: 'flex', flexDirection: 'column' }}>
+                                <div className="modal-header" style={{ background: '#6f42c1', color: '#fff', padding: '10px 15px 0px 15px', borderBottom: 'none', flexShrink: 0, minHeight: 0 }}>
+                                    <button type="button" className="close" onClick={() => { setEvaluateModalOpen(false); setEvaluateData(null); }} style={{ color: '#fff', opacity: 0.9, fontSize: '22px', fontWeight: '500', marginTop: '0px', marginBottom: '-30px', padding: '0 4px', lineHeight: '1' }}>
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div className="modal-body" style={{ padding: 0, display: 'flex', flex: 1, overflow: 'hidden' }}>
+                                    {/* Left Panel - Description */}
+                                    <div style={{ flex: 1, padding: '20px', borderRight: '1px solid #eee', overflowY: 'auto' }}>
+                                        <p style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>Description:</p>
+                                        <div style={{ fontSize: '13px', color: '#333' }} dangerouslySetInnerHTML={{ __html: evaluateData.description || 'No description available' }} />
+                                    </div>
+                                    {/* Right Panel - Summary */}
+                                    <div style={{ width: '320px', minWidth: '280px', padding: '20px', background: '#fafafa', overflowY: 'auto', flexShrink: 0 }}>
+                                        <h4 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Summary</h4>
+                                        <div style={{ marginBottom: '12px' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                                <i className="fa fa-calendar"></i>
+                                                <b>Homework Date:</b>{evaluateData.date || '-'}
+                                            </span>
+                                        </div>
+                                        <div style={{ marginBottom: '8px' }}>
+                                            <b>Created By: </b>{evaluateData.assigned_by || '-'}
+                                        </div>
+                                        <div style={{ marginBottom: '8px' }}>
+                                            <b>Class: </b>{evaluateData.class_name || '-'}
+                                        </div>
+                                        <div style={{ marginBottom: '8px' }}>
+                                            <b>Section: </b>{evaluateData.section_name || '-'}
+                                        </div>
+                                        {evaluateData.document && (
+                                            <div style={{ marginTop: '12px' }}>
+                                                <b>Documents:</b>
+                                                <div style={{ marginTop: '6px' }}>
+                                                    <span style={{ fontSize: '13px', color: '#555' }}>
+                                                        {(() => {
+                                                            const raw = evaluateData.document.split('/').pop();
+                                                            const parts = raw.split('!');
+                                                            return parts.length > 1 ? parts.slice(1).join('!') : raw;
+                                                        })()}
+                                                    </span>
+                                                    <div style={{ marginTop: '4px' }}>
+                                                        <a
+                                                            href={`https://newlayout.wisibles.com/studentdairy/download/${evaluateData.id}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            title="Download"
+                                                            style={{ color: '#333', fontSize: '16px', cursor: 'pointer' }}
+                                                        >
+                                                            <i className="fa fa-download"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade in" style={{ zIndex: 1040 }}></div>
                 </>
             )}
             <Footer />
