@@ -35,6 +35,16 @@ const StudentView = () => {
   const [countAttendance, setCountAttendance] = useState({});
   const [attendanceYear, setAttendanceYear] = useState(new Date().getFullYear());
   const [siblings, setSiblings] = useState([]);
+  const [currencySymbol, setCurrencySymbol] = useState("₹");
+  const [studentDiscountFee, setStudentDiscountFee] = useState([]);
+  const [feeTotals, setFeeTotals] = useState({
+    totalAmount: 0,
+    totalPaid: 0,
+    totalDiscount: 0,
+    totalFine: 0,
+    totalBalance: 0,
+    totalPenaltyFine: 0,
+  });
 
   // Timeline Modal State
   const [timelineModalOpen, setTimelineModalOpen] = useState(false);
@@ -89,7 +99,8 @@ const StudentView = () => {
               if (fee.amount_detail && fee.amount_detail !== "0") {
                 try {
                   const details = JSON.parse(fee.amount_detail);
-                  Object.values(details).forEach((detail) => {
+                  const detailArray = Array.isArray(details) ? details : Object.values(details);
+                  detailArray.forEach((detail) => {
                     paid += parseFloat(detail.amount || 0);
                     discount += parseFloat(detail.amount_discount || 0);
                     fine += parseFloat(detail.amount_fine || 0);
@@ -100,24 +111,25 @@ const StudentView = () => {
                 }
               }
 
-              balance = parseFloat(fee.amount) - paid + fine; // Usually balance is (amount + fine) - (paid + discount) depends on logic.
-              // Standard logic: Balance = (Amount + Fine) - (Paid + Discount).
-              // But usually discount reduces the payable amount.
-              // Let's assume Balance = Amount + Fine - Paid - Discount.
-              balance = parseFloat(fee.amount) + fine - (paid + discount);
+              const currentDate = new Date();
+              let penaltyFine = 0;
+              if (fee.due_date && fee.due_date !== "0000-00-00") {
+                const dueDate = new Date(fee.due_date);
+                if (dueDate < currentDate) {
+                  penaltyFine = parseFloat(fee.fine_amount || 0);
+                }
+              }
 
-              // Determine status
+              let feeTypeBalance = parseFloat(fee.amount || 0) - (paid + discount);
+
+              // Determine status including penalty fine
               let status = "Unpaid";
-              if (balance <= 0) {
+              if (feeTypeBalance + penaltyFine === 0) {
                 status = "Paid";
-              } else if (paid > 0) {
+              } else if (paymentDetails.length > 0) {
                 status = "Partial";
               }
 
-              // Extract display values for the table (rendering last payment or concatenated?)
-              // For simplicity, we can show the latest payment info or '-' if none.
-              // If multiple payments, we might need a nested table or just "View Details".
-              // For this view, we'll take the latest payment info if available.
               const latestPayment =
                 paymentDetails.length > 0
                   ? paymentDetails[paymentDetails.length - 1]
@@ -128,11 +140,13 @@ const StudentView = () => {
                 paid: paid.toFixed(2),
                 discount: discount.toFixed(2),
                 fine: fine.toFixed(2),
-                balance: balance.toFixed(2),
+                penalty_fine: penaltyFine,
+                balance: (feeTypeBalance + penaltyFine).toFixed(2),
                 status: status,
-                payment_id: latestPayment.inv_no || latestPayment.id,
+                payment_id: latestPayment.inv_no ? `${fee.student_fees_deposite_id}/${latestPayment.inv_no}` : (latestPayment.id || "-"),
                 payment_mode: latestPayment.payment_mode,
                 payment_date: latestPayment.date,
+                payment_details: paymentDetails,
               };
             });
             return [...acc, ...processedFees];
@@ -151,7 +165,8 @@ const StudentView = () => {
           if (fee.amount_detail && fee.amount_detail !== "0") {
             try {
               const details = JSON.parse(fee.amount_detail);
-              Object.values(details).forEach((detail) => {
+              const detailArray = Array.isArray(details) ? details : Object.values(details);
+              detailArray.forEach((detail) => {
                 paid += parseFloat(detail.amount || 0);
                 discount += parseFloat(detail.amount_discount || 0);
                 fine += parseFloat(detail.amount_fine || 0);
@@ -162,14 +177,21 @@ const StudentView = () => {
             }
           }
 
-          // For transport, balance might be fees + fine - paid - discount
-          // Assuming similar logic
-          let balance = parseFloat(fee.fees) + fine - (paid + discount);
+          const currentDate = new Date();
+          let penaltyFine = 0;
+          if (fee.due_date && fee.due_date !== "0000-00-00") {
+            const dueDate = new Date(fee.due_date);
+            if (dueDate < currentDate) {
+              penaltyFine = parseFloat(fee.fine_amount || 0);
+            }
+          }
+
+          let feeTypeBalance = parseFloat(fee.fees || 0) - (paid + discount);
 
           let status = "Unpaid";
-          if (balance <= 0) {
+          if (feeTypeBalance + penaltyFine === 0) {
             status = "Paid";
-          } else if (paid > 0) {
+          } else if (paymentDetails.length > 0) {
             status = "Partial";
           }
 
@@ -185,18 +207,54 @@ const StudentView = () => {
             due_date: fee.due_date,
             status: status,
             amount: fee.fees,
-            payment_id: latestPayment.inv_no || latestPayment.id,
+            payment_id: latestPayment.inv_no ? `${fee.student_fees_deposite_id || fee.id}/${latestPayment.inv_no}` : (latestPayment.id || "-"),
+            student_fees_deposite_id: fee.student_fees_deposite_id || fee.id,
             payment_mode: latestPayment.payment_mode,
             payment_date: latestPayment.date,
             discount: discount.toFixed(2),
             fine: fine.toFixed(2),
+            penalty_fine: penaltyFine,
             paid: paid.toFixed(2),
-            balance: balance.toFixed(2),
+            balance: (feeTypeBalance + penaltyFine).toFixed(2),
+            payment_details: paymentDetails,
           };
         });
 
-        setFees([...flattenedFees, ...processedTransportFees]);
+        const allFees = [...flattenedFees, ...processedTransportFees];
+        setFees(allFees);
 
+        // Calculate Totals exactly as GetFees.jsx
+        let totalAmount = 0;
+        let totalPaid = 0;
+        let totalDiscount = 0;
+        let totalFine = 0;
+        let totalBalance = 0;
+        let totalPenaltyFine = 0;
+
+        allFees.forEach(fee => {
+          totalAmount += parseFloat(fee.amount || fee.fees || 0);
+          totalPaid += parseFloat(fee.paid || 0);
+          totalDiscount += parseFloat(fee.discount || 0);
+          totalFine += parseFloat(fee.fine || 0);
+          totalBalance += parseFloat(fee.balance || 0);
+          totalPenaltyFine += fee.penalty_fine || 0;
+        });
+
+        setFeeTotals({
+          totalAmount,
+          totalPaid,
+          totalDiscount,
+          totalFine,
+          totalBalance,
+          totalPenaltyFine
+        });
+
+        // Currency Symbol
+        if (response.data.sch_setting && response.data.sch_setting.currency_symbol) {
+          setCurrencySymbol(response.data.sch_setting.currency_symbol);
+        }
+
+        setStudentDiscountFee(response.data.student_discount_fee || []);
         setCbseExams(response.data.cbse_exams || []);
         setExamResults(response.data.exam_result || []);
         setDocuments(response.data.student_documents || []);
@@ -1127,14 +1185,14 @@ const StudentView = () => {
                           <th>Fees Code</th>
                           <th>Due Date</th>
                           <th>Status</th>
-                          <th>Amount</th>
+                          <th style={{ textAlign: 'right' }}>Amount</th>
                           <th>Payment Id</th>
                           <th>Mode</th>
                           <th>Date</th>
-                          <th>Discount</th>
-                          <th>Fine</th>
-                          <th>Paid</th>
-                          <th>Balance</th>
+                          <th style={{ textAlign: 'right' }}>Discount</th>
+                          <th style={{ textAlign: 'right' }}>Fine</th>
+                          <th style={{ textAlign: 'right' }}>Paid</th>
+                          <th style={{ textAlign: 'right' }}>Balance</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1149,27 +1207,83 @@ const StudentView = () => {
                           </tr>
                         ) : (
                           fees.map((fee, index) => (
-                            <tr key={index}>
-                              <td>{fee.name}</td>
-                              <td>{fee.code}</td>
-                              <td>{formatDate(fee.due_date)}</td>
+                            <React.Fragment key={index}>
+                              <tr>
+                                <td>{fee.name}</td>
+                                <td>{fee.code}</td>
+                                <td>{formatDate(fee.due_date)}</td>
+                                <td>
+                                  <span
+                                    className={`label ${fee.status === "Paid" ? "label-success" : fee.status === "Partial" ? "label-warning" : "label-danger"}`}
+                                  >
+                                    {fee.status}
+                                  </span>
+                                </td>
+                                <td className="text-right">
+                                  {fee.amount || fee.fees}
+                                  {fee.penalty_fine > 0 && (
+                                    <span className="text-danger" style={{ marginLeft: '5px' }} title="Fine">+{fee.penalty_fine.toFixed(2)}</span>
+                                  )}
+                                </td>
+                                <td>{fee.payment_id || "-"}</td>
+                                <td>{fee.payment_mode || "-"}</td>
+                                <td>{formatDate(fee.payment_date)}</td>
+                                <td className="text-right">{fee.discount || "0.00"}</td>
+                                <td className="text-right" title="Fine">{fee.fine || "0.00"}</td>
+                                <td className="text-right">{fee.paid || "0.00"}</td>
+                                <td className="text-right">{fee.balance || "0.00"}</td>
+                              </tr>
+                              {fee.payment_details && fee.payment_details.map((payment, pIndex) => (
+                                <tr key={`payment-${pIndex}`} style={{ backgroundColor: '#fff', color: '#666' }}>
+                                  <td colSpan="5"></td>
+                                  <td>
+                                    <i className="fa fa-level-up fa-rotate-90" style={{ color: '#ccc', marginRight: '5px' }}></i>
+                                    {fee.student_fees_deposite_id}/{payment.inv_no}
+                                  </td>
+                                  <td>{payment.payment_mode}</td>
+                                  <td>{formatDate(payment.date)}</td>
+                                  <td className="text-right">{parseFloat(payment.amount_discount || 0).toFixed(2)}</td>
+                                  <td className="text-right">{parseFloat(payment.amount_fine || 0).toFixed(2)}</td>
+                                  <td className="text-right">{parseFloat(payment.amount || 0).toFixed(2)}</td>
+                                  <td></td>
+                                </tr>
+                              ))}
+                            </React.Fragment>
+                          ))
+                        )}
+                        {studentDiscountFee && studentDiscountFee.length > 0 &&
+                          studentDiscountFee.map((discount, dIndex) => (
+                            <tr key={`discount-${dIndex}`} style={{ backgroundColor: '#fcf8e3' }}>
+                              <td></td>
+                              <td>Discount</td>
+                              <td>{discount.code}</td>
+                              <td></td>
                               <td>
-                                <span
-                                  className={`label ${fee.status === "Paid" ? "label-success" : "label-danger"}`}
-                                >
-                                  {fee.status}
-                                </span>
+                                {discount.status === 'applied' ? (
+                                  <span className="text-success small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} Applied</span>
+                                ) : (
+                                  <span className="text-danger small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} {discount.status}</span>
+                                )}
                               </td>
-                              <td>{fee.amount}</td>
-                              <td>{fee.payment_id}</td>
-                              <td>{fee.payment_mode}</td>
-                              <td>{formatDate(fee.payment_date)}</td>
-                              <td>{fee.discount || "0.00"}</td>
-                              <td>{fee.fine || "0.00"}</td>
-                              <td>{fee.paid || "0.00"}</td>
-                              <td>{fee.balance || "0.00"}</td>
+                              <td colSpan="7"></td>
                             </tr>
                           ))
+                        }
+                        {fees.length > 0 && (
+                          <tr style={{ fontWeight: 'bold', backgroundColor: '#f4f4f4' }}>
+                            <td colSpan="4" className="text-right">Grand Total</td>
+                            <td className="text-right">
+                              {currencySymbol}{feeTotals.totalAmount.toFixed(2)}
+                              {feeTotals.totalPenaltyFine > 0 && (
+                                <span className="text-danger" style={{ marginLeft: '5px' }}>+{currencySymbol}{feeTotals.totalPenaltyFine.toFixed(2)}</span>
+                              )}
+                            </td>
+                            <td colSpan="3"></td>
+                            <td className="text-right">{currencySymbol}{feeTotals.totalDiscount.toFixed(2)}</td>
+                            <td className="text-right">{currencySymbol}{feeTotals.totalFine.toFixed(2)}</td>
+                            <td className="text-right">{currencySymbol}{feeTotals.totalPaid.toFixed(2)}</td>
+                            <td className="text-right">{currencySymbol}{feeTotals.totalBalance.toFixed(2)}</td>
+                          </tr>
                         )}
                       </tbody>
                     </table>
