@@ -20,6 +20,7 @@ const StudentIdCard = () => {
         fetchIdCardList();
     }, []);
 
+
     const fetchIdCardList = async () => {
         try {
             const response = await api.getStudentIdCard();
@@ -108,6 +109,39 @@ const StudentIdCard = () => {
     const [showViewModal, setShowViewModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
+
+    // Initialize Dropify
+    useEffect(() => {
+        const $ = window.jQuery;
+        let drEvent;
+        const timer = setTimeout(() => {
+            try {
+                if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                    drEvent = $('.dropify').dropify();
+                }
+            } catch (error) {
+                console.error('Dropify initialization error:', error);
+            }
+        }, 500);
+
+        return () => {
+            clearTimeout(timer);
+            try {
+                if (drEvent && $ && $.fn && typeof $.fn.dropify === 'function') {
+                    // Destroy each dropify instance
+                    $('.dropify').each(function () {
+                        const dropifyData = $(this).data('dropify');
+                        if (dropifyData) {
+                            dropifyData.destroy();
+                        }
+                    });
+                }
+            } catch (e) {
+                console.log('Dropify destroy error:', e);
+            }
+        };
+    }, [isEditing, editId]);
+
     const colorPickerRef = useRef(null);
 
     // Colorpicker useEffect removed as we are using native input type='color'
@@ -326,24 +360,6 @@ const StudentIdCard = () => {
         }
     };
 
-    const dropzoneStyle = {
-        border: '2px dashed #d2d6de',
-        borderRadius: '5px',
-        padding: '8px 10px',
-        textAlign: 'center',
-        background: '#f9f9f9',
-        cursor: 'pointer',
-        position: 'relative',
-        transition: 'border-color 0.3s',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px'
-    };
-
-    const dropzoneHoverStyle = {
-        borderColor: '#3c8dbc'
-    };
 
     return (
         <div className="wrapper" style={{ marginTop: '0px' }}>
@@ -412,77 +428,38 @@ const StudentIdCard = () => {
                                 </div>
                                 <form onSubmit={handleSubmit}>
                                     <div className="box-body" style={{ fontSize: '13px' }}>
-                                        <div className="form-group">
+                                        <div className="form-group" key={`bg-${editId}-${formData.old_background}`}>
                                             <label>Background Image</label>
-                                            <div
-                                                style={dropzoneStyle}
-                                                onMouseOver={(e) => e.currentTarget.style.borderColor = '#3c8dbc'}
-                                                onMouseOut={(e) => e.currentTarget.style.borderColor = '#d2d6de'}
-                                                onClick={() => document.getElementById('background_image_input').click()}
-                                            >
-                                                <i className="fa fa-cloud-upload" style={{ fontSize: '18px', color: '#999' }}></i>
-                                                <p style={{ margin: 0, color: '#666', fontSize: '12px' }}>Drag & drop or click</p>
-                                                <input
-                                                    id="background_image_input"
-                                                    type="file"
-                                                    name="background_image"
-                                                    style={{ display: 'none' }}
-                                                    onChange={handleInputChange}
-                                                />
-                                            </div>
-                                            {(formData.background_image || (isEditing && formData.old_background)) && (
-                                                <div style={{ marginTop: '10px' }}>
-                                                    <img src={formData.background_image ? URL.createObjectURL(formData.background_image) : getImageUrl('background', formData.old_background)} alt="Background Preview" style={{ maxHeight: '60px' }} />
-                                                </div>
-                                            )}
+                                            <input
+                                                type="file"
+                                                name="background_image"
+                                                className="dropify"
+                                                data-height="40"
+                                                data-default-file={isEditing && formData.old_background ? getImageUrl('background', formData.old_background) : ''}
+                                                onChange={handleInputChange}
+                                            />
                                         </div>
-                                        <div className="form-group">
+                                        <div className="form-group" key={`logo-${editId}-${formData.old_logo_img}`}>
                                             <label>Logo</label>
-                                            <div
-                                                style={dropzoneStyle}
-                                                onMouseOver={(e) => e.currentTarget.style.borderColor = '#3c8dbc'}
-                                                onMouseOut={(e) => e.currentTarget.style.borderColor = '#d2d6de'}
-                                                onClick={() => document.getElementById('logo_img_input').click()}
-                                            >
-                                                <i className="fa fa-cloud-upload" style={{ fontSize: '18px', color: '#999' }}></i>
-                                                <p style={{ margin: 0, color: '#666', fontSize: '12px' }}>Drag & drop or click</p>
-                                                <input
-                                                    id="logo_img_input"
-                                                    type="file"
-                                                    name="logo_img"
-                                                    style={{ display: 'none' }}
-                                                    onChange={handleInputChange}
-                                                />
-                                            </div>
-                                            {(formData.logo_img || (isEditing && formData.old_logo_img)) && (
-                                                <div style={{ marginTop: '10px' }}>
-                                                    <img src={formData.logo_img ? URL.createObjectURL(formData.logo_img) : getImageUrl('logo', formData.old_logo_img)} alt="Logo Preview" style={{ maxHeight: '60px' }} />
-                                                </div>
-                                            )}
+                                            <input
+                                                type="file"
+                                                name="logo_img"
+                                                className="dropify"
+                                                data-height="40"
+                                                data-default-file={isEditing && formData.old_logo_img ? getImageUrl('logo', formData.old_logo_img) : ''}
+                                                onChange={handleInputChange}
+                                            />
                                         </div>
-                                        <div className="form-group">
+                                        <div className="form-group" key={`sign-${editId}-${formData.old_sign_image}`}>
                                             <label>Signature</label>
-                                            <div
-                                                style={dropzoneStyle}
-                                                onMouseOver={(e) => e.currentTarget.style.borderColor = '#3c8dbc'}
-                                                onMouseOut={(e) => e.currentTarget.style.borderColor = '#d2d6de'}
-                                                onClick={() => document.getElementById('sign_image_input').click()}
-                                            >
-                                                <i className="fa fa-cloud-upload" style={{ fontSize: '18px', color: '#999' }}></i>
-                                                <p style={{ margin: 0, color: '#666', fontSize: '12px' }}>Drag & drop or click</p>
-                                                <input
-                                                    id="sign_image_input"
-                                                    type="file"
-                                                    name="sign_image"
-                                                    style={{ display: 'none' }}
-                                                    onChange={handleInputChange}
-                                                />
-                                            </div>
-                                            {(formData.sign_image || (isEditing && formData.old_sign_image)) && (
-                                                <div style={{ marginTop: '10px' }}>
-                                                    <img src={formData.sign_image ? URL.createObjectURL(formData.sign_image) : getImageUrl('signature', formData.old_sign_image)} alt="Signature Preview" style={{ maxHeight: '60px' }} />
-                                                </div>
-                                            )}
+                                            <input
+                                                type="file"
+                                                name="sign_image"
+                                                className="dropify"
+                                                data-height="40"
+                                                data-default-file={isEditing && formData.old_sign_image ? getImageUrl('signature', formData.old_sign_image) : ''}
+                                                onChange={handleInputChange}
+                                            />
                                         </div>
                                         <div className="form-group">
                                             <label>School Name <small className="req" style={{ color: 'red' }}> *</small></label>

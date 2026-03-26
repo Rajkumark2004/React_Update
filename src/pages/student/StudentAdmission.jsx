@@ -616,11 +616,11 @@ const StudentAdmission = () => {
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Class</label><small className="req"> *</small>
-                                                        <select 
+                                                        <select
                                                             id="class_id"
-                                                            name="class_id" 
-                                                            className={`form-control ${formErrors.class_id ? 'border-danger' : ''}`} 
-                                                            value={formData.class_id} 
+                                                            name="class_id"
+                                                            className={`form-control ${formErrors.class_id ? 'border-danger' : ''}`}
+                                                            value={formData.class_id}
                                                             onChange={handleInputChange}
                                                         >
                                                             <option value="">Select</option>
@@ -632,11 +632,11 @@ const StudentAdmission = () => {
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Section</label><small className="req"> *</small>
-                                                        <select 
+                                                        <select
                                                             id="section_id"
-                                                            name="section_id" 
-                                                            className={`form-control ${formErrors.section_id ? 'border-danger' : ''}`} 
-                                                            value={formData.section_id} 
+                                                            name="section_id"
+                                                            className={`form-control ${formErrors.section_id ? 'border-danger' : ''}`}
+                                                            value={formData.section_id}
                                                             onChange={handleInputChange}
                                                         >
                                                             <option value="">Select</option>
@@ -1180,7 +1180,7 @@ const StudentAdmission = () => {
 
 
                                             {/* Parent Guardian Detail */}
-                                            <h4 className="pagetitleh2">Parent Guardian Detail</h4>
+                                            <h4 className="pagetitleh2">Parent Guardian Details</h4>
                                             <div className="row">
                                                 {/* Father */}
                                                 {schSetting && schSetting.father_name === '1' && (

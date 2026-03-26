@@ -4935,7 +4935,7 @@ export const api = {
                 method: 'POST',
                 body: payload
             };
-            
+
             // If payload is not FormData, treat as JSON
             if (!(payload instanceof FormData)) {
                 options.headers = { 'Content-Type': 'application/json' };
@@ -7392,7 +7392,7 @@ export const api = {
     searchStaffAttendance: async (payload) => {
         console.log('API Request: Search Staff Attendance', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/staffattendance/index`, createFetchOptions('POST', payload));
+            const response = await fetch(`${API_BASE}/admin/Staffattendance/index`, createFetchOptions('POST', payload));
             const data = await response.json();
             console.log('Search Staff Attendance Response:', data);
             return data;

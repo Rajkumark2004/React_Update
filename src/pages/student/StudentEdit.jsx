@@ -368,7 +368,9 @@ const StudentEdit = () => {
             // Convert YYYY-MM-DD → DD/MM/YYYY for date fields the API expects
             const dateFields = ['dob', 'admission_date', 'measurement_date'];
             // Append all fields
+            const skipFields = ['adhar_no', 'samagra_id', 'username', 'password', 'user_id'];
             Object.keys(formData).forEach(key => {
+                if (skipFields.includes(key)) return;
                 const value = formData[key];
 
                 // Only append if value is not empty (null, undefined, empty string, or empty array)
@@ -766,7 +768,7 @@ const StudentEdit = () => {
                                             </div>
 
                                             {/* Parent Guardian Detail */}
-                                            <h4 className="pagetitleh2">Parent Guardian Detail</h4>
+                                            <h4 className="pagetitleh2">Parent Guardian Details</h4>
                                             <div className="row">
                                                 <div className="col-md-3">
                                                     <div className="form-group">
@@ -1057,7 +1059,7 @@ const StudentEdit = () => {
                                                     </div>
 
                                                     {/* Upload Documents Details */}
-{/* <h4 className="pagetitleh2">Upload Documents</h4>
+                                                    {/* <h4 className="pagetitleh2">Upload Documents</h4>
                                                     <div className="row">
                                                         <div className="col-md-3">
                                                             <div className="form-group">

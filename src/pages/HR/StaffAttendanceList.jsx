@@ -59,8 +59,7 @@ const StaffAttendanceList = () => {
         const selectedRole = roleList.find(r => r.id === userTypeId);
         const roleType = selectedRole ? selectedRole.type : userTypeId;
 
-        const [year, month, day] = attendanceDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
+        const formattedDate = attendanceDate.replace(/-/g, '/');
 
         setLoading(true);
         try {
@@ -131,8 +130,7 @@ const StaffAttendanceList = () => {
         const selectedRole = roleList.find(r => r.id === userTypeId);
         const roleType = selectedRole ? selectedRole.type : userTypeId;
 
-        const [year, month, day] = attendanceDate.split('-');
-        const formattedDate = `${day}/${month}/${year}`;
+        const formattedDate = attendanceDate.replace(/-/g, '/');
 
         try {
             const formData = new FormData();

@@ -216,8 +216,33 @@ const StaffCreate = () => {
             if (response && (response.status === true || response.status === 'success')) {
                 toast.success(response.message || 'Staff created successfully');
                 navigate('/admin/staff/search');
+            } else if (response && response.errors) {
+                const apiErrors = {};
+                let hasErrors = false;
+                
+                Object.keys(response.errors).forEach(key => {
+                    const errText = response.errors[key];
+                    if (errText) {
+                        const cleanError = errText.replace(/<\/?[^>]+(>|$)/g, "").trim();
+                        if (cleanError) {
+                            apiErrors[key] = cleanError;
+                            hasErrors = true;
+                        }
+                    }
+                });
+                
+                if (hasErrors) {
+                    setFormErrors(apiErrors);
+                    toast.error('Please correct the highlighted errors');
+                    setTimeout(() => {
+                        const firstErrorEl = document.querySelector('.text-danger:not(:empty)');
+                        if (firstErrorEl) firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
+                } else {
+                    toast.error(response.message || 'Failed to create staff');
+                }
             } else {
-                toast.error(response.message || 'Failed to create staff');
+                toast.error(response?.message || 'Failed to create staff');
             }
         } catch (error) {
             console.error('Error creating staff:', error);
