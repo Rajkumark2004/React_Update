@@ -147,6 +147,15 @@ const EnquiryView = () => {
             }
 
             console.log('DEBUG: Final enquiries extracted:', enquiries.length);
+            
+            // Client-side fallback because the server is currently ignoring the class_id filter
+            // We apply the local filtering logic to ensure the UI matches the requested criteria
+            if (filters) {
+                console.log('DEBUG: Applying client-side filters:', filters);
+                enquiries = filterEnquiries(enquiries, filters);
+                console.log('DEBUG: Enquiries after client-side filtering:', enquiries.length);
+            }
+
             setMasterEnquiryList(enquiries);
             setEnquiryList(enquiries);
         } catch (err) {
