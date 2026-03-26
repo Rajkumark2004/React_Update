@@ -21,6 +21,7 @@ const StaffImport = () => {
         department: '',
         file: null
     });
+    const [importSummary, setImportSummary] = useState(null);
 
     useEffect(() => {
         fetchInitialData();
@@ -85,11 +86,16 @@ const StaffImport = () => {
         data.append('designation', formData.designation);
         data.append('department', formData.department);
 
+        setImportSummary(null);
         setLoading(true);
         try {
             const response = await api.importStaff(data);
             if (response && response.status) {
                 toast.success(response.message || 'Import completed successfully');
+                // Show import summary if available
+                if (response.summary) {
+                    setImportSummary(response.summary);
+                }
                 // Optional: reset form or file input
                 setFormData(prev => ({ ...prev, file: null }));
                 // Reset dropify if possible (usually needs jQuery trigger)
@@ -291,6 +297,31 @@ const StaffImport = () => {
                                         </div>
                                     </div>
                                 </form>
+
+                                {/* Import Summary */}
+                                {importSummary && (
+                                    <div className="box-body">
+                                        <div className="alert alert-info" style={{ marginBottom: 0 }}>
+                                            <h4 style={{ marginTop: 0 }}><i className="fa fa-info-circle"></i> Import Summary</h4>
+                                            <table className="table table-bordered" style={{ background: '#fff', marginTop: '10px' }}>
+                                                <tbody>
+                                                    <tr>
+                                                        <th>Total Records</th>
+                                                        <td>{importSummary.total ?? 0}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Imported</th>
+                                                        <td><span className="text-success"><strong>{importSummary.imported ?? 0}</strong></span></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Skipped</th>
+                                                        <td><span className="text-danger"><strong>{importSummary.skipped ?? 0}</strong></span></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

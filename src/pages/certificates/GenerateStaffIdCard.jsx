@@ -7,6 +7,7 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import StaffIdCard from '../../components/StaffIdCard';
@@ -42,6 +43,36 @@ const GenerateStaffIdCard = () => {
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Build dynamic columns based on idCardSettings visibility
+    const getVisibleColumns = () => {
+        const cols = [];
+        if (!idCardSettings || idCardSettings.enable_staff_id == 1) cols.push({ key: 'employee_id', label: 'Staff ID' });
+        if (!idCardSettings || idCardSettings.enable_name == 1) cols.push({ key: 'full_name', label: 'Staff Name' });
+        if (!idCardSettings || idCardSettings.enable_designation == 1) cols.push({ key: 'designation', label: 'Designation' });
+        if (!idCardSettings || idCardSettings.enable_staff_department == 1) cols.push({ key: 'department', label: 'Department' });
+        if (!idCardSettings || idCardSettings.enable_fathers_name == 1) cols.push({ key: 'father_name', label: 'Father Name' });
+        if (!idCardSettings || idCardSettings.enable_mothers_name == 1) cols.push({ key: 'mother_name', label: 'Mother Name' });
+        if (!idCardSettings || idCardSettings.enable_date_of_joining == 1) cols.push({ key: 'date_of_joining', label: 'Date of Joining' });
+        if (!idCardSettings || idCardSettings.enable_permanent_address == 1) cols.push({ key: 'local_address', label: 'Address' });
+        if (!idCardSettings || idCardSettings.enable_staff_phone == 1) cols.push({ key: 'contact_no', label: 'Phone' });
+        if (!idCardSettings || idCardSettings.enable_staff_dob == 1) cols.push({ key: 'dob', label: 'Date of Birth' });
+        return cols;
+    };
+
+    const getExportData = () => {
+        const cols = getVisibleColumns();
+        const filtered = staffList.filter(s =>
+            (s.name + ' ' + s.surname).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            s.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        const headers = cols.map(c => c.label);
+        const rows = filtered.map(staff => cols.map(c => {
+            if (c.key === 'full_name') return `${staff.name} ${staff.surname || ''}`;
+            return String(staff[c.key] ?? '');
+        }));
+        return { headers, rows };
+    };
     const mockStaffData = [
         { id: 101, employee_id: 'EMP001', name: 'James', surname: 'Wilson', role: 'Admin', designation: 'Teacher', department: 'Mathematics', father_name: 'Robert Wilson', mother_name: 'Mary Wilson', date_of_joining: '2022-01-10', local_address: '123 Street, City', contact_no: '9876543210', dob: '1990-05-15' },
         { id: 102, employee_id: 'EMP002', name: 'Sarah', surname: 'Johnson', role: 'Librarian', designation: 'Librarian', department: 'Library', father_name: 'David Johnson', mother_name: 'Linda Johnson', date_of_joining: '2021-11-20', local_address: '456 Lane, City', contact_no: '9876543211', dob: '1988-08-22' },
@@ -314,11 +345,11 @@ const GenerateStaffIdCard = () => {
                                             </div>
                                             <div className="col-sm-6">
                                                 <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm" title="Copy"><i className="fa fa-copy"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Print"><i className="fa fa-print"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Staff_ID_Card_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Staff_ID_Card_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Staff_ID_Card_List.pdf', 'Staff ID Card List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Staff ID Card List'); }}><i className="fa fa-print"></i></button>
                                                 </div>
                                             </div>
                                         </div>

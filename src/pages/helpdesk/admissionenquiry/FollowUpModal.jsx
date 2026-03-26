@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../../services/api';
 import { toast } from 'react-hot-toast';
 
-const FollowUpModal = ({ show, onClose, enquiry }) => {
+const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -68,9 +68,10 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
         }
 
         // 3️⃣ Set FORM data
+        const todayStr = new Date().toISOString().split('T')[0];
         setFormData(prev => ({
           ...prev,
-          follow_up_date: toInputDate(nextFollowUpDate),
+          follow_up_date: todayStr,
           next_follow_up_date: toInputDate(nextFollowUpDate),
           status: enquiry.status || 'active'
         }));
@@ -126,19 +127,18 @@ const FollowUpModal = ({ show, onClose, enquiry }) => {
         note: formData.note
       };
 
-      await api.addFollowUp(payload);
-      toast.success('Follow up saved successfully');
+      const response = await api.addFollowUp(payload);
+      const msg = response?.message || 'Follow up saved successfully';
+      toast.success(msg);
 
-      // Refresh history list
-      const listRes = await api.getFollowUpList(enquiry.id);
-      setHistory(listRes.data?.follow_up_list || []);
-
-      // Clear non-static fields
-      setFormData(prev => ({
-        ...prev,
-        response: '',
-        note: ''
-      }));
+      if (onSuccess) {
+          onSuccess();
+      } else {
+          // Fallback if onSuccess not provided
+          const listRes = await api.getFollowUpList(enquiry.id);
+          setHistory(listRes.data?.follow_up_list || []);
+          setFormData(prev => ({ ...prev, response: '', note: '' }));
+      }
 
     } catch (err) {
       console.error(err);

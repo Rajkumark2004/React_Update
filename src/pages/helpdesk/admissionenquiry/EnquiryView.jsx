@@ -64,7 +64,7 @@ const EnquiryView = () => {
         { key: 'classname', label: 'Class', sortKey: 'classname' },
         { key: 'date', label: 'Enquiry Date', sortKey: 'date' },
         { key: 'followupdate', label: 'Last Follow Up Date', sortKey: 'followupdate' },
-        { key: 'follow_up_date', label: 'Next Follow Up Date', sortKey: 'follow_up_date' },
+        { key: 'next_date', label: 'Next Follow Up Date', sortKey: 'next_date' },
         { key: 'status', label: 'Status', sortKey: 'status' }
     ];
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
@@ -79,7 +79,12 @@ const EnquiryView = () => {
     };
 
     const formatCell = (row, key) => {
-        if (key === 'date' || key === 'followupdate' || key === 'follow_up_date') return formatDate(row[key]);
+        if (key === 'next_date') {
+            const isInvalid = !row.next_date || row.next_date === '0000-00-00' || row.next_date === '1970-01-01';
+            const dateVal = isInvalid ? row.follow_up_date : row.next_date;
+            return formatDate(dateVal);
+        }
+        if (key === 'date' || key === 'followupdate') return formatDate(row[key]);
         if (key === 'status') return (enquiryStatus && enquiryStatus[row[key]]) || row[key];
         return row[key];
     };

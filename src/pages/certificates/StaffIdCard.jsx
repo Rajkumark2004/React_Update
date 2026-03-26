@@ -324,7 +324,7 @@ const StaffIdCard = () => {
                                                 name="background"
                                                 className="dropify"
                                                 data-height="40"
-                                                data-default-file={isEditing && formData.old_background ? `https://newlayout.wisibles.com/${formData.old_background}` : ''}
+                                                data-default-file={isEditing && formData.old_background ? getImageUrl('background', formData.old_background) : ''}
                                                 onChange={handleInputChange}
                                             />
                                         </div>
@@ -335,7 +335,7 @@ const StaffIdCard = () => {
                                                 name="logo"
                                                 className="dropify"
                                                 data-height="40"
-                                                data-default-file={isEditing && formData.old_logo_img ? `https://newlayout.wisibles.com/${formData.old_logo_img}` : ''}
+                                                data-default-file={isEditing && formData.old_logo_img ? getImageUrl('logo', formData.old_logo_img) : ''}
                                                 onChange={handleInputChange}
                                             />
                                         </div>
@@ -346,7 +346,7 @@ const StaffIdCard = () => {
                                                 name="sign_image"
                                                 className="dropify"
                                                 data-height="40"
-                                                data-default-file={isEditing && formData.old_sign_image ? `https://newlayout.wisibles.com/${formData.old_sign_image}` : ''}
+                                                data-default-file={isEditing && formData.old_sign_image ? getImageUrl('signature', formData.old_sign_image) : ''}
                                                 onChange={handleInputChange}
                                             />
                                         </div>
@@ -501,7 +501,7 @@ const StaffIdCard = () => {
                                                         <tr key={item.id}>
                                                             {!hiddenColumns.includes(0) && <td><a href="#" onClick={(e) => { e.preventDefault(); setActiveViewItem(item); setShowViewModal(true); }}>{item.title}</a></td>}
                                                             {!hiddenColumns.includes(1) && <td>
-                                                                {item.background ? <img src={`https://newlayout.wisibles.com/${item.background}`} width="40" alt="bg" /> : <i className="fa fa-picture-o fa-2x"></i>}
+                                                                {item.background ? <img className="object-fit-cover fit-image-40" src={getImageUrl('background', item.background)} width="40" alt="bg" /> : <i className="fa fa-picture-o fa-2x"></i>}
                                                             </td>}
                                                             {!hiddenColumns.includes(2) && <td className="text-center">{item.enable_vertical_card == 1 ? 'Vertical' : 'Horizontal'}</td>}
                                                             <td className="text-right">
