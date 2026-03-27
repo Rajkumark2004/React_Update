@@ -204,11 +204,15 @@ const StudentEdit = () => {
 
                         height: data.height || '',
                         weight: data.weight || '',
-                        house: data.house_id || data.house || '',
+                        house: data.house_id ? String(data.house_id) : 
+                               (data.school_house_id ? String(data.school_house_id) : 
+                               (data.student_house_id ? String(data.student_house_id) : 
+                               (data.house && !isNaN(data.house) ? String(data.house) : 
+                               (data.house && hList.length > 0 ? (hList.find(h => h.house_name === data.house)?.id || '') : '')))),
                         blood_group: data.blood_group || '',
-                        class_id: data.class_id || '',
-                        section_id: data.section_id || '',
-                        category_id: data.category_id || '',
+                        class_id: data.class_id ? String(data.class_id) : '',
+                        section_id: data.section_id ? String(data.section_id) : '',
+                        category_id: data.category_id ? String(data.category_id) : '',
 
                         child_id: data.child_id || '',
                         class_of_admission: data.class_of_admission || '',
@@ -487,10 +491,8 @@ const StudentEdit = () => {
                             dataToSend.append('hostel_id', value);
                             return;
                         }
-                        if (key === 'house') {
-                            dataToSend.append('house_id', value);
-                            return;
-                        }
+                        // Note: house is sent as 'house' by default (key reflects state name)
+                        // to match StudentAdmission.jsx behavior which is known to work.
 
                         const imageFields = ['image', 'father_pic', 'mother_pic', 'guardian_pic', 'first_doc', 'second_doc', 'third_doc', 'fourth_doc'];
                         if (imageFields.includes(key) && !(value instanceof File)) {
@@ -639,7 +641,7 @@ const StudentEdit = () => {
                                                         <label>Class <small className="req"> *</small></label>
                                                         <select name="class_id" className="form-control" value={formData.class_id} onChange={handleInputChange}>
                                                             <option value="">Select</option>
-                                                            {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.class}</option>)}
+                                                            {classes.map(cls => <option key={cls.id} value={String(cls.id)}>{cls.class}</option>)}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -648,7 +650,7 @@ const StudentEdit = () => {
                                                         <label>Section <small className="req"> *</small></label>
                                                         <select name="section_id" className="form-control" value={formData.section_id} onChange={handleInputChange}>
                                                             <option value="">Select</option>
-                                                            {sections.map(sec => <option key={sec.section_id || sec.id} value={sec.section_id || sec.id}>{sec.section}</option>)}
+                                                            {sections.map(sec => <option key={sec.section_id || sec.id} value={String(sec.section_id || sec.id)}>{sec.section}</option>)}
                                                         </select>
                                                     </div>
                                                 </div>
@@ -693,7 +695,7 @@ const StudentEdit = () => {
                                                         <select name="category_id" className="form-control" value={formData.category_id} onChange={handleInputChange}>
                                                             <option value="">Select</option>
                                                             {categories.map((cat) => (
-                                                                <option key={cat.id} value={cat.id}>{cat.category}</option>
+                                                                <option key={cat.id} value={String(cat.id)}>{cat.category}</option>
                                                             ))}
                                                         </select>
                                                     </div>
@@ -762,7 +764,7 @@ const StudentEdit = () => {
                                                         <select className="form-control" name="house" value={formData.house} onChange={handleInputChange}>
                                                             <option value="">Select</option>
                                                             {houseList.map((house) => (
-                                                                <option key={house.id} value={house.id}>
+                                                                <option key={house.id} value={String(house.id)}>
                                                                     {house.house_name}
                                                                 </option>
                                                             ))}
@@ -1096,7 +1098,7 @@ const StudentEdit = () => {
                                                                         {Object.values(vehRoutes).map(route => (
                                                                             <optgroup key={route.id} label={route.route_title}>
                                                                                 {route.vehicles && route.vehicles.map(vehicle => (
-                                                                                    <option key={vehicle.vec_route_id} value={vehicle.vec_route_id}>
+                                                                                    <option key={vehicle.vec_route_id} value={String(vehicle.vec_route_id)}>
                                                                                         {vehicle.vehicle_no} ({vehicle.vehicle_model})
                                                                                     </option>
                                                                                 ))}
@@ -1156,7 +1158,7 @@ const StudentEdit = () => {
                                                                     <select className="form-control" name="hostel_id" value={formData.hostel_id || formData.hostel} onChange={handleInputChange}>
                                                                         <option value="">Select</option>
                                                                         {hostels.map(h => (
-                                                                            <option key={h.id} value={h.id}>{h.hostel_name}</option>
+                                                                            <option key={h.id} value={String(h.id)}>{h.hostel_name}</option>
                                                                         ))}
                                                                     </select>
                                                                 </div>
@@ -1167,7 +1169,7 @@ const StudentEdit = () => {
                                                                     <select className="form-control" name="hostel_room_id" value={formData.hostel_room_id || formData.room_no} onChange={handleInputChange}>
                                                                         <option value="">Select</option>
                                                                         {hostelRooms.map(room => (
-                                                                            <option key={room.id} value={room.id}>{room.room_no} ({room.room_type})</option>
+                                                                            <option key={room.id} value={String(room.id)}>{room.room_no} ({room.room_type})</option>
                                                                         ))}
                                                                     </select>
                                                                 </div>
