@@ -123,6 +123,7 @@ const StudentEdit = () => {
     const [transportFeesList, setTransportFeesList] = useState([]);
 
     const [loading, setLoading] = useState(false);
+    const [initialPhotoUrls, setInitialPhotoUrls] = useState({});
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
 
@@ -237,6 +238,18 @@ const StudentEdit = () => {
                     if (data.permanent_address && data.current_address && data.permanent_address === data.current_address) {
                         setAutofillPermanent(true);
                     }
+
+                    // Store initial photo URLs for Dropify
+                    setInitialPhotoUrls({
+                        image: getImageUrl(data.image),
+                        father_pic: getImageUrl(data.father_pic),
+                        mother_pic: getImageUrl(data.mother_pic),
+                        guardian_pic: getImageUrl(data.guardian_pic),
+                        first_doc: data.first_doc ? getImageUrl(`uploads/student_documents/${data.id}/${data.first_doc}`) : '',
+                        second_doc: data.second_doc ? getImageUrl(`uploads/student_documents/${data.id}/${data.second_doc}`) : '',
+                        third_doc: data.third_doc ? getImageUrl(`uploads/student_documents/${data.id}/${data.third_doc}`) : '',
+                        fourth_doc: data.fourth_doc ? getImageUrl(`uploads/student_documents/${data.id}/${data.fourth_doc}`) : '',
+                    });
 
                     // Use siblings from studentRes if available
                     if (studentRes.student_data.siblings) {
@@ -472,6 +485,15 @@ const StudentEdit = () => {
                         }
                         if (key === 'hostel') {
                             dataToSend.append('hostel_id', value);
+                            return;
+                        }
+                        if (key === 'house') {
+                            dataToSend.append('house_id', value);
+                            return;
+                        }
+
+                        const imageFields = ['image', 'father_pic', 'mother_pic', 'guardian_pic', 'first_doc', 'second_doc', 'third_doc', 'fourth_doc'];
+                        if (imageFields.includes(key) && !(value instanceof File)) {
                             return;
                         }
 
@@ -718,7 +740,7 @@ const StudentEdit = () => {
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Student Photo</label>
-                                                        <input className="dropify" type='file' name='image' onChange={handleInputChange} />
+                                                        <input className="dropify" type='file' name='image' data-default-file={initialPhotoUrls.image} onChange={handleInputChange} />
                                                     </div>
                                                 </div>
                                                 <div className="col-md-2">
@@ -857,359 +879,360 @@ const StudentEdit = () => {
                                                 <div className="col-md-3">
                                                     <div className="form-group">
                                                         <label>Father Photo</label>
-                                                        <input className="dropify" type='file' name='father_pic' onChange={handleInputChange} />
+                                                        <input className="dropify" type='file' name='father_pic' data-default-file={initialPhotoUrls.father_pic} onChange={handleInputChange} />
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <div className="row">
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mother Name</label>
-                                                        <input name="mother_name" type="text" className="form-control" value={formData.mother_name} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mother Phone</label>
-                                                        <input name="mother_phone" type="text" className="form-control" value={formData.mother_phone} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mother Occupation</label>
-                                                        <input name="mother_occupation" type="text" className="form-control" value={formData.mother_occupation} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mother Photo</label>
-                                                        <input className="dropify" type='file' name='mother_pic' onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="form-group col-md-12">
-                                                    <label>If Guardian Is <small className="req"> *</small>&nbsp;&nbsp;&nbsp;</label>
-                                                    <label className="radio-inline">
-                                                        <input type="radio" name="guardian_is" value="father" checked={formData.guardian_is === 'father'} onChange={handleGuardianChange} /> Father
-                                                    </label>
-                                                    <label className="radio-inline">
-                                                        <input type="radio" name="guardian_is" value="mother" checked={formData.guardian_is === 'mother'} onChange={handleGuardianChange} /> Mother
-                                                    </label>
-                                                    <label className="radio-inline">
-                                                        <input type="radio" name="guardian_is" value="other" checked={formData.guardian_is === 'other'} onChange={handleGuardianChange} /> Other
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-6">
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Guardian Name <small className="req"> *</small></label>
-                                                                <input name="guardian_name" type="text" className="form-control" value={formData.guardian_name} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Guardian Relation</label>
-                                                                <input name="guardian_relation" type="text" className="form-control" value={formData.guardian_relation} onChange={handleInputChange} />
-                                                            </div>
+                                                <div className="row">
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Mother Name</label>
+                                                            <input name="mother_name" type="text" className="form-control" value={formData.mother_name} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Guardian Phone <small className="req"> *</small></label>
-                                                                <input name="guardian_phone" type="text" className="form-control" value={formData.guardian_phone} onChange={handleInputChange} />
-                                                            </div>
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Mother Phone</label>
+                                                            <input name="mother_phone" type="text" className="form-control" value={formData.mother_phone} onChange={handleInputChange} />
                                                         </div>
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Guardian Occupation</label>
-                                                                <input name="guardian_occupation" type="text" className="form-control" value={formData.guardian_occupation} onChange={handleInputChange} />
-                                                            </div>
+                                                    </div>
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Mother Occupation</label>
+                                                            <input name="mother_occupation" type="text" className="form-control" value={formData.mother_occupation} onChange={handleInputChange} />
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Mother Photo</label>
+                                                            <input className="dropify" type='file' name='mother_pic' data-default-file={initialPhotoUrls.mother_pic} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Guardian Email</label>
-                                                        <input name="guardian_email" type="text" className="form-control" value={formData.guardian_email} onChange={handleInputChange} />
+                                                <div className="row">
+                                                    <div className="form-group col-md-12">
+                                                        <label>If Guardian Is <small className="req"> *</small>&nbsp;&nbsp;&nbsp;</label>
+                                                        <label className="radio-inline">
+                                                            <input type="radio" name="guardian_is" value="father" checked={formData.guardian_is === 'father'} onChange={handleGuardianChange} /> Father
+                                                        </label>
+                                                        <label className="radio-inline">
+                                                            <input type="radio" name="guardian_is" value="mother" checked={formData.guardian_is === 'mother'} onChange={handleGuardianChange} /> Mother
+                                                        </label>
+                                                        <label className="radio-inline">
+                                                            <input type="radio" name="guardian_is" value="other" checked={formData.guardian_is === 'other'} onChange={handleGuardianChange} /> Other
+                                                        </label>
                                                     </div>
                                                 </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Guardian Photo</label>
-                                                        <input className="dropify" type='file' name='guardian_pic' onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <div className="form-group">
-                                                        <label>Guardian Address</label>
-                                                        <textarea name="guardian_address" className="form-control" rows="2" value={formData.guardian_address} onChange={handleInputChange}></textarea>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {/* Add More Details Toggle */}
-                                            <div className="box-group">
-                                                <div className="panel box border0 mb0">
-                                                    <div className="addmoredetail-title">
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-link boxplus"
-                                                            onClick={() => setShowMoreDetails(!showMoreDetails)}
-                                                            style={{ textDecoration: 'none', color: '#444', fontWeight: 'bold' }}
-                                                        >
-                                                            <i className={`fa fa-fw ${showMoreDetails ? 'fa-minus' : 'fa-plus'}`}></i>
-                                                            {showMoreDetails ? ' Hide More Details' : ' Add More Details'}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
 
-                                            {showMoreDetails && (
-                                                <div className="show-more-details-section">
-                                                    <h4 className="pagetitleh2">Student Address Details</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="checkbox">
-                                                                <label>
-                                                                    <input type="checkbox" checked={autofillCurrent} onChange={handleAutofillGuardianAddress} /> If Guardian Address is Current Address
-                                                                </label>
+                                                <div className="row">
+                                                    <div className="col-md-6">
+                                                        <div className="row">
+                                                            <div className="col-md-6">
+                                                                <div className="form-group">
+                                                                    <label>Guardian Name <small className="req"> *</small></label>
+                                                                    <input name="guardian_name" type="text" className="form-control" value={formData.guardian_name} onChange={handleInputChange} />
+                                                                </div>
                                                             </div>
-                                                            <div className="form-group">
-                                                                <label>Current Address</label>
-                                                                <textarea name="current_address" rows="2" className="form-control" value={formData.current_address} onChange={handleInputChange}></textarea>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="checkbox">
-                                                                <label>
-                                                                    <input type="checkbox" checked={autofillPermanent} onChange={handleAutofillPermanentAddress} /> If Permanent Address is Current Address
-                                                                </label>
-                                                            </div>
-                                                            <div className="form-group">
-                                                                <label>Permanent Address</label>
-                                                                <textarea name="permanent_address" rows="2" className="form-control" value={formData.permanent_address} onChange={handleInputChange}></textarea>
+                                                            <div className="col-md-6">
+                                                                <div className="form-group">
+                                                                    <label>Guardian Relation</label>
+                                                                    <input name="guardian_relation" type="text" className="form-control" value={formData.guardian_relation} onChange={handleInputChange} />
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-
-
-                                                    {/* Misc */}
-                                                    <h4 className="pagetitleh2">Miscellaneous Details</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Bank Account Number</label>
-                                                                <input name="bank_account_no" type="text" className="form-control" value={formData.bank_account_no} onChange={handleInputChange} />
+                                                        <div className="row">
+                                                            <div className="col-md-6">
+                                                                <div className="form-group">
+                                                                    <label>Guardian Phone <small className="req"> *</small></label>
+                                                                    <input name="guardian_phone" type="text" className="form-control" value={formData.guardian_phone} onChange={handleInputChange} />
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Bank Name</label>
-                                                                <input name="bank_name" type="text" className="form-control" value={formData.bank_name} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>IFSC Code</label>
-                                                                <input name="ifsc_code" type="text" className="form-control" value={formData.ifsc_code} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>National Identification No</label>
-                                                                <input name="national_identification_no" type="text" className="form-control" value={formData.national_identification_no} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Local Identification No</label>
-                                                                <input name="local_identification_no" type="text" className="form-control" value={formData.local_identification_no} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>RTE</label>
-                                                                <select className="form-control" name="rte" value={formData.rte} onChange={handleInputChange}>
-                                                                    <option value="Yes">Yes</option>
-                                                                    <option value="No">No</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Previous School Details</label>
-                                                                <textarea name="previous_school" rows="2" className="form-control" value={formData.previous_school} onChange={handleInputChange}></textarea>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Note</label>
-                                                                <textarea name="note" rows="2" className="form-control" value={formData.note} onChange={handleInputChange}></textarea>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Transport & Hostel Details */}
-                                                    <h4 className="pagetitleh2">Transport Details</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Route List</label>
-                                                                <select className="form-control" name="vehroute_id" value={formData.vehroute_id || formData.route_list} onChange={handleInputChange}>
-                                                                    <option value="">Select</option>
-                                                                    {Object.values(vehRoutes).map(route => (
-                                                                        <optgroup key={route.id} label={route.route_title}>
-                                                                            {route.vehicles && route.vehicles.map(vehicle => (
-                                                                                <option key={vehicle.vec_route_id} value={vehicle.vec_route_id}>
-                                                                                    {vehicle.vehicle_no} ({vehicle.vehicle_model})
-                                                                                </option>
-                                                                            ))}
-                                                                        </optgroup>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Pickup Point</label>
-                                                                <select className="form-control" name="route_pickup_point_id" value={formData.route_pickup_point_id || formData.pickup_point} onChange={handleInputChange}>
-                                                                    <option value="">Select</option>
-                                                                    <option value="Point A">Point A</option>
-                                                                    <option value="Point B">Point B</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Fees Month</label>
-                                                                {/* Map month checkboxes like StudentAdmission */}
-                                                                <div className="checkbox-list" style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', padding: '10px', borderRadius: '4px' }}>
-                                                                    {transportFeesList.map((tf, index) => (
-                                                                        <div className="checkbox" key={index} style={{ marginTop: '0', marginBottom: '5px' }}>
-                                                                            <label>
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    name="fees_month"
-                                                                                    value={tf.month}
-                                                                                    checked={Array.isArray(formData.fees_month) && formData.fees_month.includes(tf.month)}
-                                                                                    onChange={(e) => {
-                                                                                        const { value, checked } = e.target;
-                                                                                        setFormData(prev => {
-                                                                                            const currentMonths = Array.isArray(prev.fees_month) ? prev.fees_month : [];
-                                                                                            const nextMonths = checked
-                                                                                                ? [...currentMonths, value]
-                                                                                                : currentMonths.filter(m => m !== value);
-                                                                                            return { ...prev, fees_month: nextMonths };
-                                                                                        });
-                                                                                    }}
-                                                                                />
-                                                                                {tf.month}
-                                                                            </label>
-                                                                        </div>
-                                                                    ))}
+                                                            <div className="col-md-6">
+                                                                <div className="form-group">
+                                                                    <label>Guardian Occupation</label>
+                                                                    <input name="guardian_occupation" type="text" className="form-control" value={formData.guardian_occupation} onChange={handleInputChange} />
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <h4 className="pagetitleh2">Hostel Details</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Hostel</label>
-                                                                <select className="form-control" name="hostel_id" value={formData.hostel_id || formData.hostel} onChange={handleInputChange}>
-                                                                    <option value="">Select</option>
-                                                                    {hostels.map(h => (
-                                                                        <option key={h.id} value={h.id}>{h.hostel_name}</option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Room No</label>
-                                                                <select className="form-control" name="hostel_room_id" value={formData.hostel_room_id || formData.room_no} onChange={handleInputChange}>
-                                                                    <option value="">Select</option>
-                                                                    {hostelRooms.map(room => (
-                                                                        <option key={room.id} value={room.id}>{room.room_no} ({room.room_type})</option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Guardian Email</label>
+                                                            <input name="guardian_email" type="text" className="form-control" value={formData.guardian_email} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
-
-                                                    {/* Upload Documents Details */}
-                                                    {/* <h4 className="pagetitleh2">Upload Documents</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Title</label>
-                                                                <input type="text" className="form-control" name="first_title" value={formData.first_title} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Documents</label>
-                                                                <input className="dropify" type="file" name="first_doc" onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Title</label>
-                                                                <input type="text" className="form-control" name="second_title" value={formData.second_title} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Documents</label>
-                                                                <input className="dropify" type="file" name="second_doc" onChange={handleInputChange} />
-                                                            </div>
+                                                    <div className="col-md-3">
+                                                        <div className="form-group">
+                                                            <label>Guardian Photo</label>
+                                                            <input className="dropify" type='file' name='guardian_pic' data-default-file={initialPhotoUrls.guardian_pic} onChange={handleInputChange} />
                                                         </div>
                                                     </div>
-                                                    <div className="row">
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Title</label>
-                                                                <input type="text" className="form-control" name="third_title" value={formData.third_title} onChange={handleInputChange} />
-                                                            </div>
+                                                    <div className="col-md-6">
+                                                        <div className="form-group">
+                                                            <label>Guardian Address</label>
+                                                            <textarea name="guardian_address" className="form-control" rows="2" value={formData.guardian_address} onChange={handleInputChange}></textarea>
                                                         </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Documents</label>
-                                                                <input className="dropify" type="file" name="third_doc" onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Title</label>
-                                                                <input type="text" className="form-control" name="fourth_title" value={formData.fourth_title} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Documents</label>
-                                                                <input className="dropify" type="file" name="fourth_doc" onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                    </div> */}
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="box-footer">
-                                            <button type="submit" className="btn btn-info pull-right">{loading ? 'Saving...' : 'Save'}</button>
-                                        </div>
+                                                {/* Add More Details Toggle */}
+                                                <div className="box-group">
+                                                    <div className="panel box border0 mb0">
+                                                        <div className="addmoredetail-title">
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-link boxplus"
+                                                                onClick={() => setShowMoreDetails(!showMoreDetails)}
+                                                                style={{ textDecoration: 'none', color: '#444', fontWeight: 'bold' }}
+                                                            >
+                                                                <i className={`fa fa-fw ${showMoreDetails ? 'fa-minus' : 'fa-plus'}`}></i>
+                                                                {showMoreDetails ? ' Hide More Details' : ' Add More Details'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {showMoreDetails && (
+                                                    <div className="show-more-details-section">
+                                                        <h4 className="pagetitleh2">Student Address Details</h4>
+                                                        <div className="row">
+                                                            <div className="col-md-6">
+                                                                <div className="checkbox">
+                                                                    <label>
+                                                                        <input type="checkbox" checked={autofillCurrent} onChange={handleAutofillGuardianAddress} /> If Guardian Address is Current Address
+                                                                    </label>
+                                                                </div>
+                                                                <div className="form-group">
+                                                                    <label>Current Address</label>
+                                                                    <textarea name="current_address" rows="2" className="form-control" value={formData.current_address} onChange={handleInputChange}></textarea>
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-6">
+                                                                <div className="checkbox">
+                                                                    <label>
+                                                                        <input type="checkbox" checked={autofillPermanent} onChange={handleAutofillPermanentAddress} /> If Permanent Address is Current Address
+                                                                    </label>
+                                                                </div>
+                                                                <div className="form-group">
+                                                                    <label>Permanent Address</label>
+                                                                    <textarea name="permanent_address" rows="2" className="form-control" value={formData.permanent_address} onChange={handleInputChange}></textarea>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Misc */}
+                                                        <h4 className="pagetitleh2">Miscellaneous Details</h4>
+                                                        <div className="row">
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>Bank Account Number</label>
+                                                                    <input name="bank_account_no" type="text" className="form-control" value={formData.bank_account_no} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>Bank Name</label>
+                                                                    <input name="bank_name" type="text" className="form-control" value={formData.bank_name} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>IFSC Code</label>
+                                                                    <input name="ifsc_code"
+                                                                        type="text"
+                                                                        className="form-control"
+                                                                        value={formData.ifsc_code}
+                                                                        onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="row">
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>National Identification No</label>
+                                                                    <input name="national_identification_no" type="text" className="form-control" value={formData.national_identification_no} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>Local Identification No</label>
+                                                                    <input name="local_identification_no" type="text" className="form-control" value={formData.local_identification_no} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>RTE</label>
+                                                                    <select className="form-control" name="rte" value={formData.rte} onChange={handleInputChange}>
+                                                                        <option value="Yes">Yes</option>
+                                                                        <option value="No">No</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="row">
+                                                            <div className="col-md-6">
+                                                                <div className="form-group">
+                                                                    <label>Previous School Details</label>
+                                                                    <textarea name="previous_school" rows="2" className="form-control" value={formData.previous_school} onChange={handleInputChange}></textarea>
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-6">
+                                                                <div className="form-group">
+                                                                    <label>Note</label>
+                                                                    <textarea name="note" rows="2" className="form-control" value={formData.note} onChange={handleInputChange}></textarea>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Transport & Hostel Details */}
+                                                        <h4 className="pagetitleh2">Transport Details</h4>
+                                                        <div className="row">
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>Route List</label>
+                                                                    <select className="form-control" name="vehroute_id" value={formData.vehroute_id || formData.route_list} onChange={handleInputChange}>
+                                                                        <option value="">Select</option>
+                                                                        {Object.values(vehRoutes).map(route => (
+                                                                            <optgroup key={route.id} label={route.route_title}>
+                                                                                {route.vehicles && route.vehicles.map(vehicle => (
+                                                                                    <option key={vehicle.vec_route_id} value={vehicle.vec_route_id}>
+                                                                                        {vehicle.vehicle_no} ({vehicle.vehicle_model})
+                                                                                    </option>
+                                                                                ))}
+                                                                            </optgroup>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>Pickup Point</label>
+                                                                    <select className="form-control" name="route_pickup_point_id" value={formData.route_pickup_point_id || formData.pickup_point} onChange={handleInputChange}>
+                                                                        <option value="">Select</option>
+                                                                        <option value="Point A">Point A</option>
+                                                                        <option value="Point B">Point B</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-4">
+                                                                <div className="form-group">
+                                                                    <label>Fees Month</label>
+                                                                    {/* Map month checkboxes like StudentAdmission */}
+                                                                    <div className="checkbox-list" style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', padding: '10px', borderRadius: '4px' }}>
+                                                                        {transportFeesList.map((tf, index) => (
+                                                                            <div className="checkbox" key={index} style={{ marginTop: '0', marginBottom: '5px' }}>
+                                                                                <label>
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        name="fees_month"
+                                                                                        value={tf.month}
+                                                                                        checked={Array.isArray(formData.fees_month) && formData.fees_month.includes(tf.month)}
+                                                                                        onChange={(e) => {
+                                                                                            const { value, checked } = e.target;
+                                                                                            setFormData(prev => {
+                                                                                                const currentMonths = Array.isArray(prev.fees_month) ? prev.fees_month : [];
+                                                                                                const nextMonths = checked
+                                                                                                    ? [...currentMonths, value]
+                                                                                                    : currentMonths.filter(m => m !== value);
+                                                                                                return { ...prev, fees_month: nextMonths };
+                                                                                            });
+                                                                                        }}
+                                                                                    />
+                                                                                    {tf.month}
+                                                                                </label>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <h4 className="pagetitleh2">Hostel Details</h4>
+                                                        <div className="row">
+                                                            <div className="col-md-6">
+                                                                <div className="form-group">
+                                                                    <label>Hostel</label>
+                                                                    <select className="form-control" name="hostel_id" value={formData.hostel_id || formData.hostel} onChange={handleInputChange}>
+                                                                        <option value="">Select</option>
+                                                                        {hostels.map(h => (
+                                                                            <option key={h.id} value={h.id}>{h.hostel_name}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-6">
+                                                                <div className="form-group">
+                                                                    <label>Room No</label>
+                                                                    <select className="form-control" name="hostel_room_id" value={formData.hostel_room_id || formData.room_no} onChange={handleInputChange}>
+                                                                        <option value="">Select</option>
+                                                                        {hostelRooms.map(room => (
+                                                                            <option key={room.id} value={room.id}>{room.room_no} ({room.room_type})</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>                                                     {/* Upload Documents Details */}
+                                                        <h4 className="pagetitleh2">Upload Documents</h4>
+                                                        <div className="row">
+                                                            <div className="col-md-3">
+                                                                <div className="form-group">
+                                                                    <label>Title</label>
+                                                                    <input type="text" className="form-control" name="first_title" value={formData.first_title} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <div className="form-group">
+                                                                    <label>Documents</label>
+                                                                    <input className="dropify" type="file" name="first_doc" data-default-file={initialPhotoUrls.first_doc} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <div className="form-group">
+                                                                    <label>Title</label>
+                                                                    <input type="text" className="form-control" name="second_title" value={formData.second_title} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <div className="form-group">
+                                                                    <label>Documents</label>
+                                                                    <input className="dropify" type="file" name="second_doc" data-default-file={initialPhotoUrls.second_doc} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="row">
+                                                            <div className="col-md-3">
+                                                                <div className="form-group">
+                                                                    <label>Title</label>
+                                                                    <input type="text" className="form-control" name="third_title" value={formData.third_title} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <div className="form-group">
+                                                                    <label>Documents</label>
+                                                                    <input className="dropify" type="file" name="third_doc" data-default-file={initialPhotoUrls.third_doc} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <div className="form-group">
+                                                                    <label>Title</label>
+                                                                    <input type="text" className="form-control" name="fourth_title" value={formData.fourth_title} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="col-md-3">
+                                                                <div className="form-group">
+                                                                    <label>Documents</label>
+                                                                    <input className="dropify" type="file" name="fourth_doc" data-default-file={initialPhotoUrls.fourth_doc} onChange={handleInputChange} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="box-footer">
+
+                                                <button type="submit" className="btn btn-info pull-right">{loading ? 'Saving...' : 'Save'}</button>
+                                            </div>
                                     </form>
                                 </div>
                             </div>
@@ -1225,3 +1248,4 @@ const StudentEdit = () => {
 };
 
 export default StudentEdit;
+
