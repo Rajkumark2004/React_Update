@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../context/SessionContext';
@@ -351,6 +350,7 @@ const Profile = () => {
                 .profile-box { background: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 0; margin-bottom: 20px; overflow: hidden; }
                 .profile-header-new { display: flex; gap: 15px; padding: 20px; border-bottom: 1px solid #f4f4f4; }
                 .photo-square { width: 75px; height: 75px; background: #fff8e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+                .photo-square img { width: 100%; height: 100%; object-fit: cover; }
                 .photo-square .person-icon { width: 45px; height: 45px; background: url('https://cdn-icons-png.flaticon.com/512/1077/1077114.png') no-repeat center; background-size: contain; opacity: 0.35; filter: grayscale(1); }
                 .name-info h3 { margin: 0; font-size: 18px; font-weight: bold; color: #333; }
                 .name-info p { margin: 2px 0 0; font-size: 13px; color: #777; }
@@ -449,6 +449,12 @@ const Profile = () => {
                     justify-content: center;
                     margin: 15px 20px;
                     flex-shrink: 0;
+                    overflow: hidden;
+                }
+                .parent-photo-circle img {
+                    width: 100%; 
+                    height: 100%; 
+                    object-fit: cover;
                 }
                 .parent-photo-circle .person-icon { 
                     width: 35px; 
@@ -616,7 +622,11 @@ const Profile = () => {
                             <div className="profile-box up-profile-box">
                                 <div className="profile-header-new">
                                     <div className="photo-square">
-                                        <div className="person-icon"></div>
+                                        {studentObj.image ? (
+                                            <img src={`https://newlayout.wisibles.com/${studentObj.image}`} alt="Student" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<div class="person-icon"></div>'; }} />
+                                        ) : (
+                                            <div className="person-icon"></div>
+                                        )}
                                     </div>
                                     <div className="name-info">
                                         <h3>{studentObj.firstname || 'Student'} {studentObj.lastname || ''}</h3>
@@ -710,9 +720,27 @@ const Profile = () => {
                                                         </table>
                                                     </div>
                                                     <div className="up-parent-photos">
-                                                        <div className="parent-photo-circle"><div className="person-icon"></div></div>
-                                                        <div className="parent-photo-circle"><div className="person-icon"></div></div>
-                                                        <div className="parent-photo-circle"><div className="person-icon"></div></div>
+                                                        <div className="parent-photo-circle">
+                                                            {studentObj.father_pic ? (
+                                                                <img src={`https://newlayout.wisibles.com/${studentObj.father_pic}`} alt="Father" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<div class="person-icon"></div>'; }} />
+                                                            ) : (
+                                                                <div className="person-icon"></div>
+                                                            )}
+                                                        </div>
+                                                        <div className="parent-photo-circle">
+                                                            {studentObj.mother_pic ? (
+                                                                <img src={`https://newlayout.wisibles.com/${studentObj.mother_pic}`} alt="Mother" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<div class="person-icon"></div>'; }} />
+                                                            ) : (
+                                                                <div className="person-icon"></div>
+                                                            )}
+                                                        </div>
+                                                        <div className="parent-photo-circle">
+                                                            {studentObj.guardian_pic ? (
+                                                                <img src={`https://newlayout.wisibles.com/${studentObj.guardian_pic}`} alt="Guardian" onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = '<div class="person-icon"></div>'; }} />
+                                                            ) : (
+                                                                <div className="person-icon"></div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -768,8 +796,7 @@ const Profile = () => {
                                             </div>
 
                                             <div className="up-attendance-legend">
-                                                Present: <span className="up-color-p">P</span> |
-                                                Late With Excuse: <span className="up-color-e">E</span> |
+                                                Present: <span className="up-color-p">P</span> |Late With Excuse: <span className="up-color-e">E</span> |
                                                 Late: <span className="up-color-l">L</span> |
                                                 Absent: <span className="up-color-a">A</span> |
                                                 Holiday: <span className="up-color-h">H</span> |
