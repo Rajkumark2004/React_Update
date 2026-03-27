@@ -600,17 +600,6 @@ const Template = () => {
         setErrors({});
     };
 
-    const appName = "Smart School";
-    const userData = { name: "Joe", pimage: "/images/userprofile.jpg", role: "Super Admin" };
-
-
-    const cbseSubmenu = [
-        { label: 'Exam', url: '/cbseexam/exam', active: false, icon: '1.png' },
-        { label: 'Term', url: '/cbseexam/term', active: false, icon: '9.png' },
-        { label: 'Template', url: '/cbseexam/template', active: true, icon: '4.png' },
-        { label: 'Assessment', url: '/cbseexam/assessment', active: false, icon: '8.png' },
-    ];
-
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this?')) {
             try {
@@ -661,8 +650,8 @@ const Template = () => {
 
     return (
         <div className="wrapper theme-white-skin">
-            <Header appName={appName} userData={userData} handleLogout={() => { }} />
-            <Sidebar sessionYear={sessionYear} currentUrl="/cbseexam/template" handleSearch={setSearchTerm} />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '850px' }}>
                 <section className="content-header">

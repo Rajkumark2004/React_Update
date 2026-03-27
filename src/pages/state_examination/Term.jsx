@@ -156,12 +156,6 @@ const Term = () => {
         setIsEditing(false);
     };
 
-    const appName = "Smart School";
-    const userData = {
-        name: "Joe",
-        pimage: "/images/userprofile.jpg",
-        role: "Super Admin"
-    };
 
     const filteredTerms = terms.filter(t =>
         t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -171,12 +165,8 @@ const Term = () => {
 
     return (
         <div className="wrapper">
-            <Header appName={appName} userData={userData} handleLogout={() => { }} />
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/cbseexam/term"
-                handleSearch={handleSearch}
-            />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '710px' }}>
                 <section className="content" style={{ marginTop: '0px' }}>

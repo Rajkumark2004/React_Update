@@ -105,9 +105,9 @@ const GenerateAdmitCard = () => {
         let html = '';
 
         student_details.forEach((student, index) => {
-            const studentImage = student.image 
+            const studentImage = student.image
                 ? `https://newlayout.wisibles.com/${student.image}`
-                : (student.gender === 'Female' 
+                : (student.gender === 'Female'
                     ? 'https://newlayout.wisibles.com/uploads/student_images/default_female.jpg'
                     : 'https://newlayout.wisibles.com/uploads/student_images/default_male.jpg');
 
@@ -277,8 +277,8 @@ const GenerateAdmitCard = () => {
 
     return (
         <div className="wrapper theme-white-skin">
-            <Header appName={appName} userData={userData} />
-            <Sidebar sessionYear={currentSession?.session} />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper">
                 <section className="content">

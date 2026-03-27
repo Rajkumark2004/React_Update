@@ -43,21 +43,35 @@ const GenerateStaffIdCard = () => {
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
-    // Build dynamic columns based on idCardSettings visibility
+    const allStaffColumns = [
+        { key: 'employee_id', label: 'Staff ID', setting: 'enable_staff_id' },
+        { key: 'full_name', label: 'Staff Name', setting: 'enable_name' },
+        { key: 'designation', label: 'Designation', setting: 'enable_designation' },
+        { key: 'department', label: 'Department', setting: 'enable_staff_department' },
+        { key: 'father_name', label: 'Father Name', setting: 'enable_fathers_name' },
+        { key: 'mother_name', label: 'Mother Name', setting: 'enable_mothers_name' },
+        { key: 'date_of_joining', label: 'Date of Joining', setting: 'enable_date_of_joining' },
+        { key: 'local_address', label: 'Address', setting: 'enable_permanent_address' },
+        { key: 'contact_no', label: 'Phone', setting: 'enable_staff_phone' },
+        { key: 'dob', label: 'Date of Birth', setting: 'enable_staff_dob' },
+    ];
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    // Build dynamic columns based on idCardSettings visibility and manual hiddenColumns
     const getVisibleColumns = () => {
-        const cols = [];
-        if (!idCardSettings || idCardSettings.enable_staff_id == 1) cols.push({ key: 'employee_id', label: 'Staff ID' });
-        if (!idCardSettings || idCardSettings.enable_name == 1) cols.push({ key: 'full_name', label: 'Staff Name' });
-        if (!idCardSettings || idCardSettings.enable_designation == 1) cols.push({ key: 'designation', label: 'Designation' });
-        if (!idCardSettings || idCardSettings.enable_staff_department == 1) cols.push({ key: 'department', label: 'Department' });
-        if (!idCardSettings || idCardSettings.enable_fathers_name == 1) cols.push({ key: 'father_name', label: 'Father Name' });
-        if (!idCardSettings || idCardSettings.enable_mothers_name == 1) cols.push({ key: 'mother_name', label: 'Mother Name' });
-        if (!idCardSettings || idCardSettings.enable_date_of_joining == 1) cols.push({ key: 'date_of_joining', label: 'Date of Joining' });
-        if (!idCardSettings || idCardSettings.enable_permanent_address == 1) cols.push({ key: 'local_address', label: 'Address' });
-        if (!idCardSettings || idCardSettings.enable_staff_phone == 1) cols.push({ key: 'contact_no', label: 'Phone' });
-        if (!idCardSettings || idCardSettings.enable_staff_dob == 1) cols.push({ key: 'dob', label: 'Date of Birth' });
-        return cols;
+        return allStaffColumns.filter((col, index) => {
+            const settingVisible = !idCardSettings || idCardSettings[col.setting] == 1;
+            const manualVisible = !hiddenColumns.includes(index);
+            return settingVisible && manualVisible;
+        });
     };
 
     const getExportData = () => {
@@ -73,11 +87,6 @@ const GenerateStaffIdCard = () => {
         }));
         return { headers, rows };
     };
-    const mockStaffData = [
-        { id: 101, employee_id: 'EMP001', name: 'James', surname: 'Wilson', role: 'Admin', designation: 'Teacher', department: 'Mathematics', father_name: 'Robert Wilson', mother_name: 'Mary Wilson', date_of_joining: '2022-01-10', local_address: '123 Street, City', contact_no: '9876543210', dob: '1990-05-15' },
-        { id: 102, employee_id: 'EMP002', name: 'Sarah', surname: 'Johnson', role: 'Librarian', designation: 'Librarian', department: 'Library', father_name: 'David Johnson', mother_name: 'Linda Johnson', date_of_joining: '2021-11-20', local_address: '456 Lane, City', contact_no: '9876543211', dob: '1988-08-22' },
-        { id: 103, employee_id: 'EMP003', name: 'Michael', surname: 'Brown', role: 'Accountant', designation: 'Accountant', department: 'Finance', father_name: 'William Brown', mother_name: 'Patricia Brown', date_of_joining: '2023-03-05', local_address: '789 Road, City', contact_no: '9876543212', dob: '1992-12-10' }
-    ];
 
     const [formData, setFormData] = useState({
         role_id: '',
@@ -90,19 +99,6 @@ const GenerateStaffIdCard = () => {
     });
 
     const [selectedStaff, setSelectedStaff] = useState([]);
-
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
-    };
-
-    const userData = JSON.parse(localStorage.getItem('user')) || {
-        name: 'Admin User',
-        role: 'Super Admin',
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
-    const sessionYear = currentSession?.session || '2024-25';
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -264,8 +260,8 @@ const GenerateStaffIdCard = () => {
 
     return (
         <div className="wrapper" style={{ marginTop: '0px' }}>
-            <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
-            <Sidebar sessionYear={sessionYear} currentUrl="/admin/generatestaffidcard" />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '600px' }}>
                 <section className="content-header">
@@ -350,6 +346,22 @@ const GenerateStaffIdCard = () => {
                                                     <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Staff_ID_Card_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
                                                     <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Staff_ID_Card_List.pdf', 'Staff ID Card List'); }}><i className="fa fa-file-pdf-o"></i></button>
                                                     <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Staff ID Card List'); }}><i className="fa fa-print"></i></button>
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i>
+                                                        </button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                {allStaffColumns.map((col, index) => {
+                                                                    const settingVisible = !idCardSettings || idCardSettings[col.setting] == 1;
+                                                                    if (!settingVisible) return null;
+                                                                    return (
+                                                                        <li key={index}><label><input type="checkbox" checked={!hiddenColumns.includes(index)} onChange={() => toggleColumnVisibility(index)} /> {col.label}</label></li>
+                                                                    );
+                                                                })}
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -359,16 +371,7 @@ const GenerateStaffIdCard = () => {
                                                 <thead>
                                                     <tr>
                                                         <th className="text-center"><input type="checkbox" onChange={handleSelectAll} checked={staffList.length > 0 && selectedStaff.length === staffList.length} /></th>
-                                                        {(!idCardSettings || idCardSettings.enable_staff_id == 1) && <th>Staff ID</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_name == 1) && <th>Staff Name</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_designation == 1) && <th>Designation</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_staff_department == 1) && <th>Department</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_fathers_name == 1) && <th>Father Name</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_mothers_name == 1) && <th>Mother Name</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_date_of_joining == 1) && <th>Date of Joining</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_permanent_address == 1) && <th>Address</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_staff_phone == 1) && <th>Phone</th>}
-                                                        {(!idCardSettings || idCardSettings.enable_staff_dob == 1) && <th>Date of Birth</th>}
+                                                        {getVisibleColumns().map(col => <th key={col.key}>{col.label}</th>)}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -381,38 +384,22 @@ const GenerateStaffIdCard = () => {
                                                     ).map(staff => (
                                                         <tr key={staff.id}>
                                                             <td className="text-center"><input type="checkbox" checked={selectedStaff.includes(staff.id)} onChange={() => handleSelectStaff(staff.id)} /></td>
-                                                            {(!idCardSettings || idCardSettings.enable_staff_id == 1) && <td>{staff.employee_id}</td>}
-                                                            {(!idCardSettings || idCardSettings.enable_name == 1) && (
-                                                                <td>
-                                                                    <Link to={`/admin/staff/profile/${staff.id}`} style={{ color: '#000' }}>
-                                                                        {staff.name} {staff.surname}
-                                                                    </Link>
-                                                                </td>
-                                                            )}
-                                                            {(!idCardSettings || idCardSettings.enable_designation == 1) && <td>{staff.designation}</td>}
-                                                            {(!idCardSettings || idCardSettings.enable_staff_department == 1) && <td>{staff.department}</td>}
-                                                            {(!idCardSettings || idCardSettings.enable_fathers_name == 1) && <td>{staff.father_name}</td>}
-                                                            {(!idCardSettings || idCardSettings.enable_mothers_name == 1) && <td>{staff.mother_name}</td>}
-                                                            {(!idCardSettings || idCardSettings.enable_date_of_joining == 1) && <td>{staff.date_of_joining}</td>}
-                                                            {(!idCardSettings || idCardSettings.enable_permanent_address == 1) && <td>{staff.local_address}</td>}
-                                                            {(!idCardSettings || idCardSettings.enable_staff_phone == 1) && <td>{staff.contact_no}</td>}
-                                                            {(!idCardSettings || idCardSettings.enable_staff_dob == 1) && <td>{staff.dob}</td>}
+                                                            {getVisibleColumns().map(col => {
+                                                                if (col.key === 'full_name') {
+                                                                    return (
+                                                                        <td key={col.key}>
+                                                                            <Link to={`/admin/staff/profile/${staff.id}`} style={{ color: '#000' }}>
+                                                                                {staff.name} {staff.surname}
+                                                                            </Link>
+                                                                        </td>
+                                                                    );
+                                                                }
+                                                                return <td key={col.key}>{staff[col.key] ?? ''}</td>;
+                                                            })}
                                                         </tr>
                                                     )) : (
                                                         <tr>
-                                                            {/* calculate dynamic colspan */}
-                                                            <td colSpan={1 + [
-                                                                !idCardSettings || idCardSettings.enable_staff_id == 1,
-                                                                !idCardSettings || idCardSettings.enable_name == 1,
-                                                                !idCardSettings || idCardSettings.enable_designation == 1,
-                                                                !idCardSettings || idCardSettings.enable_staff_department == 1,
-                                                                !idCardSettings || idCardSettings.enable_fathers_name == 1,
-                                                                !idCardSettings || idCardSettings.enable_mothers_name == 1,
-                                                                !idCardSettings || idCardSettings.enable_date_of_joining == 1,
-                                                                !idCardSettings || idCardSettings.enable_permanent_address == 1,
-                                                                !idCardSettings || idCardSettings.enable_staff_phone == 1,
-                                                                !idCardSettings || idCardSettings.enable_staff_dob == 1,
-                                                            ].filter(Boolean).length} className="text-center text-danger">No Record Found</td>
+                                                            <td colSpan={1 + getVisibleColumns().length} className="text-center text-danger">No Record Found</td>
                                                         </tr>
                                                     )}
                                                 </tbody>

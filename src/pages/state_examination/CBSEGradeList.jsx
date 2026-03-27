@@ -12,17 +12,9 @@ const CBSEGradeList = () => {
     const { sessionYear } = useSession();
     const navigate = useNavigate();
 
-    // Mock Data
-    const appName = "Smart School";
-    const userData = {
-        name: "Joe",
-        pimage: "/public/images/userprofile.jpg",
-        role: "Super Admin"
-    };
 
 
-
-    const cbseSubmenu = [
+    {/*} const cbseSubmenu = [
         { label: 'Exam', url: '/cbseexam/exam', active: false, icon: '1.png' },
         { label: 'Exam Schedule', url: '/cbseexam/schedule', active: false, icon: '2.png' },
         { label: 'Print Marksheet', url: '/cbseexam/result/marksheet', active: false, icon: '3.png' },
@@ -35,7 +27,7 @@ const CBSEGradeList = () => {
         { label: 'Template', url: '#', active: false, icon: '4.png' },
         { label: 'Reports', url: '#', active: false, icon: '10.png' },
         { label: 'Setting', url: '/cbseexam/setting', active: false, icon: '11.png' },
-    ];
+    ];*/}
 
     const [gradeList, setGradeList] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -266,8 +258,8 @@ const CBSEGradeList = () => {
         }
     };
 
-    const handleLogout = () => console.log("Logout");
-    const handleSearch = (term) => console.log("Search:", term);
+
+    //const handleSearch = (term) => console.log("Search:", term);
 
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -311,12 +303,8 @@ const CBSEGradeList = () => {
 
     return (
         <div className="wrapper theme-white-skin">
-            <Header appName={appName} userData={userData} handleLogout={handleLogout} />
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/cbseexam/grade/index"
-                handleSearch={handleSearch}
-            />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '850px' }}>
                 <section className="content-header">

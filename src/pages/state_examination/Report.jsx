@@ -13,27 +13,6 @@ const Report = () => {
     const [reportType, setReportType] = useState('menu'); // 'menu', 'examsubject', 'templatewise', 'consolidated'
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Mock Data
-    const [exams, setExams] = useState([
-        { id: 1, name: 'First Term Exam' },
-        { id: 2, name: 'Second Term Exam' }
-    ]);
-
-    const [classes, setClasses] = useState([
-        { id: 1, class: 'Class 1' },
-        { id: 2, class: 'Class 2' }
-    ]);
-
-    const [sections, setSections] = useState([
-        { id: 1, section: 'A' },
-        { id: 2, section: 'B' }
-    ]);
-
-    const [templates, setTemplates] = useState([
-        { id: 1, name: 'C.B.S.E Marksheet' },
-        { id: 2, name: 'Term Wise Report' }
-    ]);
-
     const [formData, setFormData] = useState({
         exam_id: '',
         class_id: '',
@@ -44,6 +23,10 @@ const Report = () => {
     const [results, setResults] = useState(null);
     const [resultHtml, setResultHtml] = useState('');
     const [searchLoading, setSearchLoading] = useState(false);
+    const [classes, setClasses] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [templates, setTemplates] = useState([]);
+    const [exams, setExams] = useState([]);
 
     const handleInputChange = async (e) => {
         const { name, value } = e.target;
@@ -227,14 +210,6 @@ const Report = () => {
         setResults(null);
         setFormData({ exam_id: '', class_id: '', section_id: '', template_id: '' });
     };
-
-    const appName = "Smart School";
-    const userData = {
-        name: "Joe",
-        pimage: "/images/userprofile.jpg",
-        role: "Super Admin"
-    };
-
 
 
     const renderMenu = () => (
@@ -537,12 +512,8 @@ const Report = () => {
 
     return (
         <div className="wrapper theme-white-skin">
-            <Header appName={appName} userData={userData} handleLogout={() => { }} />
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/cbseexam/report"
-                handleSearch={setSearchTerm}
-            />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '850px' }}>
                 <section className="content-header">

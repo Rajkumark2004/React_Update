@@ -220,16 +220,7 @@ const Assessment = () => {
         }
     };
 
-    const appName = "Smart School";
-    const userData = {
-        name: "Joe",
-        pimage: "/images/userprofile.jpg",
-        role: "Super Admin"
-    };
-
-
-
-    const cbseSubmenu = [
+    {/*}  const cbseSubmenu = [
         { label: 'Exam', url: '/cbseexam/exam', active: false, icon: '1.png' },
         { label: 'Exam Schedule', url: '#', active: false, icon: '2.png' },
         { label: 'Print Marksheet', url: '#', active: false, icon: '3.png' },
@@ -242,7 +233,7 @@ const Assessment = () => {
         { label: 'Template', url: '/cbseexam/template', active: false, icon: '4.png' },
         { label: 'Reports', url: '#', active: false, icon: '10.png' },
         { label: 'Setting', url: '#', active: false, icon: '11.png' },
-    ];
+    ];*/}
 
     const filteredAssessments = assessments.filter(a =>
         a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -284,12 +275,8 @@ const Assessment = () => {
 
     return (
         <div className="wrapper theme-white-skin">
-            <Header appName={appName} userData={userData} handleLogout={() => { }} />
-            <Sidebar
-                sessionYear={sessionYear}
-                currentUrl="/cbseexam/assessment"
-                handleSearch={setSearchTerm}
-            />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '850px' }}>
                 <section className="content-header">

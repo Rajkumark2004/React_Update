@@ -5,11 +5,9 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
 import '../../utils/include_files'; // Ensure global styles are loaded
-import { useSession } from '../../context/SessionContext';
 import { api } from '../../services/api';
 
 const StaffSearch = () => {
-    const { sessionYear } = useSession();
     const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRole, setSelectedRole] = useState('');
@@ -20,26 +18,12 @@ const StaffSearch = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Mock Data for Layout Props
-    const appName = "Smart School";
-    const userData = {
-        name: "Joe",
-        pimage: "public/images/userprofile.jpg",
-        role: "Super Admin"
-    };
-
-
-
-
-    const handleLogout = () => {
-        console.log("Logout clicked");
-    };
-
     const handleSearch = (e) => {
         if (e) e.preventDefault();
         setAppliedSearchTerm(searchTerm);
         setAppliedSelectedRole(selectedRole);
     };
+
 
     // Fetch staff list from API
     useEffect(() => {
@@ -96,16 +80,8 @@ const StaffSearch = () => {
 
     return (
         <div className="wrapper">
-            <Header
-                appName={appName}
-                userData={userData}
-                handleLogout={handleLogout}
-            />
-            <Sidebar
-
-                handleSearch={handleSearch}
-                sessionYear={sessionYear}
-            />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ marginTop: '0px' }}>
                 <section className="content-header">

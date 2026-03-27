@@ -90,18 +90,11 @@ const TemplateWiseRank = () => {
         return `${day}/${month}/${year}`;
     };
 
-    const appName = schSetting.name || "Smart School";
-    const userData = {
-        name: "Joe",
-        pimage: "/images/userprofile.jpg",
-        role: "Super Admin"
-    };
-
     if (loading) {
         return (
             <div className="wrapper theme-white-skin">
-                <Header appName={appName} userData={userData} />
-                <Sidebar sessionYear={currentSession?.session} />
+                <Header />
+                <Sidebar />
                 <div className="content-wrapper" style={{ marginTop: '0px' }}>
                     <div className="text-center" style={{ padding: "100px" }}>
                         <i className="fa fa-spinner fa-spin fa-3x"></i>
@@ -115,8 +108,8 @@ const TemplateWiseRank = () => {
 
     return (
         <div className="wrapper theme-white-skin">
-            <Header appName={appName} userData={userData} />
-            <Sidebar sessionYear={currentSession?.session} />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ marginTop: '17px' }}>
                 <section className="content">

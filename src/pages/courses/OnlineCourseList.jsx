@@ -4,7 +4,6 @@ import '../../utils/include_files.js';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
-import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
@@ -12,7 +11,6 @@ import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../u
 const OnlineCourseList = () => {
     const navigate = useNavigate();
     const { id: categoryId } = useParams();
-    const { currentSession, clearSession } = useSession();
 
     // State
     const [videos, setVideos] = useState([]);
@@ -54,45 +52,7 @@ const OnlineCourseList = () => {
         v.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Mock User Data
-    const [loggedInUser, setLoggedInUser] = useState(null);
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                setLoggedInUser(JSON.parse(storedUser));
-            } catch (e) { }
-        }
-    }, []);
 
-    const userData = loggedInUser ? {
-        name: loggedInUser.username,
-        role: Object.keys(loggedInUser.roles || {})[0] || 'User',
-        id: loggedInUser.id,
-        avatar: loggedInUser.image || '/uploads/staff_images/default_male.jpg'
-    } : {
-        name: 'Admin User',
-        role: 'Super Admin',
-        id: 1,
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
-
-    const sessionYear = currentSession?.session || '2024-25';
-
-
-
-    const handleLogout = async () => {
-        try { await api.logout(); } catch (e) { }
-        clearSession();
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        console.log('Search triggered');
-    };
 
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
@@ -318,8 +278,8 @@ const OnlineCourseList = () => {
                 .req { color: red; }
             `}</style>
 
-            <Header appName="School Management System" userData={userData} pendingTasks={[]} handleLogout={handleLogout} />
-            <Sidebar handleSearch={handleSearch} sessionYear={sessionYear} currentUrl="/admin/onlinecourse" />
+            <Header />
+            <Sidebar currentUrl="/admin/onlinecourse" />
 
             <div className="content-wrapper">
                 <section className="content">

@@ -147,19 +147,6 @@ const StaffIdCard = () => {
         }
     };
 
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
-    };
-
-    const userData = JSON.parse(localStorage.getItem('user')) || {
-        name: 'Admin User',
-        role: 'Super Admin',
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
-    const sessionYear = currentSession?.session || '2024-25';
-
     const handleInputChange = (e) => {
         const { name, value, type, checked, files } = e.target;
         setFormData(prev => ({
@@ -304,8 +291,8 @@ const StaffIdCard = () => {
 
     return (
         <div className="wrapper" style={{ marginTop: '0px' }}>
-            <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
-            <Sidebar sessionYear={sessionYear} currentUrl="/admin/staffidcard" />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '600px' }}>
                 <section className="content">

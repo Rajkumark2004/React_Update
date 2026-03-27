@@ -12,17 +12,6 @@ const Worksheets = () => {
     const { currentSession, clearSession } = useSession();
     const sessionYear = currentSession?.session || '2024-25';
 
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
-    };
-
-    const userData = JSON.parse(localStorage.getItem('user')) || {
-        name: 'Admin User',
-        role: 'Super Admin',
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
 
     // Mock data based on worksheets.php structure
     const [list, setList] = useState([]);
@@ -68,8 +57,8 @@ const Worksheets = () => {
 
     return (
         <div className="wrapper">
-            <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
-            <Sidebar sessionYear={sessionYear} currentUrl="/admin/content/worksheets" />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper">
                 <section className="content-header">

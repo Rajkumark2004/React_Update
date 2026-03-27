@@ -53,18 +53,6 @@ const CBSEExamList = () => {
     const [csvFile, setCsvFile] = useState(null);
     const [importLoading, setImportLoading] = useState(false);
 
-    const mockStudents = [
-        { id: 101, admission_no: '1001', firstname: 'John', lastname: 'Doe', class: 'Class 1', section: 'A', father_name: 'Robert Doe', gender: 'Male', category: 'General', roll_no: '1', dob: '2010-05-15', mobileno: '9876543210' },
-        { id: 102, admission_no: '1002', firstname: 'Sarah', lastname: 'Smith', class: 'Class 1', section: 'A', father_name: 'James Smith', gender: 'Female', category: 'OBC', roll_no: '2', dob: '2010-08-20', mobileno: '9876543211' },
-        { id: 103, admission_no: '1003', firstname: 'Michael', lastname: 'Brown', class: 'Class 1', section: 'B', father_name: 'David Brown', gender: 'Male', category: 'SC', roll_no: '3', dob: '2010-02-10', mobileno: '9876543212' },
-    ];
-
-    const assessmentTypes = [
-        { id: 1, name: 'Periodic Test', maximum_marks: 20 },
-        { id: 2, name: 'Notebook', maximum_marks: 5 },
-        { id: 3, name: 'Subject Enrichment', maximum_marks: 5 },
-        { id: 4, name: 'Half Yearly', maximum_marks: 70 },
-    ];
 
     const openActionModal = (exam, title, type) => {
         setActiveExam(exam);
@@ -488,16 +476,6 @@ const CBSEExamList = () => {
         }
     };
 
-    // Layout Mock Data
-    const appName = "Smart School";
-    const userData = {
-        name: "Joe",
-        pimage: "/public/images/userprofile.jpg",
-        role: "Super Admin"
-    };
-
-
-
     // CBSE Submenu with correct routes
     const cbseSubmenu = [
         { label: 'Exam', url: '/cbseexam/exam', active: true, icon: 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/state_examination/1.png' },
@@ -600,11 +578,8 @@ const CBSEExamList = () => {
                 .noExport { }
                 .input-group-sm .form-control { height: 30px; }
             `}</style>
-            <Header appName={appName} userData={userData} handleLogout={handleLogout} />
-            <Sidebar
-                sessionYear={currentSession?.session}
-                handleSearch={handleSearch}
-            />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ marginTop: '0px' }}>
                 <section className="content">

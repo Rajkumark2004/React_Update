@@ -4,14 +4,12 @@ import '../../utils/include_files.js';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
-import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
 
 const OnlineCourseCategory = () => {
     const navigate = useNavigate();
-    const { currentSession, clearSession } = useSession();
 
     // State
     const [categories, setCategories] = useState([]);
@@ -20,9 +18,6 @@ const OnlineCourseCategory = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-
-    // Mock User Data (similar to other pages)
-    const [loggedInUser, setLoggedInUser] = useState(null);
 
     // Fetch Categories function
     const fetchCategories = async () => {
@@ -44,12 +39,6 @@ const OnlineCourseCategory = () => {
     };
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                setLoggedInUser(JSON.parse(storedUser));
-            } catch (e) { }
-        }
         fetchCategories();
     }, []);
 
@@ -57,35 +46,6 @@ const OnlineCourseCategory = () => {
     const filteredCategories = categories.filter(cat =>
         cat.category_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    const userData = loggedInUser ? {
-        name: loggedInUser.username,
-        role: Object.keys(loggedInUser.roles || {})[0] || 'User',
-        id: loggedInUser.id,
-        avatar: loggedInUser.image || '/uploads/staff_images/default_male.jpg'
-    } : {
-        name: 'Admin User',
-        role: 'Super Admin',
-        id: 1,
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
-
-    const sessionYear = currentSession?.session || '2024-25';
-
-
-
-    const handleLogout = async () => {
-        try { await api.logout(); } catch (e) { }
-        clearSession();
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        console.log('Search triggered');
-    };
 
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
@@ -205,8 +165,8 @@ const OnlineCourseCategory = () => {
                 .req { color: red; }
             `}</style>
 
-            <Header appName="School Management System" userData={userData} pendingTasks={[]} handleLogout={handleLogout} />
-            <Sidebar handleSearch={handleSearch} sessionYear={sessionYear} currentUrl="/admin/onlinecourse" />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper">
                 <section className="content">

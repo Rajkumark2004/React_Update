@@ -10,19 +10,6 @@ import { api } from '../../services/api';
 const CreateContent = () => {
     const navigate = useNavigate();
     const { currentSession, clearSession } = useSession();
-    const sessionYear = currentSession?.session || '2024-25';
-
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
-    };
-
-    const userData = JSON.parse(localStorage.getItem('user')) || {
-        name: 'Admin User',
-        role: 'Super Admin',
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
 
     const [formData, setFormData] = useState({
         title: '',
@@ -115,7 +102,7 @@ const CreateContent = () => {
             const submitData = new FormData();
             submitData.append('content_title', formData.title);
             submitData.append('content_type', formData.type);
-            
+
             // Get user info from localStorage
             const userStr = localStorage.getItem('user');
             if (userStr) {
@@ -199,8 +186,8 @@ const CreateContent = () => {
 
     return (
         <div className="wrapper">
-            <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
-            <Sidebar sessionYear={sessionYear} currentUrl="/admin/content/createcontent" />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper">
                 <section className="content-header">

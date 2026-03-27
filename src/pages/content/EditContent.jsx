@@ -11,19 +11,6 @@ const EditContent = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { currentSession, clearSession } = useSession();
-    const sessionYear = currentSession?.session || '2024-25';
-
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
-    };
-
-    const userData = JSON.parse(localStorage.getItem('user')) || {
-        name: 'Admin User',
-        role: 'Super Admin',
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
 
     const [formData, setFormData] = useState({
         title: '',
@@ -191,8 +178,8 @@ const EditContent = () => {
 
     return (
         <div className="wrapper">
-            <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
-            <Sidebar sessionYear={sessionYear} currentUrl="/admin/content/edit" />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper">
                 <section className="content-header">
@@ -236,25 +223,25 @@ const EditContent = () => {
                                                     <div className="custom-select-option-box" id="custom-select-option-box" style={{ display: 'block' }}>
                                                         <div className="custom-select-option checkbox">
                                                             <label className="vertical-middle line-h-18">
-                                                                <input 
-                                                                    className="custom-select-option-checkbox select_all" 
-                                                                    type="checkbox" 
-                                                                    name="select_all" 
-                                                                    id="select_all" 
-                                                                    checked={sectionList.length > 0 && formData.section.length === sectionList.length} 
-                                                                    onChange={toggleSelectAll} 
+                                                                <input
+                                                                    className="custom-select-option-checkbox select_all"
+                                                                    type="checkbox"
+                                                                    name="select_all"
+                                                                    id="select_all"
+                                                                    checked={sectionList.length > 0 && formData.section.length === sectionList.length}
+                                                                    onChange={toggleSelectAll}
                                                                 /> Select All
                                                             </label>
                                                         </div>
                                                         {sectionList.map(s => (
                                                             <div key={s.section_id} className="custom-select-option checkbox">
                                                                 <label className="vertical-middle line-h-18">
-                                                                    <input 
-                                                                        className="custom-select-option-checkbox" 
-                                                                        type="checkbox" 
-                                                                        name="section[]" 
-                                                                        checked={formData.section.some(sec => String(sec) === String(s.section_id))} 
-                                                                        onChange={() => toggleSection(s.section_id)} 
+                                                                    <input
+                                                                        className="custom-select-option-checkbox"
+                                                                        type="checkbox"
+                                                                        name="section[]"
+                                                                        checked={formData.section.some(sec => String(sec) === String(s.section_id))}
+                                                                        onChange={() => toggleSection(s.section_id)}
                                                                     /> {s.section}
                                                                 </label>
                                                             </div>

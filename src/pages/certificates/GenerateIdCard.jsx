@@ -6,6 +6,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { api } from '../../services/api.js';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import StudentIdCard from '../../components/StudentIdCard';
@@ -28,6 +29,25 @@ const GenerateIdCard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [generatedData, setGeneratedData] = useState(null);
     const [generatingPdf, setGeneratingPdf] = useState(false);
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const studentColumns = [
+        { index: 0, label: 'Student Name' },
+        { index: 1, label: 'Class' },
+        { index: 2, label: 'Father Name' },
+        { index: 3, label: 'Date of Birth' },
+        { index: 4, label: 'Mother Name' },
+        { index: 5, label: 'Gender' },
+        { index: 6, label: 'Category' },
+        { index: 7, label: 'Mobile No' },
+    ];
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
 
     useEffect(() => {
         fetchInitialData();
@@ -59,19 +79,6 @@ const GenerateIdCard = () => {
             console.error('Error fetching sections:', error);
         }
     };
-
-    const handleLogout = () => {
-        clearSession();
-        localStorage.removeItem('isLoggedIn');
-        navigate('/');
-    };
-
-    const userData = JSON.parse(localStorage.getItem('user')) || {
-        name: 'Admin User',
-        role: 'Super Admin',
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
-    const sessionYear = currentSession?.session || '2024-25';
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -239,10 +246,28 @@ const GenerateIdCard = () => {
             s?.admission_no?.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
+    const getExportData = () => {
+        const allHeaders = ['Student Name', 'Class', 'Father Name', 'Date of Birth', 'Mother Name', 'Gender', 'Category', 'Mobile No'];
+        const allRowData = filteredStudents.map(s => [
+            `${s.firstname || ''} ${s.lastname || ''}`.trim(),
+            `${s.class || ''} (${s.section || ''})`,
+            s.father_name || '',
+            s.dob || '',
+            s.mother_name || '',
+            s.gender || '',
+            s.category || '',
+            s.mobileno || ''
+        ]);
+        const visibleIndices = allHeaders.map((_, i) => i).filter(i => !hiddenColumns.includes(i));
+        const headers = visibleIndices.map(i => allHeaders[i]);
+        const rows = allRowData.map(row => visibleIndices.map(i => row[i]));
+        return { headers, rows };
+    };
+
     return (
         <div className="wrapper" style={{ marginTop: '0px' }}>
-            <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
-            <Sidebar sessionYear={sessionYear} currentUrl="/admin/generateidcard" />
+            <Header />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '600px' }}>
                 <section className="content-header">
@@ -331,11 +356,23 @@ const GenerateIdCard = () => {
                                             </div>
                                             <div className="col-sm-6">
                                                 <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm" title="Copy"><i className="fa fa-copy"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Print"><i className="fa fa-print"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Student_ID_Card_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Student_ID_Card_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Student_ID_Card_List.pdf', 'Student ID Card List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student ID Card List'); }}><i className="fa fa-print"></i></button>
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i>
+                                                        </button>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                {studentColumns.map(col => (
+                                                                    <li key={col.index}><label><input type="checkbox" checked={!hiddenColumns.includes(col.index)} onChange={() => toggleColumnVisibility(col.index)} /> {col.label}</label></li>
+                                                                ))}
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -345,14 +382,14 @@ const GenerateIdCard = () => {
                                                 <thead>
                                                     <tr>
                                                         <th><input type="checkbox" onChange={handleSelectAll} checked={studentList.length > 0 && selectedStudents.length === studentList.length} /></th>
-                                                        <th>Student Name</th>
-                                                        <th>Class</th>
-                                                        <th>Father Name</th>
-                                                        <th>Date of Birth</th>
-                                                        <th>Mother Name</th>
-                                                        <th>Gender</th>
-                                                        <th>Category</th>
-                                                        <th>Mobile No</th>
+                                                        {!hiddenColumns.includes(0) && <th>Student Name</th>}
+                                                        {!hiddenColumns.includes(1) && <th>Class</th>}
+                                                        {!hiddenColumns.includes(2) && <th>Father Name</th>}
+                                                        {!hiddenColumns.includes(3) && <th>Date of Birth</th>}
+                                                        {!hiddenColumns.includes(4) && <th>Mother Name</th>}
+                                                        {!hiddenColumns.includes(5) && <th>Gender</th>}
+                                                        {!hiddenColumns.includes(6) && <th>Category</th>}
+                                                        {!hiddenColumns.includes(7) && <th>Mobile No</th>}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -361,18 +398,18 @@ const GenerateIdCard = () => {
                                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                                                                 <input type="checkbox" className="checkbox center-block" checked={selectedStudents.includes(student.id)} onChange={() => handleSelectStudent(student.id)} />
                                                             </td>
-                                                            <td>{`${student.firstname || ''} ${student.lastname || ''}`.trim()}</td>
-                                                            <td>{student.class} ({student.section})</td>
-                                                            <td>{student.father_name}</td>
-                                                            <td>{student.dob}</td>
-                                                            <td>{student.mother_name}</td>
-                                                            <td>{student.gender}</td>
-                                                            <td>{student.category}</td>
-                                                            <td>{student.mobileno}</td>
+                                                            {!hiddenColumns.includes(0) && <td>{`${student.firstname || ''} ${student.lastname || ''}`.trim()}</td>}
+                                                            {!hiddenColumns.includes(1) && <td>{student.class} ({student.section})</td>}
+                                                            {!hiddenColumns.includes(2) && <td>{student.father_name}</td>}
+                                                            {!hiddenColumns.includes(3) && <td>{student.dob}</td>}
+                                                            {!hiddenColumns.includes(4) && <td>{student.mother_name}</td>}
+                                                            {!hiddenColumns.includes(5) && <td>{student.gender}</td>}
+                                                            {!hiddenColumns.includes(6) && <td>{student.category}</td>}
+                                                            {!hiddenColumns.includes(7) && <td>{student.mobileno}</td>}
                                                         </tr>
                                                     )) : (
                                                         <tr>
-                                                            <td colSpan="8" className="text-center text-danger">No Record Found</td>
+                                                            <td colSpan={1 + studentColumns.filter(c => !hiddenColumns.includes(c.index)).length} className="text-center text-danger">No Record Found</td>
                                                         </tr>
                                                     )}
                                                 </tbody>

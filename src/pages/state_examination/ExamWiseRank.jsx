@@ -89,19 +89,13 @@ const ExamWiseRank = () => {
     return `${day}/${month}/${year}`;
   };
 
-  // Mock session for now if context is empty
-  const appName = "Smart School";
-  const userData = {
-    name: "Joe",
-    pimage: "/public/images/userprofile.jpg",
-    role: "Super Admin"
-  };
+
 
   if (loading) {
     return (
       <div className="wrapper theme-white-skin">
-        <Header appName={appName} userData={userData} />
-        <Sidebar sessionYear={currentSession?.session} />
+        <Header />
+        <Sidebar />
         <div className="content-wrapper" style={{ marginTop: '0px' }}>
           <div className="text-center" style={{ padding: "100px" }}>
             <i className="fa fa-spinner fa-spin fa-3x"></i>
@@ -115,8 +109,8 @@ const ExamWiseRank = () => {
 
   return (
     <div className="wrapper theme-white-skin">
-      <Header appName={appName} userData={userData} />
-      <Sidebar sessionYear={currentSession?.session} />
+      <Header />
+      <Sidebar />
 
       <div className="content-wrapper" style={{ marginTop: '0px' }}>
         <section className="content">
@@ -128,9 +122,9 @@ const ExamWiseRank = () => {
                     Generate Rank : {examDetails?.name}
                   </h3>
                   <div className="box-tools pull-right">
-                      <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs" style={{ marginTop: '5px' }}>
-                          <i className="fa fa-arrow-left"></i> Back
-                      </button>
+                    <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs" style={{ marginTop: '5px' }}>
+                      <i className="fa fa-arrow-left"></i> Back
+                    </button>
                   </div>
                 </div>
 
