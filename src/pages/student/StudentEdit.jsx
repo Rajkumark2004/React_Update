@@ -230,6 +230,14 @@ const StudentEdit = () => {
                         student_session_id: data.student_session_id || '',
                     }));
 
+                    // Infer autofill states based on existing address data
+                    if (data.current_address && data.guardian_address && data.current_address === data.guardian_address) {
+                        setAutofillCurrent(true);
+                    }
+                    if (data.permanent_address && data.current_address && data.permanent_address === data.current_address) {
+                        setAutofillPermanent(true);
+                    }
+
                     // Use siblings from studentRes if available
                     if (studentRes.student_data.siblings) {
                         setSiblings(studentRes.student_data.siblings);
