@@ -115,6 +115,13 @@ const StudentEdit = () => {
     const [bloodgroupList, setBloodgroupList] = useState([]);
     const [siblings, setSiblings] = useState([]);
 
+    // Transport & Hostel Lists
+    const [hostels, setHostels] = useState([]);
+    const [hostelRooms, setHostelRooms] = useState([]);
+    const [vehRoutes, setVehRoutes] = useState({});
+    const [pickupPoints, setPickupPoints] = useState([]);
+    const [transportFeesList, setTransportFeesList] = useState([]);
+
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -227,10 +234,43 @@ const StudentEdit = () => {
                     if (studentRes.student_data.siblings) {
                         setSiblings(studentRes.student_data.siblings);
                     }
+
+                    // Populate Transport & Hostel Lists from studentRes if available
+                    if (studentRes.student_data.vehroutelist) {
+                        setVehRoutes(studentRes.student_data.vehroutelist);
+                    }
+                    if (Array.isArray(studentRes.student_data.hostelList)) {
+                        setHostels(studentRes.student_data.hostelList);
+                    }
+
+                    // Initial fetch for rooms if hostel_id is already set
+                    const initialHostelId = data.hostel_id || data.hostel;
+                    if (initialHostelId) {
+                        try {
+                            const roomRes = await api.getHostelRooms(initialHostelId);
+                            if (roomRes && roomRes.data) setHostelRooms(roomRes.data);
+                        } catch (err) { console.error('Error fetching initial rooms:', err); }
+                    }
                 }
 
+                // If transport/hostel lists weren't in studentRes, fetch from pre-data
+                try {
+                    const preRes = await api.getStudentCreatePreData();
+                    if (preRes && preRes.status === 'success' && preRes.data) {
+                        const d = preRes.data;
+                        if (d.vehroutelist) setVehRoutes(d.vehroutelist);
+                        if (Array.isArray(d.hostelList)) setHostels(d.hostelList);
+                        if (Array.isArray(d.transport_fees)) setTransportFeesList(d.transport_fees);
+                        if (d.bloodgroupList && bloodgroupList.length === 0) {
+                            const bg = Array.isArray(d.bloodgroupList) ? d.bloodgroupList : Object.values(d.bloodgroupList);
+                            setBloodgroupList(bg);
+                        }
+                        if (Array.isArray(d.houseList) && houseList.length === 0) setHouseList(d.houseList);
+                    }
+                } catch (preErr) { console.warn("Failed to fetch pre-data:", preErr); }
+
                 // If siblings weren't in main response or we want to ensure latest
-                if (!studentRes.student_data.siblings) {
+                if (studentRes.student_data && !studentRes.student_data.siblings) {
                     const siblingRes = await api.getSiblingDetails(id);
                     if (siblingRes && siblingRes.status) {
                         let siblingData = [];
@@ -281,6 +321,24 @@ const StudentEdit = () => {
                         }
                     } catch (error) {
                         console.error('Error fetching sections by class:', error);
+                    }
+                }
+            }
+
+            // Trigger hostel room fetch if hostel changes
+            if (name === 'vehroute_id' || name === 'route_list') {
+                // Future: fetch pickup points when route is selected
+            }
+
+            if (name === 'hostel_id' || name === 'hostel') {
+                setHostelRooms([]);
+                setFormData(prev => ({ ...prev, hostel_room_id: '', room_no: '' }));
+                if (value) {
+                    try {
+                        const response = await api.getHostelRooms(value);
+                        if (response && response.data) setHostelRooms(response.data);
+                    } catch (error) {
+                        console.error('Error fetching hostel rooms:', error);
                     }
                 }
             }
@@ -1003,13 +1061,15 @@ const StudentEdit = () => {
                                                                 <label>Route List</label>
                                                                 <select className="form-control" name="vehroute_id" value={formData.vehroute_id || formData.route_list} onChange={handleInputChange}>
                                                                     <option value="">Select</option>
-                                                                    <optgroup label="Route A">
-                                                                        <option value="VH001">Vehicle 1 (VH001)</option>
-                                                                        <option value="VH002">Vehicle 2 (VH002)</option>
-                                                                    </optgroup>
-                                                                    <optgroup label="Route B">
-                                                                        <option value="VH003">Vehicle 3 (VH003)</option>
-                                                                    </optgroup>
+                                                                    {Object.values(vehRoutes).map(route => (
+                                                                        <optgroup key={route.id} label={route.route_title}>
+                                                                            {route.vehicles && route.vehicles.map(vehicle => (
+                                                                                <option key={vehicle.vec_route_id} value={vehicle.vec_route_id}>
+                                                                                    {vehicle.vehicle_no} ({vehicle.vehicle_model})
+                                                                                </option>
+                                                                            ))}
+                                                                        </optgroup>
+                                                                    ))}
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -1026,11 +1086,32 @@ const StudentEdit = () => {
                                                         <div className="col-md-4">
                                                             <div className="form-group">
                                                                 <label>Fees Month</label>
-                                                                <select className="form-control" name="fees_month" value={formData.fees_month} onChange={handleInputChange} multiple={true}>
-                                                                    <option value="January">January</option>
-                                                                    <option value="February">February</option>
-                                                                    <option value="March">March</option>
-                                                                </select>
+                                                                {/* Map month checkboxes like StudentAdmission */}
+                                                                <div className="checkbox-list" style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #ddd', padding: '10px', borderRadius: '4px' }}>
+                                                                    {transportFeesList.map((tf, index) => (
+                                                                        <div className="checkbox" key={index} style={{ marginTop: '0', marginBottom: '5px' }}>
+                                                                            <label>
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    name="fees_month"
+                                                                                    value={tf.month}
+                                                                                    checked={Array.isArray(formData.fees_month) && formData.fees_month.includes(tf.month)}
+                                                                                    onChange={(e) => {
+                                                                                        const { value, checked } = e.target;
+                                                                                        setFormData(prev => {
+                                                                                            const currentMonths = Array.isArray(prev.fees_month) ? prev.fees_month : [];
+                                                                                            const nextMonths = checked
+                                                                                                ? [...currentMonths, value]
+                                                                                                : currentMonths.filter(m => m !== value);
+                                                                                            return { ...prev, fees_month: nextMonths };
+                                                                                        });
+                                                                                    }}
+                                                                                />
+                                                                                {tf.month}
+                                                                            </label>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1042,7 +1123,9 @@ const StudentEdit = () => {
                                                                 <label>Hostel</label>
                                                                 <select className="form-control" name="hostel_id" value={formData.hostel_id || formData.hostel} onChange={handleInputChange}>
                                                                     <option value="">Select</option>
-                                                                    <option value="Hostel A">Hostel A</option>
+                                                                    {hostels.map(h => (
+                                                                        <option key={h.id} value={h.id}>{h.hostel_name}</option>
+                                                                    ))}
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -1051,8 +1134,9 @@ const StudentEdit = () => {
                                                                 <label>Room No</label>
                                                                 <select className="form-control" name="hostel_room_id" value={formData.hostel_room_id || formData.room_no} onChange={handleInputChange}>
                                                                     <option value="">Select</option>
-                                                                    <option value="101">101 (AC)</option>
-                                                                    <option value="102">102 (Non-AC)</option>
+                                                                    {hostelRooms.map(room => (
+                                                                        <option key={room.id} value={room.id}>{room.room_no} ({room.room_type})</option>
+                                                                    ))}
                                                                 </select>
                                                             </div>
                                                         </div>
