@@ -392,7 +392,7 @@ const CBSEExamList = () => {
     const handleSaveExam = async (e) => {
         e.preventDefault();
 
-        if (!examName || !selectedTerm || !selectedClass || !selectedAssessment || !selectedGrade || selectedSections.length === 0) {
+        if (!examName || !selectedTerm || !selectedClass || !selectedAssessment || !selectedGrade) {
             alert("Please fill all required fields");
             return;
         }
@@ -941,6 +941,16 @@ const CBSEExamList = () => {
                                                             </div>
                                                         )}
                                                     </div>
+                                                    <select
+                                                        required
+                                                        value={selectedSections.length > 0 ? 'selected' : ''}
+                                                        onChange={() => {}}
+                                                        style={{ position: 'absolute', left: '50%', top: '100%', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
+                                                        tabIndex={-1}
+                                                    >
+                                                        <option value="">Select</option>
+                                                        <option value="selected">Selected</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                         </div>
