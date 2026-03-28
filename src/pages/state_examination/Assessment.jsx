@@ -275,6 +275,17 @@ const Assessment = () => {
 
     return (
         <div className="wrapper theme-white-skin">
+            <style>
+                {`
+                    .hide-scrollbar::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .hide-scrollbar {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
+                `}
+            </style>
             <Header />
             <Sidebar />
 
@@ -427,57 +438,82 @@ const Assessment = () => {
                             </div>
                             <form onSubmit={handleSubmit}>
                                 <div className="modal-body">
-                                    <div className={`form-group ${errors.name ? 'has-error' : ''}`}>
-                                        <label>Assessment</label><small className="req"> *</small>
-                                        <input type="text" name="name" className="form-control" value={formData.name} onChange={handleInputChange} />
-                                        {errors.name && <span className="text-danger">{errors.name}</span>}
+                                    <div className="row">
+                                        <div className="col-md-12">
+                                            <div className={`form-group ${errors.name ? 'has-error' : ''}`}>
+                                                <label>Assessment</label><small className="req"> *</small>
+                                                <input type="text" name="name" className="form-control" value={formData.name} onChange={handleInputChange} />
+                                                {errors.name && <span className="text-danger">{errors.name}</span>}
+                                            </div>
+                                        </div>
+                                        <div className="col-md-12">
+                                            <div className="form-group">
+                                                <label>Assessment Description</label>
+                                                <textarea name="description" className="form-control" rows="2" value={formData.description} onChange={handleInputChange} style={{ resize: 'none' }}></textarea>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="form-group">
-                                        <label>Assessment Description</label>
-                                        <textarea name="description" className="form-control" rows="2" value={formData.description} onChange={handleInputChange}></textarea>
+                                    <div className="row" style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+                                        <div className="col-md-6">
+                                        </div>
+                                        <div className="col-md-6 text-right">
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm add_row"
+                                                onClick={addRow}
+                                                style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '5px 15px', border: 'none' }}
+                                            >
+                                                Add More
+                                            </button>
+                                        </div>
                                     </div>
-                                    <hr />
-                                    <h5 className="box-title">Assessment Type</h5>
-                                    <div id="grade_result">
-                                        <div className="row">
-                                            <div className="col-md-2"><b>Name</b><small className="req"> *</small></div>
-                                            <div className="col-md-2"><b>Code</b><small className="req"> *</small></div>
-                                            <div className="col-md-2"><b>Maximum Marks</b><small className="req"> *</small></div>
-                                            <div className="col-md-2"><b>Passing Percentage</b><small className="req"> *</small></div>
-                                            <div className="col-md-3"><b>Description</b></div>
+
+                                    <div className="hide-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '5px' }}>
+                                        <div className="row" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
+                                            <div className="col-md-2" style={{ fontSize: '12px' }}>Assessment Type <small className="req">*</small></div>
+                                            <div className="col-md-2" style={{ fontSize: '12px' }}>Code <small className="req">*</small></div>
+                                            <div className="col-md-2" style={{ fontSize: '12px' }}>Maximum Marks <small className="req">*</small></div>
+                                            <div className="col-md-2" style={{ fontSize: '12px' }}>Pass Percentage <small className="req">*</small></div>
+                                            <div className="col-md-3" style={{ fontSize: '12px' }}>Description</div>
                                             <div className="col-md-1"></div>
                                         </div>
+
                                         {formData.rows.map((row, index) => (
-                                            <div className="row mb10" key={row.ui_id} style={{ marginBottom: '10px' }}>
+                                            <div className="row mb10" key={row.ui_id} style={{ marginBottom: '15px' }}>
                                                 <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].type_name ? 'has-error' : ''}`}>
-                                                    <input type="text" className="form-control" value={row.type_name} onChange={(e) => handleRowChange(index, 'type_name', e.target.value)} />
-                                                    {errors.rows && errors.rows[index] && errors.rows[index].type_name && <span className="text-danger">{errors.rows[index].type_name}</span>}
+                                                    <input type="text" className="form-control input-sm" value={row.type_name} onChange={(e) => handleRowChange(index, 'type_name', e.target.value)} />
+                                                    {errors.rows && errors.rows[index] && errors.rows[index].type_name && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].type_name}</span>}
                                                 </div>
                                                 <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].code ? 'has-error' : ''}`}>
-                                                    <input type="text" className="form-control" value={row.code} onChange={(e) => handleRowChange(index, 'code', e.target.value)} />
-                                                    {errors.rows && errors.rows[index] && errors.rows[index].code && <span className="text-danger">{errors.rows[index].code}</span>}
+                                                    <input type="text" className="form-control input-sm" value={row.code} onChange={(e) => handleRowChange(index, 'code', e.target.value)} />
+                                                    {errors.rows && errors.rows[index] && errors.rows[index].code && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].code}</span>}
                                                 </div>
                                                 <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].maximum_marks ? 'has-error' : ''}`}>
-                                                    <input type="number" className="form-control" value={row.maximum_marks} onChange={(e) => handleRowChange(index, 'maximum_marks', e.target.value)} />
-                                                    {errors.rows && errors.rows[index] && errors.rows[index].maximum_marks && <span className="text-danger">{errors.rows[index].maximum_marks}</span>}
+                                                    <input type="number" className="form-control input-sm" value={row.maximum_marks} onChange={(e) => handleRowChange(index, 'maximum_marks', e.target.value)} />
+                                                    {errors.rows && errors.rows[index] && errors.rows[index].maximum_marks && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].maximum_marks}</span>}
                                                 </div>
                                                 <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].pass_percentage ? 'has-error' : ''}`}>
-                                                    <input type="number" className="form-control" value={row.pass_percentage} onChange={(e) => handleRowChange(index, 'pass_percentage', e.target.value)} />
-                                                    {errors.rows && errors.rows[index] && errors.rows[index].pass_percentage && <span className="text-danger">{errors.rows[index].pass_percentage}</span>}
+                                                    <input type="number" className="form-control input-sm" value={row.pass_percentage} onChange={(e) => handleRowChange(index, 'pass_percentage', e.target.value)} />
+                                                    {errors.rows && errors.rows[index] && errors.rows[index].pass_percentage && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].pass_percentage}</span>}
                                                 </div>
                                                 <div className="col-md-3">
-                                                    <textarea className="form-control" rows="1" value={row.type_description} onChange={(e) => handleRowChange(index, 'type_description', e.target.value)}></textarea>
+                                                    <textarea className="form-control input-sm" rows="1" value={row.type_description} onChange={(e) => handleRowChange(index, 'type_description', e.target.value)} style={{ resize: 'none', minHeight: '30px' }}></textarea>
                                                 </div>
-                                                <div className="col-md-1">
-                                                    <span className="text-danger cursor-pointer" onClick={() => removeRow(index)}><i className="fa fa-remove"></i></span>
+                                                <div className="col-md-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <span className="text-danger cursor-pointer" onClick={() => removeRow(index)} style={{ fontSize: '18px', fontWeight: 'bold' }}>&times;</span>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                    <button type="button" className="btn btn-default btn-sm add_row" onClick={addRow}><i className="fa fa-plus"></i> Add More</button>
                                 </div>
-                                <div className="modal-footer">
-                                    <button type="submit" className="btn btn-primary pull-right">Save</button>
+                                <div className="modal-footer" style={{ borderTop: 'none', paddingBottom: '20px' }}>
+                                    <button
+                                        type="submit"
+                                        className="btn pull-right"
+                                        style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '8px 25px', fontSize: '14px', fontWeight: 'bold', border: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                                    >
+                                        Save
+                                    </button>
                                 </div>
                             </form>
                         </div>
