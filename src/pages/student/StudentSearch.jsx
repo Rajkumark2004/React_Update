@@ -155,29 +155,7 @@ const StudentSearch = () => {
                 studentData = response;
             }
 
-            // Fetch full details for each student in batches to avoid rate limits
-            const BATCH_SIZE = 5;
-            const enrichedStudents = [...studentData];
-            for (let i = 0; i < studentData.length; i += BATCH_SIZE) {
-                const batch = studentData.slice(i, i + BATCH_SIZE);
-                await Promise.all(batch.map(async (student) => {
-                    const sid = student.id || student.student_id;
-                    if (!sid) return;
-                    try {
-                        const detailResponse = await api.getStudentView(sid);
-                        if (detailResponse.status && detailResponse.data && detailResponse.data.student) {
-                            const index = enrichedStudents.findIndex(s => (s.id || s.student_id) === sid);
-                            if (index !== -1) {
-                                enrichedStudents[index] = { ...enrichedStudents[index], ...detailResponse.data.student };
-                            }
-                        }
-                    } catch (e) {
-                        console.error(`Failed to fetch details for student ${sid}`, e);
-                    }
-                }));
-            }
-
-            const mappedStudents = enrichedStudents.map(student => ({
+            const mappedStudents = studentData.map(student => ({
                 id: student.id,
                 student_session_id: student.student_session_id,
                 admission_no: student.admission_no,
