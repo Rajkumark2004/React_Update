@@ -303,13 +303,17 @@ const AssignClassTeacher = () => {
     const headers = ['Class', 'Section', 'Class Teacher'];
 
     const getExportData = () => {
-        return filteredList.map(item => {
+        const activeHeaders = headers.filter((_, idx) => !hiddenColumns.includes(idx));
+        const rows = filteredList.map(item => {
             const firstTeacher = item.teachers?.[0] || {};
             const classVal = item.class || firstTeacher.class || "";
             const sectionVal = item.section || firstTeacher.section || "";
             const teachersList = item.teachers ? item.teachers.map(t => `${t.name} ${t.surname} (${t.employee_id})`).join(', ') : '';
-            return [classVal, sectionVal, teachersList];
+            
+            const fullRow = [classVal, sectionVal, teachersList];
+            return fullRow.filter((_, idx) => !hiddenColumns.includes(idx));
         });
+        return { headers: activeHeaders, rows };
     };
 
     return (

@@ -9,7 +9,7 @@ import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
 import { ReceiptContent } from './ReceiptContent';
 import toast from 'react-hot-toast';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
 
 const FeesReceipt24 = () => {
     const navigate = useNavigate();
@@ -365,7 +365,7 @@ const FeesReceipt24 = () => {
                                                 <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'fees_receipt_24.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Fees Receipt 24/25'); }}>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'fees_receipt_24.pdf', 'Fees Receipt 24/25'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Fees Receipt 24/25'); }}>

@@ -23,6 +23,14 @@ const AttendanceReport = () => {
 
     // New states for search and export
     const [searchTerm, setSearchTerm] = useState('');
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
 
     const columns = [
         { key: 'sno', label: 'S.NO' },
@@ -56,28 +64,30 @@ const AttendanceReport = () => {
         return '';
     };
 
+    const getVisibleColumnsSet = () => new Set(columns.filter((_, i) => !hiddenColumns.includes(i)).map(c => c.key));
+
     const handleCopy = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
         copyToClipboard(headers, rows);
     };
 
     const handleCSV = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
         downloadCSV(headers, rows, 'attendance_report.csv');
     };
 
     const handleExcel = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
         downloadExcel(headers, rows, 'attendance_report.xls');
     };
 
     const handlePDF = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
         downloadPDF(headers, rows, 'attendance_report.pdf', 'Attendance Report');
     };
 
     const handlePrint = () => {
-        const { headers, rows } = buildExportData(columns, new Set(columns.map(c => c.key)), filteredList, formatCell);
+        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
         printTable(headers, rows, 'Attendance Report');
     };
 
@@ -296,6 +306,22 @@ const AttendanceReport = () => {
                                                             <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print">
                                                                 <i className="fa fa-print"></i>
                                                             </button>
+                                                            <div className="btn-group">
+                                                                <button className="btn btn-default btn-sm dt-button" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showColumnsDropdown && (
+                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                        {columns.map((col, idx) => (
+                                                                            <li key={idx}>
+                                                                                <label>
+                                                                                    <input type="checkbox" checked={!hiddenColumns.includes(idx)} onChange={() => toggleColumnVisibility(idx)} /> {col.label}
+                                                                                </label>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -307,12 +333,12 @@ const AttendanceReport = () => {
                                                     <table className="table table-hover table-striped example">
                                                         <thead>
                                                             <tr>
-                                                                <th>S.NO</th>
-                                                                <th>Admission No</th>
-                                                                <th>Roll Number</th>
-                                                                <th>Name</th>
-                                                                <th>Attendance</th>
-                                                                <th>Note</th>
+                                                                {!hiddenColumns.includes(0) && <th>S.NO</th>}
+                                                                {!hiddenColumns.includes(1) && <th>Admission No</th>}
+                                                                {!hiddenColumns.includes(2) && <th>Roll Number</th>}
+                                                                {!hiddenColumns.includes(3) && <th>Name</th>}
+                                                                {!hiddenColumns.includes(4) && <th>Attendance</th>}
+                                                                {!hiddenColumns.includes(5) && <th>Note</th>}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -321,16 +347,16 @@ const AttendanceReport = () => {
                                                                 const attClass = getClassForType(attLabel);
                                                                 return (
                                                                     <tr key={index}>
-                                                                        <td>{filteredList.indexOf(student) + 1}</td>
-                                                                        <td>{student.admission_no}</td>
-                                                                        <td>{student.roll_no}</td>
-                                                                        <td>{student.firstname} {student.lastname}</td>
-                                                                        <td>
+                                                                        {!hiddenColumns.includes(0) && <td>{filteredList.indexOf(student) + 1}</td>}
+                                                                        {!hiddenColumns.includes(1) && <td>{student.admission_no}</td>}
+                                                                        {!hiddenColumns.includes(2) && <td>{student.roll_no}</td>}
+                                                                        {!hiddenColumns.includes(3) && <td>{student.firstname} {student.lastname}</td>}
+                                                                        {!hiddenColumns.includes(4) && <td>
                                                                             <small className={attClass}>
                                                                                 {attLabel}
                                                                             </small>
-                                                                        </td>
-                                                                        <td>{student.remark}</td>
+                                                                        </td>}
+                                                                        {!hiddenColumns.includes(5) && <td>{student.remark}</td>}
                                                                     </tr>
                                                                 );
                                                             })}

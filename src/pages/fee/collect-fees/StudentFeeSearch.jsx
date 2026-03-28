@@ -7,7 +7,7 @@ import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
 import '../../../utils/include_files';
 
 const amountFormat = (amount) => {
@@ -587,6 +587,9 @@ const StudentFeeSearch = () => {
                                                             </button>
                                                             <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_list.xls'); }}>
                                                                 <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
+                                                                <i className="fa fa-file-pdf-o"></i>
                                                             </button>
                                                             <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}>
                                                                 <i className="fa fa-print"></i>

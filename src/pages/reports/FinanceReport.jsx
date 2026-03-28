@@ -12,6 +12,15 @@ const FinanceReport = () => {
     const [activeReport, setActiveReport] = useState(location.state?.activeReport || 'Daily Collection Report');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearched, setIsSearched] = useState(false);
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
     const [dailyCollectionData, setDailyCollectionData] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [detailData, setDetailData] = useState([]);
@@ -362,6 +371,8 @@ const FinanceReport = () => {
         setActiveReport(report);
         setSearchTerm('');
         setIsSearched(false);
+        setHiddenColumns([]);
+        setShowColumnsDropdown(false);
 
         // Clear all filter selections per user request
         setClassId('');
@@ -542,8 +553,14 @@ const FinanceReport = () => {
     };
 
     const getExportData = () => {
-        const headers = currentConfig.headers || [];
-        const rows = filteredData.map((row, index) => headers.map(h => String(getRowValue(h, row, index) ?? '')));
+        const allHeaders = currentConfig.headers || [];
+        const headers = allHeaders.filter((_, idx) => !hiddenColumns.includes(idx));
+        const rows = filteredData.map((row, index) =>
+            allHeaders
+                .map((h, hIdx) => ({ value: getRowValue(h, row, index), index: hIdx }))
+                .filter(item => !hiddenColumns.includes(item.index))
+                .map(item => String(item.value ?? ''))
+        );
         return { headers, rows };
     };
     const handleExport = (action) => {
@@ -551,6 +568,7 @@ const FinanceReport = () => {
         if (action === 'copy') copyToClipboard(headers, rows);
         if (action === 'excel') downloadExcel(headers, rows, `${activeReport}.xls`);
         if (action === 'csv') downloadCSV(headers, rows, `${activeReport}.csv`);
+        if (action === 'pdf') downloadPDF(headers, rows, `${activeReport}.pdf`, activeReport);
         if (action === 'print') printTable(headers, rows, activeReport);
     };
 
@@ -1029,276 +1047,186 @@ const FinanceReport = () => {
     };
 
     const renderRow = (row, index) => {
+        const cells = [];
         if (activeReport === 'Balance Fees Statement' || activeReport === 'Fees Statement') {
-            return (
-                <>
-                    <td className="text-left">{row.fees_group}</td>
-                    <td className="text-left">{row.fees_code}</td>
-                    <td className="text-left">{row.due_date}</td>
-                    <td className="text-left"><span className={`label ${row.status === 'Paid' ? 'label-success' : row.status === 'Partial' ? 'label-warning' : 'label-danger'}`}>{row.status}</span></td>
-                    <td className="text-right">
-                        {(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        {row.amount_extra && <span style={{ color: 'red' }}>{row.amount_extra}</span>}
-                    </td>
-                    <td className="text-left">{row.payment_id}</td>
-                    <td className="text-left">{row.mode}</td>
-                    <td className="text-left">{row.date}</td>
-                    <td className="text-right">{(row.discount || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.fine || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.paid || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </>
+            cells.push(
+                <td className="text-left" key="0">{row.fees_group}</td>,
+                <td className="text-left" key="1">{row.fees_code}</td>,
+                <td className="text-left" key="2">{row.due_date}</td>,
+                <td className="text-left" key="3"><span className={`label ${row.status === 'Paid' ? 'label-success' : row.status === 'Partial' ? 'label-warning' : 'label-danger'}`}>{row.status}</span></td>,
+                <td className="text-right" key="4">
+                    {(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {row.amount_extra && <span style={{ color: 'red' }}>{row.amount_extra}</span>}
+                </td>,
+                <td className="text-left" key="5">{row.payment_id}</td>,
+                <td className="text-left" key="6">{row.mode}</td>,
+                <td className="text-left" key="7">{row.date}</td>,
+                <td className="text-right" key="8">{(row.discount || 0).toFixed(2)}</td>,
+                <td className="text-right" key="9">{(row.fine || 0).toFixed(2)}</td>,
+                <td className="text-right" key="10">{(row.paid || 0).toFixed(2)}</td>,
+                <td className="text-right" key="11">{(row.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             );
-        }
-        if (activeReport === 'Student Day Sheet Report') {
+        } else if (activeReport === 'Student Day Sheet Report') {
             const dynamicHeaders = studentDaySheetHeaders.length > 8 ? studentDaySheetHeaders.slice(5, studentDaySheetHeaders.length - 3) : [];
-            return (
-                <>
-                    <td>{index + 1}</td>
-                    <td>{row.admission_no}</td>
-                    <td>{`${row.firstname} ${row.lastname || ''}`.trim()}</td>
-                    <td>{row.class} ({row.section})</td>
-                    <td>{row.id}/{row.inv_no}</td>
-                    {dynamicHeaders.map((header, idx) => (
-                        <td key={idx}>{parseFloat(row.feetypePaidAmount?.[header] || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    ))}
-                    <td>{parseFloat(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td>{row.payment_mode}</td>
-                    <td>{row.received_byname?.name}</td>
-                </>
+            cells.push(
+                <td key="0">{index + 1}</td>,
+                <td key="1">{row.admission_no}</td>,
+                <td key="2">{`${row.firstname} ${row.lastname || ''}`.trim()}</td>,
+                <td key="3">{row.class} ({row.section})</td>,
+                <td key="4">{row.id}/{row.inv_no}</td>,
+                ...dynamicHeaders.map((header, dIdx) => (
+                    <td key={5 + dIdx}>{parseFloat(row.feetypePaidAmount?.[header] || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                )),
+                <td key={5 + dynamicHeaders.length}>{parseFloat(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>,
+                <td key={6 + dynamicHeaders.length}>{row.payment_mode}</td>,
+                <td key={7 + dynamicHeaders.length}>{row.received_byname?.name}</td>
             );
-        }
-
-        if (activeReport === 'Daily Collection Report') {
-            return (
-                <>
-                    <td className="text-center">{row.date_col}</td>
-                    <td className="text-center">{row.total_transactions || 0}</td>
-                    <td className="text-center">₹{(row.total || 0).toFixed(2)}</td>
-                    <td className="text-center">
-                        <i
-                            className="fa fa-eye"
-                            style={{ color: '#9429b8', cursor: 'pointer' }}
-                            onClick={() => handleViewClick(row)}
-                        ></i>
+        } else if (activeReport === 'Daily Collection Report') {
+            cells.push(
+                <td className="text-center" key="0">{row.date_col}</td>,
+                <td className="text-center" key="1">{row.total_transactions || 0}</td>,
+                <td className="text-center" key="2">₹{(row.total || 0).toFixed(2)}</td>,
+                <td className="text-center" key="3">
+                    <i className="fa fa-eye" style={{ color: '#9429b8', cursor: 'pointer' }} onClick={() => handleViewClick(row)}></i>
+                </td>
+            );
+        } else if (activeReport === 'Balance Fees Report') {
+            const dynamicBalanceHeaders = currentConfig.headers.slice(5, currentConfig.headers.length - 5);
+            cells.push(
+                <td className="text-left" key="0">{index + 1}</td>,
+                <td className="text-left" key="1">{row.admission_no}</td>,
+                <td className="text-left" key="2">{row.name}</td>,
+                <td className="text-left" key="3">{row.father_name}</td>,
+                <td className="text-left" key="4">{row.father_phone}</td>,
+                ...dynamicBalanceHeaders.map((header, i) => (
+                    <td key={5 + i} className="text-right">
+                        {(row[header] || row[header.toLowerCase()] || row[header.toUpperCase()] || 0).toString()}
                     </td>
-                </>
+                )),
+                <td className="text-right" key={5 + dynamicBalanceHeaders.length}>{(row.totalfee || 0).toFixed(2)}</td>,
+                <td className="text-right" key={6 + dynamicBalanceHeaders.length}>{(row.deposit || 0).toFixed(2)}</td>,
+                <td className="text-right" key={7 + dynamicBalanceHeaders.length}>{(row.discount || 0).toFixed(2)}</td>,
+                <td className="text-right" key={8 + dynamicBalanceHeaders.length}>{(row.fine || 0).toFixed(2)}</td>,
+                <td className="text-right" key={9 + dynamicBalanceHeaders.length}>{(row.balance || 0).toFixed(2)}</td>
+            );
+        } else if (activeReport === 'No Due Certificate') {
+            cells.push(
+                <td className="text-left" key="0">{row.admission_no}</td>,
+                <td className="text-left" key="1">{row.name}</td>,
+                <td className="text-left" key="2">{row.class}</td>,
+                <td className="text-left" key="3">{row.section}</td>,
+                <td className="text-right" key="4">{(row.balance || 0).toFixed(2)}</td>
+            );
+        } else if (activeReport === 'Online Fees Collection Report') {
+            cells.push(
+                <td className="text-left" key="0">{row.id}</td>,
+                <td className="text-left" key="1">{row.date}</td>,
+                <td className="text-left" key="2">{row.admission_no}</td>,
+                <td className="text-left" key="3">{`${row.firstname} ${row.lastname}`}</td>,
+                <td className="text-left" key="4">{`${row.class} (${row.section})`}</td>,
+                <td className="text-left" key="5">{row.type}</td>,
+                <td className="text-left" key="6">{row.payment_mode}</td>,
+                <td className="text-right" key="7">{(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>,
+                <td className="text-right" key="8">{(row.amount_discount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>,
+                <td className="text-right" key="9">{(row.amount_fine || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>,
+                <td className="text-right" key="10">{(parseFloat(row.amount || 0) + parseFloat(row.amount_fine || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            );
+        } else if (activeReport === 'Day Collection Report') {
+            cells.push(
+                <td className="text-left" key="0">{index + 1}</td>,
+                <td className="text-left" key="1">{row.admission_no}</td>,
+                <td className="text-left" key="2">{`${row.firstname} ${row.lastname}`}</td>,
+                <td className="text-left" key="3">{`${row.class} (${row.section})`}</td>,
+                <td className="text-left" key="4">{row.id}</td>,
+                <td className="text-left" key="5">{row.reference_no}</td>,
+                <td className="text-left" key="6">{row.mode}</td>,
+                <td className="text-right" key="7">{(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>,
+                <td className="text-left" key="8">{row.created_at || row.date}</td>,
+                <td className="text-left" key="9">{row.collected_by}</td>,
+                <td className="text-left" key="10">{row.fee_types}</td>
+            );
+        } else if (activeReport === 'Balance Fees Report With Remark') {
+            cells.push(
+                <td className="text-left" key="0">{row.student_name} ({row.admission_no})</td>,
+                <td className="text-left" key="1">{row.class}</td>,
+                <td className="text-left" key="2">{row.fees_group}</td>,
+                <td className="text-right" key="3">{(row.amount || 0).toFixed(2)}</td>,
+                <td className="text-right" key="4">{(row.paid || 0).toFixed(2)}</td>,
+                <td className="text-right" key="5">{(row.balance || 0).toFixed(2)}</td>,
+                <td className="text-left" key="6">{row.guardian_phone}</td>,
+                <td className="text-left" key="7">{row.remark}</td>
+            );
+        } else if (activeReport === 'Income Report') {
+            cells.push(
+                <td className="text-left" key="0">{row.student_name}</td>,
+                <td className="text-left" key="1">{row.invoice_no}</td>,
+                <td className="text-left" key="2">{row.income_head}</td>,
+                <td className="text-left" key="3">{row.date}</td>,
+                <td className="text-right" key="4">{(row.amount || 0).toFixed(2)}</td>
+            );
+        } else if (activeReport === 'Expense Report') {
+            cells.push(
+                <td className="text-left" key="0">{row.date}</td>,
+                <td className="text-left" key="1">{row.fee_type}</td>,
+                <td className="text-left" key="2">{row.student_name}</td>,
+                <td className="text-left" key="3">{row.invoice_no}</td>,
+                <td className="text-right" key="4">{(row.amount || 0).toFixed(2)}</td>
+            );
+        } else if (activeReport === 'Payroll Report') {
+            cells.push(
+                <td className="text-left" key="0">{row.student_name}</td>,
+                <td className="text-left" key="1">{row.role}</td>,
+                <td className="text-left" key="2">{row.designation}</td>,
+                <td className="text-left" key="3">{row.month_year}</td>,
+                <td className="text-left" key="4">{row.payslip}</td>,
+                <td className="text-right" key="5">{(row.basic || 0).toFixed(2)}</td>,
+                <td className="text-right" key="6">{(row.earning || 0).toFixed(2)}</td>,
+                <td className="text-right" key="7">{(row.deduction || 0).toFixed(2)}</td>,
+                <td className="text-right" key="8">{(row.gross || 0).toFixed(2)}</td>,
+                <td className="text-right" key="9">{(row.tax || 0).toFixed(2)}</td>,
+                <td className="text-right" key="10">{(row.net || 0).toFixed(2)}</td>
+            );
+        } else if (activeReport === 'Income Group Report') {
+            cells.push(
+                <td className="text-left" key="0">{row.income_head}</td>,
+                <td className="text-left" key="1">{row.income_id}</td>,
+                <td className="text-left" key="2">{row.student_name}</td>,
+                <td className="text-left" key="3">{row.date}</td>,
+                <td className="text-left" key="4">{row.invoice_no}</td>,
+                <td className="text-right" key="5">{(row.amount || 0).toFixed(2)}</td>
+            );
+        } else if (activeReport === 'Expense Group Report') {
+            cells.push(
+                <td className="text-left" key="0">{row.fee_type}</td>,
+                <td className="text-left" key="1">{row.expense_id}</td>,
+                <td className="text-left" key="2">{row.student_name}</td>,
+                <td className="text-left" key="3">{row.date}</td>,
+                <td className="text-left" key="4">{row.invoice_no}</td>,
+                <td className="text-right" key="5">{(row.amount || 0).toFixed(2)}</td>
+            );
+        } else if (activeReport === 'Fees Collection Report') {
+            cells.push(
+                <td className="text-center" key="0">{index + 1}</td>,
+                <td className="text-center" key="1">{row.date}</td>,
+                <td className="text-center" key="2">{row.admission_no}</td>,
+                <td className="text-center" key="3">{row.student_name}</td>,
+                <td className="text-center" key="4">{row.class}</td>,
+                <td className="text-center" key="5">{row.fee_type}</td>,
+                <td className="text-center" key="6">{row.collected_by}</td>,
+                <td className="text-center" key="7">{row.mode}</td>,
+                <td className="text-center" key="8">₹{(row.paid || 0).toFixed(2)}</td>,
+                <td className="text-center" key="9">₹{(row.discount || 0).toFixed(2)}</td>,
+                <td className="text-center" key="10">₹{(row.fine || 0).toFixed(2)}</td>,
+                <td className="text-center" key="11">₹{(row.total || 0).toFixed(2)}</td>
+            );
+        } else {
+            cells.push(
+                <td className="text-center" key="0">{index + 1}</td>,
+                <td className="text-center" key="1">{row.description || row.student_name}</td>,
+                <td className="text-center" key="2">{row.amount || row.balance}</td>
             );
         }
-        if (activeReport === 'Balance Fees Report') {
-            return (
-                <>
-                    <td className="text-left">{index + 1}</td>
-                    <td className="text-left">{row.admission_no}</td>
-                    <td className="text-left">{row.name}</td>
-                    <td className="text-left">{row.father_name}</td>
-                    <td className="text-left">{row.father_phone}</td>
-
-                    {currentConfig.headers.slice(5, currentConfig.headers.length - 5).map((header, i) => (
-                        <td key={i} className="text-right">
-                            {(row[header] || row[header.toLowerCase()] || row[header.toUpperCase()] || 0).toString()}
-                        </td>
-                    ))}
-
-                    <td className="text-right">{(row.totalfee || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.deposit || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.discount || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.fine || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.balance || 0).toFixed(2)}</td>
-                </>
-            );
-        }
-
-        if (activeReport === 'No Due Certificate') {
-            return (
-                <>
-                    <td className="text-left">{row.admission_no}</td>
-                    <td className="text-left">{row.name}</td>
-                    <td className="text-left">{row.class}</td>
-                    <td className="text-left">{row.section}</td>
-                    <td className="text-right">{(row.balance || 0).toFixed(2)}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Online Fees Collection Report') {
-            return (
-                <>
-                    <td className="text-left">{row.id}</td>
-                    <td className="text-left">{row.date}</td>
-                    <td className="text-left">{row.admission_no}</td>
-                    <td className="text-left">{`${row.firstname} ${row.lastname}`}</td>
-                    <td className="text-left">{`${row.class} (${row.section})`}</td>
-                    <td className="text-left">{row.type}</td>
-                    <td className="text-left">{row.payment_mode}</td>
-                    <td className="text-right">{(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="text-right">{(row.amount_discount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="text-right">{(row.amount_fine || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="text-right">{(parseFloat(row.amount || 0) + parseFloat(row.amount_fine || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Day Collection Report') {
-            return (
-                <>
-                    <td className="text-left">{index + 1}</td>
-                    <td className="text-left">{row.admission_no}</td>
-                    <td className="text-left">{`${row.firstname} ${row.lastname}`}</td>
-                    <td className="text-left">{`${row.class} (${row.section})`}</td>
-                    <td className="text-left">{row.id}</td>
-                    <td className="text-left">{row.reference_no}</td>
-                    <td className="text-left">{row.mode}</td>
-                    <td className="text-right">{(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="text-left">{row.created_at || row.date}</td>
-                    <td className="text-left">{row.collected_by}</td>
-                    <td className="text-left">{row.fee_types}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Balance Fees Report With Remark') {
-            return (
-                <>
-                    <td className="text-left">{row.student_name} ({row.admission_no})</td>
-                    <td className="text-left">{row.class}</td>
-                    <td className="text-left">{row.fees_group}</td>
-                    <td className="text-right">{(row.amount || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.paid || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.balance || 0).toFixed(2)}</td>
-                    <td className="text-left">{row.guardian_phone}</td>
-                    <td className="text-left">{row.remark}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Income Report') {
-            return (
-                <>
-                    <td className="text-left">{row.student_name}</td>
-                    <td className="text-left">{row.invoice_no}</td>
-                    <td className="text-left">{row.income_head}</td>
-                    <td className="text-left">{row.date}</td>
-                    <td className="text-right">{(row.amount || 0).toFixed(2)}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Expense Report') {
-            return (
-                <>
-                    <td className="text-left">{row.date}</td>
-                    <td className="text-left">{row.fee_type}</td>
-                    <td className="text-left">{row.student_name}</td>
-                    <td className="text-left">{row.invoice_no}</td>
-                    <td className="text-right">{(row.amount || 0).toFixed(2)}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Payroll Report') {
-            return (
-                <>
-                    <td className="text-left">{row.student_name}</td>
-                    <td className="text-left">{row.role}</td>
-                    <td className="text-left">{row.designation}</td>
-                    <td className="text-left">{row.month_year}</td>
-                    <td className="text-left">{row.payslip}</td>
-                    <td className="text-right">{(row.basic || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.earning || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.deduction || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.gross || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.tax || 0).toFixed(2)}</td>
-                    <td className="text-right">{(row.net || 0).toFixed(2)}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Income Group Report') {
-            return (
-                <>
-                    <td className="text-left">{row.income_head}</td>
-                    <td className="text-left">{row.income_id}</td>
-                    <td className="text-left">{row.student_name}</td>
-                    <td className="text-left">{row.date}</td>
-                    <td className="text-left">{row.invoice_no}</td>
-                    <td className="text-right">{(row.amount || 0).toFixed(2)}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Expense Group Report') {
-            return (
-                <>
-                    <td className="text-left">{row.fee_type}</td>
-                    <td className="text-left">{row.expense_id}</td>
-                    <td className="text-left">{row.student_name}</td>
-                    <td className="text-left">{row.date}</td>
-                    <td className="text-left">{row.invoice_no}</td>
-                    <td className="text-right">{(row.amount || 0).toFixed(2)}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Day Collection Report') {
-            return (
-                <>
-                    <td className="text-left">{index + 1}</td>
-                    <td className="text-left">{row.admission_no}</td>
-                    <td className="text-left">{row.student_name}</td>
-                    <td className="text-left">{row.class}</td>
-                    <td className="text-left">{row.receipt_no}</td>
-                    <td className="text-left">{row.reference_no}</td>
-                    <td className="text-left">{row.mode}</td>
-                    <td className="text-right">{(row.amount || 0).toFixed(2)}</td>
-                    <td className="text-left">{row.date}</td>
-                    <td className="text-left">{row.collected_by}</td>
-                    <td className="text-left">{row.fee_type}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Fees Collection Report') {
-            return (
-                <>
-                    <td className="text-center">{index + 1}</td>
-                    <td className="text-center">{row.date}</td>
-                    <td className="text-center">{row.admission_no}</td>
-                    <td className="text-center">{row.student_name}</td>
-                    <td className="text-center">{row.class}</td>
-                    <td className="text-center">{row.fee_type}</td>
-                    <td className="text-center">{row.collected_by}</td>
-                    <td className="text-center">{row.mode}</td>
-                    <td className="text-center">₹{(row.paid || 0).toFixed(2)}</td>
-                    <td className="text-center">₹{(row.discount || 0).toFixed(2)}</td>
-                    <td className="text-center">₹{(row.fine || 0).toFixed(2)}</td>
-                    <td className="text-center">₹{(row.total || 0).toFixed(2)}</td>
-                </>
-            );
-        }
-        if (activeReport === 'Student Day Sheet Report') {
-            return (
-                <>
-                    <td className="text-center">{index + 1}</td>
-                    <td className="text-center">{row.class}</td>
-                    <td className="text-center">{row.student_name}</td>
-                    <td className="text-center">{row.payment_id}</td>
-                    <td className="text-center">{row.july}</td>
-                    <td className="text-center">{row.test}</td>
-                    <td className="text-center">{row.sep}</td>
-                    <td className="text-center">{row.feb}</td>
-                    <td className="text-center">{row.dec}</td>
-                    <td className="text-center">{row.aug}</td>
-                    <td className="text-center">{row.prev_balance}</td>
-                    <td className="text-center">{row.oct}</td>
-                    <td className="text-center">{row.nov}</td>
-                    <td className="text-center">{row.jan}</td>
-                    <td className="text-center">{row.mar}</td>
-                    <td className="text-center">{row.hostel1}</td>
-                    <td className="text-center">{row.uniform}</td>
-                    <td className="text-center">{(row.total || 0).toFixed(2)}</td>
-                    <td className="text-center">{row.mode}</td>
-                    <td className="text-center">{row.collected_by}</td>
-                </>
-            );
-        }
-        return (
-            <>
-                <td className="text-center">{index + 1}</td>
-                <td className="text-center">{row.description || row.student_name}</td>
-                <td className="text-center">{row.amount || row.balance}</td>
-            </>
-        );
+        return cells.filter((_, idx) => !hiddenColumns.includes(idx));
     };
 
     return (
@@ -1707,18 +1635,36 @@ const FinanceReport = () => {
                                         )}
                                         <div className="dt-buttons">
                                             {!currentConfig.showExcelPrintOnly && (
-                                                <button className="dt-button" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-copy"></i></button>
+                                                <button className="dt-button buttons-copy buttons-html5" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-copy"></i></button>
                                             )}
                                             {!currentConfig.hideExportButtons && (
                                                 <>
-                                                    <button className="dt-button" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    {!currentConfig.showExcelPrintOnly && <button className="dt-button" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>}
+                                                    <button className="dt-button buttons-excel buttons-html5" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                    {!currentConfig.showExcelPrintOnly && <button className="dt-button buttons-csv buttons-html5" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>}
+                                                    <button className="dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
                                                 </>
                                             )}
                                             {(activeReport === 'Daily Collection Report' || (!currentConfig.hidePrint && activeReport !== 'Daily Collection Report')) && (
-                                                <button className="dt-button" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
+                                                <button className="dt-button buttons-print" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
                                             )}
-                                            {!currentConfig.showExcelPrintOnly && <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>}
+                                            {!currentConfig.showExcelPrintOnly && (
+                                                <div className="btn-group">
+                                                    <button className="dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showColumnsDropdown && (
+                                                        <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto', zIndex: 1050 }}>
+                                                            {currentConfig.headers.map((header, idx) => (
+                                                                <li key={idx}>
+                                                                    <label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}>
+                                                                        <input type="checkbox" checked={!hiddenColumns.includes(idx)} onChange={() => toggleColumnVisibility(idx)} style={{ marginRight: '10px' }} /> {header}
+                                                                    </label>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -1743,7 +1689,7 @@ const FinanceReport = () => {
                                                             <thead>
                                                                 <tr>
                                                                     {currentConfig.headers.map((header, idx) => (
-                                                                        <th key={idx} className="text-center">{header}</th>
+                                                                        !hiddenColumns.includes(idx) && <th key={idx} className="text-center">{header}</th>
                                                                     ))}
                                                                 </tr>
                                                             </thead>
@@ -1752,7 +1698,7 @@ const FinanceReport = () => {
                                                                     <tr key={index}>{renderRow(row, index)}</tr>
                                                                 ))}
                                                                 <tr className="total-row">
-                                                                    <td colSpan="11" className="text-right" style={{ fontWeight: '600' }}>
+                                                                    <td colSpan={currentConfig.headers.length - hiddenColumns.length} className="text-right" style={{ fontWeight: '600' }}>
                                                                         Total {displayMode}: ₹{modeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                                     </td>
                                                                 </tr>
@@ -1768,7 +1714,7 @@ const FinanceReport = () => {
                                                 <thead>
                                                     <tr>
                                                         {currentConfig.headers.map((header, idx) => (
-                                                            <th key={idx} className="text-center">{header}</th>
+                                                            !hiddenColumns.includes(idx) && <th key={idx} className="text-center">{header}</th>
                                                         ))}
                                                     </tr>
                                                 </thead>
@@ -1778,24 +1724,34 @@ const FinanceReport = () => {
                                                     ))}
                                                     {(activeReport === 'Balance Fees Statement' || activeReport === 'Fees Statement') && (
                                                         <tr className="total-row">
-                                                            <td colSpan="4" className="text-center" style={{ fontWeight: '600' }}>Grand Total</td>
-                                                            <td className="text-center">
-                                                                {activeReport === 'Balance Fees Statement' ? (
-                                                                    <>₹{(totals.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span style={{ color: 'red' }}> + 0.00</span></>
-                                                                ) : (totals.amount || 0).toFixed(2)}
-                                                            </td>
-                                                            <td colSpan="3" className="text-center"></td>
-                                                            <td className="text-center">₹{(totals.discount || 0).toFixed(2)}</td>
-                                                            <td className="text-center">₹{(totals.fine || 0).toFixed(2)}</td>
-                                                            <td className="text-center">₹{(totals.paid || 0).toFixed(2)}</td>
-                                                            <td className="text-center">₹{(totals.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                            <td colSpan={currentConfig.headers.length - hiddenColumns.length - (activeReport === 'Fees Statement' ? 8 : 4)} className="text-center" style={{ fontWeight: '600' }}>Grand Total</td>
+                                                            {!hiddenColumns.includes(4) && (
+                                                                <td className="text-center">
+                                                                    {activeReport === 'Balance Fees Statement' ? (
+                                                                        <>₹{(totals.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span style={{ color: 'red' }}> + 0.00</span></>
+                                                                    ) : (totals.amount || 0).toFixed(2)}
+                                                                </td>
+                                                            )}
+                                                            {activeReport === 'Balance Fees Statement' ? (
+                                                                !hiddenColumns.includes(8) && <td className="text-center">₹{(totals.discount || 0).toFixed(2)}</td>
+                                                            ) : (
+                                                                <>
+                                                                    {!hiddenColumns.includes(5) && <td></td>}
+                                                                    {!hiddenColumns.includes(6) && <td></td>}
+                                                                    {!hiddenColumns.includes(7) && <td></td>}
+                                                                    {!hiddenColumns.includes(8) && <td className="text-center">₹{(totals.discount || 0).toFixed(2)}</td>}
+                                                                </>
+                                                            )}
+                                                            {!hiddenColumns.includes(9) && <td className="text-center">₹{(totals.fine || 0).toFixed(2)}</td>}
+                                                            {!hiddenColumns.includes(10) && <td className="text-center">₹{(totals.paid || 0).toFixed(2)}</td>}
+                                                            {!hiddenColumns.includes(11) && <td className="text-center">₹{(totals.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>}
                                                         </tr>
                                                     )}
                                                     {activeReport === 'Daily Collection Report' && (
                                                         <tr className="total-row">
-                                                            <td colSpan="2" className="text-center" style={{ fontWeight: '600' }}>Total Amount</td>
-                                                            <td className="text-center">₹{(totals.total || 0).toFixed(2)}</td>
-                                                            <td></td>
+                                                            <td colSpan={Math.max(1, currentConfig.headers.length - hiddenColumns.length - 2)} className="text-center" style={{ fontWeight: '600' }}>Total Amount</td>
+                                                            {!hiddenColumns.includes(2) && <td className="text-center">₹{(totals.total || 0).toFixed(2)}</td>}
+                                                            {!hiddenColumns.includes(3) && <td></td>}
                                                         </tr>
                                                     )}
                                                     {activeReport === 'Fees Statement' && (

@@ -5,7 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import '../../styles/reports.css';
 import { api } from '../../services/api';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
 const UserLog = () => {
     const navigate = useNavigate();
@@ -14,6 +14,14 @@ const UserLog = () => {
     const [activeTab, setActiveTab] = useState('all_users');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -114,18 +122,26 @@ const UserLog = () => {
     // Export helpers for UserLog
     const getTabHeaders = (tab) => {
         const hasClass = tab === 'all_users' || tab === 'student';
-        const cols = ['User', 'Role'];
-        if (hasClass) cols.push('Class');
-        cols.push('IP Address', 'Login Date Time', 'User Agent');
+        const cols = [];
+        if (!hiddenColumns.includes(0)) cols.push('User');
+        if (!hiddenColumns.includes(1)) cols.push('Role');
+        if (hasClass && !hiddenColumns.includes(2)) cols.push('Class');
+        if (!hiddenColumns.includes(3)) cols.push('IP Address');
+        if (!hiddenColumns.includes(4)) cols.push('Login Date Time');
+        if (!hiddenColumns.includes(5)) cols.push('User Agent');
         return cols;
     };
     const getTabRows = (tab) => {
         const data = getFilteredData(tab);
         const hasClass = tab === 'all_users' || tab === 'student';
         return data.map(item => {
-            const row = [item.user, item.role];
-            if (hasClass) row.push(item.class || '');
-            row.push(item.ipaddress || item.ip_address || '', item.login_datetime || '', item.user_agent || '');
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(item.user);
+            if (!hiddenColumns.includes(1)) row.push(item.role || '');
+            if (hasClass && !hiddenColumns.includes(2)) row.push(item.class || '');
+            if (!hiddenColumns.includes(3)) row.push(item.ipaddress || item.ip_address || '');
+            if (!hiddenColumns.includes(4)) row.push(item.login_datetime || '');
+            if (!hiddenColumns.includes(5)) row.push(item.user_agent || '');
             return row.map(String);
         });
     };
@@ -145,6 +161,10 @@ const UserLog = () => {
 
     const handleCSV = (tab) => {
         downloadCSV(getTabHeaders(tab), getTabRows(tab), `${tab}_log.csv`);
+    };
+
+    const handlePDF = (tab) => {
+        downloadPDF(getTabHeaders(tab), getTabRows(tab), `${tab}_log.pdf`, tab.replace(/_/g, ' ') + ' User Log');
     };
 
     // Check if tab has Class column
@@ -193,12 +213,13 @@ const UserLog = () => {
                             </div>
                         </div>
                         <div className="pull-right">
-                            <div className="dt-buttons btn-group" style={{ paddingBottom: '2px' }}>
-                                <button className="btn btn-default dt-button" title="Copy" onClick={() => handleCopy(tab)} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-copy"></i></button>
-                                <button className="btn btn-default dt-button" title="Excel" onClick={() => handleExcel(tab)} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-file-excel-o"></i></button>
-                                <button className="btn btn-default dt-button" title="CSV" onClick={() => handleCSV(tab)} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-file-text-o"></i></button>
-                                <button className="btn btn-default dt-button" title="Print" onClick={() => handlePrint(tab)} style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-print"></i></button>
-                                <button className="btn btn-default dt-button" title="Columns" style={{ border: 'none', padding: '5px 5px', background: 'transparent', boxShadow: 'none' }}><i className="fa fa-columns"></i></button>
+                            <div className="dt-buttons btn-group" style={{ paddingBottom: '2px', marginTop: '10px' }}>
+                                <button className="btn btn-default dt-button buttons-copy buttons-html5" title="Copy" onClick={() => handleCopy(tab)}><i className="fa fa-copy"></i></button>
+                                <button className="btn btn-default dt-button buttons-excel buttons-html5" title="Excel" onClick={() => handleExcel(tab)}><i className="fa fa-file-excel-o"></i></button>
+                                <button className="btn btn-default dt-button buttons-csv buttons-html5" title="CSV" onClick={() => handleCSV(tab)}><i className="fa fa-file-text-o"></i></button>
+                                <button className="btn btn-default dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => handlePDF(tab)}><i className="fa fa-file-pdf-o"></i></button>
+                                <button className="btn btn-default dt-button buttons-print" title="Print" onClick={() => handlePrint(tab)}><i className="fa fa-print"></i></button>
+
                             </div>
                         </div>
                     </div>
@@ -208,12 +229,12 @@ const UserLog = () => {
                 <table className="table table-striped table-bordered table-hover userlog-table" data-export-title="User Log">
                     <thead>
                         <tr>
-                            <th>Users</th>
-                            <th style={{ width: '150px' }}>Role</th>
-                            {hasClassColumn(tab) && <th>Class</th>}
-                            <th>IP Address</th>
-                            <th style={{ width: '200px' }}>Login Date Time</th>
-                            <th>User Agent</th>
+                            {!hiddenColumns.includes(0) && <th>Users</th>}
+                            {!hiddenColumns.includes(1) && <th style={{ width: '150px' }}>Role</th>}
+                            {(hasClassColumn(tab) && !hiddenColumns.includes(2)) && <th>Class</th>}
+                            {!hiddenColumns.includes(3) && <th>IP Address</th>}
+                            {!hiddenColumns.includes(4) && <th style={{ width: '200px' }}>Login Date Time</th>}
+                            {!hiddenColumns.includes(5) && <th>User Agent</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -226,12 +247,12 @@ const UserLog = () => {
                         ) : (
                             currentRecords.map((item, index) => (
                                 <tr key={item.id || index}>
-                                    <td>{item.user}</td>
-                                    <td>{item.role ? item.role.charAt(0).toUpperCase() + item.role.slice(1) : ''}</td>
-                                    {hasClassColumn(tab) && <td>{item.class}</td>}
-                                    <td>{item.ipaddress || item.ip_address}</td>
-                                    <td>{item.login_datetime}</td>
-                                    <td>{item.user_agent}</td>
+                                    {!hiddenColumns.includes(0) && <td>{item.user}</td>}
+                                    {!hiddenColumns.includes(1) && <td>{item.role ? item.role.charAt(0).toUpperCase() + item.role.slice(1) : ''}</td>}
+                                    {(hasClassColumn(tab) && !hiddenColumns.includes(2)) && <td>{item.class}</td>}
+                                    {!hiddenColumns.includes(3) && <td>{item.ipaddress || item.ip_address}</td>}
+                                    {!hiddenColumns.includes(4) && <td>{item.login_datetime}</td>}
+                                    {!hiddenColumns.includes(5) && <td>{item.user_agent}</td>}
                                 </tr>
                             ))
                         )}

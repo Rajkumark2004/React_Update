@@ -530,8 +530,17 @@ const CBSEExamList = () => {
         exam.class_sections.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
     const handleExport = (action) => {
-        const headers = [
+        const allHeaders = [
             "Exam Name",
             "Class (Sections)",
             "Term",
@@ -541,17 +550,22 @@ const CBSEExamList = () => {
             "Description",
             "Created At"
         ];
+        
+        const headers = allHeaders.filter((_, i) => !hiddenColumns.includes(i));
 
-        const rows = filteredExams.map(exam => [
-            exam.name,
-            exam.class_sections,
-            exam.term_name,
-            exam.subjectsincluded,
-            Number(exam.is_active) === 1 ? "Yes" : "No",
-            Number(exam.is_publish) === 1 ? "Yes" : "No",
-            exam.description,
-            exam.created_at
-        ].map(v => String(v ?? '')));
+        const rows = filteredExams.map(exam => {
+            const rowData = [
+                exam.name,
+                exam.class_sections,
+                exam.term_name,
+                exam.subjectsincluded,
+                Number(exam.is_active) === 1 ? "Yes" : "No",
+                Number(exam.is_publish) === 1 ? "Yes" : "No",
+                exam.description,
+                exam.created_at
+            ].map(v => String(v ?? ''));
+            return rowData.filter((_, i) => !hiddenColumns.includes(i));
+        });
 
         if (action === 'copy') copyToClipboard(headers, rows);
         if (action === 'excel') downloadExcel(headers, rows, 'Exam_List.xls');
@@ -643,6 +657,21 @@ const CBSEExamList = () => {
                                                     <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>
                                                     <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
                                                     <button className="btn btn-default btn-sm" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
+                                                    <div className="btn-group">
+                                                        <a className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
+                                                        {showColumnsDropdown && (
+                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Exam Name</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Class (Sections)</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Term</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(3)} onChange={() => toggleColumnVisibility(3)} /> Subjects Included</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(4)} onChange={() => toggleColumnVisibility(4)} /> Exam Published</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(5)} onChange={() => toggleColumnVisibility(5)} /> Published Result</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(6)} onChange={() => toggleColumnVisibility(6)} /> Description</label></li>
+                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(7)} onChange={() => toggleColumnVisibility(7)} /> Created At</label></li>
+                                                            </ul>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -651,40 +680,44 @@ const CBSEExamList = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>Exam Name</th>
-                                                    <th style={{ paddingLeft: '5px' }}>Class (Sections)</th>
-                                                    <th>Term</th>
-                                                    <th>Subjects Included</th>
-                                                    <th>Exam Published</th>
-                                                    <th>Published Result</th>
-                                                    <th width="30%">Description</th>
-                                                    <th style={{ whiteSpace: 'nowrap' }}>Created At</th>
+                                                    {!hiddenColumns.includes(0) && <th style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>Exam Name</th>}
+                                                    {!hiddenColumns.includes(1) && <th style={{ paddingLeft: '5px' }}>Class (Sections)</th>}
+                                                    {!hiddenColumns.includes(2) && <th>Term</th>}
+                                                    {!hiddenColumns.includes(3) && <th>Subjects Included</th>}
+                                                    {!hiddenColumns.includes(4) && <th>Exam Published</th>}
+                                                    {!hiddenColumns.includes(5) && <th>Published Result</th>}
+                                                    {!hiddenColumns.includes(6) && <th width="30%">Description</th>}
+                                                    {!hiddenColumns.includes(7) && <th style={{ whiteSpace: 'nowrap' }}>Created At</th>}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {filteredExams.map((exam) => (
                                                     <tr key={exam.id}>
-                                                        <td style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>{exam.name}</td>
-                                                        <td style={{ paddingLeft: '5px' }}>{exam.class_sections}</td>
-                                                        <td>{exam.term_name}</td>
-                                                        <td>{exam.subjectsincluded}</td>
-                                                        <td>
-                                                            {Number(exam.is_active) === 1 ? (
-                                                                <i className="fa fa-check-square-o"></i>
-                                                            ) : (
-                                                                <i className="fa fa-exclamation-circle"></i>
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            {Number(exam.is_publish) === 1 ? (
-                                                                <i className="fa fa-check-square-o"></i>
-                                                            ) : (
-                                                                <i className="fa fa-exclamation-circle"></i>
-                                                            )}
-                                                        </td>
-                                                        <td>{exam.description}</td>
-                                                        <td style={{ whiteSpace: 'nowrap' }}>{exam.created_at}</td>
+                                                        {!hiddenColumns.includes(0) && <td style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>{exam.name}</td>}
+                                                        {!hiddenColumns.includes(1) && <td style={{ paddingLeft: '5px' }}>{exam.class_sections}</td>}
+                                                        {!hiddenColumns.includes(2) && <td>{exam.term_name}</td>}
+                                                        {!hiddenColumns.includes(3) && <td>{exam.subjectsincluded}</td>}
+                                                        {!hiddenColumns.includes(4) && (
+                                                            <td>
+                                                                {Number(exam.is_active) === 1 ? (
+                                                                    <i className="fa fa-check-square-o"></i>
+                                                                ) : (
+                                                                    <i className="fa fa-exclamation-circle"></i>
+                                                                )}
+                                                            </td>
+                                                        )}
+                                                        {!hiddenColumns.includes(5) && (
+                                                            <td>
+                                                                {Number(exam.is_publish) === 1 ? (
+                                                                    <i className="fa fa-check-square-o"></i>
+                                                                ) : (
+                                                                    <i className="fa fa-exclamation-circle"></i>
+                                                                )}
+                                                            </td>
+                                                        )}
+                                                        {!hiddenColumns.includes(6) && <td>{exam.description}</td>}
+                                                        {!hiddenColumns.includes(7) && <td style={{ whiteSpace: 'nowrap' }}>{exam.created_at}</td>}
                                                         <td className="text-right white-space-nowrap">
                                                             <button
                                                                 className="btn btn-default btn-xs"

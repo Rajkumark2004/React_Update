@@ -5,7 +5,7 @@ import Footer from '../../components/Footer';
 import '../../utils/include_files';
 import api from '../../services/api';
 import { useSession } from '../../context/SessionContext';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
 const Term = () => {
     const { sessionYear } = useSession();
@@ -217,6 +217,9 @@ const Term = () => {
                                                     </button>
                                                     <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Term_List.csv'); }}>
                                                         <i className="fa fa-file-text-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Term_List.pdf', 'Term List'); }}>
+                                                        <i className="fa fa-file-pdf-o"></i>
                                                     </button>
                                                     <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Term List'); }}>
                                                         <i className="fa fa-print"></i>

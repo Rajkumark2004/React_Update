@@ -6,7 +6,7 @@ import { useSession } from '../../context/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import '../../utils/include_files';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
 const CBSEGradeList = () => {
     const { sessionYear } = useSession();
@@ -356,6 +356,7 @@ const CBSEGradeList = () => {
                                                 <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
                                                 <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Exam_Grade_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
                                                 <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Exam_Grade_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Exam_Grade_List.pdf', 'Exam Grade List'); }}><i className="fa fa-file-pdf-o"></i></button>
                                                 <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Exam Grade List'); }}><i className="fa fa-print"></i></button>
                                                 <div className="btn-group">
                                                     <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>

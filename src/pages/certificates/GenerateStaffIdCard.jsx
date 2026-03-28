@@ -77,8 +77,8 @@ const GenerateStaffIdCard = () => {
     const getExportData = () => {
         const cols = getVisibleColumns();
         const filtered = staffList.filter(s =>
-            (s.name + ' ' + s.surname).toLowerCase().includes(searchTerm.toLowerCase()) ||
-            s.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
+            ((s.name || '') + ' ' + (s.surname || '')).toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
         );
         const headers = cols.map(c => c.label);
         const rows = filtered.map(staff => cols.map(c => {
@@ -341,13 +341,13 @@ const GenerateStaffIdCard = () => {
                                             </div>
                                             <div className="col-sm-6">
                                                 <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Staff_ID_Card_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Staff_ID_Card_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Staff_ID_Card_List.pdf', 'Staff ID Card List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Staff ID Card List'); }}><i className="fa fa-print"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Staff_ID_Card_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Staff_ID_Card_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Staff_ID_Card_List.pdf', 'Staff ID Card List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Staff ID Card List'); }}><i className="fa fa-print"></i></button>
                                                     <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                        <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
                                                             <i className="fa fa-columns"></i>
                                                         </button>
                                                         {showColumnsDropdown && (
@@ -356,7 +356,7 @@ const GenerateStaffIdCard = () => {
                                                                     const settingVisible = !idCardSettings || idCardSettings[col.setting] == 1;
                                                                     if (!settingVisible) return null;
                                                                     return (
-                                                                        <li key={index}><label><input type="checkbox" checked={!hiddenColumns.includes(index)} onChange={() => toggleColumnVisibility(index)} /> {col.label}</label></li>
+                                                                        <li key={index}><label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}><input type="checkbox" checked={!hiddenColumns.includes(index)} onChange={() => toggleColumnVisibility(index)} style={{ marginRight: '10px' }} /> {col.label}</label></li>
                                                                     );
                                                                 })}
                                                             </ul>
@@ -376,11 +376,11 @@ const GenerateStaffIdCard = () => {
                                                 </thead>
                                                 <tbody>
                                                     {staffList.filter(s =>
-                                                        (s.name + ' ' + s.surname).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        s.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
+                                                        ((s.name || '') + ' ' + (s.surname || '')).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                        (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
                                                     ).length > 0 ? staffList.filter(s =>
-                                                        (s.name + ' ' + s.surname).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        s.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
+                                                        ((s.name || '') + ' ' + (s.surname || '')).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                        (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
                                                     ).map(staff => (
                                                         <tr key={staff.id}>
                                                             <td className="text-center"><input type="checkbox" checked={selectedStaff.includes(staff.id)} onChange={() => handleSelectStaff(staff.id)} /></td>

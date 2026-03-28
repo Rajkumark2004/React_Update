@@ -7,7 +7,7 @@ import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../../utils/tableExport';
 
 const FeeMaster = () => {
     const { currentSession } = useSession();
@@ -399,7 +399,7 @@ const FeeMaster = () => {
                                                 <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getFlatExportRows(); downloadCSV(headers, rows, 'fees_master.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getFlatExportRows(); printTable(headers, rows, 'Fees Master List'); }}>
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getFlatExportRows(); downloadPDF(headers, rows, 'fees_master.pdf', 'Fees Master List'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getFlatExportRows(); printTable(headers, rows, 'Fees Master List'); }}>

@@ -6,6 +6,7 @@ import "../../index.css";
 import '../../utils/include_files';
 import toast from 'react-hot-toast';
 import { usePermissions } from '../../context/PermissionContext';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
 const ModulePermissions = () => {
     const navigate = useNavigate();
@@ -17,6 +18,34 @@ const ModulePermissions = () => {
     const [studentPermissionList, setStudentPermissionList] = useState([]);
     const [parentPermissionList, setParentPermissionList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const columns = [
+        { index: 0, label: 'Name' },
+        { index: 1, label: 'Action' }
+    ];
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const getExportData = (filtered, type, statusKey) => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Name");
+        if (!hiddenColumns.includes(1)) headers.push("Action");
+
+        const rows = filtered.map(item => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(item.name);
+            if (!hiddenColumns.includes(1)) row.push(item[statusKey] == 1 ? 'Active' : 'Inactive');
+            return row;
+        });
+
+        return { headers, rows };
+    };
 
     useEffect(() => {
         fetchPermissions();
@@ -88,21 +117,9 @@ const ModulePermissions = () => {
         }
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
-
-    const handleExportCSV = (list, filename) => {
-        const csvContent = "data:text/csv;charset=utf-8,"
-            + "Name,Status\n"
-            + list.map(e => `${e.name},${e.is_active || e.student || e.parent ? 'Active' : 'Inactive'}`).join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const handlePrint = (filtered, type, statusKey, title) => {
+        const { headers, rows } = getExportData(filtered, type, statusKey);
+        printTable(headers, rows, title);
     };
 
     const filterList = (list) => {
@@ -129,13 +146,24 @@ const ModulePermissions = () => {
                             outline: 'none'
                         }}
                     />
-                    <div style={{ display: 'flex', gap: '10px', color: '#666', fontSize: '14px' }}>
-                        <i className="fa fa-files-o" style={{ cursor: 'pointer' }} title="Copy" onClick={() => toast.success("Copy feature not implemented yet")}></i>
-                        <i className="fa fa-file-text-o" style={{ cursor: 'pointer' }} title="CSV" onClick={() => handleExportCSV(filtered, `${filename}.csv`)}></i>
-                        <i className="fa fa-file-excel-o" style={{ cursor: 'pointer' }} title="Excel" onClick={() => toast.success("Excel export not implemented yet")}></i>
-                        <i className="fa fa-file-pdf-o" style={{ cursor: 'pointer' }} title="PDF" onClick={() => toast.success("PDF export not implemented yet")}></i>
-                        <i className="fa fa-print" style={{ cursor: 'pointer' }} title="Print" onClick={handlePrint}></i>
-                        <i className="fa fa-columns" style={{ cursor: 'pointer' }} title="Columns" onClick={() => toast.success("Column visibility not implemented yet")}></i>
+                    <div className="dt-buttons btn-group">
+                        <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                        <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadExcel(headers, rows, `${filename}.xls`); }}><i className="fa fa-file-excel-o"></i></button>
+                        <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadCSV(headers, rows, `${filename}.csv`); }}><i className="fa fa-file-text-o"></i></button>
+                        <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadPDF(headers, rows, `${filename}.pdf`, filename); }}><i className="fa fa-file-pdf-o"></i></button>
+                        <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => handlePrint(filtered, type, statusKey, filename)}><i className="fa fa-print"></i></button>
+                        <div className="btn-group">
+                            <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                <i className="fa fa-columns"></i>
+                            </button>
+                            {showColumnsDropdown && (
+                                <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                    {columns.map(col => (
+                                        <li key={col.index}><label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}><input type="checkbox" checked={!hiddenColumns.includes(col.index)} onChange={() => toggleColumnVisibility(col.index)} style={{ marginRight: '10px' }} /> {col.label}</label></li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -143,15 +171,15 @@ const ModulePermissions = () => {
                     <table className="table table-striped table-bordered table-hover">
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th style={{ width: "120px", textAlign: "center" }}>Action</th>
+                                {!hiddenColumns.includes(0) && <th>Name</th>}
+                                {!hiddenColumns.includes(1) && <th style={{ width: "120px", textAlign: "center" }}>Action</th>}
                             </tr>
                         </thead>
                         <tbody>
                             {filtered.map((item) => (
                                 <tr key={item.id}>
-                                    <td>{item.name}</td>
-                                    <td style={{ textAlign: "center" }}>
+                                    {!hiddenColumns.includes(0) && <td>{item.name}</td>}
+                                    {!hiddenColumns.includes(1) && <td style={{ textAlign: "center" }}>
                                         <label className="custom-switch">
                                             <input
                                                 type="checkbox"
@@ -160,7 +188,7 @@ const ModulePermissions = () => {
                                             />
                                             <span className="slider"></span>
                                         </label>
-                                    </td>
+                                    </td>}
                                 </tr>
                             ))}
                         </tbody>

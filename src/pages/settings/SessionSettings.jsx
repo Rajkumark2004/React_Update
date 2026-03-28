@@ -4,6 +4,7 @@ import SettingsMenu from "../../components/SettingsMenu";
 import Loader from "../../components/Loader";
 import "../../utils/include_files.js";
 import api from "../../services/api";
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
 const SessionSettings = () => {
     const navigate = useNavigate();
@@ -12,10 +13,42 @@ const SessionSettings = () => {
     const [error, setError] = useState('');
 
     const [newSession, setNewSession] = useState('');
-
     const [viewSession, setViewSession] = useState(null);
-
     const [editSession, setEditSession] = useState(null);
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const columns = [
+        { index: 0, label: 'Session' },
+        { index: 1, label: 'Status' }
+    ];
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    const filteredSessions = sessions.filter(s =>
+        s.session.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const getExportData = () => {
+        const headers = [];
+        if (!hiddenColumns.includes(0)) headers.push("Session");
+        if (!hiddenColumns.includes(1)) headers.push("Status");
+
+        const rows = filteredSessions.map(session => {
+            const row = [];
+            if (!hiddenColumns.includes(0)) row.push(session.session);
+            if (!hiddenColumns.includes(1)) row.push(session.status === 'active' ? 'Active' : 'Inactive');
+            return row;
+        });
+
+        return { headers, rows };
+    };
 
     const fetchSessions = async () => {
         try {
@@ -250,6 +283,8 @@ const SessionSettings = () => {
                                         type="text"
                                         className="form-control input-sm"
                                         placeholder="Search..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
                                         style={{
                                             width: '280px',
                                             border: 'none',
@@ -260,30 +295,24 @@ const SessionSettings = () => {
                                     />
 
                                     {/* Icons */}
-                                    <div
-                                        style={{
-                                            display: 'flex',
-                                            gap: '10px'
-                                        }}
-                                    >
-                                        <button className="btn btn-default btn-xs" title="Copy">
-                                            <i className="fa fa-files-o"></i>
-                                        </button>
-                                        <button className="btn btn-default btn-xs" title="Excel">
-                                            <i className="fa fa-file-excel-o"></i>
-                                        </button>
-                                        <button className="btn btn-default btn-xs" title="CSV">
-                                            <i className="fa fa-file-text-o"></i>
-                                        </button>
-                                        <button className="btn btn-default btn-xs" title="PDF">
-                                            <i className="fa fa-file-pdf-o"></i>
-                                        </button>
-                                        <button className="btn btn-default btn-xs" title="Print">
-                                            <i className="fa fa-print"></i>
-                                        </button>
-                                        <button className="btn btn-default btn-xs" title="Columns">
-                                            <i className="fa fa-columns"></i>
-                                        </button>
+                                    <div className="dt-buttons btn-group">
+                                        <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                        <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Session_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                        <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Session_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                        <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Session_List.pdf', 'Session List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                        <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Session List'); }}><i className="fa fa-print"></i></button>
+                                        <div className="btn-group">
+                                            <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                <i className="fa fa-columns"></i>
+                                            </button>
+                                            {showColumnsDropdown && (
+                                                <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                    {columns.map(col => (
+                                                        <li key={col.index}><label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}><input type="checkbox" checked={!hiddenColumns.includes(col.index)} onChange={() => toggleColumnVisibility(col.index)} style={{ marginRight: '10px' }} /> {col.label}</label></li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -293,22 +322,22 @@ const SessionSettings = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Session</th>
-                                                    <th>Status</th>
+                                                    {!hiddenColumns.includes(0) && <th>Session</th>}
+                                                    {!hiddenColumns.includes(1) && <th>Status</th>}
                                                     <th className="text-right">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {sessions.map((session) => (
+                                                {filteredSessions.map((session) => (
                                                     <tr key={session.id}>
-                                                        <td className="mailbox-name">
+                                                        {!hiddenColumns.includes(0) && <td className="mailbox-name">
                                                             <a href="#" onClick={(e) => { e.preventDefault(); setViewSession(session); }} title="View">
                                                                 {session.session}
                                                             </a>
-                                                        </td>
-                                                        <td className="mailbox-name">
+                                                        </td>}
+                                                        {!hiddenColumns.includes(1) && <td className="mailbox-name">
                                                             {session.status === 'active' && <span className="label bg-green font-weight-normal">Active</span>}
-                                                        </td>
+                                                        </td>}
                                                         <td className="mailbox-date text-right">
                                                             <button className="btn btn-default btn-xs" title="Edit" onClick={() => startEdit(session)}>
                                                                 <i className="fa fa-pencil"></i>

@@ -5,7 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import '../../styles/reports.css';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
 
 const AttendanceReport = () => {
     const navigate = useNavigate();
@@ -27,11 +27,30 @@ const AttendanceReport = () => {
     const [studentId, setStudentId] = useState('');
     const [searchType, setSearchType] = useState('today');
     const [searchTerm, setSearchTerm] = useState('');
+    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const dropdownRef = React.useRef(null);
 
     // Table states
     const [loading, setLoading] = useState(false);
     const [searched, setSearched] = useState(false);
     const [reportData, setReportData] = useState(null);
+
+    const toggleColumnVisibility = (colIndex) => {
+        setHiddenColumns(prev =>
+            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
+        );
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowColumnsDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Data states
     const [classList, setClassList] = useState([]);
@@ -633,6 +652,7 @@ const AttendanceReport = () => {
         if (action === 'copy') copyToClipboard(hdrs, rows);
         if (action === 'excel') downloadExcel(hdrs, rows, 'Class_Attendance.xls');
         if (action === 'csv') downloadCSV(hdrs, rows, 'Class_Attendance.csv');
+        if (action === 'pdf') downloadPDF(hdrs, rows, 'Class_Attendance.pdf', 'Student Attendance Report');
         if (action === 'print') printTable(hdrs, rows, 'Student Attendance Report');
     };
     // type_report
@@ -643,6 +663,7 @@ const AttendanceReport = () => {
         if (action === 'copy') copyToClipboard(hdrs, rows);
         if (action === 'excel') downloadExcel(hdrs, rows, 'Type_Report.xls');
         if (action === 'csv') downloadCSV(hdrs, rows, 'Type_Report.csv');
+        if (action === 'pdf') downloadPDF(hdrs, rows, 'Type_Report.pdf', 'Student Attendance Type Report');
         if (action === 'print') printTable(hdrs, rows, 'Student Attendance Type Report');
     };
     // daily_report
@@ -653,6 +674,7 @@ const AttendanceReport = () => {
         if (action === 'copy') copyToClipboard(hdrs, rows);
         if (action === 'excel') downloadExcel(hdrs, rows, 'Daily_Attendance.xls');
         if (action === 'csv') downloadCSV(hdrs, rows, 'Daily_Attendance.csv');
+        if (action === 'pdf') downloadPDF(hdrs, rows, 'Daily_Attendance.pdf', 'Daily Attendance Report');
         if (action === 'print') printTable(hdrs, rows, 'Daily Attendance Report');
     };
     // staff_report
@@ -663,6 +685,7 @@ const AttendanceReport = () => {
         if (action === 'copy') copyToClipboard(hdrs, rows);
         if (action === 'excel') downloadExcel(hdrs, rows, 'Staff_Attendance.xls');
         if (action === 'csv') downloadCSV(hdrs, rows, 'Staff_Attendance.csv');
+        if (action === 'pdf') downloadPDF(hdrs, rows, 'Staff_Attendance.pdf', 'Staff Attendance Report');
         if (action === 'print') printTable(hdrs, rows, 'Staff Attendance Report');
     };
     // late_report
@@ -673,19 +696,56 @@ const AttendanceReport = () => {
         if (action === 'copy') copyToClipboard(hdrs, rows);
         if (action === 'excel') downloadExcel(hdrs, rows, 'Late_Entries.xls');
         if (action === 'csv') downloadCSV(hdrs, rows, 'Late_Entries.csv');
+        if (action === 'pdf') downloadPDF(hdrs, rows, 'Late_Entries.pdf', 'Late Entries Report');
         if (action === 'print') printTable(hdrs, rows, 'Late Entries Report');
     };
 
     const getDaysArray = (monthName, yearVal) => {
         const monthIndex = months.indexOf(monthName);
-        const dateObj = new Date(yearVal, monthIndex, 1);
-        const days = [];
-        while (dateObj.getMonth() === monthIndex) {
-            days.push(new Date(dateObj));
-            dateObj.setDate(dateObj.getDate() + 1);
+        const date = new Date(yearVal, monthIndex, 1);
+        const result = [];
+        while (date.getMonth() === monthIndex) {
+            result.push(new Date(date));
+            date.setDate(date.getDate() + 1);
         }
-        return days;
+        return result;
     };
+
+    const renderExportToolbar = (exportHandler, headers) => (
+        <div className="dt-header no-print">
+            <div className="dt-search">
+                <input
+                    type="text"
+                    placeholder="Search..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <div className="dt-buttons">
+                <button className="dt-button" title="Copy" onClick={() => exportHandler('copy')}><i className="fa fa-copy"></i></button>
+                <button className="dt-button" title="Excel" onClick={() => exportHandler('excel')}><i className="fa fa-file-excel-o"></i></button>
+                <button className="dt-button" title="CSV" onClick={() => exportHandler('csv')}><i className="fa fa-file-text-o"></i></button>
+                <button className="dt-button" title="PDF" onClick={() => exportHandler('pdf')}><i className="fa fa-file-pdf-o"></i></button>
+                <button className="dt-button" title="Print" onClick={() => exportHandler('print')}><i className="fa fa-print"></i></button>
+                <div className="btn-group" ref={dropdownRef}>
+                    <button className="dt-button" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                        <i className="fa fa-columns"></i>
+                    </button>
+                    {showColumnsDropdown && (
+                        <ul className="dropdown-menu dropdown-menu-right" style={{ display: 'block', right: 0, left: 'auto', padding: '10px' }}>
+                            {headers.map((h, i) => (
+                                <li key={i} style={{ listStyle: 'none', margin: '5px 0' }}>
+                                    <label style={{ fontWeight: 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                        <input type="checkbox" checked={!hiddenColumns.includes(i)} onChange={() => toggleColumnVisibility(i)} style={{ marginRight: '8px' }} /> {h}
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 
     const days = (activeReport === 'class_attendance' || activeReport === 'staff_report') && reportData ? getDaysArray(reportData.month, reportData.year) : [];
 
@@ -1031,29 +1091,7 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'class_attendance' && (
                                         <div className="table-responsive" style={{ marginTop: '10px' }}>
-                                            <div className="dt-header" style={{ alignItems: 'flex-end' }}>
-                                                <div className="dt-search">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="lateday-stack">
-                                                    <div className="lateday">
-                                                        {attTypes.map(t => <b key={t.key}>{t.type}: {t.key}</b>)}
-                                                        <b>Holiday: H</b>
-                                                    </div>
-                                                    <div className="dt-buttons">
-                                                        <button className="dt-button" title="Copy" onClick={() => exportClassAttendance('copy')}><i className="fa fa-copy"></i></button>
-                                                        <button className="dt-button" title="Excel" onClick={() => exportClassAttendance('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                        <button className="dt-button" title="CSV" onClick={() => exportClassAttendance('csv')}><i className="fa fa-file-text-o"></i></button>
-                                                        <button className="dt-button" title="Print" onClick={() => exportClassAttendance('print')}><i className="fa fa-print"></i></button>
-                                                        <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            {renderExportToolbar(exportClassAttendance, ['Student Name', '(%)', 'P', 'L', 'A', 'F', 'H'])}
 
                                             <table className="table table-striped table-bordered table-hover attendance-table">
                                                 <thead>
@@ -1086,23 +1124,7 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'type_report' && (
                                         <div className="table-responsive">
-                                            <div className="dt-header">
-                                                <div className="dt-search">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="dt-buttons">
-                                                    <button className="dt-button" title="Copy" onClick={() => exportTypeReport('copy')}><i className="fa fa-copy"></i></button>
-                                                    <button className="dt-button" title="Excel" onClick={() => exportTypeReport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="dt-button" title="CSV" onClick={() => exportTypeReport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="dt-button" title="Print" onClick={() => exportTypeReport('print')}><i className="fa fa-print"></i></button>
-                                                    <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
-                                                </div>
-                                            </div>
+                                            {renderExportToolbar(exportTypeReport, ['Admission No', 'Student Name', 'Class (Section)', 'Father Name', 'Date Of Birth', 'Adm Date', 'Gender', 'Mobile', 'Count'])}
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>Admission No</th><th>Student Name</th><th>Class (Section)</th><th>Father Name</th><th>Date Of Birth</th><th>Adm Date</th><th>Gender</th><th>Mobile</th><th>Count</th></tr></thead>
                                                 <tbody>{Array.isArray(reportData) && reportData
@@ -1128,23 +1150,7 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'daily_report' && (
                                         <div className="table-responsive">
-                                            <div className="dt-header">
-                                                <div className="dt-search">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="dt-buttons">
-                                                    <button className="dt-button" title="Copy" onClick={() => exportDailyReport('copy')}><i className="fa fa-copy"></i></button>
-                                                    <button className="dt-button" title="Excel" onClick={() => exportDailyReport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="dt-button" title="CSV" onClick={() => exportDailyReport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="dt-button" title="Print" onClick={() => exportDailyReport('print')}><i className="fa fa-print"></i></button>
-                                                    <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
-                                                </div>
-                                            </div>
+                                            {renderExportToolbar(exportDailyReport, ['Class (Section)', 'Total Present', 'Total Absent', 'Present %', 'Absent %'])}
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>Class (Section)</th><th>Total Present</th><th>Total Absent</th><th>Present %</th><th>Absent %</th></tr></thead>
                                                 <tbody>
@@ -1184,29 +1190,7 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'staff_report' && (
                                         <div className="table-responsive">
-                                            <div className="dt-header" style={{ alignItems: 'flex-end' }}>
-                                                <div className="dt-search">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="lateday-stack">
-                                                    <div className="lateday">
-                                                        {attTypes.map(t => <b key={t.key}>{t.type}: {t.key}</b>)}
-                                                        <b>Holiday: H</b>
-                                                    </div>
-                                                    <div className="dt-buttons">
-                                                        <button className="dt-button" title="Copy" onClick={() => exportStaffReport('copy')}><i className="fa fa-copy"></i></button>
-                                                        <button className="dt-button" title="Excel" onClick={() => exportStaffReport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                        <button className="dt-button" title="CSV" onClick={() => exportStaffReport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                                        <button className="dt-button" title="Print" onClick={() => exportStaffReport('print')}><i className="fa fa-print"></i></button>
-                                                        <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            {renderExportToolbar(exportStaffReport, ['Staff Name', '(%)', 'P', 'L', 'A', 'H', 'F'])}
                                             <table className="table table-striped table-bordered table-hover attendance-table">
                                                 <thead>
                                                     <tr><th rowSpan="2" style={{ textAlign: 'left' }}>Staff Name</th><th rowSpan="2">(%)</th><th colSpan="5">Total</th>{days.map(d => <th key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>)}</tr>
@@ -1237,23 +1221,7 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'late_report' && (
                                         <div className="table-responsive">
-                                            <div className="dt-header">
-                                                <div className="dt-search">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="dt-buttons">
-                                                    <button className="dt-button" title="Copy" onClick={() => exportLateReport('copy')}><i className="fa fa-copy"></i></button>
-                                                    <button className="dt-button" title="Excel" onClick={() => exportLateReport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="dt-button" title="CSV" onClick={() => exportLateReport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="dt-button" title="Print" onClick={() => exportLateReport('print')}><i className="fa fa-print"></i></button>
-                                                    <button className="dt-button" title="Columns"><i className="fa fa-columns"></i></button>
-                                                </div>
-                                            </div>
+                                            {renderExportToolbar(exportLateReport, ['S.No', 'Name', 'Admission No', 'Class (Section)', 'Date', 'Time', 'Roll No'])}
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>S.No</th><th>Name</th><th>Admission No</th><th>Class (Section)</th><th>Date</th><th>Time</th><th>Roll No</th></tr></thead>
                                                 <tbody>{Array.isArray(reportData) && reportData
