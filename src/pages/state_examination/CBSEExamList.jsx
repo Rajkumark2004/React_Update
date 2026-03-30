@@ -532,7 +532,7 @@ const CBSEExamList = () => {
 
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
-    
+
     const toggleColumnVisibility = (colIndex) => {
         setHiddenColumns(prev =>
             prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
@@ -550,7 +550,7 @@ const CBSEExamList = () => {
             "Description",
             "Created At"
         ];
-        
+
         const headers = allHeaders.filter((_, i) => !hiddenColumns.includes(i));
 
         const rows = filteredExams.map(exam => {
@@ -559,8 +559,8 @@ const CBSEExamList = () => {
                 exam.class_sections,
                 exam.term_name,
                 exam.subjectsincluded,
-                Number(exam.is_active) === 1 ? "Yes" : "No",
                 Number(exam.is_publish) === 1 ? "Yes" : "No",
+                Number(exam.is_active) === 1 ? "Yes" : "No",
                 exam.description,
                 exam.created_at
             ].map(v => String(v ?? ''));
@@ -700,7 +700,7 @@ const CBSEExamList = () => {
                                                         {!hiddenColumns.includes(3) && <td>{exam.subjectsincluded}</td>}
                                                         {!hiddenColumns.includes(4) && (
                                                             <td>
-                                                                {Number(exam.is_active) === 1 ? (
+                                                                {Number(exam.is_publish) === 1 ? (
                                                                     <i className="fa fa-check-square-o"></i>
                                                                 ) : (
                                                                     <i className="fa fa-exclamation-circle"></i>
@@ -709,7 +709,7 @@ const CBSEExamList = () => {
                                                         )}
                                                         {!hiddenColumns.includes(5) && (
                                                             <td>
-                                                                {Number(exam.is_publish) === 1 ? (
+                                                                {Number(exam.is_active) === 1 ? (
                                                                     <i className="fa fa-check-square-o"></i>
                                                                 ) : (
                                                                     <i className="fa fa-exclamation-circle"></i>
@@ -825,7 +825,7 @@ const CBSEExamList = () => {
                                                             name="is_active"
                                                             checked={isActive}
                                                             onChange={(e) => setIsActive(e.target.checked)}
-                                                        /> Active
+                                                        /> Publish Result
                                                     </label>
                                                 </div>
                                             </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -91,21 +92,20 @@ const Term = () => {
 
             const response = await api.addCBSETerm(payload);
             if (response.status) {
-                alert(response.message || (isEditing ? "Record Updated Successfully" : "Record Saved Successfully"));
+                toast.success(response.message || (isEditing ? "Record Updated Successfully" : "Record Saved Successfully"));
                 // Refresh the term list
                 const listResponse = await api.getCBSETermList();
                 if (listResponse.status && listResponse.data) {
                     setTerms(listResponse.data);
                 }
+                setShowModal(false);
+                resetForm();
             } else {
-                alert(response.message || "Failed to save record");
+                toast.error(response.message || "debug");
             }
-
-            setShowModal(false);
-            resetForm();
         } catch (error) {
             console.error("Error saving term:", error);
-            alert("Failed to save record");
+            //toast.error("Failed to save record");
         }
     };
 
@@ -122,11 +122,11 @@ const Term = () => {
                 setIsEditing(true);
                 setShowModal(true);
             } else {
-                alert("Failed to fetch term details");
+                toast.error("Failed to fetch term details");
             }
         } catch (error) {
             console.error("Error fetching term data:", error);
-            alert("Failed to fetch term details");
+            toast.error("Failed to fetch term details");
         }
     };
 
@@ -135,18 +135,18 @@ const Term = () => {
             try {
                 const response = await api.deleteCBSETerm(id);
                 if (response.status) {
-                    alert("Record Removed Successfully");
+                    toast.success("Record Removed Successfully");
                     // Refresh the term list
                     const listResponse = await api.getCBSETermList();
                     if (listResponse.status && listResponse.data) {
                         setTerms(listResponse.data);
                     }
                 } else {
-                    alert(response.message || "Failed to delete record");
+                    toast.error(response.message || "Failed to delete record");
                 }
             } catch (error) {
                 console.error("Error deleting term:", error);
-                alert("Failed to delete record");
+                toast.error("Failed to delete record");
             }
         }
     };

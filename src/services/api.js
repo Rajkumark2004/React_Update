@@ -6552,7 +6552,13 @@ export const api = {
         try {
             const response = await fetch(`${API_BASE}/cbseexam/term/add`, createFetchOptions('POST', payload));
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return errorData; // Return error data to let the component handle the message
             }
             return await response.json();
         } catch (error) {
