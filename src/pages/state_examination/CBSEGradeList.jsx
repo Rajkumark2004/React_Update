@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -157,13 +158,14 @@ const CBSEGradeList = () => {
                 setLoading(true);
                 const response = await api.deleteCBSEGrade({ id });
                 if (response.status) {
+                    toast.success(response.message || 'Record deleted successfully');
                     fetchGradeList();
                 } else {
-                    alert(response.message || "Delete failed");
+                    toast.error(response.message || "Delete failed");
                 }
             } catch (error) {
                 console.error("Error deleting grade:", error);
-                alert("An error occurred while deleting.");
+                toast.error("An error occurred while deleting.");
             } finally {
                 setLoading(false);
             }
@@ -244,15 +246,16 @@ const CBSEGradeList = () => {
             }
 
             if (response.status) {
+                toast.success(response.message || `Record ${editMode ? 'updated' : 'saved'} successfully`);
                 fetchGradeList(); // Refresh list
                 setShowModal(false);
                 resetForm();
             } else {
-                alert(response.message || "Operation failed");
+                toast.error(response.message || "Operation failed");
             }
         } catch (error) {
             console.error("Error saving grade:", error);
-            alert("An error occurred while saving.");
+            toast.error("An error occurred while saving.");
         } finally {
             setLoading(false);
         }
@@ -281,21 +284,41 @@ const CBSEGradeList = () => {
         const headers = [];
         if (!hiddenColumns.includes(0)) headers.push("Grade Title");
         if (!hiddenColumns.includes(1)) headers.push("Description");
-        if (!hiddenColumns.includes(2)) headers.push("Grade");
+        if (!hiddenColumns.includes(2)) {
+            headers.push("Grade");
+            headers.push("Maximum Percentage");
+            headers.push("Minimum Percentage");
+            headers.push("Remark");
+        }
 
-        const rows = filteredGradeList.map(grade => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(grade.name);
-            if (!hiddenColumns.includes(1)) row.push(grade.description);
-            if (!hiddenColumns.includes(2)) {
-                if (grade.data && grade.data.length > 0) {
-                    const gradeStr = grade.data.map(r => `${r.name} (${r.minimum_percentage}-${r.maximum_percentage})`).join(', ');
-                    row.push(gradeStr);
-                } else {
+        const rows = [];
+        filteredGradeList.forEach(grade => {
+            if (grade.data && grade.data.length > 0) {
+                grade.data.forEach((range, idx) => {
+                    const row = [];
+                    // Visual Grouping: Only show Title/Description for the first range of a grade
+                    if (!hiddenColumns.includes(0)) row.push(idx === 0 ? (grade.name || '') : "");
+                    if (!hiddenColumns.includes(1)) row.push(idx === 0 ? (grade.description || '') : "");
+                    if (!hiddenColumns.includes(2)) {
+                        row.push(range.name || "");
+                        row.push(range.maximum_percentage || "");
+                        row.push(range.minimum_percentage || "");
+                        row.push(range.description || "");
+                    }
+                    rows.push(row);
+                });
+            } else {
+                const row = [];
+                if (!hiddenColumns.includes(0)) row.push(grade.name || "");
+                if (!hiddenColumns.includes(1)) row.push(grade.description || "");
+                if (!hiddenColumns.includes(2)) {
+                    row.push("");
+                    row.push("");
+                    row.push("");
                     row.push("");
                 }
+                rows.push(row);
             }
-            return row;
         });
 
         return { headers, rows };
@@ -494,7 +517,7 @@ const CBSEGradeList = () => {
                                             <div className="row">
                                                 <div className="col-md-12">
                                                     <div className="form-group">
-                                                        <label>Name</label><small className="req"> *</small>
+                                                        <label>Grade Title</label><small className="req"> *</small>
                                                         <input
                                                             type="text"
                                                             className="form-control"
@@ -534,7 +557,7 @@ const CBSEGradeList = () => {
 
                                             <div className="hide-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '5px' }}>
                                                 <div className="row" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
-                                                    <div className="col-md-2" style={{ fontSize: '12px' }}>Range Name <small className="req">*</small></div>
+                                                    <div className="col-md-2" style={{ fontSize: '12px' }}>Grade<small className="req">*</small></div>
                                                     <div className="col-md-3" style={{ fontSize: '12px' }}>Maximum Percentage <small className="req">*</small></div>
                                                     <div className="col-md-3" style={{ fontSize: '12px' }}>Minimum Percentage <small className="req">*</small></div>
                                                     <div className="col-md-3" style={{ fontSize: '12px' }}>Remark</div>
