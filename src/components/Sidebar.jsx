@@ -271,6 +271,29 @@ const Sidebar = ({
     // Logout specific icon
     const logoutIconUrl = "https://newlayout.wisibles.com/backend/images/sidebar/logout.png";
 
+    // Auto-scroll sidebar to the active module using math to prevent resetting to top
+    useEffect(() => {
+        const activeIndex = menus.findIndex(menu => isMenuActive(menu.url));
+        if (activeIndex > -1) {
+            const sidebarElement = document.getElementById('alert2');
+            if (sidebarElement) {
+                // Math: active item index * 60px (item height) + top offset (~120px) 
+                // We maintain the scroll position relative to the clicked item
+                const scrollPos = (activeIndex * 60); 
+                sidebarElement.scrollTop = Math.max(0, scrollPos);
+            }
+        }
+    }, [currentPath, menus]);
+
+    // Delay the skin-blue background until permissions load to prevent layout flashes
+    useEffect(() => {
+        if (permissionsLoaded) {
+            document.body.classList.add('skin-blue');
+        } else {
+            document.body.classList.remove('skin-blue');
+        }
+    }, [permissionsLoaded]);
+
     return (
         <>
             {/* Sidebar Overlay - Close sidebar when clicking outside on mobile */}
@@ -292,145 +315,152 @@ const Sidebar = ({
             )}
 
             {/* Desktop Sidebar - Hidden on Mobile via CSS transform, slides in via .sidebar-open */}
-            <aside className={`main-sidebar ${isSidebarOpen ? 'open' : ''}`} id="alert2" style={{ overflowX: 'hidden' }}>
-                {/* Sidebar Search Form */}
-                <form className="navbar-form navbar-left search-form2" role="search" onSubmit={(e) => {
-                    e.preventDefault();
-                    if (handleSearch) handleSearch(e);
-                }}>
-                    <div className="input-group">
-                        <input
-                            type="text"
-                            name="search_text"
-                            className="form-control search-form"
-                            placeholder="Search by student name"
-                        />
-                        <span className="input-group-btn">
-                            <button
-                                type="submit"
-                                className="btn btn-flat"
-                                style={{
-                                    padding: '3px 12px',
-                                    borderRadius: '0px 30px 30px 0px',
-                                    background: '#fff'
-                                }}
-                            >
-                                <i className="fa fa-search"></i>
-                            </button>
-                        </span>
-                    </div>
-                </form>
-
-                <section className="sidebar" id="sibe-box">
-                    <TopSidebar sessionYear={sessionYear} />
-
-                    <ul className="sidebar-menu verttop" style={{ paddingLeft: '0px' }}>
-                        {menus.map((menu) => {
-                            const active = isMenuActive(menu.url);
-                            return (
-                                <li
-                                    key={menu.id}
-                                    className={`treeview ${active ? 'active' : ''}`}
+            {permissionsLoaded && (
+                <aside 
+                    className={`main-sidebar ${isSidebarOpen ? 'open' : ''}`} 
+                    id="alert2" 
+                    style={{ overflowX: 'hidden', overflowY: 'auto' }}
+                >
+                    {/* Sidebar Search Form */}
+                    <form className="navbar-form navbar-left search-form2" role="search" onSubmit={(e) => {
+                        e.preventDefault();
+                        if (handleSearch) handleSearch(e);
+                    }}>
+                        <div className="input-group">
+                            <input
+                                type="text"
+                                name="search_text"
+                                className="form-control search-form"
+                                placeholder="Search by student name"
+                            />
+                            <span className="input-group-btn">
+                                <button
+                                    type="submit"
+                                    className="btn btn-flat"
                                     style={{
-                                        position: 'relative',
-                                        minHeight: '60px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
+                                        padding: '3px 12px',
+                                        borderRadius: '0px 30px 30px 0px',
+                                        background: '#fff'
                                     }}
                                 >
-                                    {/* Active indicator - white bar on right */}
-                                    {active && (
-                                        <div
-                                            style={{
-                                                position: 'absolute',
-                                                left: 0,
-                                                top: 0,
-                                                width: '2px',
-                                                height: '100%',
-                                                backgroundColor: '#fff',
-                                                borderRadius: '0 1px 1px 0'
-                                            }}
-                                        />
-                                    )}
-                                    {menu.url === '#' ? (
-                                        <a
-                                            href="#"
-                                            onClick={(e) => e.preventDefault()}
-                                            style={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                padding: '6px 0'
-                                            }}
-                                        >
-                                            <img
-                                                width="28px"
-                                                src={`/images/${menu.icon}`}
-                                                alt={menu.label}
-                                                className="img-fluid"
-                                                style={{ marginBottom: '5px' }}
-                                            />
-                                            <span
-                                                className="sidebar-small-text"
+                                    <i className="fa fa-search"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </form>
+
+                    <section className="sidebar" id="sibe-box">
+                        <TopSidebar sessionYear={sessionYear} />
+
+                        <ul className="sidebar-menu verttop" style={{ paddingLeft: '0px' }}>
+                            {menus.map((menu, index) => {
+                                const active = isMenuActive(menu.url);
+                                return (
+                                    <li
+                                        key={menu.id}
+                                        data-index={index}
+                                        className={`treeview ${active ? 'active' : ''}`}
+                                        style={{
+                                            position: 'relative',
+                                            minHeight: '60px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}
+                                    >
+                                        {/* Active indicator - white bar on right */}
+                                        {active && (
+                                            <div
                                                 style={{
-                                                    display: 'block',
-                                                    whiteSpace: 'normal',
-                                                    wordWrap: 'break-word',
-                                                    textAlign: 'center',
-                                                    maxWidth: '70px',
-                                                    overflow: 'hidden',
-                                                    lineHeight: '1.2',
-                                                    color: '#fff',
-                                                    fontWeight: '700',
-                                                    fontSize: '11pt'
-                                                }}>
-                                                {menu.label}
-                                            </span>
-                                        </a>
-                                    ) : (
-                                        <Link
-                                            to={menu.url}
-                                            style={{
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                padding: '6px 0'
-                                            }}
-                                        >
-                                            <img
-                                                width="28px"
-                                                src={`/images/${menu.icon}`}
-                                                alt={menu.label}
-                                                className="img-fluid"
-                                                style={{ marginBottom: '5px' }}
+                                                    position: 'absolute',
+                                                    left: 0,
+                                                    top: 0,
+                                                    width: '2px',
+                                                    height: '100%',
+                                                    backgroundColor: '#fff',
+                                                    borderRadius: '0 1px 1px 0'
+                                                }}
                                             />
-                                            <span
-                                                className="sidebar-small-text"
+                                        )}
+                                        {menu.url === '#' ? (
+                                            <a
+                                                href="#"
+                                                onClick={(e) => e.preventDefault()}
                                                 style={{
-                                                    display: 'block',
-                                                    whiteSpace: 'normal',
-                                                    wordWrap: 'break-word',
-                                                    textAlign: 'center',
-                                                    maxWidth: '70px',
-                                                    overflow: 'hidden',
-                                                    lineHeight: '1.2',
-                                                    color: '#fff',
-                                                    fontWeight: '700',
-                                                    fontSize: '11px'
-                                                }}>
-                                                {menu.label}
-                                            </span>
-                                        </Link>
-                                    )}
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </section>
-            </aside>
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    padding: '6px 0'
+                                                }}
+                                            >
+                                                <img
+                                                    width="28px"
+                                                    src={`/images/${menu.icon}`}
+                                                    alt={menu.label}
+                                                    className="img-fluid"
+                                                    style={{ marginBottom: '5px' }}
+                                                />
+                                                <span
+                                                    className="sidebar-small-text"
+                                                    style={{
+                                                        display: 'block',
+                                                        whiteSpace: 'normal',
+                                                        wordWrap: 'break-word',
+                                                        textAlign: 'center',
+                                                        maxWidth: '70px',
+                                                        overflow: 'hidden',
+                                                        lineHeight: '1.2',
+                                                        color: '#fff',
+                                                        fontWeight: '700',
+                                                        fontSize: '11pt'
+                                                    }}>
+                                                    {menu.label}
+                                                </span>
+                                            </a>
+                                        ) : (
+                                            <Link
+                                                to={menu.url}
+                                                style={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    padding: '6px 0'
+                                                }}
+                                            >
+                                                <img
+                                                    width="28px"
+                                                    src={`/images/${menu.icon}`}
+                                                    alt={menu.label}
+                                                    className="img-fluid"
+                                                    style={{ marginBottom: '5px' }}
+                                                />
+                                                <span
+                                                    className="sidebar-small-text"
+                                                    style={{
+                                                        display: 'block',
+                                                        whiteSpace: 'normal',
+                                                        wordWrap: 'break-word',
+                                                        textAlign: 'center',
+                                                        maxWidth: '70px',
+                                                        overflow: 'hidden',
+                                                        lineHeight: '1.2',
+                                                        color: '#fff',
+                                                        fontWeight: '700',
+                                                        fontSize: '11px'
+                                                    }}>
+                                                    {menu.label}
+                                                </span>
+                                            </Link>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </section>
+                </aside>
+            )}
 
             {/* Mobile Bottom Navigation - Visible on Mobile Only */}
             <nav className="mobile-bottom-nav hide-desktop shadow-sm" id="bottom-menu">
