@@ -123,7 +123,7 @@ const ApplyLeave = () => {
                 from_date: leaveData.from_date.split('-').reverse().join('-'),
                 to_date: leaveData.to_date.split('-').reverse().join('-'),
                 message: leaveData.reason,
-                file: leaveData.file
+                docs: leaveData.file
             });
 
             if (result.status) {
@@ -151,7 +151,7 @@ const ApplyLeave = () => {
                 from_date: leaveData.from_date.split('-').reverse().join('-'),
                 to_date: leaveData.to_date.split('-').reverse().join('-'),
                 message: leaveData.reason,
-                file: leaveData.file
+                docs: leaveData.file
             });
 
             if (result.status) {
@@ -1219,14 +1219,26 @@ const ApplyLeave = () => {
                                                                 </span>
                                                             </td>
                                                         )}
-                                                        <td className="al-td-action">
-                                                            <button title="Edit" className="action-btn al-action-btn-edit" onClick={() => handleEditClick(leave)}>
-                                                                <i className="fa fa-pencil"></i>
-                                                            </button>
-                                                            <button title="Delete" className="action-btn" onClick={() => handleDelete(leave.id)}>
-                                                                <i className="fa fa-remove"></i>
-                                                            </button>
-                                                        </td>
+                                                         <td className="al-td-action">
+                                                             {leave.docs && (
+                                                                 <a
+                                                                     href={`https://newlayout.wisibles.com/user/apply_leave/download/${leave.id}`}
+                                                                     title="Download"
+                                                                     className="action-btn"
+                                                                     target="_blank"
+                                                                     rel="noopener noreferrer"
+                                                                     style={{ marginRight: '5px', display: 'inline-block' }}
+                                                                 >
+                                                                     <i className="fa fa-download"></i>
+                                                                 </a>
+                                                             )}
+                                                             <button title="Edit" className="action-btn al-action-btn-edit" onClick={() => handleEditClick(leave)}>
+                                                                 <i className="fa fa-pencil"></i>
+                                                             </button>
+                                                             <button title="Delete" className="action-btn" onClick={() => handleDelete(leave.id)}>
+                                                                 <i className="fa fa-remove"></i>
+                                                             </button>
+                                                         </td>
                                                     </tr>
                                                 );
                                             })
@@ -1274,14 +1286,25 @@ const ApplyLeave = () => {
                                             <div className="leave-card" key={index}>
                                                 <div className="leave-card-header">
                                                     <h4 className="leave-card-title">Apply Date: {leave.apply_date}</h4>
-                                                    <div className="leave-card-actions">
-                                                        <button className="card-action-btn" onClick={() => handleEditClick(leave)} title="Edit">
-                                                            <i className="fa fa-pencil"></i>
-                                                        </button>
-                                                        <button className="card-action-btn" onClick={() => handleDelete(leave.id)} title="Delete">
-                                                            <i className="fa fa-remove"></i>
-                                                        </button>
-                                                    </div>
+                                                     <div className="leave-card-actions">
+                                                         {leave.docs && (
+                                                             <a
+                                                                 href={`https://newlayout.wisibles.com/user/apply_leave/download/${leave.id}`}
+                                                                 className="card-action-btn"
+                                                                 title="Download"
+                                                                 target="_blank"
+                                                                 rel="noopener noreferrer"
+                                                             >
+                                                                 <i className="fa fa-download"></i>
+                                                             </a>
+                                                         )}
+                                                         <button className="card-action-btn" onClick={() => handleEditClick(leave)} title="Edit">
+                                                             <i className="fa fa-pencil"></i>
+                                                         </button>
+                                                         <button className="card-action-btn" onClick={() => handleDelete(leave.id)} title="Delete">
+                                                             <i className="fa fa-remove"></i>
+                                                         </button>
+                                                     </div>
                                                 </div>
                                                 <div className="leave-card-body">
                                                     <div className="leave-card-row">From Date : {leave.from_date}</div>
