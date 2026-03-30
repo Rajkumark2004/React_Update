@@ -78,7 +78,7 @@ const CBSEGradeList = () => {
         setLoading(true);
         try {
             const response = await api.getCBSEGradeForm({ action: 'add', record_id: 0 });
-            const totalRows = response.status && response.data ? response.data.total_rows : 2; // Default to 2 if fail
+            const totalRows = 1; // Force 1 row for adding as per request
 
             const initialRanges = [];
             for (let i = 0; i < totalRows; i++) {
@@ -303,6 +303,17 @@ const CBSEGradeList = () => {
 
     return (
         <div className="wrapper theme-white-skin">
+            <style>
+                {`
+                    .hide-scrollbar::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .hide-scrollbar {
+                        -ms-overflow-style: none;
+                        scrollbar-width: none;
+                    }
+                `}
+            </style>
             <Header />
             <Sidebar />
 
@@ -477,128 +488,123 @@ const CBSEGradeList = () => {
                                     <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
                                     <h4 className="modal-title">{editMode ? 'Edit Exam Grade' : 'Add Exam Grade'}</h4>
                                 </div>
-                                <div className="scroll-area">
+                                <div className="scroll-area hide-scrollbar">
                                     <form role="form" onSubmit={handleSubmit}>
-                                        <div className="modal-body minheight260">
-                                            <div className="modal-body-inner">
-                                                <div className="form-group">
-                                                    <label>Name</label><small className="req"> *</small>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        value={formData.name}
-                                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="form-group">
-                                                    <label>Description</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        value={formData.description}
-                                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                    />
-                                                </div>
-
-                                                <div className="row">
+                                        <div className="modal-body">
+                                            <div className="row">
+                                                <div className="col-md-12">
                                                     <div className="form-group">
-                                                        <label className="btn btn-xs btn-info pull-right" onClick={addRange}>Add More</label>
+                                                        <label>Name</label><small className="req"> *</small>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={formData.name}
+                                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                            required
+                                                        />
                                                     </div>
                                                 </div>
+                                                <div className="col-md-12">
+                                                    <div className="form-group">
+                                                        <label>Description</label>
+                                                        <textarea
+                                                            className="form-control"
+                                                            rows="2"
+                                                            value={formData.description}
+                                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                            style={{ resize: 'none' }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                                <div className="row">
-                                                    <div className="col-md-2">
-                                                        <div className="form-group">
-                                                            <label>Range Name</label> <small className="req"> *</small>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-3">
-                                                        <div className="form-group">
-                                                            <label>Maximum Percentage</label> <small className="req"> *</small>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-3">
-                                                        <div className="form-group">
-                                                            <label>Minimum Percentage</label> <small className="req"> *</small>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-3">
-                                                        <div className="form-group">
-                                                            <label>Remark</label>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-1">
-                                                        <div className="form-group"></div>
-                                                    </div>
+                                            <div className="row" style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+                                                <div className="col-md-6"></div>
+                                                <div className="col-md-6 text-right">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm add_row"
+                                                        onClick={addRange}
+                                                        style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '5px 15px', border: 'none' }}
+                                                    >
+                                                        Add More
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="hide-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '5px' }}>
+                                                <div className="row" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
+                                                    <div className="col-md-2" style={{ fontSize: '12px' }}>Range Name <small className="req">*</small></div>
+                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Maximum Percentage <small className="req">*</small></div>
+                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Minimum Percentage <small className="req">*</small></div>
+                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Remark</div>
+                                                    <div className="col-md-1"></div>
                                                 </div>
 
                                                 <div id="grade_result">
                                                     {formData.ranges.map((range, index) => (
-                                                        <div className="row" key={range.id || index}>
+                                                        <div className="row mb10" key={range.id || index} style={{ marginBottom: '15px' }}>
                                                             <div className="col-md-2">
-                                                                <div className="form-group">
-                                                                    <input
-                                                                        className="form-control"
-                                                                        value={range.name}
-                                                                        onChange={(e) => handleRangeChange(index, 'name', e.target.value)}
-                                                                        required
-                                                                    />
-                                                                </div>
+                                                                <input
+                                                                    className="form-control input-sm"
+                                                                    value={range.name}
+                                                                    onChange={(e) => handleRangeChange(index, 'name', e.target.value)}
+                                                                    required
+                                                                />
                                                             </div>
                                                             <div className="col-md-3">
-                                                                <div className="form-group">
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control"
-                                                                        value={range.maximum_percentage}
-                                                                        onChange={(e) => handleRangeChange(index, 'maximum_percentage', e.target.value)}
-                                                                        required
-                                                                        min="0"
-                                                                        max="100"
-                                                                    />
-                                                                </div>
+                                                                <input
+                                                                    type="number"
+                                                                    className="form-control input-sm"
+                                                                    value={range.maximum_percentage}
+                                                                    onChange={(e) => handleRangeChange(index, 'maximum_percentage', e.target.value)}
+                                                                    required
+                                                                    min="0"
+                                                                    max="100"
+                                                                />
                                                             </div>
                                                             <div className="col-md-3">
-                                                                <div className="form-group">
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control"
-                                                                        value={range.minimum_percentage}
-                                                                        onChange={(e) => handleRangeChange(index, 'minimum_percentage', e.target.value)}
-                                                                        required
-                                                                        min="0"
-                                                                        max="100"
-                                                                    />
-                                                                </div>
+                                                                <input
+                                                                    type="number"
+                                                                    className="form-control input-sm"
+                                                                    value={range.minimum_percentage}
+                                                                    onChange={(e) => handleRangeChange(index, 'minimum_percentage', e.target.value)}
+                                                                    required
+                                                                    min="0"
+                                                                    max="100"
+                                                                />
                                                             </div>
                                                             <div className="col-md-3">
-                                                                <div className="form-group">
-                                                                    <textarea
-                                                                        className="form-control"
-                                                                        value={range.description}
-                                                                        onChange={(e) => handleRangeChange(index, 'description', e.target.value)}
-                                                                    />
-                                                                </div>
+                                                                <textarea
+                                                                    className="form-control input-sm"
+                                                                    rows="1"
+                                                                    value={range.description}
+                                                                    onChange={(e) => handleRangeChange(index, 'description', e.target.value)}
+                                                                    style={{ resize: 'none', minHeight: '30px' }}
+                                                                />
                                                             </div>
-                                                            <div className="col-md-1">
-                                                                <div className="form-group">
-                                                                    <span
-                                                                        className="section_id_error text-danger rtl-float-right cursor-pointer"
-                                                                        onClick={() => removeRange(index)}
-                                                                    >
-                                                                        <i className="fa fa-remove"></i>
-                                                                    </span>
-                                                                </div>
+                                                            <div className="col-md-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <span
+                                                                    className="text-danger cursor-pointer"
+                                                                    onClick={() => removeRange(index)}
+                                                                    style={{ fontSize: '18px', fontWeight: 'bold' }}
+                                                                >
+                                                                    &times;
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
-
                                             </div>
                                         </div>
-                                        <div className="modal-footer clearboth mx-nt-lr-15 pb0">
-                                            <button type="submit" className="btn btn-primary pull-right">Save</button>
+                                        <div className="modal-footer" style={{ borderTop: 'none', paddingBottom: '20px' }}>
+                                            <button
+                                                type="submit"
+                                                className="btn pull-right"
+                                                style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '8px 25px', fontSize: '14px', fontWeight: 'bold', border: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                                            >
+                                                Save
+                                            </button>
                                         </div>
                                     </form>
                                 </div>
