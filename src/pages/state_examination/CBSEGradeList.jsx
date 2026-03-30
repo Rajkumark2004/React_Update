@@ -286,12 +286,28 @@ const CBSEGradeList = () => {
         if (!hiddenColumns.includes(1)) headers.push("Description");
         if (!hiddenColumns.includes(2)) {
             headers.push("Grade");
-            headers.push("Maximum Percentage");
-            headers.push("Minimum Percentage");
-            headers.push("Remark");
+            headers.push("");
+            headers.push("");
+            headers.push("");
         }
 
         const rows = [];
+        
+        // Add a sub-header row for grouped styling
+        const subHeaderRow = [];
+        if (!hiddenColumns.includes(0)) subHeaderRow.push("");
+        if (!hiddenColumns.includes(1)) subHeaderRow.push("");
+        if (!hiddenColumns.includes(2)) {
+            subHeaderRow.push("Grade");
+            subHeaderRow.push("Maximum Percentage");
+            subHeaderRow.push("Minimum Percentage");
+            subHeaderRow.push("Remark");
+        }
+        
+        // Only push sub headers if we have actual data to export
+        if (filteredGradeList.length > 0) {
+            rows.push(subHeaderRow);
+        }
         filteredGradeList.forEach(grade => {
             if (grade.data && grade.data.length > 0) {
                 grade.data.forEach((range, idx) => {

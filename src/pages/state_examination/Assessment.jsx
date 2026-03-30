@@ -253,21 +253,60 @@ const Assessment = () => {
         const headers = [];
         if (!hiddenColumns.includes(0)) headers.push("Assessment");
         if (!hiddenColumns.includes(1)) headers.push("Assessment Description");
-        if (!hiddenColumns.includes(2)) headers.push("Assessment Type");
+        if (!hiddenColumns.includes(2)) {
+            headers.push("Assessment Type");
+            headers.push("");
+            headers.push("");
+            headers.push("");
+            headers.push("");
+        }
 
-        const rows = filteredAssessments.map(assessment => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(assessment.name);
-            if (!hiddenColumns.includes(1)) row.push(assessment.description);
-            if (!hiddenColumns.includes(2)) {
-                if (assessment.data && assessment.data.length > 0) {
-                    const typeStr = assessment.data.map(item => `${item.name} (${item.code})`).join(', ');
-                    row.push(typeStr);
-                } else {
+        const rows = [];
+        
+        // Add a sub-header row for grouped styling
+        const subHeaderRow = [];
+        if (!hiddenColumns.includes(0)) subHeaderRow.push("");
+        if (!hiddenColumns.includes(1)) subHeaderRow.push("");
+        if (!hiddenColumns.includes(2)) {
+            subHeaderRow.push("Name");
+            subHeaderRow.push("Code");
+            subHeaderRow.push("Maximum Marks");
+            subHeaderRow.push("Passing Percentage");
+            subHeaderRow.push("Description");
+        }
+        
+        // Only push sub headers if we have actual data to export
+        if (filteredAssessments.length > 0) {
+            rows.push(subHeaderRow);
+        }
+        filteredAssessments.forEach(assessment => {
+            if (assessment.data && assessment.data.length > 0) {
+                assessment.data.forEach((item, idx) => {
+                    const row = [];
+                    if (!hiddenColumns.includes(0)) row.push(idx === 0 ? (assessment.name || '') : "");
+                    if (!hiddenColumns.includes(1)) row.push(idx === 0 ? (assessment.description || '') : "");
+                    if (!hiddenColumns.includes(2)) {
+                        row.push(item.name || "");
+                        row.push(item.code || "");
+                        row.push(item.maximum_marks || "");
+                        row.push(item.pass_percentage || "");
+                        row.push(item.description || "");
+                    }
+                    rows.push(row);
+                });
+            } else {
+                const row = [];
+                if (!hiddenColumns.includes(0)) row.push(assessment.name || "");
+                if (!hiddenColumns.includes(1)) row.push(assessment.description || "");
+                if (!hiddenColumns.includes(2)) {
+                    row.push("");
+                    row.push("");
+                    row.push("");
+                    row.push("");
                     row.push("");
                 }
+                rows.push(row);
             }
-            return row;
         });
 
         return { headers, rows };
