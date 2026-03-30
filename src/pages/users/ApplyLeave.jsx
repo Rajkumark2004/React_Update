@@ -1108,7 +1108,7 @@ const ApplyLeave = () => {
                 .al-export-icons-wrap { position: relative; }
                 .al-th-sortable { cursor: pointer; }
                 .al-sort-icon { color: #ccc; margin-left: 4px; }
-                .al-th-action { text-align: right; }
+                .al-th-action { text-align: right !important; }
                 .al-td-loading { text-align: center; padding: 20px; }
                 .al-status-badge { color: #fff; padding: 2px 8px; border-radius: 2px; font-size: 11px; }
                 .al-td-action { text-align: right; white-space: nowrap; }
@@ -1220,24 +1220,26 @@ const ApplyLeave = () => {
                                                             </td>
                                                         )}
                                                          <td className="al-td-action">
-                                                             {leave.docs && (
-                                                                 <a
-                                                                     href={`https://newlayout.wisibles.com/user/apply_leave/download/${leave.id}`}
-                                                                     title="Download"
-                                                                     className="action-btn"
-                                                                     target="_blank"
-                                                                     rel="noopener noreferrer"
+                                                             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                                 {leave.docs && (
+                                                                     <a
+                                                                         href={`https://newlayout.wisibles.com/user/apply_leave/download/${leave.id}`}
+                                                                         title="Download"
+                                                                         className="action-btn"
+                                                                         target="_blank"
+                                                                         rel="noopener noreferrer"
                                                                      style={{ marginRight: '5px', display: 'inline-block' }}
-                                                                 >
-                                                                     <i className="fa fa-download"></i>
-                                                                 </a>
-                                                             )}
+                                                                     >
+                                                                         <i className="fa fa-download"></i>
+                                                                     </a>
+                                                                 )}
                                                              <button title="Edit" className="action-btn al-action-btn-edit" onClick={() => handleEditClick(leave)}>
-                                                                 <i className="fa fa-pencil"></i>
-                                                             </button>
+                                                                     <i className="fa fa-pencil"></i>
+                                                                 </button>
                                                              <button title="Delete" className="action-btn" onClick={() => handleDelete(leave.id)}>
-                                                                 <i className="fa fa-remove"></i>
-                                                             </button>
+                                                                     <i className="fa fa-remove"></i>
+                                                                 </button>
+                                                             </div>
                                                          </td>
                                                     </tr>
                                                 );
