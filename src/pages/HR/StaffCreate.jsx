@@ -219,7 +219,7 @@ const StaffCreate = () => {
             } else if (response && response.errors) {
                 const apiErrors = {};
                 let hasErrors = false;
-                
+
                 Object.keys(response.errors).forEach(key => {
                     const errText = response.errors[key];
                     if (errText) {
@@ -230,7 +230,7 @@ const StaffCreate = () => {
                         }
                     }
                 });
-                
+
                 if (hasErrors) {
                     setFormErrors(apiErrors);
                     toast.error('Please correct the highlighted errors');
@@ -288,12 +288,12 @@ const StaffCreate = () => {
 
                                         {/* Basic Information */}
                                         <div className="tshadow mb25 bozero">
-                                            <div className="box-tools pull-right pt3">
-                                                <Link className="btn btn-sm btn-primary" to="/admin/staff/import">
-                                                    <i className="fa fa-plus"></i> Import Staff
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', backgroundColor: '#f4f4f4', border: 'none', borderBottom: 'none' }}>
+                                                <h4 className="pagetitleh2" style={{ margin: 0, borderBottom: 'none' }}>Basic Information</h4>
+                                                <Link className="btn btn-sm" to="/admin/staff/import" style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '5px 15px', border: 'none', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', textDecoration: 'none', fontWeight: '600', fontSize: '13px' }}>
+                                                    <i className="fa fa-plus" style={{ marginRight: '5px' }}></i> Import Staff
                                                 </Link>
                                             </div>
-                                            <h4 className="pagetitleh2">Basic Information</h4>
                                             <div className="around10">
 
                                                 {/* Row 1: Staff ID, Role, Designation, Department */}
