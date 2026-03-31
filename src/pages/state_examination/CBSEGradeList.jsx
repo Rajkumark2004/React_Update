@@ -351,6 +351,30 @@ const CBSEGradeList = () => {
                         -ms-overflow-style: none;
                         scrollbar-width: none;
                     }
+                    .hover-nested-row {
+                        background-color: #fff !important;
+                    }
+                    .hover-nested-row:hover {
+                        background-color: #f1f1f1 !important;
+                        cursor: pointer;
+                    }
+                    .hover-main-entry:hover {
+                        background-color: #f9f9f9 !important;
+                    }
+                    .action-button-boxed {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 24px;
+                        height: 24px;
+                        background: #fff;
+                        border: none;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    }
+                    .action-button-boxed:hover {
+                        background: #f1f1f1;
+                    }
                 `}
             </style>
             <Header />
@@ -381,10 +405,32 @@ const CBSEGradeList = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="box-body" style={{ fontSize: '13px' }}>
+                <div className="box-body" style={{ fontSize: '13px' }}>
                                     <div className="download_label">Exam Grade List</div>
-                                    <div className="row">
-                                        <div className="col-md-6">
+                                    <style>
+                                        {`
+                                            @media (max-width: 767px) {
+                                                .mobile-stack {
+                                                    display: flex;
+                                                    flex-direction: column;
+                                                    align-items: center;
+                                                    gap: 15px;
+                                                }
+                                                .mobile-stack > div {
+                                                    width: 100% !important;
+                                                    text-align: center !important;
+                                                }
+                                                .mobile-stack .pull-right, .mobile-stack .pull-left {
+                                                    float: none !important;
+                                                }
+                                                .mobile-stack .dt-buttons {
+                                                    justify-content: center;
+                                                }
+                                            }
+                                        `}
+                                    </style>
+                                    <div className="row mobile-stack">
+                                        <div className="col-md-6 col-sm-12">
                                             <div className="pull-left mb10">
                                                 <div className="input-group" style={{ width: '200px', display: 'inline-table', verticalAlign: 'middle' }}>
                                                     <input
@@ -401,7 +447,7 @@ const CBSEGradeList = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="col-md-6">
+                                        <div className="col-md-6 col-sm-12">
                                             <div className="dt-buttons btn-group pull-right">
                                                 <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
                                                 <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Exam_Grade_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
@@ -427,63 +473,62 @@ const CBSEGradeList = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="table-responsive mailbox-messages overflow-visible-lg">
-                                        <table className="table table-striped table-bordered table-hover example" style={{ fontSize: '13px' }}>
+                                    <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                                        <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                             <thead>
-                                                <tr>
-                                                    {!hiddenColumns.includes(0) && <th width="10%">Grade Title</th>}
-                                                    {!hiddenColumns.includes(1) && <th width="20%">Description</th>}
-                                                    {!hiddenColumns.includes(2) && <th width="65%">Grade</th>}
-                                                    <th width="5%" className="text-right noExport">Action</th>
+                                                <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
+                                                    <th style={{ width: '10%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Grade Title</th>
+                                                    <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Description</th>
+                                                    <th style={{ width: '65%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Grade Data</th>
+                                                    <th style={{ width: '5%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {filteredGradeList.map((grade) => (
-                                                    <tr key={grade.id}>
-                                                        {!hiddenColumns.includes(0) && <td>{grade.name}</td>}
-                                                        {!hiddenColumns.includes(1) && <td>{grade.description}</td>}
-                                                        {!hiddenColumns.includes(2) && <td className="mailbox-name">
-                                                            <table className="table table-bordered table-hover table-last-right" style={{ fontSize: '13px', marginBottom: '0' }}>
+                                                    <tr key={grade.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
+                                                        <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                                                            <strong>{grade.name}</strong>
+                                                        </td>
+                                                        <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                                                            {grade.description}
+                                                        </td>
+                                                        <td style={{ padding: '8px 0', borderTop: 'none' }}>
+                                                            <table style={{ width: '100%', marginBottom: '0', tableLayout: 'fixed' }}>
                                                                 <thead>
                                                                     <tr>
-                                                                        <th>Grade</th>
-                                                                        <th>Maximum Percentage</th>
-                                                                        <th>Minimum Percentage</th>
-                                                                        <th>Remark</th>
+                                                                        <th style={{ width: '10%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 8px' }}>Grade</th>
+                                                                        <th style={{ width: '25%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Maximum Percentage</th>
+                                                                        <th style={{ width: '25%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Minimum Percentage</th>
+                                                                        <th style={{ width: '40%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Remark</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
                                                                     {grade.data && grade.data.length > 0 ? (
-                                                                        grade.data.map((range, idx) => (
-                                                                            <tr key={idx}>
-                                                                                <td>{range.name}</td>
-                                                                                <td>{range.maximum_percentage}</td>
-                                                                                <td>{range.minimum_percentage}</td>
-                                                                                <td>{range.description}</td>
+                                                                        grade.data.map((range, midx) => (
+                                                                            <tr key={midx} className="hover-nested-row" style={{ borderTop: '1px solid #f4f4f4' }}>
+                                                                                <td style={{ padding: '6px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{range.name}</td>
+                                                                                <td style={{ padding: '6px 40px', borderTop: 'none' }}>{range.maximum_percentage}</td>
+                                                                                <td style={{ padding: '6px 40px', borderTop: 'none' }}>{range.minimum_percentage}</td>
+                                                                                <td style={{ padding: '6px 40px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{range.description}</td>
                                                                             </tr>
                                                                         ))
                                                                     ) : (
-                                                                        <tr><td colSpan="4">No ranges defined</td></tr>
+                                                                        <tr>
+                                                                            <td colSpan="4" className="text-muted" style={{ padding: '6px 8px' }}>No ranges defined</td>
+                                                                        </tr>
                                                                     )}
                                                                 </tbody>
                                                             </table>
-                                                        </td>}
-                                                        <td className="white-space-nowrap text-right">
-                                                            <button
-                                                                onClick={() => handleEditOpen(grade)}
-                                                                className="btn btn-default btn-xs"
-                                                                title="Edit"
-                                                                style={{ marginRight: '5px' }}
-                                                            >
-                                                                <i className="fa fa-pencil"></i>
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDelete(grade.id)}
-                                                                className="btn btn-default btn-xs"
-                                                                title="Delete"
-                                                            >
-                                                                <i className="fa fa-remove"></i>
-                                                            </button>
+                                                        </td>
+                                                        <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                                                <div onClick={() => handleEditOpen(grade)} className="action-button-boxed" title="Edit">
+                                                                    <i className="fa fa-pencil" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div onClick={() => handleDelete(grade.id)} className="action-button-boxed" title="Delete">
+                                                                    <i className="fa fa-remove" style={{ color: '#000', fontSize: '13px', fontWeight: 'bold' }}></i>
+                                                                </div>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
