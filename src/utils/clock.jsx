@@ -13,7 +13,7 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 
 function parseTimeString(val) {
     if (!val) return { hour12: 12, minute: 0, period: 'AM' };
-    const m24 = val.match(/^(\d{1,2}):(\d{2})$/);
+    const m24 = val.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
     if (m24) {
         let h = parseInt(m24[1], 10);
         const m = parseInt(m24[2], 10);

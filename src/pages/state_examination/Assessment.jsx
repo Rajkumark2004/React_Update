@@ -204,19 +204,20 @@ const Assessment = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this item?")) {
-            try {
-                const response = await api.deleteCBSEAssessment(id);
-                if (response.status) {
-                    alert(response.message || "Record Deleted Successfully");
-                    fetchAssessments(); // Refresh list
-                } else {
-                    alert("Failed to delete record.");
-                }
-            } catch (error) {
-                console.error("Delete Error:", error);
-                alert("Error deleting record.");
+        if (!window.confirm("Are you sure you want to delete this record?")) {
+            return;
+        }
+        try {
+            const response = await api.deleteCBSEAssessment(id);
+            if (response.status) {
+                alert(response.message || "Record Deleted Successfully");
+                fetchAssessments();
+            } else {
+                alert("Failed to delete record.");
             }
+        } catch (error) {
+            console.error("Delete Error:", error);
+            alert("Error deleting record.");
         }
     };
 

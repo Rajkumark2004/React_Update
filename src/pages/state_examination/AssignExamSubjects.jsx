@@ -49,7 +49,15 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                     }));
                     setRows(initialRows);
                 } else {
-                    setRows([]);
+                    setRows([{
+                        id: Date.now(),
+                        exam_subject_id: null,
+                        subject_id: '',
+                        date: '',
+                        time_from: '',
+                        duration: '',
+                        room_no: ''
+                    }]);
                 }
             } else {
                 console.error("Invalid response structure:", response);
@@ -83,6 +91,32 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+
+        // Manual validation for all required fields (especially start time which uses ClockInput)
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row.subject_id) {
+                alert(`Row ${i + 1}: Please select a Subject.`);
+                return;
+            }
+            if (!row.date) {
+                alert(`Row ${i + 1}: Please select a Date.`);
+                return;
+            }
+            if (!row.time_from) {
+                alert(`Row ${i + 1}: Please select a Start Time.`);
+                return;
+            }
+            if (!row.duration) {
+                alert(`Row ${i + 1}: Please enter Duration.`);
+                return;
+            }
+            if (!row.room_no) {
+                alert(`Row ${i + 1}: Please enter Room No.`);
+                return;
+            }
+        }
+
         setSaving(true);
         try {
             // Mimicking the original PHP application's indexed payload

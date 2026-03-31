@@ -267,7 +267,7 @@ const BulkDelete = () => {
                                                                                 <Link to={`/student/view/${student.id}`}>{student.full_name || (student.firstname + ' ' + (student.lastname || ''))}</Link>
                                                                             </td>
                                                                             <td className="white-space-nowrap">
-                                                                                {student.class_section || student.class}
+                                                                                {student.class && student.section ? `${student.class} (${student.section})` : (student.class_section || student.class)}
                                                                             </td>
                                                                             <td>{student.dob}</td>
                                                                             <td>{student.gender}</td>
