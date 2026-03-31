@@ -18,7 +18,15 @@ const PrintFeesByGroupArrayPage = () => {
             setLoading(false);
         }
     }, []);
-
+    useEffect(() => {
+        if (!loading && data) {
+            // Short delay to ensure PrintFeesByGroupArray has fully rendered and styles are applied
+            const timer = setTimeout(() => {
+                window.print();
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, data]);
     if (loading) return <Loader />;
     if (!data) return <div className="text-center p-5">No data found to print.</div>;
 

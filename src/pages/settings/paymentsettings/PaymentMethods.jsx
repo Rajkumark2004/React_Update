@@ -201,15 +201,17 @@ const PaymentMethods = () => {
             <div className="row">
                 <div className="col-md-12">
                     <div className="box box-primary" style={{ border: 'none', boxShadow: '0 1px 1px rgba(0,0,0,0.1)', background: '#fff' }}>
-                        <div className="box-header with-border" style={{ borderBottom: '1px solid #f4f4f4', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 className="box-title" style={{ fontSize: '18px', color: '#333', margin: '0' }}>Payment Methods</h3>
-                            <button
-                                onClick={() => navigate('/settings')}
-                                className="btn btn-primary btn-sm"
-                                style={{ background: '#9153c3', borderColor: '#9153c3', borderRadius: '20px', fontSize: '12px' }}
-                            >
-                                <i className="fa fa-arrow-left"></i> Back
-                            </button>
+                        <div className="box-header with-border" style={{ borderBottom: '1px solid #f4f4f4', padding: '15px 20px' }}>
+                            <h3 className="box-title pull-left" style={{ fontSize: '18px', color: '#333', margin: '0' }}>Payment Methods</h3>
+                            <div className="box-tools pull-right">
+                                <button
+                                    onClick={() => navigate('/settings')}
+                                    className="btn btn-primary btn-sm"
+                                    style={{ background: '#9153c3', borderColor: '#9153c3', borderRadius: '20px', fontSize: '12px' }}
+                                >
+                                    <i className="fa fa-arrow-left"></i> Back
+                                </button>
+                            </div>
                         </div>
                         <div className="box-body" style={{ padding: '20px' }}>
                             {/* Combined Tabs row - scrollable if many */}

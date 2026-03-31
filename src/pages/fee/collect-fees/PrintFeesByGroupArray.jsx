@@ -123,7 +123,7 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
                 </div>
             </div>
 
-            <div className="row table table-striped table-bordered" style={{ width: '95%' }}>
+            <div className="row table table-bordered" style={{ width: '95%' }}>
                 <div className="col-xs-12 text-left">
                     <br />
                     <div className="row">
@@ -168,7 +168,7 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
             <hr style={{ marginTop: '0px', marginBottom: '0px' }} />
             <div className="row">
                 {!feearray || feearray.length === 0 ? (
-                    <table className="table table-striped table-bordered" style={{ fontSize: '8pt', width: '95%' }}>
+                    <table className="table table-bordered" style={{ fontSize: '8pt', width: '95%' }}>
                         <tbody>
                             <tr>
                                 <td colSpan="11" className="text-danger text-center">
@@ -178,7 +178,7 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
                         </tbody>
                     </table>
                 ) : (
-                    <table className="table table-striped table-bordered" style={{ fontSize: '8pt', width: '95%' }}>
+                    <table className="table table-bordered" style={{ fontSize: '8pt', width: '95%' }}>
                         <thead>
                             <tr>
                                 <th style={{ width: '20px' }}>S.No.</th>
@@ -255,8 +255,12 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
                     
                     .print_header { border: 0.5px solid; border-radius: 8px; padding: 5px 10px; }
                     .print_footer { border: 0.5px solid; border-radius: 8px; padding: 5px 10px; margin-left: -10px; width: 98%; font-size: 8pt; }
+                    table, tr, td, th { background-color: #ffffff !important; }
+                    body, html { background-color: #ffffff !important; }
                 }
                 .print_footer { border: 0.5px solid; border-radius: 8px; padding: 5px 10px; margin-left: -10px; width: 98%; font-size: 8pt; }
+                table, tr, td, th { background-color: #ffffff !important; }
+                body, html { background-color: #ffffff !important; }
                 `}
             </style>
             <div className="row">

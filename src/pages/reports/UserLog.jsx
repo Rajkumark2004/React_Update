@@ -308,7 +308,7 @@ const UserLog = () => {
             <div className="content-wrapper" style={{ minHeight: '946px' }}>
                 <section className="content">
 
-                    <div className="nav-tabs-custom theme-shadow" style={{ marginTop: '10px' }}>
+                    <div className="nav-tabs-custom theme-shadow" style={{ marginTop: '0px' }}>
                         {/* Tabs Header */}
                         <ul className="nav nav-tabs pull-right">
                             <li className="pull-right header">

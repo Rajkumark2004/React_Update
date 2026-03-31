@@ -232,7 +232,7 @@ const StaffSearch = () => {
                                                                 </div>
                                                                 <div className="overlay3">
                                                                     <div className="stafficons">
-                                                                        <a title="View" href={`/admin/staff/profile/${staff.id}`}><i className="fa fa-navicon"></i></a>
+                                                                        <Link title="View" to={`/admin/staff/profile/${staff.id}`}><i className="fa fa-navicon"></i></Link>
                                                                         <Link title="Edit" to={`/admin/staff/edit/${staff.id}`}><i className="fa fa-pencil"></i></Link>
                                                                     </div>
                                                                 </div>
@@ -266,15 +266,15 @@ const StaffSearch = () => {
                                                             {filteredStaff.map(staff => (
                                                                 <tr key={staff.id}>
                                                                     <td>{staff.employee_id}</td>
-                                                                    <td><a href={`/admin/staff/profile/${staff.id}`}>{staff.name} {staff.surname}</a></td>
+                                                                    <td><Link to={`/admin/staff/profile/${staff.id}`}>{staff.name} {staff.surname}</Link></td>
                                                                     <td>{staff.role}</td>
                                                                     <td>{staff.department}</td>
                                                                     <td>{staff.designation}</td>
                                                                     <td>{staff.mobile}</td>
                                                                     <td className="text-right">
-                                                                        <a href={`/admin/staff/profile/${staff.id}`} className="btn btn-default btn-xs" title="View">
+                                                                        <Link to={`/admin/staff/profile/${staff.id}`} className="btn btn-default btn-xs" title="View">
                                                                             <i className="fa fa-reorder"></i>
-                                                                        </a>
+                                                                        </Link>
                                                                         <Link to={`/admin/staff/edit/${staff.id}`} className="btn btn-default btn-xs" title="Edit">
                                                                             <i className="fa fa-pencil"></i>
                                                                         </Link>

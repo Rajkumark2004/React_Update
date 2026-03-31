@@ -286,7 +286,7 @@ const PrintHeaderFooterSettings = () => {
                             </ul>
                             <button
                                 className="btn btn-primary btn-sm pull-right"
-                                style={{ borderRadius: '20px', padding: '6px 14px', marginTop: '-37px', marginRight: '15px', position: 'relative', zIndex: 1000 }}
+                                style={{ borderRadius: '20px', padding: '6px 14px', marginTop: '-37px', marginRight: '15px', position: 'relative', zIndex: 0 }}
                                 onClick={() => navigate('/settings')}
                             >
                                 <i className="fa fa-arrow-left"></i> Back

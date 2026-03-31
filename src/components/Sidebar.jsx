@@ -43,7 +43,7 @@ const Sidebar = ({
             currentPath.startsWith('/attendance-by-date') ||
             currentPath.startsWith('/approve_leave')
         )) return true;
- 
+
         // Fees - active for /studentfee and its submenus
         if (menuUrl === '/studentfee' && (
             currentPath.startsWith('/studentfee') ||
@@ -55,7 +55,7 @@ const Sidebar = ({
             currentPath.startsWith('/admin/feesreceipt') ||
             currentPath.startsWith('/fee/')
         )) return true;
- 
+
         // Transport - active for /admin/route and submenus
         if (menuUrl === '/admin/route' && (
             currentPath.startsWith('/admin/route') ||
@@ -198,7 +198,7 @@ const Sidebar = ({
         { id: 6, icon: 'academics.png', label: 'Academics', url: '/admin/timetable/classreport', permissionShortCode: 'academics' },
         { id: 7, icon: 'state_examination.png', label: 'State Examinations', url: '/cbseexam/exam', permissionShortCode: 'cbseexam' },
         { id: 8, icon: 'courses.png', label: 'Courses', url: '/admin/onlinecourse', permissionShortCode: 'online_course' },
-        { id: 9, icon: 'transport.png', label: 'Transport', url: '/admin/route', permissionShortCode: 'transport' },
+        { id: 9, icon: 'transport_admin.png', label: 'Transport', url: '/admin/route', permissionShortCode: 'transport' },
         { id: 10, icon: 'messages.png', label: 'Messages', url: '/admin/notification', permissionShortCode: 'communicate' },
         { id: 11, icon: 'hr.png', label: 'Human Resource', url: '/admin/staff/search', permissionShortCode: 'human_resource' },
         { id: 12, icon: 'download_resouces.png', label: 'Download Center', url: '/admin/content/createcontent', permissionShortCode: 'download_center' },
@@ -281,7 +281,7 @@ const Sidebar = ({
                 if (activeLi) {
                     const itemRect = activeLi.getBoundingClientRect();
                     const sidebarRect = sidebarElement.getBoundingClientRect();
-                    
+
                     if (itemRect.top < sidebarRect.top || itemRect.bottom > sidebarRect.bottom) {
                         activeLi.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
@@ -321,9 +321,9 @@ const Sidebar = ({
 
             {/* Desktop Sidebar - Hidden on Mobile via CSS transform, slides in via .sidebar-open */}
             {permissionsLoaded && (
-                <aside 
-                    className={`main-sidebar ${isSidebarOpen ? 'open' : ''}`} 
-                    id="alert2" 
+                <aside
+                    className={`main-sidebar ${isSidebarOpen ? 'open' : ''}`}
+                    id="alert2"
                     style={{ overflowX: 'hidden', overflowY: 'auto' }}
                 >
                     {/* Sidebar Search Form */}
