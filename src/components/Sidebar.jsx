@@ -271,16 +271,21 @@ const Sidebar = ({
     // Logout specific icon
     const logoutIconUrl = "https://newlayout.wisibles.com/backend/images/sidebar/logout.png";
 
-    // Auto-scroll sidebar to the active module using math to prevent resetting to top
+    // Auto-scroll sidebar to the active module only if it's out of view
     useEffect(() => {
         const activeIndex = menus.findIndex(menu => isMenuActive(menu.url));
         if (activeIndex > -1) {
             const sidebarElement = document.getElementById('alert2');
             if (sidebarElement) {
-                // Math: active item index * 60px (item height) + top offset (~120px) 
-                // We maintain the scroll position relative to the clicked item
-                const scrollPos = (activeIndex * 60); 
-                sidebarElement.scrollTop = Math.max(0, scrollPos);
+                const activeLi = sidebarElement.querySelector('li.active');
+                if (activeLi) {
+                    const itemRect = activeLi.getBoundingClientRect();
+                    const sidebarRect = sidebarElement.getBoundingClientRect();
+                    
+                    if (itemRect.top < sidebarRect.top || itemRect.bottom > sidebarRect.bottom) {
+                        activeLi.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
             }
         }
     }, [currentPath, menus]);
