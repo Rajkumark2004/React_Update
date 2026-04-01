@@ -11,6 +11,7 @@ import Loader from '../../../components/Loader';
 import StudentCollectFeeModal from './StudentCollectFeeModal';
 import ApplyDiscountModal from './ApplyDiscountModal';
 import CancelInvoiceModal from './CancelInvoiceModal';
+import PrintFeesByGroupArray from './PrintFeesByGroupArray';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../../utils/tableExport';
 
 const StudentAddFee = () => {
@@ -369,18 +370,36 @@ const StudentAddFee = () => {
                 fee_category: item.fee_category
             }));
 
-            const printData = {
-                feearray: feearray,
-                student: student,
-                sch_setting: {
-                    ...schSetting,
-                    receipt_header_url: printSettings?.header_image || schSetting?.receipt_header_url || '',
-                    receipt_footer_content: printSettings?.footer_content || schSetting?.receipt_footer_content || ''
-                }
+            const enriched_sch_setting = {
+                ...schSetting,
+                receipt_header_url: printSettings?.header_image || schSetting?.receipt_header_url || '',
+                receipt_footer_content: printSettings?.footer_content || schSetting?.receipt_footer_content || ''
             };
+            const receiptHtml = renderToStaticMarkup(
+                <PrintFeesByGroupArray feearray={feearray} student={student} sch_setting={enriched_sch_setting} />
+            );
 
-            localStorage.setItem('printFeesByGroupArrayData', JSON.stringify(printData));
-            window.open('/studentfee/printFeesByGroupArray', '_blank');
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+
+            const frameDoc = iframe.contentWindow ? iframe.contentWindow : iframe.contentDocument.document ? iframe.contentDocument.document : iframe.contentDocument;
+            frameDoc.document.open();
+            frameDoc.document.write('<html><head><title>Print Selected Fees</title>');
+            frameDoc.document.write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">');
+            frameDoc.document.write('</head><body>');
+            frameDoc.document.write(receiptHtml);
+            frameDoc.document.write('</body></html>');
+            frameDoc.document.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                document.body.removeChild(iframe);
+            }, 500);
 
         } catch (error) {
             console.error(error);
@@ -439,18 +458,36 @@ const StudentAddFee = () => {
                 fee_groups_feetype_id: fee.fee_groups_feetype_id || 0
             };
 
-            const printData = {
-                feearray: [item],
-                student: student,
-                sch_setting: {
-                    ...schSetting,
-                    receipt_header_url: printSettings?.header_image || schSetting?.receipt_header_url || '',
-                    receipt_footer_content: printSettings?.footer_content || schSetting?.receipt_footer_content || ''
-                }
+            const enriched_sch_setting = {
+                ...schSetting,
+                receipt_header_url: printSettings?.header_image || schSetting?.receipt_header_url || '',
+                receipt_footer_content: printSettings?.footer_content || schSetting?.receipt_footer_content || ''
             };
+            const receiptHtml = renderToStaticMarkup(
+                <PrintFeesByGroupArray feearray={[item]} student={student} sch_setting={enriched_sch_setting} />
+            );
 
-            localStorage.setItem('printFeesByGroupArrayData', JSON.stringify(printData));
-            window.open('/studentfee/printFeesByGroupArray', '_blank');
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+            document.body.appendChild(iframe);
+
+            const frameDoc = iframe.contentWindow ? iframe.contentWindow : iframe.contentDocument.document ? iframe.contentDocument.document : iframe.contentDocument;
+            frameDoc.document.open();
+            frameDoc.document.write('<html><head><title>Print Fee</title>');
+            frameDoc.document.write('<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">');
+            frameDoc.document.write('</head><body>');
+            frameDoc.document.write(receiptHtml);
+            frameDoc.document.write('</body></html>');
+            frameDoc.document.close();
+
+            setTimeout(() => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                document.body.removeChild(iframe);
+            }, 500);
 
         } catch (error) {
             console.error(error);

@@ -75,7 +75,7 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
         let name = firstname || "";
         if (showMiddle && middlename) name += " " + middlename;
         if (showLast && lastname) name += " " + lastname;
-        return name;
+        return name.toUpperCase();
     };
 
     const formatDate = (dateString) => {
@@ -110,102 +110,135 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
 
     const currency_symbol = sch_setting.currency_symbol || "₹";
 
-    const renderReceipt = (title) => (
-        <div className="col-sm-6">
-            <div className="row header ">
-                <div className="col-sm-12">
-                    <img src={sch_setting.receipt_header_url || "/uploads/print_headerfooter/student_receipt/header.jpg"} style={{ height: '100px', width: '100%' }} alt="Header" />
-                </div>
+    const renderReceipt = (title, index) => {
+        const sidePadding = index === 0 ? { paddingRight: '10px' } : { paddingLeft: '10px' };
+
+        return (
+        <div style={{ width: '50%', float: 'left', boxSizing: 'border-box', ...sidePadding }}>
+            <div>
+                <img src={sch_setting.receipt_header_url || "/uploads/print_headerfooter/student_receipt/header.jpg"} style={{ height: '100px', width: '100%', display: 'block' }} alt="Header" />
             </div>
-            <div className="row">
-                <div className="col-md-12 text text-center">
-                    {title}
-                </div>
+            <div>
+                <div style={{ textAlign: 'center', margin: '6px 0', fontWeight: '600', fontSize: '10pt' }}>{title}</div>
             </div>
 
-            <div className="row table table-bordered" style={{ width: '95%' }}>
-                <div className="col-xs-12 text-left">
-                    <br />
+            <div style={{ border: '1px solid #ddd', padding: '10px 15px', marginBottom: '0', fontSize: '9pt', lineHeight: '1.7' }}>
                     <div className="row">
-                        <div className="col-sm-3">Receipt No &#160;:</div>
-                        <div className="col-sm-3">
-                            {receiptNoPrefix}{String(student.id || '').padStart(5, '0')}
+                        <div className="col-xs-6">
+                            <div className="row">
+                                <div className="col-xs-4" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>Receipt No</div>
+                                <div className="col-xs-1" style={{ padding: 0, textAlign: 'center' }}>:</div>
+                                <div className="col-xs-7" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>{receiptNoPrefix}{String(student.id || '').padStart(5, '0')}</div>
+                            </div>
                         </div>
-                        <div className="col-sm-2">Date</div>
-                        <div className="col-sm-1">:</div>
-                        <div className="col-sm-3">
-                            {formatDate(new Date())}
-                        </div>
-                    </div>
-                    <div className="row">
-                        <div className="col-sm-3">Admin No &#160;&#160;&#160;:</div>
-                        <div className="col-sm-3">{firstFee.admission_no || student.admission_no}</div>
-                        <div className="col-sm-2">Roll No</div>
-                        <div className="col-sm-1">:</div>
-                        <div className="col-sm-3">{firstFee.roll_no || student.roll_no}</div>
-                    </div>
-                    <div className="row">
-                        <div className="col-sm-4">Student's Name</div>
-                        <div className="col-sm-1">:</div>
-                        <div className="col-sm-6">
-                            {getFullName(firstFee.firstname || student.firstname, firstFee.middlename || student.middlename, firstFee.lastname || student.lastname, sch_setting.middlename, sch_setting.lastname)}
+                        <div className="col-xs-6">
+                            <div className="row">
+                                <div className="col-xs-4" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>Date</div>
+                                <div className="col-xs-1" style={{ padding: 0, textAlign: 'center' }}>:</div>
+                                <div className="col-xs-7" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>{formatDate(new Date())}</div>
+                            </div>
                         </div>
                     </div>
                     <div className="row">
-                        <div className="col-sm-4">Father's Name</div>
-                        <div className="col-sm-1">:</div>
-                        <div className="col-sm-6">{firstFee.father_name || student.father_name}</div>
-                    </div>
-                    <div className="row">
-                        <div className="col-sm-4">Class & Sec</div>
-                        <div className="col-sm-1">:</div>
-                        <div className="col-sm-6">
-                            {firstFee.class || student.class} ({firstFee.section || student.section})
+                        <div className="col-xs-6">
+                            <div className="row">
+                                <div className="col-xs-4" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>Admin No</div>
+                                <div className="col-xs-1" style={{ padding: 0, textAlign: 'center' }}>:</div>
+                                <div className="col-xs-7" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>{firstFee.admission_no || student.admission_no}</div>
+                            </div>
+                        </div>
+                        <div className="col-xs-6">
+                            <div className="row">
+                                <div className="col-xs-4" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>Roll No.</div>
+                                <div className="col-xs-1" style={{ padding: 0, textAlign: 'center' }}>:</div>
+                                <div className="col-xs-7" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>{firstFee.roll_no || student.roll_no}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                    <div className="row">
+                        <div className="col-xs-6">
+                            <div className="row">
+                                <div className="col-xs-6" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>Student Name</div>
+                                <div className="col-xs-1" style={{ padding: 0, textAlign: 'center' }}>:</div>
+                                <div className="col-xs-5" style={{ wordBreak: 'break-word', padding: '0 5px' }}>{getFullName(firstFee.firstname || student.firstname, firstFee.middlename || student.middlename, firstFee.lastname || student.lastname, sch_setting.middlename, sch_setting.lastname)}</div>
+                            </div>
+                        </div>
+                        <div className="col-xs-6">
+                            <div className="row">
+                                <div className="col-xs-6" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>Father's Name</div>
+                                <div className="col-xs-1" style={{ padding: 0, textAlign: 'center' }}>:</div>
+                                <div className="col-xs-5" style={{ wordBreak: 'break-word', padding: '0 5px' }}>{(firstFee.father_name || student.father_name || '').toUpperCase()}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="row">
+                        <div className="col-xs-6">
+                            <div className="row">
+                                <div className="col-xs-4" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>Class</div>
+                                <div className="col-xs-1" style={{ padding: 0, textAlign: 'center' }}>:</div>
+                                <div className="col-xs-7" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>{firstFee.class || student.class}</div>
+                            </div>
+                        </div>
+                        <div className="col-xs-6">
+                            <div className="row">
+                                <div className="col-xs-4" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>Section</div>
+                                <div className="col-xs-1" style={{ padding: 0, textAlign: 'center' }}>:</div>
+                                <div className="col-xs-7" style={{ whiteSpace: 'nowrap', padding: '0 5px' }}>{firstFee.section || student.section}</div>
+                            </div>
+                        </div>
+                    </div>
             </div>
-            <hr style={{ marginTop: '0px', marginBottom: '0px' }} />
-            <div className="row">
+            <div>
                 {!feearray || feearray.length === 0 ? (
-                    <table className="table table-bordered" style={{ fontSize: '8pt', width: '95%' }}>
+                    <table style={{ fontSize: '8pt', width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd', tableLayout: 'fixed' }}>
                         <tbody>
                             <tr>
-                                <td colSpan="11" className="text-danger text-center">
+                                <td className="text-danger text-center" style={{ border: '1px solid #ddd', padding: '8px' }}>
                                     No Transaction Found
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 ) : (
-                    <table className="table table-bordered" style={{ fontSize: '8pt', width: '95%' }}>
+                    <table style={{ fontSize: '8pt', width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd', tableLayout: 'fixed' }}>
                         <thead>
                             <tr>
-                                <th style={{ width: '20px' }}>S.No.</th>
-                                <th colSpan="4">Particulars</th>
-                                <th className="text text-right">Amount</th>
+                                <th style={{ width: '10%', border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>S.No.</th>
+                                <th style={{ width: '40%', border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Particulars</th>
+                                <th style={{ width: '25%', border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Mode</th>
+                                <th style={{ width: '25%', border: '1px solid #ddd', padding: '8px', textAlign: 'right' }}>Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             {feearray.map((fee, index) => (
                                 <tr key={index}>
-                                    <td>{index + 1}</td>
-                                    <td colSpan="4">
+                                    <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>{index + 1}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>
                                         {fee.type || fee.feeTypeName}
                                         {fee.code ? ` (${fee.code})` : ''}
                                         {fee.fine_amount > 0 && <span className="text-danger"> + Fine ({currency_symbol}{fee.fine_amount})</span>}
                                     </td>
-                                    <td className="text text-right">
-                                        {currency_symbol}{amountFormat(parseFloat(fee.amount) + parseFloat(fee.fine_amount || 0))}
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>{(fee.mode || '').toUpperCase()}</td>
+                                    <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                                            <span>{currency_symbol}</span> <span style={{ marginLeft: '4px' }}>{amountFormat(parseFloat(fee.amount) + parseFloat(fee.fine_amount || 0))}</span>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
-
                             <tr>
-                                <td></td>
-                                <td colSpan="4" className="text text-right">Total</td>
-                                <td className="text text-right">
-                                    {currency_symbol}{amountFormat(total_amount + total_fine_amount)}
+                                <td colSpan="4" style={{ border: '1px solid #ddd', padding: '8px' }}>
+                                    <div style={{ display: 'flex', whiteSpace: 'nowrap', alignItems: 'center' }}>
+                                        Received Amount: <span style={{ marginLeft: '4px' }}>{currency_symbol}</span> <span style={{ marginLeft: '4px' }}>{amountFormat(total_amount + total_fine_amount)}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colSpan="3" style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'right', fontWeight: 'bold' }}>Total</td>
+                                <td style={{ border: '1px solid #ddd', padding: '8px', fontWeight: 'bold' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                                        <span>{currency_symbol}</span> <span style={{ marginLeft: '4px' }}>{amountFormat(total_amount + total_fine_amount)}</span>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -213,59 +246,30 @@ const PrintFeesByGroupArray = ({ feearray, student, sch_setting, receiptNoPrefix
                 )}
             </div>
 
-            <div className="print_footer">
-                <div className="row header ">
-                    <div className="col-sm-12">
-                        In Words: {convertToWords(total_amount + total_fine_amount)}
-                    </div>
+            <div style={{ marginTop: '6px', border: '1px solid #999', borderRadius: '4px', padding: '5px 8px', fontSize: '8pt' }}>
+                <div>
+                    In Words: {convertToWords(total_amount + total_fine_amount)}
                 </div>
-                <div className="row header" style={{ marginTop: '10px' }}>
-                    <div className="col-sm-8">
+                <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                    <div style={{ flex: 1 }}>
                         {sch_setting.receipt_footer_content ? (
                             <div dangerouslySetInnerHTML={{ __html: sch_setting.receipt_footer_content }} />
                         ) : (
-                            "Note: Fee once paid is not refundable"
+                            "This receipt is computer-generated; hence, no signature is required."
                         )}
                     </div>
-                    <div className="col-sm-4 text-right">
-                        Signature
-                    </div>
+                    <div style={{ textAlign: 'right', minWidth: '80px' }}>Signature</div>
                 </div>
             </div>
         </div>
-    );
+        );
+    };
 
     return (
-        <div className="container">
-            <style>
-                {`
-                .page-break { display: block; page-break-before: always; }
-                @media print {
-                    .page-break { display: block; page-break-before: always; }
-                    .col-sm-1, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-10, .col-sm-11, .col-sm-12 { float: left; }
-                    .col-sm-12 { width: 100%; }
-                    .col-sm-6 { width: 50%; }
-                    .col-sm-4 { width: 33.33333333%; }
-                    .col-sm-3 { width: 25%; }
-                    .col-sm-2 { width: 16.66666667%; }
-                    .col-sm-1 { width: 8.33333333%; }
-                    .col-xs-12 { width: 100%; float: left; }
-                    .text-right { text-align: right; }
-                    .text-center { text-align: center; }
-                    
-                    .print_header { border: 0.5px solid; border-radius: 8px; padding: 5px 10px; }
-                    .print_footer { border: 0.5px solid; border-radius: 8px; padding: 5px 10px; margin-left: -10px; width: 98%; font-size: 8pt; }
-                    table, tr, td, th { background-color: #ffffff !important; }
-                    body, html { background-color: #ffffff !important; }
-                }
-                .print_footer { border: 0.5px solid; border-radius: 8px; padding: 5px 10px; margin-left: -10px; width: 98%; font-size: 8pt; }
-                table, tr, td, th { background-color: #ffffff !important; }
-                body, html { background-color: #ffffff !important; }
-                `}
-            </style>
-            <div className="row">
-                {renderReceipt("Office Copy")}
-                {renderReceipt("Student Copy")}
+        <div style={{ padding: '10px', background: 'white' }}>
+            <div style={{ overflow: 'hidden' }}>
+                {renderReceipt("Office Copy", 0)}
+                {renderReceipt("Student Copy", 1)}
             </div>
         </div>
     );
