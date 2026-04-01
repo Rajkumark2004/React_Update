@@ -8,10 +8,12 @@ import { api } from '../../services/api';
 import '../../utils/include_files';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 import { useTableSort } from '../../hooks/useTableSort';
+import { validateMaxLength, validateDescription, sanitizeName } from '../../utils/validation';
 
 const Hostel = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         hostel_name: '',
         type: '',
@@ -19,6 +21,7 @@ const Hostel = () => {
         intake: '',
         description: ''
     });
+    const [errors, setErrors] = useState({});
 
     const [hostellist, setHostelList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -80,23 +83,64 @@ const Hostel = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        let sanitizedValue = value;
+        let errorMsg = '';
+
+        if (name === 'hostel_name' || name === 'address' || name === 'intake') {
+            let limit = name === 'address' ? 100 : (name === 'intake' ? 10 : 50);
+            if (value.length > limit) {
+                errorMsg = `Maximum ${limit} characters allowed`;
+            }
+            if (name === 'hostel_name') sanitizedValue = sanitizeName(value);
+            if (name === 'intake') sanitizedValue = value.replace(/[^0-9]/g, '');
+        }
+
+        setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+        setErrors(prev => ({ ...prev, [name]: errorMsg }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validation
-        if (!formData.hostel_name) {
-            toast.error('Please enter hostel name');
-            return;
+        const newErrors = {};
+        
+        const nameError = validateMaxLength(formData.hostel_name, 50, 'Hostel Name');
+        if (nameError) {
+            newErrors.hostel_name = nameError;
+        } else if (!formData.hostel_name) {
+            newErrors.hostel_name = 'Hostel Name is required';
         }
+        
         if (!formData.type) {
-            toast.error('Please select type');
+            newErrors.type = 'Type is required';
+        }
+
+        const addressError = validateMaxLength(formData.address, 100, 'Address');
+        if (addressError) {
+            newErrors.address = addressError;
+        }
+
+        const intakeError = validateMaxLength(formData.intake, 10, 'Intake');
+        if (intakeError) {
+            newErrors.intake = intakeError;
+        } else if (formData.intake && !/^\d+$/.test(formData.intake)) {
+            newErrors.intake = 'Intake must be a number';
+        }
+        
+        const descriptionError = validateDescription(formData.description);
+        if (descriptionError) {
+            newErrors.description = descriptionError;
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        setLoading(true);
+        setErrors({}); // Clear errors if validation passes
+
+        setSubmitting(true);
         try {
             const response = await api.createHostel(formData);
 
@@ -117,7 +161,7 @@ const Hostel = () => {
             console.error('Error creating hostel:', error);
             toast.error('Failed to add hostel');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -170,8 +214,10 @@ const Hostel = () => {
                                                 onChange={handleInputChange}
                                                 className="form-control"
                                                 placeholder=""
+                                                maxLength={51}
                                                 autoFocus
                                             />
+                                            {errors.hostel_name && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.hostel_name}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -189,6 +235,7 @@ const Hostel = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                            {errors.type && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.type}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -200,7 +247,9 @@ const Hostel = () => {
                                                 onChange={handleInputChange}
                                                 className="form-control"
                                                 placeholder=""
+                                                maxLength={101}
                                             />
+                                            {errors.address && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.address}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -212,7 +261,9 @@ const Hostel = () => {
                                                 onChange={handleInputChange}
                                                 className="form-control"
                                                 placeholder=""
+                                                maxLength={11}
                                             />
+                                            {errors.intake && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.intake}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -228,8 +279,8 @@ const Hostel = () => {
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right" disabled={loading}>
-                                            {loading ? 'Saving...' : 'Save'}
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
                                         </button>
                                     </div>
                                 </form>

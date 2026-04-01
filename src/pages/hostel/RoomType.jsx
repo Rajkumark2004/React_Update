@@ -8,14 +8,17 @@ import { api } from '../../services/api';
 import '../../utils/include_files';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 import { useTableSort } from '../../hooks/useTableSort';
+import { validateName, validateDescription, sanitizeName } from '../../utils/validation';
 
 const RoomType = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         room_type: '',
         description: ''
     });
+    const [errors, setErrors] = useState({});
     const [roomtypelist, setRoomTypeList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -71,19 +74,44 @@ const RoomType = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        let sanitizedValue = value;
+        let errorMsg = '';
+
+        if (name === 'room_type') {
+            if (value.length > 50) {
+                errorMsg = 'Maximum 50 characters allowed';
+            }
+            sanitizedValue = sanitizeName(value);
+        }
+
+        setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+        setErrors(prev => ({ ...prev, [name]: errorMsg }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validation
-        if (!formData.room_type) {
-            toast.error('Please enter room type');
+        const newErrors = {};
+        
+        const roomTypeError = validateName(formData.room_type);
+        if (roomTypeError) {
+            newErrors.room_type = roomTypeError.replace('Name', 'Room Type');
+        }
+
+        const descriptionError = validateDescription(formData.description);
+        if (descriptionError) {
+            newErrors.description = descriptionError;
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        setLoading(true);
+        setErrors({}); // Clear errors if validation passes
+
+        setSubmitting(true);
         try {
             const response = await api.createRoomType(formData);
 
@@ -101,7 +129,7 @@ const RoomType = () => {
             console.error('Error creating room type:', error);
             toast.error('Failed to add room type');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -154,8 +182,10 @@ const RoomType = () => {
                                                 onChange={handleInputChange}
                                                 className="form-control"
                                                 placeholder=""
+                                                maxLength={51}
                                                 autoFocus
                                             />
+                                            {errors.room_type && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.room_type}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -168,11 +198,12 @@ const RoomType = () => {
                                                 rows="3"
                                                 placeholder=""
                                             ></textarea>
+                                            {errors.description && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.description}</span>}
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right" disabled={loading}>
-                                            {loading ? 'Saving...' : 'Save'}
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
                                         </button>
                                     </div>
                                 </form>

@@ -6,11 +6,13 @@ import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
+import { validateRoomNo, validateNoOfBeds, validateCost, validateDescription, sanitizeNameWithNumbers, sanitizeNumbers, sanitizeDecimal } from '../../utils/validation';
 
 const HostelRoomEdit = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         id: '',
         room_no: '',
@@ -20,6 +22,7 @@ const HostelRoomEdit = () => {
         cost_per_bed: '',
         description: ''
     });
+    const [errors, setErrors] = useState({});
 
     // Mock data - will be replaced with API calls
     const [hostellist, setHostelList] = useState([]);
@@ -67,35 +70,64 @@ const HostelRoomEdit = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        let sanitizedValue = value;
+        let errorMsg = '';
+        
+        if (name === 'room_no') {
+            if (value.length > 50) {
+                errorMsg = 'Maximum 50 characters allowed';
+            }
+            sanitizedValue = sanitizeNameWithNumbers(value);
+        }
+        if (name === 'no_of_bed') sanitizedValue = sanitizeNumbers(value);
+        if (name === 'cost_per_bed') sanitizedValue = sanitizeDecimal(value);
+        
+        setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+        setErrors(prev => ({ ...prev, [name]: errorMsg }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validation
-        if (!formData.room_no) {
-            toast.error('Please enter room number');
-            return;
+        const newErrors = {};
+
+        const roomNoError = validateRoomNo(formData.room_no);
+        if (roomNoError) {
+            newErrors.room_no = roomNoError;
         }
+
         if (!formData.hostel_id) {
-            toast.error('Please select hostel');
-            return;
+            newErrors.hostel_id = 'Please select hostel';
         }
+
         if (!formData.room_type_id) {
-            toast.error('Please select room type');
-            return;
+            newErrors.room_type_id = 'Please select room type';
         }
-        if (!formData.no_of_bed) {
-            toast.error('Please enter number of beds');
-            return;
+
+        const noOfBedsError = validateNoOfBeds(formData.no_of_bed);
+        if (noOfBedsError) {
+            newErrors.no_of_bed = noOfBedsError;
         }
-        if (!formData.cost_per_bed) {
-            toast.error('Please enter cost per bed');
+
+        const costError = validateCost(formData.cost_per_bed);
+        if (costError) {
+            newErrors.cost_per_bed = costError;
+        }
+
+        const descriptionError = validateDescription(formData.description);
+        if (descriptionError) {
+            newErrors.description = descriptionError;
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        setLoading(true);
+        setErrors({}); // Clear errors if validation passes
+
+        setSubmitting(true);
         try {
             const response = await api.updateHostelRoom(formData);
 
@@ -109,7 +141,7 @@ const HostelRoomEdit = () => {
             console.error('Error updating room:', error);
             toast.error('Failed to update hostel room');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -164,8 +196,10 @@ const HostelRoomEdit = () => {
                                                 onChange={handleInputChange}
                                                 className="form-control"
                                                 placeholder=""
+                                                maxLength={51}
                                                 autoFocus
                                             />
+                                            {errors.room_no && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.room_no}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -183,6 +217,7 @@ const HostelRoomEdit = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                            {errors.hostel_id && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.hostel_id}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -200,6 +235,7 @@ const HostelRoomEdit = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                            {errors.room_type_id && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.room_type_id}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -212,6 +248,7 @@ const HostelRoomEdit = () => {
                                                 className="form-control"
                                                 placeholder=""
                                             />
+                                            {errors.no_of_bed && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.no_of_bed}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -224,6 +261,7 @@ const HostelRoomEdit = () => {
                                                 className="form-control"
                                                 placeholder=""
                                             />
+                                            {errors.cost_per_bed && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.cost_per_bed}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -236,11 +274,12 @@ const HostelRoomEdit = () => {
                                                 rows="3"
                                                 placeholder=""
                                             ></textarea>
+                                            {errors.description && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.description}</span>}
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right" disabled={loading}>
-                                            {loading ? 'Saving...' : 'Save'}
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
                                         </button>
                                     </div>
                                 </form>

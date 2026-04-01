@@ -6,11 +6,13 @@ import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
+import { validateMaxLength, validateDescription, sanitizeName } from '../../utils/validation';
 
 const HostelEdit = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         id: '',
         hostel_name: '',
@@ -19,6 +21,7 @@ const HostelEdit = () => {
         intake: '',
         description: ''
     });
+    const [errors, setErrors] = useState({});
 
     const [hostellist, setHostelList] = useState([]);
     const hostelTypes = ['Boys', 'Girls', 'Combined'];
@@ -58,23 +61,64 @@ const HostelEdit = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        let sanitizedValue = value;
+        let errorMsg = '';
+
+        if (name === 'hostel_name' || name === 'address' || name === 'intake') {
+            let limit = name === 'address' ? 100 : (name === 'intake' ? 10 : 50);
+            if (value.length > limit) {
+                errorMsg = `Maximum ${limit} characters allowed`;
+            }
+            if (name === 'hostel_name') sanitizedValue = sanitizeName(value);
+            if (name === 'intake') sanitizedValue = value.replace(/[^0-9]/g, '');
+        }
+
+        setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
+        setErrors(prev => ({ ...prev, [name]: errorMsg }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validation
-        if (!formData.hostel_name) {
-            toast.error('Please enter hostel name');
-            return;
+        const newErrors = {};
+
+        const nameError = validateMaxLength(formData.hostel_name, 50, 'Hostel Name');
+        if (nameError) {
+            newErrors.hostel_name = nameError;
+        } else if (!formData.hostel_name) {
+            newErrors.hostel_name = 'Hostel Name is required';
         }
+
         if (!formData.type) {
-            toast.error('Please select type');
+            newErrors.type = 'Type is required';
+        }
+
+        const addressError = validateMaxLength(formData.address, 100, 'Address');
+        if (addressError) {
+            newErrors.address = addressError;
+        }
+
+        const intakeError = validateMaxLength(formData.intake, 10, 'Intake');
+        if (intakeError) {
+            newErrors.intake = intakeError;
+        } else if (formData.intake && !/^\d+$/.test(formData.intake)) {
+            newErrors.intake = 'Intake must be a number';
+        }
+
+        const descriptionError = validateDescription(formData.description);
+        if (descriptionError) {
+            newErrors.description = descriptionError;
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             return;
         }
 
-        setLoading(true);
+        setErrors({}); // Clear errors if validation passes
+
+        setSubmitting(true);
         try {
             const response = await api.updateHostel(formData);
 
@@ -88,7 +132,7 @@ const HostelEdit = () => {
             console.error('Error updating hostel:', error);
             toast.error('Failed to update hostel');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -147,8 +191,10 @@ const HostelEdit = () => {
                                                 onChange={handleInputChange}
                                                 className="form-control"
                                                 placeholder=""
+                                                maxLength={51}
                                                 autoFocus
                                             />
+                                            {errors.hostel_name && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.hostel_name}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -166,6 +212,7 @@ const HostelEdit = () => {
                                                     </option>
                                                 ))}
                                             </select>
+                                            {errors.type && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.type}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -177,7 +224,9 @@ const HostelEdit = () => {
                                                 onChange={handleInputChange}
                                                 className="form-control"
                                                 placeholder=""
+                                                maxLength={101}
                                             />
+                                            {errors.address && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.address}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -189,7 +238,9 @@ const HostelEdit = () => {
                                                 onChange={handleInputChange}
                                                 className="form-control"
                                                 placeholder=""
+                                                maxLength={11}
                                             />
+                                            {errors.intake && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.intake}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -205,8 +256,8 @@ const HostelEdit = () => {
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right" disabled={loading}>
-                                            {loading ? 'Saving...' : 'Save'}
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
                                         </button>
                                     </div>
                                 </form>
