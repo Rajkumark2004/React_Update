@@ -89,6 +89,14 @@ const StudentAddFee = () => {
                     setSchSetting(data.sch_setting);
                 }
 
+                // Map category using category_id and categorylist
+                if (data.categorylist && Array.isArray(data.categorylist) && studentData.category_id) {
+                    const mappedCategory = data.categorylist.find(cat => String(cat.id) === String(studentData.category_id));
+                    if (mappedCategory) {
+                        studentData.mapped_category_name = mappedCategory.category;
+                    }
+                }
+
                 setStudent(studentData);
                 // setTransportFees moved to after processing
                 setStudentDiscountFee(data.student_discount_fee || []);
@@ -738,7 +746,7 @@ const StudentAddFee = () => {
                                                                 </tr>
                                                                 <tr>
                                                                     <th>Category</th>
-                                                                    <td>{student.category}</td>
+                                                                    <td>{student.mapped_category_name || student.category}</td>
                                                                     <th>RTE</th>
                                                                     <td><b className="text-danger">{student.rte}</b></td>
                                                                 </tr>
