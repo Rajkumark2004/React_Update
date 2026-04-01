@@ -25,13 +25,13 @@ const StudentFeeSearch = () => {
 
     // Column definitions
     const columns = [
-        { key: 'class', label: 'Class' },
-        { key: 'section', label: 'Section' },
-        { key: 'admission_no', label: 'Admission No' },
-        { key: 'student_name', label: 'Student Name' },
-        { key: 'father_name', label: 'Father Name' },
-        { key: 'dob', label: 'Date Of Birth' },
-        { key: 'mobileno', label: 'Phone' }
+        { key: 'class', label: 'Class', minWidth: '60px', maxWidth: '100px' },
+        { key: 'section', label: 'Section', minWidth: '70px', maxWidth: '110px' },
+        { key: 'admission_no', label: 'Admission No', minWidth: '110px', maxWidth: '150px' },
+        { key: 'student_name', label: 'Student Name', minWidth: '150px', maxWidth: '200px' },
+        { key: 'father_name', label: 'Father Name', minWidth: '150px', maxWidth: '200px' },
+        { key: 'dob', label: 'Date Of Birth', minWidth: '100px', maxWidth: '120px' },
+        { key: 'mobileno', label: 'Phone', minWidth: '100px', maxWidth: '130px' }
     ];
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
@@ -74,6 +74,11 @@ const StudentFeeSearch = () => {
     const [students, setStudents] = useState([]);
     const [csvFile, setCsvFile] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    // Pagination & local search state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [localSearch, setLocalSearch] = useState('');
     const [importing, setImporting] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -211,6 +216,7 @@ const StudentFeeSearch = () => {
             }
 
             setStudents(studentsData);
+            setCurrentPage(1);
 
             if (studentsData.length === 0) {
                 toast.error('No students found');
@@ -271,6 +277,29 @@ const StudentFeeSearch = () => {
 
     // Helper for currency format
     const currencySymbol = "₹"; // Mock or fetch from settings
+
+    // Pagination Logic
+    const filteredStudents = students.filter(student => {
+        if (!localSearch) return true;
+        const searchLower = localSearch.toLowerCase();
+        return columns.some(col => {
+            const val = formatCell(student, col.key);
+            return val && String(val).toLowerCase().includes(searchLower);
+        });
+    });
+
+    const currentTotal = filteredStudents.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? currentTotal || 1 : recordsPerPage;
+    const totalPages = Math.ceil(currentTotal / safeRecordsPerPage);
+    const indexOfLastRecord = currentPage * safeRecordsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - safeRecordsPerPage;
+    const currentRecords = filteredStudents.slice(indexOfFirstRecord, indexOfLastRecord);
+
+    const handlePageChange = (pageNumber) => {
+        if (pageNumber > 0 && pageNumber <= totalPages) {
+            setCurrentPage(pageNumber);
+        }
+    };
 
     return (
         <div className="wrapper theme-white-skin">
@@ -437,7 +466,7 @@ const StudentFeeSearch = () => {
                                                     disabled={downloading}
                                                 >
                                                     <i className={`fa ${downloading ? 'fa-spinner fa-spin' : 'fa-download'}`}></i>
-                                                    {downloading ? ' Downloading...' : ' Download Payment Import File'}
+                                                    {downloading ? ' Downloading...' : ' Import Payment Sample File'}
                                                 </button>
                                             </div>
                                         </div>
@@ -449,16 +478,16 @@ const StudentFeeSearch = () => {
                                                         <label htmlFor="csvFileInput">
                                                             Select CSV File <small className="req">*</small>
                                                         </label>
-                                                            <input
-                                                                id="csvFileInput"
-                                                                className="dropify"
-                                                                type="file"
-                                                                name="file"
-                                                                data-height="92"
-                                                                accept=".csv"
-                                                                onChange={(e) => setCsvFile(e.target.files[0] || null)}
-                                                                required
-                                                            />
+                                                        <input
+                                                            id="csvFileInput"
+                                                            className="dropify"
+                                                            type="file"
+                                                            name="file"
+                                                            data-height="28"
+                                                            accept=".csv"
+                                                            onChange={(e) => setCsvFile(e.target.files[0] || null)}
+                                                            required
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6 pt20">
@@ -468,7 +497,6 @@ const StudentFeeSearch = () => {
                                                         onClick={handleImport}
                                                         disabled={importing || !csvFile}
                                                     >
-                                                        <i className={`fa ${importing ? 'fa-spinner fa-spin' : 'fa-upload'}`}></i>
                                                         {importing ? ' Importing...' : ' Import Payments'}
                                                     </button>
                                                 </div>
@@ -488,7 +516,7 @@ const StudentFeeSearch = () => {
                                                 <div className="col-md-6 col-sm-6">
                                                     <form onSubmit={(e) => handleSearch(e, 'class')}>
                                                         <div className="row">
-                                                            <div className="col-sm-4">
+                                                            <div className="col-sm-6">
                                                                 <div className="form-group">
                                                                     <label>Class</label><small className="req"> *</small>
                                                                     <select
@@ -506,7 +534,7 @@ const StudentFeeSearch = () => {
                                                                     </select>
                                                                 </div>
                                                             </div>
-                                                            <div className="col-sm-4">
+                                                            <div className="col-sm-6">
                                                                 <div className="form-group">
                                                                     <label>Section</label>
                                                                     <select
@@ -523,7 +551,7 @@ const StudentFeeSearch = () => {
                                                                     </select>
                                                                 </div>
                                                             </div>
-                                                            <div className="col-sm-4">
+                                                            <div className="col-sm-12">
                                                                 <div className="form-group">
                                                                     <button type="submit" className="btn btn-primary btn-sm pull-right">
                                                                         <i className="fa fa-search"></i> Search
@@ -537,8 +565,7 @@ const StudentFeeSearch = () => {
                                                 <div className="col-md-6 col-sm-6">
                                                     <form onSubmit={(e) => handleSearch(e, 'keyword')}>
                                                         <div className="row">
-                                                            <div className="col-sm-1"></div>
-                                                            <div className="col-sm-7">
+                                                            <div className="col-sm-12">
                                                                 <div className="form-group">
                                                                     <label>Search By Keyword</label>
                                                                     <input
@@ -551,7 +578,7 @@ const StudentFeeSearch = () => {
                                                                     />
                                                                 </div>
                                                             </div>
-                                                            <div className="col-sm-4">
+                                                            <div className="col-sm-12">
                                                                 <div className="form-group">
                                                                     <button type="submit" className="btn btn-primary btn-sm pull-right">
                                                                         <i className="fa fa-search"></i> Search
@@ -575,9 +602,47 @@ const StudentFeeSearch = () => {
                                             <div className="box-body">
                                                 <div className="download_label">Student List</div>
 
-                                                {/* Controls: Export Buttons + Global Search (if needed) */}
+                                                {/* Controls: Records, local search, export buttons */}
                                                 <div className="row" style={{ marginBottom: '10px' }}>
-                                                    <div className="col-md-12">
+                                                    <div className="col-sm-8" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                                        <div className="dataTables_length">
+                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                                Records:
+                                                                <select
+                                                                    value={recordsPerPage}
+                                                                    onChange={(e) => {
+                                                                        setRecordsPerPage(Number(e.target.value));
+                                                                        setCurrentPage(1);
+                                                                    }}
+                                                                    className="form-control input-sm"
+                                                                    style={{ width: '80px', margin: '0 10px' }}
+                                                                >
+                                                                    <option value="10">10</option>
+                                                                    <option value="25">25</option>
+                                                                    <option value="50">50</option>
+                                                                    <option value="100">100</option>
+                                                                    <option value="-1">All</option>
+                                                                </select>
+                                                            </label>
+                                                        </div>
+                                                        <div className="dataTables_filter">
+                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                                Search:
+                                                                <input
+                                                                    type="search"
+                                                                    className="form-control input-sm"
+                                                                    placeholder=""
+                                                                    style={{ marginLeft: '10px' }}
+                                                                    value={localSearch}
+                                                                    onChange={(e) => {
+                                                                        setLocalSearch(e.target.value);
+                                                                        setCurrentPage(1);
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-sm-4 text-right">
                                                         <div className="dt-buttons btn-group">
                                                             <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
                                                                 <i className="fa fa-files-o"></i>
@@ -591,15 +656,21 @@ const StudentFeeSearch = () => {
                                                             <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
                                                                 <i className="fa fa-file-pdf-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}>
+                                                            <button 
+                                                                className="btn btn-default btn-sm" 
+                                                                title="Print" 
+                                                                onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}
+                                                                style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
+                                                            >
                                                                 <i className="fa fa-print"></i>
                                                             </button>
+                                                            {/* 
                                                             <div className="btn-group">
                                                                 <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
                                                                     <i className="fa fa-columns"></i>
                                                                 </button>
                                                                 {showColumnsDropdown && (
-                                                                    <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                                         {columns.map(col => (
                                                                             <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
                                                                                 <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
@@ -609,6 +680,7 @@ const StudentFeeSearch = () => {
                                                                     </div>
                                                                 )}
                                                             </div>
+                                                            */}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -618,13 +690,13 @@ const StudentFeeSearch = () => {
                                                         <thead>
                                                             <tr>
                                                                 {columns.map(col => visibleColumns.has(col.key) && (
-                                                                    <th key={col.key}>{col.label}</th>
+                                                                    <th key={col.key} style={{ whiteSpace: 'nowrap', minWidth: col.minWidth }}>{col.label}</th>
                                                                 ))}
-                                                                <th className="text-right noExport">Action</th>
+                                                                <th className="text-right noExport" style={{ whiteSpace: 'nowrap', minWidth: '100px' }}>Action</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {students.length === 0 ? (
+                                                            {currentRecords.length === 0 ? (
                                                                 <tr>
                                                                     <td colSpan={visibleColumns.size + 1} className="text-center">
                                                                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
@@ -635,10 +707,19 @@ const StudentFeeSearch = () => {
                                                                     </td>
                                                                 </tr>
                                                             ) : (
-                                                                students.map((student, index) => (
+                                                                currentRecords.map((student, index) => (
                                                                     <tr key={`${student.id}-${index}`}>
                                                                         {columns.map(col => visibleColumns.has(col.key) && (
-                                                                            <td key={col.key}>
+                                                                            <td
+                                                                                key={col.key}
+                                                                                style={{
+                                                                                    whiteSpace: 'nowrap',
+                                                                                    maxWidth: col.maxWidth,
+                                                                                    overflow: 'hidden',
+                                                                                    textOverflow: 'ellipsis'
+                                                                                }}
+                                                                                title={formatCell(student, col.key)}
+                                                                            >
                                                                                 {col.key === 'student_name' ? (
                                                                                     <Link to={`/student/view/${student.id}`}>
                                                                                         {formatCell(student, col.key)}
@@ -646,7 +727,7 @@ const StudentFeeSearch = () => {
                                                                                 ) : formatCell(student, col.key)}
                                                                             </td>
                                                                         ))}
-                                                                        <td className="text-right">
+                                                                        <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                                                                             {/* Action Buttons */}
                                                                             <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-info btn-xs" title="Collect Fees">
                                                                                 Collect Fees
@@ -657,6 +738,42 @@ const StudentFeeSearch = () => {
                                                             )}
                                                         </tbody>
                                                     </table>
+                                                </div>
+
+                                                {/* Pagination Footer */}
+                                                <div className="row" style={{ marginTop: '15px' }}>
+                                                    <div className="col-sm-5">
+                                                        <div className="dataTables_info">
+                                                            Showing {currentTotal === 0 ? 0 : indexOfFirstRecord + 1} to {Math.min(indexOfLastRecord, currentTotal)} of {currentTotal} entries
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-sm-7">
+                                                        <div className="dataTables_paginate paging_simple_numbers pull-right">
+                                                            <ul className="pagination" style={{ margin: 0 }}>
+                                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                                    <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
+                                                                </li>
+                                                                {[...Array(totalPages)].map((_, i) => {
+                                                                    const p = i + 1;
+                                                                    if (totalPages > 7) {
+                                                                        if (p !== 1 && p !== totalPages && Math.abs(currentPage - p) > 1) {
+                                                                            if (p === 2 && currentPage > 3) return <li key={`ellipsis-${i}`} className="paginate_button disabled"><a>...</a></li>;
+                                                                            if (p === totalPages - 1 && currentPage < totalPages - 2) return <li key={`ellipsis-${i}`} className="paginate_button disabled"><a>...</a></li>;
+                                                                            return null;
+                                                                        }
+                                                                    }
+                                                                    return (
+                                                                        <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                                                            <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(p); }}>{p}</a>
+                                                                        </li>
+                                                                    );
+                                                                })}
+                                                                <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                                    <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

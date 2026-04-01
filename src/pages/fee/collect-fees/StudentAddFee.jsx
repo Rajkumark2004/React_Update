@@ -11,6 +11,7 @@ import Loader from '../../../components/Loader';
 import StudentCollectFeeModal from './StudentCollectFeeModal';
 import ApplyDiscountModal from './ApplyDiscountModal';
 import CancelInvoiceModal from './CancelInvoiceModal';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../../utils/tableExport';
 
 const StudentAddFee = () => {
     const { id } = useParams();
@@ -627,6 +628,25 @@ const StudentAddFee = () => {
         }
     };
 
+    const getReceiptExportData = () => {
+        const headers = ["S.No", "Receipt No", "Admission No", "Name", "Class", "Reference No", "Payment Date", "Payment Mode", "Fee Type", "Amount", "Status", "Description"];
+        const rows = feePayments.map((payment, index) => [
+            index + 1,
+            `24/25-${String(payment.id).padStart(5, '0')}`,
+            payment.admission_no || '',
+            `${payment.firstname || ''} ${payment.middlename || ''} ${payment.lastname || ''}`.trim(),
+            `${payment.class || ''} (${payment.section || ''})`,
+            payment.reference_no || '',
+            payment.created_at ? new Date(payment.created_at).toLocaleDateString('en-GB') : '',
+            payment.mode || '',
+            payment.fee_types || '',
+            amountFormat(payment.amount),
+            payment.status == 1 ? 'Cancel' : 'Active',
+            payment.description || ''
+        ]);
+        return { headers, rows };
+    };
+
     if (loading) {
         return (
             <div className="wrapper theme-white-skin">
@@ -719,12 +739,8 @@ const StudentAddFee = () => {
                                                                 <tr>
                                                                     <th>Category</th>
                                                                     <td>{student.category}</td>
-                                                                    {student.rte === 'Yes' && (
-                                                                        <>
-                                                                            <th>RTE</th>
-                                                                            <td><b className="text-danger">{student.rte}</b></td>
-                                                                        </>
-                                                                    )}
+                                                                    <th>RTE</th>
+                                                                    <td><b className="text-danger">{student.rte}</b></td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
@@ -945,8 +961,8 @@ const StudentAddFee = () => {
                                                                     <td className="text-right">
                                                                         {balance > 0 ? amountFormat(balance) : ""}
                                                                     </td>
-                                                                    <td width="100">
-                                                                        <div className="btn-group pull-right">
+                                                                    <td className="text-right" width="100">
+                                                                        <div className="btn-group">
                                                                             {/* Plus button hidden as per request
                                                                             {balance > 0 && (
                                                                                 <button
@@ -989,7 +1005,7 @@ const StudentAddFee = () => {
                                                                         <td className="text-right">{amountFormat(deposit.amount)}</td>
                                                                         <td></td>
                                                                         <td className="text-right">
-                                                                            <div className="btn-group pull-right">
+                                                                            <div className="btn-group">
                                                                                 <button
                                                                                     className="btn btn-default btn-xs"
                                                                                     title="Revert"
@@ -1086,8 +1102,8 @@ const StudentAddFee = () => {
                                                                 <td className="text-right">
                                                                     {balance > 0 ? amountFormat(balance) : ""}
                                                                 </td>
-                                                                <td width="100">
-                                                                    <div className="btn-group pull-right">
+                                                                <td className="text-right" width="100">
+                                                                    <div className="btn-group">
                                                                         {balance > 0 && (
                                                                             <button
                                                                                 className="btn btn-xs btn-default myCollectFeeBtn"
@@ -1133,7 +1149,7 @@ const StudentAddFee = () => {
                                                                         <td className="text-right">{amountFormat(deposit.amount)}</td>
                                                                         <td></td>
                                                                         <td className="text-right">
-                                                                            <div className="btn-group pull-right">
+                                                                            <div className="btn-group">
                                                                                 <button
                                                                                     className="btn btn-default btn-xs"
                                                                                     title="Revert"
@@ -1176,8 +1192,8 @@ const StudentAddFee = () => {
                                                         <td></td>
                                                         <td></td>
                                                         <td></td>
-                                                        <td>
-                                                            <div className="btn-group pull-right">
+                                                        <td className="text-right">
+                                                            <div className="btn-group">
                                                                 {discount.status === "applied" && (
                                                                     <button
                                                                         className="btn btn-default btn-xs"
@@ -1216,7 +1232,35 @@ const StudentAddFee = () => {
                                     {feePayments && feePayments.length > 0 && (
                                         <div className="row" style={{ marginTop: '20px' }}>
                                             <div className="col-md-12">
-                                                <h4 className="box-title">Student Fee Receipts</h4>
+                                                <div className="row" style={{ marginBottom: '10px' }}>
+                                                    <div className="col-sm-6">
+                                                        <h4 className="box-title" style={{ margin: 0 }}>Student Fees Receipts</h4>
+                                                    </div>
+                                                    <div className="col-sm-6 text-right">
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getReceiptExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                                <i className="fa fa-files-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getReceiptExportData(); downloadCSV(headers, rows, 'student_fees_receipts.csv'); }}>
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getReceiptExportData(); downloadExcel(headers, rows, 'student_fees_receipts.xls'); }}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getReceiptExportData(); downloadPDF(headers, rows, 'student_fees_receipts.pdf', 'Student Fees Receipts'); }}>
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-default btn-sm"
+                                                                title="Print"
+                                                                onClick={() => { const { headers, rows } = getReceiptExportData(); printTable(headers, rows, 'Student Fees Receipts'); }}
+                                                                style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
+                                                            >
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                                 <div className="table-responsive">
                                                     <table className="table table-striped table-bordered table-hover">
                                                         <thead>
@@ -1260,7 +1304,7 @@ const StudentAddFee = () => {
                                                                     </td>
                                                                     <td>{payment.description}</td>
                                                                     <td className="text-right">
-                                                                        <div className="pull-right" style={{ display: 'flex', gap: '5px' }}>
+                                                                        <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
                                                                             <button
                                                                                 className="btn btn-xs btn-default"
                                                                                 onClick={() => handlePrintReceipt(payment)}
