@@ -114,7 +114,7 @@ const ExpenseList = () => {
             dataToSend.append('exp_head_id', formData.exp_head_id);
             dataToSend.append('name', formData.name);
             dataToSend.append('invoice_no', formData.invoice_no);
-            
+
             // Format date from yyyy-mm-dd to dd/mm/yyyy
             let formattedDate = formData.date;
             if (formData.date && formData.date.includes('-')) {
@@ -385,7 +385,7 @@ const ExpenseList = () => {
                                                 </button>
                                                 <div className="btn-group">
                                                     <button type="button" className="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Columns">
-                                                        <i className="fa fa-columns"></i> <span className="caret"></span>
+                                                        <i className="fa fa-columns"></i> <span ></span>
                                                     </button>
                                                     <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
                                                         {columns.map(col => (

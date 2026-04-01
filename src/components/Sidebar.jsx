@@ -234,6 +234,92 @@ const Sidebar = ({
 
     // Mobile Menu State
     const [showMobileMore, setShowMobileMore] = React.useState(false);
+    const [expandedMobileModule, setExpandedMobileModule] = React.useState(null);
+
+    // Sub-modules for each main module (keyed by module id)
+    const mobileSubModules = {
+        1: [ // Help Desk
+            { label: 'Admission Enquiry', url: '/admin/enquiry', icon: 'fa fa-question-circle' },
+            { label: 'Setup Front Office', url: '/admin/source', icon: 'fa fa-cogs' }
+        ],
+        2: [ // SIS
+            { label: 'Student Details', url: '/student/search', icon: 'fa fa-users' },
+            { label: 'Student Admission', url: '/student/create', icon: 'fa fa-user-plus' },
+            { label: 'Online Admission', url: '/admin/onlinestudent', icon: 'fa fa-globe' },
+            { label: 'Disabled Students', url: '/student/disabled', icon: 'fa fa-ban' },
+            { label: 'Bulk Delete', url: '/student/bulkdelete', icon: 'fa fa-trash' },
+            { label: 'Disable Reason', url: '/admin/disable-reason', icon: 'fa fa-exclamation-circle' }
+        ],
+        3: [ // Attendance
+            { label: 'Student Attendance', url: '/student-attendance', icon: 'fa fa-calendar-check-o' },
+            { label: 'Attendance By Date', url: '/attendance-by-date', icon: 'fa fa-calendar' },
+            { label: 'Approve Leave', url: '/approve_leave', icon: 'fa fa-check-circle' }
+        ],
+        5: [ // Fees
+            { label: 'Collect Fees', url: '/studentfee', icon: 'fa fa-money' },
+            { label: 'Search Fees Payment', url: '/studentfee/searchpayment', icon: 'fa fa-search' },
+            { label: 'Fees Master', url: '/admin/feemaster', icon: 'fa fa-list-alt' },
+            { label: 'Fees Group', url: '/admin/feegroup', icon: 'fa fa-object-group' },
+            { label: 'Fees Type', url: '/admin/feetype', icon: 'fa fa-tag' },
+            { label: 'Fees Carry Forward', url: '/admin/feesforward', icon: 'fa fa-forward' },
+            { label: 'Fees Reminder', url: '/admin/feereminder/setting', icon: 'fa fa-bell' },
+            { label: 'Fees Receipt 24', url: '/admin/feesreceipt/feesreceipt_24', icon: 'fa fa-file-text' }
+        ],
+        6: [ // Academics
+            { label: 'Class Timetable', url: '/admin/timetable/classreport', icon: 'fa fa-clock-o' },
+            { label: 'Assign Class Teacher', url: '/admin/teacher/assign_class_teacher', icon: 'fa fa-user' },
+            { label: 'Subject', url: '/admin/subject', icon: 'fa fa-book' },
+            { label: 'Class', url: '/admin/classes', icon: 'fa fa-graduation-cap' },
+            { label: 'Section', url: '/admin/section', icon: 'fa fa-th-large' },
+            { label: 'Student Transfer', url: '/admin/stdtransfer', icon: 'fa fa-exchange' }
+        ],
+        7: [ // State Examinations
+            { label: 'Exam', url: '/cbseexam/exam', icon: 'fa fa-pencil-square-o' },
+            { label: 'Rank', url: '/admin/rank', icon: 'fa fa-trophy' }
+        ],
+        9: [ // Transport
+            { label: 'Routes', url: '/admin/route', icon: 'fa fa-road' },
+            { label: 'Vehicles', url: '/admin/vehicle', icon: 'fa fa-bus' },
+            { label: 'Assign Vehicle', url: '/admin/vehroute', icon: 'fa fa-link' }
+        ],
+        10: [ // Messages
+            { label: 'Notice Board', url: '/admin/notification', icon: 'fa fa-bullhorn' },
+            { label: 'Email / SMS', url: '/admin/mail', icon: 'fa fa-envelope' },
+            { label: 'Send WhatsApp', url: '/admin/sendwhatsapp', icon: 'fa fa-whatsapp' }
+        ],
+        11: [ // Human Resource
+            { label: 'Staff Directory', url: '/admin/staff/search', icon: 'fa fa-address-book' },
+            { label: 'Staff Attendance', url: '/admin/staff/attendance', icon: 'fa fa-calendar-check-o' },
+            { label: 'Approve Leave Request', url: '/admin/leaverequest', icon: 'fa fa-check' },
+            { label: 'Apply Leave', url: '/admin/staff/leaverequest', icon: 'fa fa-paper-plane' },
+            { label: 'Leave Type', url: '/admin/leavetypes', icon: 'fa fa-list' },
+            { label: 'Department', url: '/admin/department', icon: 'fa fa-building' },
+            { label: 'Designation', url: '/admin/designation', icon: 'fa fa-id-badge' }
+        ],
+        12: [ // Download Center
+            { label: 'Create Content', url: '/admin/content/createcontent', icon: 'fa fa-plus-circle' },
+            { label: 'Assignment', url: '/admin/content/assignment', icon: 'fa fa-tasks' },
+            { label: 'Study Material', url: '/admin/content/studymaterial', icon: 'fa fa-book' },
+            { label: 'Syllabus', url: '/admin/content/syllabus', icon: 'fa fa-file-text' },
+            { label: 'Other', url: '/admin/content/other', icon: 'fa fa-folder' },
+            { label: 'Worksheets', url: '/admin/content/worksheets', icon: 'fa fa-file-o' },
+            { label: 'Video Tutorial', url: '/admin/video_tutorial', icon: 'fa fa-video-camera' }
+        ],
+        14: [ // Income
+            { label: 'Income', url: '/admin/income', icon: 'fa fa-line-chart' },
+            { label: 'Income Head', url: '/admin/incomehead', icon: 'fa fa-list-alt' }
+        ],
+        15: [ // Expenses
+            { label: 'Expense', url: '/admin/expense', icon: 'fa fa-credit-card' },
+            { label: 'Expense Head', url: '/admin/expensehead', icon: 'fa fa-list-alt' }
+        ],
+        16: [ // Hostel
+            { label: 'Hostel Room', url: '/admin/hostelroom', icon: 'fa fa-bed' },
+            { label: 'Student Hostel Report', url: '/admin/studenthostelreport', icon: 'fa fa-bar-chart' },
+            { label: 'Room Type', url: '/admin/roomtype', icon: 'fa fa-th' },
+            { label: 'Hostel', url: '/admin/hostel', icon: 'fa fa-home' }
+        ]
+    };
 
     // Default mobile nav items
     const defaultMobileNavItems = [
@@ -508,27 +594,108 @@ const Sidebar = ({
                 <div className="mobile-more-overlay hide-desktop">
                     <div className="mobile-more-content">
                         <div className="mobile-more-header">
-                            <h4>Menu</h4>
-                            <button onClick={() => setShowMobileMore(false)} className="close-btn">&times;</button>
+                            {expandedMobileModule ? (
+                                <>
+                                    <button
+                                        onClick={() => setExpandedMobileModule(null)}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            fontSize: '20px',
+                                            cursor: 'pointer',
+                                            padding: '0 10px 0 0',
+                                            color: '#333',
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        <i className="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h4 style={{ margin: 0 }}>{menus.find(m => m.id === expandedMobileModule)?.label || 'Sub Modules'}</h4>
+                                </>
+                            ) : (
+                                <h4>Menu</h4>
+                            )}
+                            <button onClick={() => { setShowMobileMore(false); setExpandedMobileModule(null); }} className="close-btn">&times;</button>
                         </div>
-                        <div className="mobile-more-grid">
-                            {menus.map((menu) => (
-                                <Link
-                                    key={menu.id}
-                                    to={menu.url !== '#' ? menu.url : '#'}
-                                    className="mobile-more-item"
-                                    onClick={(e) => {
-                                        if (menu.url === '#') e.preventDefault();
-                                        else setShowMobileMore(false);
-                                    }}
-                                >
-                                    <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
-                                        <img src={`/images/${menu.icon}`} alt={menu.label} style={{ width: '22px', height: 'auto' }} />
-                                    </div>
-                                    <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>{menu.label}</span>
-                                </Link>
-                            ))}
-                        </div>
+
+                        {expandedMobileModule ? (
+                            /* Sub-module list view */
+                            <div className="mobile-submenu-list" style={{ padding: '10px 15px' }}>
+                                {(mobileSubModules[expandedMobileModule] || []).map((sub, idx) => (
+                                    <Link
+                                        key={idx}
+                                        to={sub.url}
+                                        className="mobile-submenu-item"
+                                        onClick={() => { setShowMobileMore(false); setExpandedMobileModule(null); }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '12px 15px',
+                                            borderBottom: '1px solid #f0f0f0',
+                                            textDecoration: 'none',
+                                            color: '#333',
+                                            fontSize: '14px',
+                                            transition: 'background 0.2s'
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: '36px',
+                                            height: '36px',
+                                            borderRadius: '50%',
+                                            backgroundColor: '#9854cb',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginRight: '12px',
+                                            flexShrink: 0
+                                        }}>
+                                            <i className={sub.icon} style={{ color: '#fff', fontSize: '15px' }}></i>
+                                        </div>
+                                        <span style={{ fontWeight: '500' }}>{sub.label}</span>
+                                        <i className="fa fa-angle-right" style={{ marginLeft: 'auto', color: '#aaa', fontSize: '16px' }}></i>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            /* Main module grid view */
+                            <div className="mobile-more-grid">
+                                {menus.map((menu) => {
+                                    const hasSubs = mobileSubModules[menu.id] && mobileSubModules[menu.id].length > 0;
+                                    return (
+                                        <a
+                                            key={menu.id}
+                                            href={hasSubs ? '#' : (menu.url !== '#' ? menu.url : '#')}
+                                            className="mobile-more-item"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                if (hasSubs) {
+                                                    setExpandedMobileModule(menu.id);
+                                                } else if (menu.url !== '#') {
+                                                    navigate(menu.url);
+                                                    setShowMobileMore(false);
+                                                }
+                                            }}
+                                            style={{ position: 'relative' }}
+                                        >
+                                            <div className="more-icon" style={{ backgroundColor: '#9854cb', padding: '10px', borderRadius: '50%', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 5px' }}>
+                                                <img src={`/images/${menu.icon}`} alt={menu.label} style={{ width: '22px', height: 'auto' }} />
+                                            </div>
+                                            <span style={{ fontSize: '11px', marginTop: '5px', display: 'block', color: '#333' }}>{menu.label}</span>
+                                            {hasSubs && (
+                                                <i className="fa fa-angle-right" style={{
+                                                    position: 'absolute',
+                                                    top: '5px',
+                                                    right: '5px',
+                                                    fontSize: '12px',
+                                                    color: '#999'
+                                                }}></i>
+                                            )}
+                                        </a>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

@@ -328,7 +328,7 @@ const HostelRoom = () => {
                                                 </button>
                                                 <div className="btn-group">
                                                     <button type="button" className="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Columns">
-                                                        <i className="fa fa-columns"></i> <span className="caret"></span>
+                                                        <i className="fa fa-columns"></i> <span></span>
                                                     </button>
                                                     <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
                                                         {columns.map(col => (
