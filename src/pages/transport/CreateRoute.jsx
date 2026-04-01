@@ -19,6 +19,8 @@ const CreateRoute = () => {
     const [formData, setFormData] = useState({
         route_title: ''
     });
+    const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const sessionYear = currentSession?.session || '2024-25';
 
@@ -102,10 +104,18 @@ const CreateRoute = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        const val = value.slice(0, 100);
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: val
         }));
+        if (errors[name]) {
+            setErrors(prev => {
+                const n = { ...prev };
+                delete n[name];
+                return n;
+            });
+        }
     };
 
     const [isEditing, setIsEditing] = useState(false);
@@ -113,13 +123,16 @@ const CreateRoute = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setErrors({});
+ 
         if (!formData.route_title.trim()) {
-            toast.error('Route Title is required');
+            setErrors({ route_title: 'The Route Title field is required.' });
             return;
         }
-
-        if (isEditing) {
-            try {
+ 
+        setSubmitting(true);
+        try {
+            if (isEditing) {
                 const response = await api.updateRoute(editId, { route_title: formData.route_title });
                 if (response.status === 'success' || response.status === true) {
                     toast.success('Record Updated Successfully');
@@ -127,27 +140,32 @@ const CreateRoute = () => {
                     setFormData({ route_title: '' });
                     setIsEditing(false);
                     setEditId(null);
+                } else if (response.status === 'fail') {
+                    if (response.errors) setErrors(response.errors);
+                    const errorMsg = response.message || (response.errors ? Object.values(response.errors)[0] : 'Failed to update route');
+                    toast.error(errorMsg);
                 } else {
                     toast.error(response.message || 'Failed to update route');
                 }
-            } catch (error) {
-                console.error('Error updating route:', error);
-                toast.error('An error occurred while updating route');
-            }
-        } else {
-            try {
+            } else {
                 const response = await api.createRoute({ route_title: formData.route_title });
                 if (response.status === 'success' || response.status === true) {
                     toast.success('Record Saved Successfully');
                     fetchRoutes(); // Refresh the list
                     setFormData({ route_title: '' });
+                } else if (response.status === 'fail') {
+                    if (response.errors) setErrors(response.errors);
+                    const errorMsg = response.message || (response.errors ? Object.values(response.errors)[0] : 'Failed to create route');
+                    toast.error(errorMsg);
                 } else {
                     toast.error(response.message || 'Failed to create route');
                 }
-            } catch (error) {
-                console.error('Error creating route:', error);
-                toast.error('An error occurred while creating route');
             }
+        } catch (error) {
+            console.error('Error saving route:', error);
+            toast.error(error.message || 'An error occurred while saving route');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -268,11 +286,13 @@ const CreateRoute = () => {
                                         <div className="form-group">
                                             <label htmlFor="exampleInputEmail1">Route Title</label><small className="req"> *</small>
                                             <input autoFocus="" id="route_title" name="route_title" placeholder="" type="text" className="form-control" value={formData.route_title} onChange={handleInputChange} />
-                                            <span className="text-danger"></span>
+                                            {errors.route_title && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.route_title}</span>}
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>

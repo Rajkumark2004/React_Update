@@ -2328,10 +2328,12 @@ export const api = {
             const data = await response.json();
             console.log('Add Class Response:', data);
 
-            if (!response.ok || data.status !== 'success') {
-                throw new Error(data.message || 'Failed to add class');
+            if (!response.ok) {
+                const firstError = data.errors ? Object.values(data.errors)[0] : null;
+                const errorMsg = data.message || firstError || 'Failed to add class';
+                console.log('DEBUG: addClass error data:', data);
+                throw new Error(errorMsg);
             }
-
             return data;
         } catch (error) {
             console.error('Add Class API Error:', error);
@@ -2386,10 +2388,12 @@ export const api = {
             const data = await response.json();
             console.log('Update Class Response:', data);
 
-            if (!response.ok || data.status !== 'success') {
-                throw new Error(data.message || 'Failed to update class');
+            if (!response.ok) {
+                const firstError = data.errors ? Object.values(data.errors)[0] : null;
+                const errorMsg = data.message || firstError || 'Failed to update class';
+                console.log('DEBUG: updateClass error data:', data);
+                throw new Error(errorMsg);
             }
-
             return data;
         } catch (error) {
             console.error('Update Class API Error:', error);

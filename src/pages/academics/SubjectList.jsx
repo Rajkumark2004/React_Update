@@ -24,6 +24,8 @@ const SubjectList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isEditMode, setIsEditMode] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
     // Fetch Initial Data
     const fetchInitialData = async () => {
@@ -73,16 +75,61 @@ const SubjectList = () => {
             setSubjectType('');
         }
     }, [id, subjectList]);
+ 
+    // Handlers
+    const handleNameChange = (e) => {
+        const val = e.target.value.slice(0, 50);
+        setSubjectName(val);
+        if (errors.name) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.name;
+                return newErrors;
+            });
+        }
+    };
+ 
+    const handleCodeChange = (e) => {
+        const val = e.target.value.slice(0, 20);
+        setSubjectCode(val);
+        if (errors.code) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.code;
+                return newErrors;
+            });
+        }
+    };
+ 
+    const handleTypeChange = (e) => {
+        setSubjectType(e.target.value);
+        if (errors.type) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.type;
+                return newErrors;
+            });
+        }
+    };
 
     const handleSave = async (e) => {
         e.preventDefault();
+        setErrors({});
+
+        let hasError = false;
+        const newErrors = {};
 
         if (!subjectName) {
-            toast.error('The Subject Name field is required.');
-            return;
+            newErrors.name = 'The Subject Name field is required.';
+            hasError = true;
         }
         if (!subjectType) {
-            toast.error('The Subject Type field is required.');
+            newErrors.type = 'The Subject Type field is required.';
+            hasError = true;
+        }
+
+        if (hasError) {
+            setErrors(newErrors);
             return;
         }
 
@@ -92,6 +139,7 @@ const SubjectList = () => {
             code: subjectCode
         };
 
+        setSubmitting(true);
         try {
             if (isEditMode) {
                 // TODO: Implement Edit API when available
@@ -106,6 +154,10 @@ const SubjectList = () => {
                     setSubjectName('');
                     setSubjectCode('');
                     setSubjectType('');
+                } else if (response.status === 'fail' && response.errors) {
+                    setErrors(response.errors);
+                    const firstError = Object.values(response.errors)[0];
+                    toast.error(firstError || 'Validation failed');
                 } else {
                     toast.error(response.message || 'Failed to save subject');
                 }
@@ -113,6 +165,8 @@ const SubjectList = () => {
         } catch (error) {
             console.error('Error saving subject:', error);
             toast.error('An error occurred while saving.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -193,9 +247,9 @@ const SubjectList = () => {
                                                 className="form-control"
                                                 placeholder=""
                                                 value={subjectName}
-                                                onChange={(e) => setSubjectName(e.target.value)}
+                                                onChange={handleNameChange}
                                             />
-                                            <span className="text-danger"></span>
+                                            {errors.name && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.name}</span>}
                                         </div>
 
                                         {/* Subject Type Radio Buttons */}
@@ -207,12 +261,13 @@ const SubjectList = () => {
                                                         name="type"
                                                         value={type.key}
                                                         checked={subjectType === type.key}
-                                                        onChange={(e) => setSubjectType(e.target.value)}
+                                                        onChange={handleTypeChange}
                                                     />
                                                     {type.value}
                                                 </label>
                                             ))}
-                                            <span className="text-danger"></span>
+                                            <br />
+                                            {errors.type && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.type}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -223,13 +278,15 @@ const SubjectList = () => {
                                                 className="form-control"
                                                 placeholder=""
                                                 value={subjectCode}
-                                                onChange={(e) => setSubjectCode(e.target.value)}
+                                                onChange={handleCodeChange}
                                             />
-                                            <span className="text-danger"></span>
+                                            {errors.code && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.code}</span>}
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>

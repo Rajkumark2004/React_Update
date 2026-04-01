@@ -124,13 +124,15 @@ const ReferenceView = () => {
             if (response.status) {
                 await fetchReferenceList(); // Refresh list
                 setFormData({ reference: '', description: '' });
-                toast.success('Reference saved successfully');
+                toast.success(response.message || 'Reference saved successfully');
+            } else {
+                toast.error(response.message || 'Failed to save reference');
             }
         } catch (error) {
             console.error('Error saving reference:', error);
-            toast.error('Failed to save reference');
+            toast.error(error.message || 'Failed to save reference');
         } finally {
-            setTimeout(() => setSaving(false), 5000);
+            setSaving(false);
         }
     };
 

@@ -18,6 +18,8 @@ const ClassList = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [initialSections, setInitialSections] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
     // Fetch Initial Data
     useEffect(() => {
@@ -76,28 +78,62 @@ const ClassList = () => {
     }, [id]);
 
 
+    const handleClassChange = (e) => {
+        const val = e.target.value.slice(0, 50);
+        setClassName(val);
+        if (errors.class) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.class;
+                return newErrors;
+            });
+        }
+    };
+ 
     const handleCheckboxChange = (sectionId) => {
+        let nextSections;
         setSelectedSections(prev => {
             if (prev.includes(sectionId)) {
-                return prev.filter(id => id !== sectionId);
+                nextSections = prev.filter(id => id !== sectionId);
             } else {
-                return [...prev, sectionId];
+                nextSections = [...prev, sectionId];
             }
+            
+            if (nextSections.length > 0 && errors.sections) {
+                setErrors(p => {
+                    const n = { ...p };
+                    delete n.sections;
+                    return n;
+                });
+            }
+            return nextSections;
         });
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
+        setErrors({});
+ 
+        let hasError = false;
+        const newErrors = {};
+ 
         if (!className) {
-            toast.error('The Class field is required.');
-            return;
+            newErrors.class = 'The Class field is required.';
+            hasError = true;
         }
         if (selectedSections.length === 0) {
-            toast.error('The Section field is required.');
+            newErrors.sections = 'The Section field is required.';
+            hasError = true;
+        }
+ 
+        if (hasError) {
+            setErrors(newErrors);
             return;
         }
-
+ 
+        setSubmitting(true);
         try {
+            console.log('DEBUG: Submitting class data:', isEditMode ? 'EDIT' : 'ADD');
             if (isEditMode) {
                 const payload = {
                     id: id,
@@ -107,6 +143,7 @@ const ClassList = () => {
                     sections: selectedSections
                 };
                 const response = await api.updateClass(payload);
+                console.log('DEBUG: updateClass response:', response);
                 if (response.status === 'success') {
                     toast.success('Record Updated Successfully');
                     setClassName('');
@@ -118,6 +155,12 @@ const ClassList = () => {
                     if (data && data.status === 'success') {
                         setClassList(data.classsectionlist || []);
                     }
+                } else if (response.status === 'fail') {
+                    if (response.errors) setErrors(response.errors);
+                    const errorMsg = response.message || (response.errors ? Object.values(response.errors)[0] : 'Failed to update record');
+                    toast.error(errorMsg);
+                } else {
+                    toast.error(response.message || 'Failed to update record');
                 }
             } else {
                 // Add new
@@ -126,6 +169,7 @@ const ClassList = () => {
                     sections: selectedSections
                 };
                 const response = await api.addClass(payload);
+                console.log('DEBUG: addClass response:', response);
                 if (response.status === 'success') {
                     toast.success('Record Saved Successfully');
                     setClassName('');
@@ -135,11 +179,19 @@ const ClassList = () => {
                     if (data && data.status === 'success') {
                         setClassList(data.classsectionlist || []);
                     }
+                } else if (response.status === 'fail') {
+                    if (response.errors) setErrors(response.errors);
+                    const errorMsg = response.message || (response.errors ? Object.values(response.errors)[0] : 'Failed to save record');
+                    toast.error(errorMsg);
+                } else {
+                    toast.error(response.message || 'Failed to save record');
                 }
             }
         } catch (error) {
-            console.error('Error saving class:', error);
+            console.error('DEBUG: handleSave catch error:', error);
             toast.error(error.message || 'Failed to save record');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -217,8 +269,9 @@ const ClassList = () => {
                                                 type="text"
                                                 className="form-control"
                                                 value={className}
-                                                onChange={(e) => setClassName(e.target.value)}
+                                                onChange={handleClassChange}
                                             />
+                                            {errors.class && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.class}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -237,11 +290,14 @@ const ClassList = () => {
                                                     </label>
                                                 </div>
                                             ))}
+                                            {errors.sections && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.sections}</span>}
                                         </div>
                                     </div>
 
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>

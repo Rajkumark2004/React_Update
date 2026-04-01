@@ -132,14 +132,16 @@ const ReferenceEdit = () => {
         try {
             const response = await api.updateReference(id, formData);
             if (response.status) {
-                toast.success('Reference updated successfully');
+                toast.success(response.message || 'Reference updated successfully');
                 navigate('/admin/reference');
+            } else {
+                toast.error(response.message || 'Failed to update reference');
             }
         } catch (error) {
             console.error('Error updating reference:', error);
-            toast.error('Failed to update reference');
+            toast.error(error.message || 'Failed to update reference');
         } finally {
-            setTimeout(() => setSaving(false), 5000);
+            setSaving(false);
         }
     };
 

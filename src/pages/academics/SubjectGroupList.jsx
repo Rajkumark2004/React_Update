@@ -25,6 +25,8 @@ const SubjectGroupList = () => {
     const [isEditMode, setIsEditMode] = useState(false);
 
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
@@ -162,6 +164,16 @@ const SubjectGroupList = () => {
             setAvailableSections([]);
         }
     }, [id, subjectGroupList]); // Re-run when ID changes or list loads
+ 
+    const clearError = (field) => {
+        if (errors[field]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
+        }
+    };
 
     const fetchSectionsForClass = async (cId) => {
         try {
@@ -179,6 +191,7 @@ const SubjectGroupList = () => {
         setClassId(selectedId);
         setSelectedSections([]);
         setAvailableSections([]);
+        clearError('class_id');
 
         if (selectedId) {
             fetchSectionsForClass(selectedId);
@@ -186,35 +199,40 @@ const SubjectGroupList = () => {
     };
 
     const handleSectionCheckboxChange = (sectionId) => {
+        const idStr = String(sectionId);
         setSelectedSections(prev => {
-            const idStr = String(sectionId);
-            if (prev.includes(idStr)) {
-                return prev.filter(id => id !== idStr);
-            } else {
-                return [...prev, idStr];
-            }
+            const next = prev.includes(idStr) ? prev.filter(id => id !== idStr) : [...prev, idStr];
+            if (next.length > 0) clearError('sections');
+            return next;
         });
     };
 
     const handleSubjectCheckboxChange = (subjectId) => {
+        const idStr = String(subjectId);
         setSelectedSubjects(prev => {
-            const idStr = String(subjectId);
-            if (prev.includes(idStr)) {
-                return prev.filter(id => id !== idStr);
-            } else {
-                return [...prev, idStr];
-            }
+            const next = prev.includes(idStr) ? prev.filter(id => id !== idStr) : [...prev, idStr];
+            if (next.length > 0) clearError('subject');
+            return next;
         });
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
-
-        if (!name) { toast.error('The Name field is required.'); return; }
-        if (!classId) { toast.error('The Class field is required.'); return; }
-        if (selectedSections.length === 0) { toast.error('The Section field is required.'); return; }
-        if (selectedSubjects.length === 0) { toast.error('The Subject field is required.'); return; }
-
+        setErrors({});
+ 
+        let hasError = false;
+        const newErrors = {};
+ 
+        if (!name) { newErrors.name = 'The Name field is required.'; hasError = true; }
+        if (!classId) { newErrors.class_id = 'The Class field is required.'; hasError = true; }
+        if (selectedSections.length === 0) { newErrors.sections = 'The Section field is required.'; hasError = true; }
+        if (selectedSubjects.length === 0) { newErrors.subject = 'The Subject field is required.'; hasError = true; }
+ 
+        if (hasError) {
+            setErrors(newErrors);
+            return;
+        }
+ 
         const payload = {
             name: name,
             description: description,
@@ -222,7 +240,8 @@ const SubjectGroupList = () => {
             subject: selectedSubjects.map(sId => parseInt(sId, 10)).filter(n => !isNaN(n)),
             sections: selectedSections.map(sId => parseInt(sId, 10)).filter(n => !isNaN(n))
         };
-
+ 
+        setSubmitting(true);
         try {
             let response;
             if (isEditMode) {
@@ -230,7 +249,7 @@ const SubjectGroupList = () => {
             } else {
                 response = await api.addSubjectGroup(payload);
             }
-
+ 
             if (response.status === 'success' || response.status === true) {
                 toast.success(isEditMode ? 'Record Updated Successfully' : 'Record Saved Successfully');
                 if (isEditMode) {
@@ -245,12 +264,18 @@ const SubjectGroupList = () => {
                     setAvailableSections([]);
                 }
                 fetchInitialData();
+            } else if (response.status === 'fail' && response.errors) {
+                setErrors(response.errors);
+                const firstMsg = Object.values(response.errors)[0] || 'Validation failed';
+                toast.error(firstMsg);
             } else {
                 toast.error(response.message || 'Failed to save record');
             }
         } catch (error) {
             console.error('Error saving subject group:', error);
-            toast.error('An error occurred while saving');
+            toast.error(error.message || 'An error occurred while saving');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -296,9 +321,9 @@ const SubjectGroupList = () => {
                                                 type="text"
                                                 className="form-control"
                                                 value={name}
-                                                onChange={(e) => setName(e.target.value)}
+                                                onChange={(e) => { setName(e.target.value); clearError('name'); }}
                                             />
-                                            <span className="text-danger"></span>
+                                            {errors.name && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.name}</span>}
                                         </div>
                                         <div className="form-group">
                                             <label>Class</label><small className="req"> *</small>
@@ -312,7 +337,7 @@ const SubjectGroupList = () => {
                                                     <option key={cls.id} value={cls.id}>{cls.class}</option>
                                                 ))}
                                             </select>
-                                            <span className="text-danger"></span>
+                                            {errors.class_id && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.class_id}</span>}
                                         </div>
                                         <div className="form-group">
                                             <label className="control-label">Sections</label><small className="req"> *</small>
@@ -335,7 +360,7 @@ const SubjectGroupList = () => {
                                                     <div>No Section</div>
                                                 )}
                                             </div>
-                                            <span className="text-danger"></span>
+                                            {errors.sections && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.sections}</span>}
                                         </div>
                                         <div className="form-group">
                                             <label>Subject</label><small className="req"> *</small>
@@ -352,7 +377,7 @@ const SubjectGroupList = () => {
                                                     </label>
                                                 </div>
                                             ))}
-                                            <span className="text-danger"></span>
+                                            {errors.subject && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.subject}</span>}
                                         </div>
                                         <div className="form-group">
                                             <label>Description</label>
@@ -367,7 +392,9 @@ const SubjectGroupList = () => {
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>

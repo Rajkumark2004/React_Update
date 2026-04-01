@@ -23,6 +23,8 @@ const SubjectEdit = () => {
     const [subjectList, setSubjectList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
     // Fetch Data
     const fetchData = async () => {
@@ -73,37 +75,89 @@ const SubjectEdit = () => {
     useEffect(() => {
         fetchData();
     }, [id]);
+ 
+    // Handlers
+    const handleNameChange = (e) => {
+        const val = e.target.value.slice(0, 50);
+        setName(val);
+        if (errors.name) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.name;
+                return newErrors;
+            });
+        }
+    };
+ 
+    const handleCodeChange = (e) => {
+        const val = e.target.value.slice(0, 20);
+        setCode(val);
+        if (errors.code) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.code;
+                return newErrors;
+            });
+        }
+    };
+ 
+    const handleTypeChange = (e) => {
+        setType(e.target.value);
+        if (errors.type) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.type;
+                return newErrors;
+            });
+        }
+    };
 
     const handleSave = async (e) => {
         e.preventDefault();
-
+        setErrors({});
+ 
+        let hasError = false;
+        const newErrors = {};
+ 
         if (!name) {
-            toast.error('The Subject Name field is required.');
-            return;
+            newErrors.name = 'The Subject Name field is required.';
+            hasError = true;
         }
         if (!type) {
-            toast.error('The Subject Type field is required.');
+            newErrors.type = 'The Subject Type field is required.';
+            hasError = true;
+        }
+ 
+        if (hasError) {
+            setErrors(newErrors);
             return;
         }
-
+ 
         const payload = {
             id: id,
             name: name,
             type: type,
             code: code
         };
-
+ 
+        setSubmitting(true);
         try {
             const response = await api.updateSubject(id, payload);
             if (response.status === 'success' || response.status === true) {
                 toast.success('Record Updated Successfully');
                 navigate('/admin/subject');
+            } else if (response.status === 'fail' && response.errors) {
+                setErrors(response.errors);
+                const firstError = Object.values(response.errors)[0];
+                toast.error(firstError || 'Validation failed');
             } else {
                 toast.error(response.message || 'Failed to update subject');
             }
         } catch (error) {
             console.error('Error updating subject:', error);
             toast.error('An error occurred while updating.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -185,9 +239,9 @@ const SubjectEdit = () => {
                                                 type="text"
                                                 className="form-control"
                                                 value={name}
-                                                onChange={(e) => setName(e.target.value)}
+                                                onChange={handleNameChange}
                                             />
-                                            <span className="text-danger"></span>
+                                            {errors.name && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.name}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -198,12 +252,13 @@ const SubjectEdit = () => {
                                                         name="type"
                                                         value={t.key}
                                                         checked={type === t.key}
-                                                        onChange={(e) => setType(e.target.value)}
+                                                        onChange={handleTypeChange}
                                                     />
                                                     {t.value}
                                                 </label>
                                             ))}
-                                            <span className="text-danger"></span>
+                                            <br />
+                                            {errors.type && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.type}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -213,13 +268,15 @@ const SubjectEdit = () => {
                                                 type="text"
                                                 className="form-control"
                                                 value={code}
-                                                onChange={(e) => setCode(e.target.value)}
+                                                onChange={handleCodeChange}
                                             />
-                                            <span className="text-danger"></span>
+                                            {errors.code && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.code}</span>}
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>

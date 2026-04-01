@@ -117,11 +117,11 @@ const DisableReason = () => {
                 setFormData({ name: '' });
                 toast.success(response.message || 'Record Saved Successfully');
             } else {
-                toast.error(response.error || 'Failed to save record');
+                toast.error(response.message || 'Failed to save record');
             }
         } catch (error) {
             console.error('Error saving disable reason:', error);
-            toast.error('An error occurred while saving');
+            toast.error(error.message || 'An error occurred while saving');
         } finally {
             setLoading(false);
         }

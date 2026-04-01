@@ -27,6 +27,8 @@ const VehicleRoute = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
+    const [submitting, setSubmitting] = useState(false);
+    const [errors, setErrors] = useState({});
 
 
     // Initialize data
@@ -104,32 +106,56 @@ const VehicleRoute = () => {
 
     const handleVehicleChange = (vehicleId) => {
         setSelectedVehicles(prev => {
-            if (prev.includes(vehicleId)) {
-                return prev.filter(id => id !== vehicleId);
-            } else {
-                return [...prev, vehicleId];
+            const next = prev.includes(vehicleId) ? prev.filter(id => id !== vehicleId) : [...prev, vehicleId];
+            if (next.length > 0 && errors.vehicle) {
+                setErrors(p => {
+                    const n = { ...p };
+                    delete n.vehicle;
+                    return n;
+                });
             }
+            return next;
         });
+    };
+ 
+    const handleRouteCHange = (val) => {
+        setSelectedRoute(val);
+        if (errors.route_id) {
+            setErrors(prev => {
+                const n = { ...prev };
+                delete n.route_id;
+                return n;
+            });
+        }
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
-
+        setErrors({});
+ 
+        let hasError = false;
+        const newErrors = {};
+ 
         if (!selectedRoute) {
-            toast.error('The Route field is required.');
-            return;
+            newErrors.route_id = 'The Route field is required.';
+            hasError = true;
         }
-
+ 
         if (selectedVehicles.length === 0) {
-            toast.error('At least one vehicle must be selected.');
+            newErrors.vehicle = 'At least one vehicle must be selected.';
+            hasError = true;
+        }
+ 
+        if (hasError) {
+            setErrors(newErrors);
             return;
         }
-
+ 
         let payload = {
             route_id: selectedRoute,
             vehicle: selectedVehicles.map(String) // Ensure IDs are strings
         };
-
+ 
         if (isEditMode) {
             payload = {
                 ...payload,
@@ -137,7 +163,8 @@ const VehicleRoute = () => {
                 prev_vec_route: originalVehicleIds.map(String)
             };
         }
-
+ 
+        setSubmitting(true);
         try {
             let response;
             if (isEditMode) {
@@ -145,7 +172,7 @@ const VehicleRoute = () => {
             } else {
                 response = await api.addAssignVehicleRouteList(payload);
             }
-
+ 
             if (response.status === 'success' || response.status === true) {
                 toast.success(response.message || 'Record Saved Successfully');
                 fetchData(); // Refresh list on both create and edit
@@ -154,12 +181,18 @@ const VehicleRoute = () => {
                 } else {
                     resetForm();
                 }
+            } else if (response.status === 'fail') {
+                if (response.errors) setErrors(response.errors);
+                const errorMsg = response.message || (response.errors ? Object.values(response.errors)[0] : 'Failed to save record');
+                toast.error(errorMsg);
             } else {
                 toast.error(response.message || 'Failed to save record');
             }
         } catch (error) {
             console.error('Error saving vehicle route:', error);
-            toast.error('An error occurred while saving the record');
+            toast.error(error.message || 'An error occurred while saving the record');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -244,7 +277,7 @@ const VehicleRoute = () => {
                                                 autoFocus
                                                 className="form-control"
                                                 value={selectedRoute}
-                                                onChange={(e) => setSelectedRoute(e.target.value)}
+                                                onChange={(e) => handleRouteCHange(e.target.value)}
                                             >
                                                 <option value="">Select</option>
                                                 {routeList.map((route) => (
@@ -253,7 +286,7 @@ const VehicleRoute = () => {
                                                     </option>
                                                 ))}
                                             </select>
-                                            <span className="text-danger"></span>
+                                            {errors.route_id && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.route_id}</span>}
                                         </div>
 
                                         <div className="form-group">
@@ -270,11 +303,13 @@ const VehicleRoute = () => {
                                                     </label>
                                                 </div>
                                             ))}
-                                            <span className="text-danger"></span>
+                                            {errors.vehicle && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.vehicle}</span>}
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        <button type="submit" className="btn btn-info pull-right" disabled={submitting}>
+                                            {submitting ? 'Saving...' : 'Save'}
+                                        </button>
                                     </div>
                                 </form>
                             </div>
