@@ -346,8 +346,7 @@ const FeeMaster = () => {
                                                         value={formData.fine_amount}
                                                         onChange={handleInputChange}
                                                         min="0"
-                                                        disabled={formData.account_type !== 'fix' && formData.account_type !== 'percentage'}
-                                                        readOnly={formData.account_type === 'percentage'}
+                                                        disabled={formData.account_type !== 'fix'}
                                                         required={formData.account_type === 'fix'}
                                                     />
                                                 </div>
@@ -491,49 +490,54 @@ const FeeMaster = () => {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="row">
-                                        <div className="col-sm-5">
-                                            <div className="dataTables_info">
-                                                Showing {feeMasterList.length > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} to {Math.min(currentPage * itemsPerPage, feeMasterList.filter(group =>
-                                                    group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                    (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                ).length)} of {feeMasterList.filter(group =>
-                                                    group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                    (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                ).length} entries
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-7">
-                                            <div className="dataTables_paginate paging_simple_numbers">
-                                                <ul className="pagination">
-                                                    <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                        <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>Previous</a>
-                                                    </li>
-                                                    {Array.from({
-                                                        length: Math.ceil(feeMasterList.filter(group =>
+                                    {feeMasterList.length > 0 && (
+                                        <div className="row">
+                                            <div className="col-sm-5">
+                                                <div className="dataTables_info">
+                                                    {(() => {
+                                                        const filteredItems = feeMasterList.filter(group =>
                                                             group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                                             (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                        ).length / itemsPerPage)
-                                                    }, (_, i) => (
-                                                        <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                                            <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
+                                                        );
+                                                        const totalCount = filteredItems.length;
+                                                        const from = totalCount > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0;
+                                                        const to = Math.min(currentPage * itemsPerPage, totalCount);
+                                                        return `Showing ${from} to ${to} of ${totalCount} entries`;
+                                                    })()}
+                                                </div>
+                                            </div>
+                                            <div className="col-sm-7">
+                                                <div className="dataTables_paginate paging_simple_numbers pull-right">
+                                                    <ul className="pagination" style={{ margin: 0 }}>
+                                                        <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
                                                         </li>
-                                                    ))}
-                                                    <li className={`paginate_button next ${currentPage === Math.ceil(feeMasterList.filter(group =>
-                                                        group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                    ).length / itemsPerPage) ? 'disabled' : ''}`}>
-                                                        <a href="#" onClick={(e) => {
-                                                            e.preventDefault(); if (currentPage < Math.ceil(feeMasterList.filter(group =>
+                                                        {Array.from({
+                                                            length: Math.ceil(feeMasterList.filter(group =>
                                                                 group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                                                 (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                            ).length / itemsPerPage)) setCurrentPage(currentPage + 1);
-                                                        }}>Next</a>
-                                                    </li>
-                                                </ul>
+                                                            ).length / itemsPerPage)
+                                                        }, (_, i) => (
+                                                            <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
+                                                                <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
+                                                            </li>
+                                                        ))}
+                                                        <li className={`paginate_button next ${currentPage === Math.ceil(feeMasterList.filter(group =>
+                                                            group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                            (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
+                                                        ).length / itemsPerPage) ? 'disabled' : ''}`}>
+                                                            <a href="#" onClick={(e) => {
+                                                                e.preventDefault(); if (currentPage < Math.ceil(feeMasterList.filter(group =>
+                                                                    group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                                    (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
+                                                                ).length / itemsPerPage)) setCurrentPage(currentPage + 1);
+                                                            }}><i className="fa fa-angle-right"></i></a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

@@ -535,7 +535,7 @@ const FeesForward = () => {
                                                                     <tbody>
                                                                         {currentEntries.length === 0 ? (
                                                                             <tr>
-                                                                                <td colSpan="6" className="text-center">No matching records found</td>
+                                                                                <td colSpan={visibleColumns.size} className="text-center">No matching records found</td>
                                                                             </tr>
                                                                         ) : (
                                                                             currentEntries.map((dueFee, index) => {
@@ -578,7 +578,7 @@ const FeesForward = () => {
                                                                                                 <input
                                                                                                     type="text"
                                                                                                     name={`amount[${i}]`}
-                                                                                                    className="form-control tddm200"
+                                                                                                    className="form-control tddm200 text-right"
                                                                                                     value={amounts[i] || formatCurrency(dueFee.balance)}
                                                                                                     onChange={(e) => handleAmountChange(i, e.target.value)}
                                                                                                     style={{ width: '200px', display: 'inline-block' }}
@@ -602,10 +602,10 @@ const FeesForward = () => {
                                                                         </div>
                                                                     </div>
                                                                     <div className="col-sm-7">
-                                                                        <div className="dataTables_paginate paging_simple_numbers" style={{ textAlign: 'right' }}>
-                                                                            <ul className="pagination">
+                                                                        <div className="dataTables_paginate paging_simple_numbers pull-right">
+                                                                            <ul className="pagination" style={{ margin: 0 }}>
                                                                                 <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                                                    <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>Previous</a>
+                                                                                    <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
                                                                                 </li>
                                                                                 {[...Array(totalPages)].map((_, i) => {
                                                                                     if (totalPages > 10 && Math.abs(currentPage - (i + 1)) > 4 && i !== 0 && i !== totalPages - 1) {
@@ -619,7 +619,7 @@ const FeesForward = () => {
                                                                                     );
                                                                                 })}
                                                                                 <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                                                    <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>Next</a>
+                                                                                    <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
                                                                                 </li>
                                                                             </ul>
                                                                         </div>
