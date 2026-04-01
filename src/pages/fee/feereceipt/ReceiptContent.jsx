@@ -62,63 +62,64 @@ export const ReceiptContent = ({ student, sch_setting }) => {
             </div>
             <div style={{ border: '1px solid #ddd', padding: '6px 8px', marginBottom: '0', fontSize: '9pt', lineHeight: '1.7' }}>
                     <div style={{ display: 'flex' }}>
-                        <div style={{ width: '25%' }}>Receipt No :</div>
-                        <div style={{ width: '25%' }}>{sch_setting.session.split('-')[0] + '/' + sch_setting.session.split('-')[1].substring(2) + '-' + String(student.id).padStart(5, '0')}</div>
-                        <div style={{ width: '17%' }}>Date</div>
-                        <div style={{ width: '8%' }}>:</div>
-                        <div style={{ width: '25%' }}>{student.created_at.split('-').reverse().join('/')}</div>
+                        <div style={{ width: '26%', whiteSpace: 'nowrap' }}>Receipt No</div>
+                        <div style={{ width: '4%', textAlign: 'center' }}>:</div>
+                        <div style={{ width: '20%' }}>{sch_setting.session.split('-')[0] + '/' + sch_setting.session.split('-')[1].substring(2) + '-' + String(student.id).padStart(5, '0')}</div>
+                        <div style={{ width: '26%', whiteSpace: 'nowrap', paddingLeft: '8px' }}>Date</div>
+                        <div style={{ width: '4%', textAlign: 'center' }}>:</div>
+                        <div style={{ width: '20%' }}>{student.created_at.split('-').reverse().join('/')}</div>
                     </div>
                     <div style={{ display: 'flex' }}>
-                        <div style={{ width: '25%' }}>Admin No :</div>
-                        <div style={{ width: '25%' }}>{student.admission_no}</div>
-                        <div style={{ width: '17%' }}>Roll No.</div>
-                        <div style={{ width: '8%' }}>:</div>
-                        <div style={{ width: '25%' }}>{student.roll_no}</div>
+                        <div style={{ width: '26%', whiteSpace: 'nowrap' }}>Admin No</div>
+                        <div style={{ width: '4%', textAlign: 'center' }}>:</div>
+                        <div style={{ width: '20%' }}>{student.admission_no}</div>
+                        <div style={{ width: '26%', whiteSpace: 'nowrap', paddingLeft: '8px' }}>Roll No.</div>
+                        <div style={{ width: '4%', textAlign: 'center' }}>:</div>
+                        <div style={{ width: '20%' }}>{student.roll_no}</div>
                     </div>
                     <div style={{ display: 'flex' }}>
-                        <div style={{ width: '33%' }}>Student's Name</div>
-                        <div style={{ width: '8%' }}>:</div>
-                        <div style={{ width: '59%' }}>{student.firstname} {student.lastname}</div>
+                        <div style={{ width: '26%', whiteSpace: 'nowrap' }}>Student Name</div>
+                        <div style={{ width: '4%', textAlign: 'center' }}>:</div>
+                        <div style={{ width: '20%' }}>{student.firstname} {student.lastname}</div>
+                        <div style={{ width: '26%', whiteSpace: 'nowrap', paddingLeft: '8px' }}>Father's Name</div>
+                        <div style={{ width: '4%', textAlign: 'center' }}>:</div>
+                        <div style={{ width: '20%' }}>{student.father_name}</div>
                     </div>
                     <div style={{ display: 'flex' }}>
-                        <div style={{ width: '33%' }}>Father's Name</div>
-                        <div style={{ width: '8%' }}>:</div>
-                        <div style={{ width: '59%' }}>{student.father_name}</div>
-                    </div>
-                    <div style={{ display: 'flex' }}>
-                        <div style={{ width: '33%' }}>Class & Sec</div>
-                        <div style={{ width: '8%' }}>:</div>
-                        <div style={{ width: '59%' }}>{student.class} ({student.section})</div>
+                        <div style={{ width: '26%', whiteSpace: 'nowrap' }}>Class</div>
+                        <div style={{ width: '4%', textAlign: 'center' }}>:</div>
+                        <div style={{ width: '20%' }}>{student.class}</div>
+                        <div style={{ width: '26%', whiteSpace: 'nowrap', paddingLeft: '8px' }}>Section</div>
+                        <div style={{ width: '4%', textAlign: 'center' }}>:</div>
+                        <div style={{ width: '20%' }}>{student.section}</div>
                     </div>
             </div>
             <div>
                 <table style={{ fontSize: '8pt', width: '100%', borderCollapse: 'collapse', border: '1px solid #ddd', tableLayout: 'fixed' }}>
                     <thead>
                         <tr>
-                            <th style={{ width: '20px', border: '1px solid #ddd', padding: '8px' }}>S.No.</th>
-                            <th colSpan="4" style={{ border: '1px solid #ddd', padding: '8px' }}>Particulars</th>
-                            <th style={{ border: '1px solid #ddd', padding: '8px' }}>Mode</th>
-                            <th className="text text-right" style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'right' }}>Amount</th>
+                            <th style={{ width: '12%', border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>S.No.</th>
+                            <th style={{ width: '48%', border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Particulars</th>
+                            <th style={{ width: '15%', border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>Mode</th>
+                            <th style={{ width: '25%', border: '1px solid #ddd', padding: '8px', textAlign: 'right' }}>Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr className="dark-gray">
-                            <td style={{ border: '1px solid #ddd', padding: '8px' }}>1</td>
-                            <td colSpan="4" style={{ border: '1px solid #ddd', padding: '8px' }}>Tuition Fee</td>
+                            <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'center' }}>1</td>
+                            <td style={{ border: '1px solid #ddd', padding: '8px' }}>Tuition Fee</td>
                             <td style={{ border: '1px solid #ddd', padding: '8px' }}>{student.mode.toUpperCase()}</td>
-                            <td className="text text-right" style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'right' }}>{currencySymbol} {formatAmount(student.amount)}</td>
+                            <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'right' }}>{currencySymbol} {formatAmount(student.amount)}</td>
                         </tr>
                         <tr>
-                            <td colSpan="9" style={{ border: '1px solid #ddd', padding: '8px' }}>Remarks: {student.fee_types}</td>
+                            <td colSpan="4" style={{ border: '1px solid #ddd', padding: '8px' }}>Remarks: {student.fee_types}</td>
                         </tr>
                         <tr>
-                            <td colSpan="9" style={{ border: '1px solid #ddd', padding: '8px' }}>Received Amount: {currencySymbol} {formatAmount(student.amount)}</td>
+                            <td colSpan="4" style={{ border: '1px solid #ddd', padding: '8px' }}>Received Amount: {currencySymbol} {formatAmount(student.amount)}</td>
                         </tr>
                         <tr>
-                            <td style={{ border: '1px solid #ddd', padding: '8px' }}></td>
-                            <td style={{ border: '1px solid #ddd', padding: '8px' }}></td>
-                            <td colSpan="4" className="text text-right" style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'right', fontWeight: 'bold' }}>Total</td>
-                            <td className="text text-right" style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'right', fontWeight: 'bold' }}>{currencySymbol} {formatAmount(student.amount)}</td>
+                            <td colSpan="3" style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'right', fontWeight: 'bold' }}>Total</td>
+                            <td style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'right', fontWeight: 'bold' }}>{currencySymbol} {formatAmount(student.amount)}</td>
                         </tr>
                     </tbody>
                 </table>
