@@ -82,6 +82,15 @@ const StudentFeeSearch = () => {
     const [importing, setImporting] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     // Fetch Classes and Stats on Mount
     useEffect(() => {
@@ -575,6 +584,16 @@ const StudentFeeSearch = () => {
                                                                         placeholder="Search By Student Name, Roll Number, Enroll Number, National Id, Local Id Etc."
                                                                         value={formData.search_text}
                                                                         onChange={(e) => setFormData(prev => ({ ...prev, search_text: e.target.value }))}
+                                                                        style={{
+                                                                            border: 'none',
+                                                                            borderBottom: '1px solid #ccc',
+                                                                            borderRadius: '0',
+                                                                            boxShadow: 'none',
+                                                                            backgroundColor: 'transparent',
+                                                                            paddingLeft: '5px',
+                                                                            outline: 'none',
+                                                                            height: '30px'
+                                                                        }}
                                                                     />
                                                                 </div>
                                                             </div>
@@ -603,8 +622,26 @@ const StudentFeeSearch = () => {
                                                 <div className="download_label">Student List</div>
 
                                                 {/* Controls: Records, local search, export buttons */}
-                                                <div className="row" style={{ marginBottom: '10px' }}>
-                                                    <div className="col-sm-8" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                                <div 
+                                                    className="row mb-2" 
+                                                    style={{ 
+                                                        marginBottom: '10px', 
+                                                        display: isMobile ? 'flex' : 'block',
+                                                        flexDirection: isMobile ? 'column' : 'row',
+                                                        alignItems: isMobile ? 'center' : 'stretch',
+                                                        gap: isMobile ? '15px' : '0'
+                                                    }}
+                                                >
+                                                    <div 
+                                                        className={isMobile ? "" : "col-sm-6"} 
+                                                        style={{ 
+                                                            display: 'flex', 
+                                                            alignItems: 'center', 
+                                                            gap: isMobile ? '15px' : '20px',
+                                                            justifyContent: isMobile ? 'center' : 'flex-start',
+                                                            flexWrap: 'wrap'
+                                                        }}
+                                                    >
                                                         <div className="dataTables_length">
                                                             <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                                 Records:
@@ -626,25 +663,34 @@ const StudentFeeSearch = () => {
                                                             </label>
                                                         </div>
                                                         <div className="dataTables_filter">
-                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                                Search:
-                                                                <input
-                                                                    type="search"
-                                                                    className="form-control input-sm"
-                                                                    placeholder=""
-                                                                    style={{ marginLeft: '10px' }}
-                                                                    value={localSearch}
-                                                                    onChange={(e) => {
-                                                                        setLocalSearch(e.target.value);
-                                                                        setCurrentPage(1);
-                                                                    }}
-                                                                />
-                                                            </label>
+                                                            <input
+                                                                type="search"
+                                                                className="form-control input-sm"
+                                                                placeholder="Search..."
+                                                                style={{ 
+                                                                    marginLeft: isMobile ? '0' : '10px',
+                                                                    display: 'inline-block', 
+                                                                    width: isMobile ? '200px' : '180px', 
+                                                                    border: 'none', 
+                                                                    borderBottom: '1px solid #ccc', 
+                                                                    borderRadius: '0', 
+                                                                    boxShadow: 'none',
+                                                                    backgroundColor: 'transparent',
+                                                                    paddingLeft: '0',
+                                                                    outline: 'none',
+                                                                    textAlign: isMobile ? 'center' : 'left'
+                                                                }}
+                                                                value={localSearch}
+                                                                onChange={(e) => {
+                                                                    setLocalSearch(e.target.value);
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                            />
                                                         </div>
                                                     </div>
-                                                    <div className="col-sm-4 text-right">
+                                                    <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
                                                         <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                                 <i className="fa fa-files-o"></i>
                                                             </button>
                                                             <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_list.csv'); }}>
@@ -656,9 +702,9 @@ const StudentFeeSearch = () => {
                                                             <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
                                                                 <i className="fa fa-file-pdf-o"></i>
                                                             </button>
-                                                            <button 
-                                                                className="btn btn-default btn-sm" 
-                                                                title="Print" 
+                                                            <button
+                                                                className="btn btn-default btn-sm"
+                                                                title="Print"
                                                                 onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}
                                                                 style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
                                                             >
@@ -741,14 +787,14 @@ const StudentFeeSearch = () => {
                                                 </div>
 
                                                 {/* Pagination Footer */}
-                                                <div className="row" style={{ marginTop: '15px' }}>
-                                                    <div className="col-sm-5">
+                                                <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
+                                                    <div className={isMobile ? "text-center" : "col-sm-5"}>
                                                         <div className="dataTables_info">
                                                             Showing {currentTotal === 0 ? 0 : indexOfFirstRecord + 1} to {Math.min(indexOfLastRecord, currentTotal)} of {currentTotal} entries
                                                         </div>
                                                     </div>
-                                                    <div className="col-sm-7">
-                                                        <div className="dataTables_paginate paging_simple_numbers pull-right">
+                                                    <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                        <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
                                                             <ul className="pagination" style={{ margin: 0 }}>
                                                                 <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
                                                                     <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>

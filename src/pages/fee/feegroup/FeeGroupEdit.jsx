@@ -25,6 +25,15 @@ const FeeGroupEdit = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     // Column definitions
     const columns = [
@@ -149,8 +158,17 @@ const FeeGroupEdit = () => {
                     <div className="row">
                         <div className="col-md-4">
                             <div className="box box-primary">
-                                <div className="box-header with-border">
-                                    <h3 className="box-title">Edit Fees Group : {sessionYear}</h3>
+                                <div className="box-header with-border" style={isMobile ? { display: 'flex', alignItems: 'center', padding: '12px 15px' } : {}}>
+                                    <h3 className="box-title" style={isMobile ? { margin: 0, fontSize: '18px' } : {}}>
+                                        Edit Fees Group : {sessionYear}
+                                    </h3>
+                                    {isMobile && (
+                                        <div style={{ marginLeft: 'auto' }}>
+                                            <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <form onSubmit={handleSubmit}>
                                     <div className="box-body">
@@ -188,31 +206,48 @@ const FeeGroupEdit = () => {
                         </div>
                         <div className="col-md-8">
                             <div className="box box-primary">
-                                <div className="box-header ptbnull">
-                                    <h3 className="box-title titlefix">Fees Group List : {sessionYear}</h3>
-                                    <div className="btn-group pull-right">
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
-                                            <i className="fa fa-arrow-left"></i> Back
-                                        </button>
-                                    </div>
+                                <div className="box-header ptbnull" style={isMobile ? { display: 'flex', alignItems: 'center', padding: '12px 15px' } : {}}>
+                                    <h3 className="box-title titlefix" style={isMobile ? { margin: 0, fontSize: '18px' } : {}}>
+                                        Fees Group List : {sessionYear}
+                                    </h3>
+                                    {!isMobile && (
+                                        <div className="btn-group pull-right">
+                                            <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="box-body">
                                     <div className="download_label">Fees Group List</div>
-                                    <div className="row mb-2" style={{ marginBottom: '10px' }}>
-                                        <div className="col-sm-6">
-                                            <div className="dataTables_filter pull-left">
-                                                <label>Search:<input
-                                                    type="search"
-                                                    className="form-control input-sm"
-                                                    placeholder=""
-                                                    style={{ display: 'inline-block', width: 'auto', marginLeft: '0.5em' }}
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                /></label>
+                                    <div className="row mb-2" style={isMobile ? { marginBottom: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' } : { marginBottom: '10px' }}>
+                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                            <div className={isMobile ? "dataTables_filter text-center" : "dataTables_filter pull-left"}>
+                                                <label style={isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}}>
+                                                    Search:<input
+                                                        type="search"
+                                                        className="form-control input-sm"
+                                                        placeholder=""
+                                                        style={isMobile ? { 
+                                                            display: 'inline-block', 
+                                                            width: '180px', 
+                                                            marginLeft: '0.5em',
+                                                            border: 'none',
+                                                            borderBottom: '1px solid #ccc',
+                                                            borderRadius: 0,
+                                                            boxShadow: 'none',
+                                                            backgroundColor: 'transparent',
+                                                            outline: 'none',
+                                                            textAlign: 'center'
+                                                        } : { display: 'inline-block', width: 'auto', marginLeft: '0.5em' }}
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                    />
+                                                </label>
                                             </div>
                                         </div>
-                                        <div className="col-sm-6">
-                                            <div className="pull-right dt-buttons btn-group">
+                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                            <div className={isMobile ? "dt-buttons btn-group" : "pull-right dt-buttons btn-group"}>
                                                 <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
@@ -255,13 +290,13 @@ const FeeGroupEdit = () => {
                                                     <i className="fa fa-print"></i>
                                                 </button>
                                                 <div className="btn-group" style={{ position: 'relative', display: 'inline-block' }}>
-                                                    <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                    <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: isMobile ? '20px' : '0', borderBottomRightRadius: isMobile ? '20px' : '0' }}>
                                                         <i className="fa fa-columns"></i>
                                                     </button>
                                                     {showColumnsDropdown && (
                                                         <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                             {columns.map(col => (
-                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', whiteSpace: 'nowrap' }}>
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', whiteSpace: 'nowrap', textAlign: 'left' }}>
                                                                     <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
                                                                     {col.label}
                                                                 </label>
@@ -277,9 +312,9 @@ const FeeGroupEdit = () => {
                                             <thead>
                                                 <tr>
                                                     {columns.map(col => visibleColumns.has(col.key) && (
-                                                        <th key={col.key}>{col.label}</th>
+                                                        <th key={col.key} style={isMobile ? { borderLeft: 'none', borderRight: 'none', fontSize: '13px', width: col.key === 'name' ? '30%' : '55%' } : {}}>{col.label}</th>
                                                     ))}
-                                                    <th className="text-right noExport">Action</th>
+                                                    <th className="text-right noExport" style={isMobile ? { borderLeft: 'none', borderRight: 'none', fontSize: '13px', width: '15%' } : {}}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -299,33 +334,40 @@ const FeeGroupEdit = () => {
                                                     .map((feegroup) => (
                                                         <tr key={feegroup.id}>
                                                             {visibleColumns.has('name') && (
-                                                                <td className="mailbox-name">
+                                                                <td className="mailbox-name" style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '13px', width: '30%' } : { verticalAlign: 'top' }}>
                                                                     <a href="#" onClick={(e) => e.preventDefault()}>{feegroup.name}</a>
                                                                 </td>
                                                             )}
                                                             {visibleColumns.has('description') && (
-                                                                <td className="mailbox-name">
+                                                                <td className="mailbox-name" style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '13px', width: '55%' } : { verticalAlign: 'top' }}>
                                                                     {feegroup.description}
                                                                 </td>
                                                             )}
-                                                            <td className="mailbox-date pull-right">
-                                                                <Link
-                                                                    to={`/admin/feegroup/edit/${feegroup.id}`}
-                                                                    className="btn btn-default btn-xs"
-                                                                    data-toggle="tooltip"
-                                                                    title="Edit"
-                                                                >
-                                                                    <i className="fa fa-pencil"></i>
-                                                                </Link>
-                                                                <a
-                                                                    href="#"
-                                                                    onClick={(e) => { e.preventDefault(); handleDelete(feegroup.id); }}
-                                                                    className="btn btn-default btn-xs"
-                                                                    data-toggle="tooltip"
-                                                                    title="Delete"
-                                                                >
-                                                                    <i className="fa fa-remove"></i>
-                                                                </a>
+                                                            <td 
+                                                                className={isMobile ? "text-right" : "mailbox-date pull-right"} 
+                                                                style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px' } : { verticalAlign: 'top' }}
+                                                            >
+                                                                <div style={isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' } : {}}>
+                                                                    <Link
+                                                                        to={`/admin/feegroup/edit/${feegroup.id}`}
+                                                                        className={isMobile ? "" : "btn btn-default btn-xs"}
+                                                                        style={isMobile ? { color: '#333', fontSize: '14px' } : {}}
+                                                                        data-toggle="tooltip"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <i className="fa fa-pencil"></i>
+                                                                    </Link>
+                                                                    <a
+                                                                        href="#"
+                                                                        onClick={(e) => { e.preventDefault(); handleDelete(feegroup.id); }}
+                                                                        className={isMobile ? "" : "btn btn-default btn-xs"}
+                                                                        style={isMobile ? { color: '#333', fontSize: '14px' } : {}}
+                                                                        data-toggle="tooltip"
+                                                                        title="Delete"
+                                                                    >
+                                                                        <i className="fa fa-remove"></i>
+                                                                    </a>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     ))

@@ -21,7 +21,16 @@ const FeeMaster = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     // Column definitions for export
     const columns = [
@@ -230,6 +239,13 @@ const FeeMaster = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Add Fees Master : {sessionYear}</h3>
+                                    {isMobile && (
+                                        <div className="btn-group pull-right">
+                                            <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <form onSubmit={handleSubmit}>
                                     <div className="box-body">
@@ -366,30 +382,43 @@ const FeeMaster = () => {
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Fees Master List : {sessionYear}</h3>
-                                    <div className="btn-group pull-right">
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
-                                            <i className="fa fa-arrow-left"></i> Back
-                                        </button>
-                                    </div>
+                                    {!isMobile && (
+                                        <div className="btn-group pull-right">
+                                            <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="box-body">
                                     <div className="download_label">Fees Master List</div>
-                                    <div className="row mb-2" style={{ marginBottom: '10px' }}>
-                                        <div className="col-sm-6">
-                                            <div className="dataTables_filter pull-left">
-                                                <label>Search:<input
+                                    <div className="row mb-2" style={isMobile ? { marginBottom: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' } : { marginBottom: '10px' }}>
+                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                            <div className={isMobile ? "dataTables_filter" : "dataTables_filter pull-left"}>
+                                                <input
                                                     type="search"
                                                     className="form-control input-sm"
-                                                    placeholder=""
-                                                    style={{ display: 'inline-block', width: 'auto', marginLeft: '0.5em' }}
+                                                    placeholder="Search..."
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                                /></label>
+                                                    style={{ 
+                                                        display: 'inline-block', 
+                                                        width: '180px', 
+                                                        border: 'none', 
+                                                        borderBottom: '1px solid #ccc', 
+                                                        borderRadius: '0', 
+                                                        boxShadow: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        paddingLeft: '0',
+                                                        outline: 'none',
+                                                        textAlign: isMobile ? 'center' : 'left'
+                                                    }}
+                                                />
                                             </div>
                                         </div>
-                                        <div className="col-sm-6">
-                                            <div className="pull-right dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getFlatExportRows(); copyToClipboard(headers, rows); }}>
+                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                            <div className={isMobile ? "dt-buttons btn-group" : "pull-right dt-buttons btn-group"}>
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getFlatExportRows(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getFlatExportRows(); downloadExcel(headers, rows, 'fees_master.xls'); }}>
@@ -405,13 +434,13 @@ const FeeMaster = () => {
                                                     <i className="fa fa-print"></i>
                                                 </button>
                                                 <div className="btn-group">
-                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
                                                         <i className="fa fa-columns"></i>
                                                     </button>
                                                     {showColumnsDropdown && (
                                                         <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                             {columns.map(col => (
-                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
                                                                     <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
                                                                     {col.label}
                                                                 </label>
@@ -422,16 +451,25 @@ const FeeMaster = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="table-responsive mailbox-messages">
+                                    <div className="mailbox-messages" style={isMobile ? { overflowX: 'hidden' } : {}}>
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
                                                     <th>Fees Group</th>
                                                     <th>
-                                                        <div className="row">
-                                                            <div className="col-md-6">Fees Code</div>
-                                                            <div className="col-md-6">Amount</div>
-                                                        </div>
+                                                        {isMobile ? (
+                                                            <div>
+                                                                <div>Fees Code</div>
+                                                                <div>Amount</div>
+                                                                <i className="fa fa-caret-down" style={{ color: '#ccc', marginTop: '5px', display: 'block' }}></i>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="row">
+                                                                <div className="col-xs-6">Fees Code</div>
+                                                                <div className="col-xs-3">Amount</div>
+                                                                <div className="col-xs-3"></div>
+                                                            </div>
+                                                        )}
                                                     </th>
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
@@ -449,29 +487,48 @@ const FeeMaster = () => {
                                                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                                                     .map((group, index) => (
                                                         <tr key={index}>
-                                                            <td className="mailbox-name" style={{ verticalAlign: 'top' }}>
+                                                            <td className="mailbox-name" style={{ verticalAlign: 'top', wordBreak: 'break-all' }}>
                                                                 {group.group_name}
                                                             </td>
                                                             <td className="mailbox-name">
                                                                 <ul className="liststyle1" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                                                     {group.feetypes && group.feetypes.map((ft) => (
                                                                         <li key={ft.id} style={{ padding: '0', margin: '0' }}>
-                                                                            <div className="row">
-                                                                                <div className="col-md-6">
-                                                                                    <i className="fa fa-money"></i> {ft.type} ({ft.code})
+                                                                            {isMobile ? (
+                                                                                <div style={{ wordBreak: 'break-word' }}>
+                                                                                    <div style={{ marginBottom: '2px' }}>
+                                                                                        <i className="fa fa-money"></i> {ft.type} ({ft.code})
+                                                                                    </div>
+                                                                                    <div style={{ fontWeight: 'normal', color: '#333', marginBottom: '4px' }}>
+                                                                                        ₹{ft.amount}
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                                                                        <Link to={`/admin/feemaster/edit/${ft.id}`} style={{ color: '#337ab7', fontSize: '14px' }} title="Edit">
+                                                                                            <i className="fa fa-pencil"></i>
+                                                                                        </Link>
+                                                                                        <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(ft.id) }} style={{ color: '#337ab7', fontSize: '14px' }} title="Delete">
+                                                                                            <i className="fa fa-remove" style={{ fontWeight: 'bold' }}></i>
+                                                                                        </a>
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div className="col-md-3">
-                                                                                    ₹{ft.amount}
+                                                                            ) : (
+                                                                                <div className="row">
+                                                                                    <div className="col-xs-6">
+                                                                                        <i className="fa fa-money"></i> {ft.type} ({ft.code})
+                                                                                    </div>
+                                                                                    <div className="col-xs-3">
+                                                                                        ₹{ft.amount}
+                                                                                    </div>
+                                                                                    <div className="col-xs-3 text-right">
+                                                                                        <Link to={`/admin/feemaster/edit/${ft.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                                                            <i className="fa fa-pencil"></i>
+                                                                                        </Link>
+                                                                                        <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(ft.id) }} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                                                            <i className="fa fa-remove"></i>
+                                                                                        </a>
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div className="col-md-3 text-right">
-                                                                                    <Link to={`/admin/feemaster/edit/${ft.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                                                        <i className="fa fa-pencil"></i>
-                                                                                    </Link>
-                                                                                    <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(ft.id) }} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
-                                                                                        <i className="fa fa-remove"></i>
-                                                                                    </a>
-                                                                                </div>
-                                                                            </div>
+                                                                            )}
                                                                         </li>
                                                                     ))}
                                                                 </ul>
@@ -491,8 +548,8 @@ const FeeMaster = () => {
                                         </table>
                                     </div>
                                     {feeMasterList.length > 0 && (
-                                        <div className="row">
-                                            <div className="col-sm-5">
+                                        <div className="row" style={isMobile ? { marginTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' } : { marginTop: '15px' }}>
+                                            <div className={isMobile ? "text-center" : "col-sm-5"}>
                                                 <div className="dataTables_info">
                                                     {(() => {
                                                         const filteredItems = feeMasterList.filter(group =>
@@ -506,8 +563,8 @@ const FeeMaster = () => {
                                                     })()}
                                                 </div>
                                             </div>
-                                            <div className="col-sm-7">
-                                                <div className="dataTables_paginate paging_simple_numbers pull-right">
+                                            <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                <div className={isMobile ? "dataTables_paginate paging_simple_numbers" : "dataTables_paginate paging_simple_numbers pull-right"}>
                                                     <ul className="pagination" style={{ margin: 0 }}>
                                                         <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
                                                             <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>

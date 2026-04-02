@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
@@ -17,6 +17,15 @@ const SearchPayment = () => {
     // Form State
     const [paymentId, setPaymentId] = useState('');
     const [loading, setLoading] = useState(false);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
     const [searched, setSearched] = useState(false);
     const [feeList, setFeeList] = useState([]);
     const [error, setError] = useState('');
@@ -173,7 +182,7 @@ const SearchPayment = () => {
 
     const sortedRecords = [...filteredRecords].sort((a, b) => {
         if (!sortConfig.key) return 0;
-        
+
         let valA = a[sortConfig.key];
         let valB = b[sortConfig.key];
 
@@ -217,11 +226,11 @@ const SearchPayment = () => {
                     <div className="row">
                         <div className="col-md-12">
                             <div className="box box-primary">
-                                <div className="box-header with-border">
-                                    <h3 className="box-title">
+                                <div className="box-header with-border" style={isMobile ? { display: 'flex', alignItems: 'center', padding: '12px 15px' } : {}}>
+                                    <h3 className="box-title" style={isMobile ? { margin: 0, fontSize: '18px' } : {}}>
                                         <i className="fa fa-search"></i> Search Fees Payments
                                     </h3>
-                                    <div className="btn-group pull-right">
+                                    <div className={isMobile ? "" : "btn-group pull-right"} style={isMobile ? { marginLeft: 'auto' } : {}}>
                                         <button
                                             onClick={() => navigate(-1)}
                                             className="btn btn-primary btn-xs"
@@ -234,11 +243,12 @@ const SearchPayment = () => {
                                 <div className="box-body">
                                     <div className="row">
                                         <div className="col-md-12">
-                                            <form onSubmit={handleSearch} className="form-inline">
-                                                <div className="form-group">
-                                                    <div className="col-sm-12">
-                                                        <label>Payment ID</label>
-                                                        <small className="req"> *</small>
+                                            <form onSubmit={handleSearch} className={isMobile ? "" : "form-inline"}>
+                                                <div className="form-group" style={isMobile ? { width: '100%', marginBottom: '20px', display: 'block' } : {}}>
+                                                    <div className={isMobile ? "" : "col-sm-12"}>
+                                                        <label style={isMobile ? { marginBottom: '10px', display: 'block' } : {}}>
+                                                            Payment ID <small className="req"> *</small>
+                                                        </label>
                                                         <input
                                                             autoFocus
                                                             id="paymentid"
@@ -248,15 +258,37 @@ const SearchPayment = () => {
                                                             className="form-control"
                                                             value={paymentId}
                                                             onChange={(e) => setPaymentId(e.target.value)}
-                                                            style={{ marginLeft: '10px', marginRight: '10px' }}
+                                                            style={isMobile ? {
+                                                                width: '100%',
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                borderRadius: '0',
+                                                                boxShadow: 'none',
+                                                                backgroundColor: 'transparent',
+                                                                outline: 'none',
+                                                                padding: '8px 0'
+                                                            } : {
+                                                                display: 'inline-block',
+                                                                width: '180px',
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                borderRadius: '0',
+                                                                boxShadow: 'none',
+                                                                backgroundColor: 'transparent',
+                                                                paddingLeft: '5px',
+                                                                outline: 'none',
+                                                                height: '30px',
+                                                                marginLeft: '10px',
+                                                                marginRight: '10px'
+                                                            }}
                                                         />
                                                         {error && (
-                                                            <span className="text-danger">{error}</span>
+                                                            <div className="text-danger">{error}</div>
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div className="form-group align-text-top">
-                                                    <div className="col-sm-12">
+                                                <div className={isMobile ? "text-right" : "form-group align-text-top"} style={isMobile ? { width: '100%', marginTop: '5px' } : {}}>
+                                                    <div className={isMobile ? "" : "col-sm-12"}>
                                                         <button
                                                             type="submit"
                                                             className="btn btn-primary btn-sm checkbox-toggle"
@@ -287,10 +319,28 @@ const SearchPayment = () => {
                                         </div>
                                         <div className="box-body table-responsive">
                                             <div className="download_label">Payment ID Detail</div>
-                                            
+
                                             {/* Toolbar: Records, Local Search, Export Buttons */}
-                                            <div className="row" style={{ marginBottom: '10px' }}>
-                                                <div className="col-sm-8" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                            <div
+                                                className="row mb-2"
+                                                style={{
+                                                    marginBottom: '10px',
+                                                    display: isMobile ? 'flex' : 'block',
+                                                    flexDirection: isMobile ? 'column' : 'row',
+                                                    alignItems: isMobile ? 'center' : 'stretch',
+                                                    gap: isMobile ? '15px' : '0'
+                                                }}
+                                            >
+                                                <div
+                                                    className={isMobile ? "" : "col-sm-6"}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: isMobile ? '15px' : '20px',
+                                                        justifyContent: isMobile ? 'center' : 'flex-start',
+                                                        flexWrap: 'wrap'
+                                                    }}
+                                                >
                                                     <div className="dataTables_length">
                                                         <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                             Records:
@@ -312,25 +362,34 @@ const SearchPayment = () => {
                                                         </label>
                                                     </div>
                                                     <div className="dataTables_filter">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Search:
-                                                            <input
-                                                                type="search"
-                                                                className="form-control input-sm"
-                                                                placeholder=""
-                                                                style={{ marginLeft: '10px' }}
-                                                                value={localSearch}
-                                                                onChange={(e) => {
-                                                                    setLocalSearch(e.target.value);
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                            />
-                                                        </label>
+                                                        <input
+                                                            type="search"
+                                                            className="form-control input-sm"
+                                                            placeholder="Search..."
+                                                            style={{
+                                                                marginLeft: isMobile ? '0' : '10px',
+                                                                display: 'inline-block',
+                                                                width: isMobile ? '180px' : '180px',
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                borderRadius: '0',
+                                                                boxShadow: 'none',
+                                                                backgroundColor: 'transparent',
+                                                                paddingLeft: '0',
+                                                                outline: 'none',
+                                                                textAlign: isMobile ? 'center' : 'left'
+                                                            }}
+                                                            value={localSearch}
+                                                            onChange={(e) => {
+                                                                setLocalSearch(e.target.value);
+                                                                setCurrentPage(1);
+                                                            }}
+                                                        />
                                                     </div>
                                                 </div>
-                                                <div className="col-sm-4 text-right">
+                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
                                                     <div className="dt-buttons btn-group">
-                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                             <i className="fa fa-files-o"></i>
                                                         </button>
                                                         <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'payment_list.csv'); }}>
@@ -346,9 +405,9 @@ const SearchPayment = () => {
                                                             <i className="fa fa-print"></i>
                                                         </button>
                                                         <div className="btn-group">
-                                                            <button 
-                                                                className="btn btn-default btn-sm" 
-                                                                title="Columns" 
+                                                            <button
+                                                                className="btn btn-default btn-sm"
+                                                                title="Columns"
                                                                 onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
                                                                 style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
                                                             >
@@ -375,8 +434,8 @@ const SearchPayment = () => {
                                                         {columns.map(col => visibleColumns.has(col.key) && (
                                                             <th key={col.key} onClick={() => handleSort(col.key)} style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}>
                                                                 {col.label}{' '}
-                                                                <i 
-                                                                    className={`fa fa-caret-${sortConfig.key === col.key && sortConfig.direction === 'desc' ? 'up' : 'down'}`} 
+                                                                <i
+                                                                    className={`fa fa-caret-${sortConfig.key === col.key && sortConfig.direction === 'desc' ? 'up' : 'down'}`}
                                                                     style={{ color: sortConfig.key === col.key ? '#333' : '#ccc', marginLeft: '5px' }}
                                                                 ></i>
                                                             </th>
@@ -422,19 +481,19 @@ const SearchPayment = () => {
                                             </table>
 
                                             {/* Pagination Footer */}
-                                            <div className="row" style={{ marginTop: '15px' }}>
-                                                <div className="col-sm-5">
+                                            <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
+                                                <div className={isMobile ? "text-center" : "col-sm-5"}>
                                                     <div className="dataTables_info">
                                                         Showing {currentTotal === 0 ? 0 : indexOfFirstRecord + 1} to {Math.min(indexOfLastRecord, currentTotal)} of {currentTotal} entries
                                                     </div>
                                                 </div>
-                                                <div className="col-sm-7">
-                                                    <div className="dataTables_paginate paging_simple_numbers pull-right">
+                                                <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                    <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
                                                         <ul className="pagination" style={{ margin: 0 }}>
                                                             <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
                                                                 <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
                                                             </li>
-                                                            {[...Array(totalPages)].map((_, i) => {
+                                                            {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
                                                                 const p = i + 1;
                                                                 return (
                                                                     <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>

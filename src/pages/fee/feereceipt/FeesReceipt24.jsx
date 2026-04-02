@@ -15,6 +15,16 @@ const FeesReceipt24 = () => {
     const navigate = useNavigate();
     const { currentSession, clearSession } = useSession();
 
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     // Stats/Session info
     const sessionYear = currentSession?.session || '2024-25';
     const appName = 'School Management System';
@@ -51,7 +61,7 @@ const FeesReceipt24 = () => {
     const [feePayments, setFeePayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [printSettings, setPrintSettings] = useState(null);
- 
+
     const receiptPrefix = "24/25-";
 
     // States for DataTable functionality
@@ -78,7 +88,7 @@ const FeesReceipt24 = () => {
             console.error("Error fetching print settings", e);
         }
     };
- 
+
     // Fetch Data
     useEffect(() => {
         const fetchData = async () => {
@@ -94,7 +104,7 @@ const FeesReceipt24 = () => {
                 setLoading(false);
             }
         };
- 
+
         fetchData();
         fetchPrintSettings();
     }, []);
@@ -121,7 +131,7 @@ const FeesReceipt24 = () => {
                 const receiptHtml = renderToStaticMarkup(
                     <ReceiptContent student={studentData} sch_setting={enriched_sch_setting} />
                 );
- 
+
                 const iframe = document.createElement('iframe');
                 iframe.style.position = 'absolute';
                 iframe.style.width = '0px';
@@ -254,9 +264,15 @@ const FeesReceipt24 = () => {
     };
 
     const renderSortIcon = (key) => {
-        if (sortConfig.key !== key) return <i className="fa fa-sort text-muted pull-right" style={{ opacity: 0.3 }}></i>;
-        if (sortConfig.direction === 'asc') return <i className="fa fa-sort-asc pull-right"></i>;
-        return <i className="fa fa-sort-desc pull-right"></i>;
+        return (
+            <i
+                className={`fa fa-caret-${sortConfig.key === key && sortConfig.direction === 'desc' ? 'up' : 'down'}`}
+                style={{
+                    color: sortConfig.key === key ? '#333' : '#ccc',
+                    marginLeft: '5px'
+                }}
+            ></i>
+        );
     };
 
     // Column definitions for export
@@ -324,9 +340,9 @@ const FeesReceipt24 = () => {
                         </div>
                         <div className="col-md-12">
                             <div className="box box-primary">
-                                <div className="box-header ptbnull">
-                                    <h3 className="box-title titlefix"> Fees Receipt 24/25</h3>
-                                    <div className="btn-group pull-right">
+                                <div className="box-header ptbnull" style={isMobile ? { display: 'flex', alignItems: 'center', padding: '12px 15px' } : {}}>
+                                    <h3 className="box-title titlefix" style={isMobile ? { margin: 0, fontSize: '18px' } : {}}> Fees Receipt 24</h3>
+                                    <div className={isMobile ? "" : "btn-group pull-right"} style={isMobile ? { marginLeft: 'auto' } : {}}>
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
@@ -337,26 +353,36 @@ const FeesReceipt24 = () => {
 
                                 <div className="box-body">
                                     {/* DataTables Controls */}
-                                    <div className="row mb-2" style={{ marginBottom: '10px' }}>
-                                        <div className="col-sm-6">
-                                            <div id="example1_filter" className="dataTables_filter pull-left">
-                                                <label>Search:<input
+                                    <div className="row mb-2" style={isMobile ? { marginBottom: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' } : { marginBottom: '10px' }}>
+                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                            <div className={isMobile ? "dataTables_filter" : "dataTables_filter pull-left"}>
+                                                <input
                                                     type="search"
                                                     className="form-control input-sm"
-                                                    placeholder=""
-                                                    aria-controls="example1"
+                                                    placeholder="Search..."
                                                     value={searchTerm}
                                                     onChange={(e) => {
                                                         setSearchTerm(e.target.value);
                                                         setCurrentPage(1);
                                                     }}
-                                                    style={{ display: 'inline-block', width: 'auto', marginLeft: '0.5em' }}
-                                                /></label>
+                                                    style={{ 
+                                                        display: 'inline-block', 
+                                                        width: '180px', 
+                                                        border: 'none', 
+                                                        borderBottom: '1px solid #ccc', 
+                                                        borderRadius: '0', 
+                                                        boxShadow: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        paddingLeft: '0',
+                                                        outline: 'none',
+                                                        textAlign: isMobile ? 'center' : 'left'
+                                                    }}
+                                                />
                                             </div>
                                         </div>
-                                        <div className="col-sm-6">
-                                            <div className="pull-right dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                            <div className={isMobile ? "dt-buttons btn-group" : "pull-right dt-buttons btn-group"}>
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'fees_receipt_24.xls'); }}>
@@ -372,13 +398,13 @@ const FeesReceipt24 = () => {
                                                     <i className="fa fa-print"></i>
                                                 </button>
                                                 <div className="btn-group">
-                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
                                                         <i className="fa fa-columns"></i>
                                                     </button>
                                                     {showColumnsDropdown && (
                                                         <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                             {columns.map(col => (
-                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
                                                                     <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
                                                                     {col.label}
                                                                 </label>
@@ -390,39 +416,57 @@ const FeesReceipt24 = () => {
                                         </div>
                                     </div>
 
-                                    <div className="table-responsive overflow-visible">
-                                        <table className="table table-striped table-bordered table-hover example">
+                                    <div className="table-responsive" style={isMobile ? { overflowX: 'auto', WebkitOverflowScrolling: 'touch', display: 'block', width: '100%' } : { overflow: 'visible' }}>
+                                        <table className="table table-striped table-bordered table-hover example" style={isMobile ? { minWidth: '1200px', tableLayout: 'fixed' } : {}}>
                                             <thead>
                                                 <tr>
-                                                    <th>S.No</th>
-                                                    <th className="sorting" onClick={() => handleSort('receipt_no')} style={{ cursor: 'pointer' }}>
-                                                        Receipt No {renderSortIcon('receipt_no')}
-                                                    </th>
-                                                    <th className="sorting" onClick={() => handleSort('admission_no')} style={{ cursor: 'pointer' }}>
-                                                        Admission No {renderSortIcon('admission_no')}
-                                                    </th>
-                                                    <th className="sorting" onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                                                        Name {renderSortIcon('name')}
-                                                    </th>
-                                                    <th className="sorting" onClick={() => handleSort('class')} style={{ cursor: 'pointer' }}>
-                                                        Class {renderSortIcon('class')}
-                                                    </th>
-                                                    <th className="sorting" onClick={() => handleSort('created_at')} style={{ cursor: 'pointer' }}>
-                                                        Payment Date {renderSortIcon('created_at')}
-                                                    </th>
-                                                    <th className="sorting" onClick={() => handleSort('amount')} style={{ cursor: 'pointer' }}>
-                                                        Amount ({currencySymbol}) {renderSortIcon('amount')}
-                                                    </th>
-                                                    <th className="sorting" onClick={() => handleSort('fee_types')} style={{ cursor: 'pointer' }}>
-                                                        Fee Type {renderSortIcon('fee_types')}
-                                                    </th>
-                                                    <th className="sorting" onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
-                                                        Status {renderSortIcon('status')}
-                                                    </th>
-                                                    <th className="sorting" onClick={() => handleSort('description')} style={{ cursor: 'pointer' }}>
-                                                        Description {renderSortIcon('description')}
-                                                    </th>
-                                                    <th className="text-right noExport">Action</th>
+                                                    {visibleColumns.has('sno') && <th style={isMobile ? { textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '50px' } : { textAlign: 'left' }}>S.No</th>}
+                                                    {visibleColumns.has('receipt_no') && (
+                                                        <th className="sorting" onClick={() => handleSort('receipt_no')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '110px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Receipt No {renderSortIcon('receipt_no')}
+                                                        </th>
+                                                    )}
+                                                    {visibleColumns.has('admission_no') && (
+                                                        <th className="sorting" onClick={() => handleSort('admission_no')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '110px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Adm No {renderSortIcon('admission_no')}
+                                                        </th>
+                                                    )}
+                                                    {visibleColumns.has('name') && (
+                                                        <th className="sorting" onClick={() => handleSort('name')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '180px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Name {renderSortIcon('name')}
+                                                        </th>
+                                                    )}
+                                                    {visibleColumns.has('class') && (
+                                                        <th className="sorting" onClick={() => handleSort('class')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '120px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Class {renderSortIcon('class')}
+                                                        </th>
+                                                    )}
+                                                    {visibleColumns.has('payment_date') && (
+                                                        <th className="sorting" onClick={() => handleSort('created_at')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '100px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Payment Date {renderSortIcon('created_at')}
+                                                        </th>
+                                                    )}
+                                                    {visibleColumns.has('amount') && (
+                                                        <th className="sorting" onClick={() => handleSort('amount')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '100px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Amt ({currencySymbol}) {renderSortIcon('amount')}
+                                                        </th>
+                                                    )}
+                                                    {visibleColumns.has('fee_type') && (
+                                                        <th className="sorting" onClick={() => handleSort('fee_types')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '150px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Fee Type {renderSortIcon('fee_types')}
+                                                        </th>
+                                                    )}
+                                                    {visibleColumns.has('status') && (
+                                                        <th className="sorting" onClick={() => handleSort('status')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '80px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Status {renderSortIcon('status')}
+                                                        </th>
+                                                    )}
+                                                    {visibleColumns.has('description') && (
+                                                        <th className="sorting" onClick={() => handleSort('description')} style={isMobile ? { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '150px' } : { cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                                                            Description {renderSortIcon('description')}
+                                                        </th>
+                                                    )}
+                                                    <th className="noExport" style={isMobile ? { textAlign: 'left', borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '60px' } : { textAlign: 'left' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -437,31 +481,56 @@ const FeesReceipt24 = () => {
                                                         <td colSpan="11" className="text-center">No matching records found</td>
                                                     </tr>
                                                 ) : (
-                                                    currentEntries.map((payment, index) => (
-                                                        <tr key={payment.id}>
-                                                            <td>{indexOfFirstEntry + index + 1}</td>
-                                                            <td>{getReceiptNo(payment.id)}</td>
-                                                            <td>{payment.admission_no}</td>
-                                                            <td>
-                                                                {`${payment.firstname} ${payment.middlename || ''} ${payment.lastname || ''}`.trim()}
-                                                            </td>
-                                                            <td>{`${payment.class} (${payment.section})`}</td>
-                                                            <td>{formatDate(payment.created_at)}</td>
-                                                            <td>{currencySymbol + formatAmount(payment.amount)}</td>
-                                                            <td>{payment.fee_types}</td>
-                                                            <td>{getStatusLabel(payment.status)}</td>
-                                                            <td>{payment.description}</td>
-                                                            <td className="text-right noExport">
-                                                                <button
-                                                                    className="btn btn-xs btn-default printDocNew"
-                                                                    onClick={() => handlePrint(payment)}
-                                                                    title="Print"
-                                                                >
-                                                                    <i className="fa fa-print"></i>
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ))
+                                                    currentEntries.map((payment, index) => {
+                                                        const fullName = `${payment.firstname} ${payment.middlename || ''} ${payment.lastname || ''}`.trim();
+                                                        return (
+                                                            <tr key={payment.id}>
+                                                                {visibleColumns.has('sno') && <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', width: '40px', textAlign: 'left' } : { width: '40px', textAlign: 'left' }}>{indexOfFirstEntry + index + 1}</td>}
+                                                                {visibleColumns.has('receipt_no') && (
+                                                                    <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' } : { maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }} title={getReceiptNo(payment.id)}>
+                                                                        {getReceiptNo(payment.id)}
+                                                                    </td>
+                                                                )}
+                                                                {visibleColumns.has('admission_no') && (
+                                                                    <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' } : { maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }} title={payment.admission_no}>
+                                                                        {payment.admission_no}
+                                                                    </td>
+                                                                )}
+                                                                {visibleColumns.has('name') && (
+                                                                    <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' } : { maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }} title={fullName}>
+                                                                        {fullName}
+                                                                    </td>
+                                                                )}
+                                                                {visibleColumns.has('class') && (
+                                                                    <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' } : { maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }} title={`${payment.class} (${payment.section})`}>
+                                                                        {`${payment.class} (${payment.section})`}
+                                                                    </td>
+                                                                )}
+                                                                {visibleColumns.has('payment_date') && <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', width: '100px', textAlign: 'left' } : { width: '100px', textAlign: 'left' }}>{formatDate(payment.created_at)}</td>}
+                                                                {visibleColumns.has('amount') && <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', width: '100px', textAlign: 'left' } : { width: '100px', textAlign: 'left' }}>{currencySymbol + formatAmount(payment.amount)}</td>}
+                                                                {visibleColumns.has('fee_type') && (
+                                                                    <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' } : { maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }} title={payment.fee_types}>
+                                                                        {payment.fee_types}
+                                                                    </td>
+                                                                )}
+                                                                {visibleColumns.has('status') && <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', width: '80px', textAlign: 'left' } : { width: '80px', textAlign: 'left' }}>{getStatusLabel(payment.status)}</td>}
+                                                                {visibleColumns.has('description') && (
+                                                                    <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' } : { maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }} title={payment.description}>
+                                                                        {payment.description}
+                                                                    </td>
+                                                                )}
+                                                                <td className="noExport" style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', width: '60px', textAlign: 'left' } : { width: '60px', textAlign: 'left' }}>
+                                                                    <button
+                                                                        className="btn btn-xs btn-default printDocNew"
+                                                                        onClick={() => handlePrint(payment)}
+                                                                        title="Print"
+                                                                    >
+                                                                        <i className="fa fa-print"></i>
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })
                                                 )}
                                             </tbody>
                                         </table>
@@ -469,17 +538,17 @@ const FeesReceipt24 = () => {
 
                                     {/* Pagination Info & Controls */}
                                     {!loading && filteredPayments.length > 0 && (
-                                        <div className="row">
-                                            <div className="col-sm-5">
+                                        <div className="row" style={isMobile ? { marginTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' } : { marginTop: '15px' }}>
+                                            <div className={isMobile ? "text-center" : "col-sm-5"}>
                                                 <div className="dataTables_info" role="status" aria-live="polite">
                                                     Showing {indexOfFirstEntry + 1} to {Math.min(indexOfLastEntry, filteredPayments.length)} of {filteredPayments.length} entries
                                                 </div>
                                             </div>
-                                            <div className="col-sm-7">
-                                                <div className="dataTables_paginate paging_simple_numbers" style={{ textAlign: 'right' }}>
-                                                    <ul className="pagination">
+                                            <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                <div className={isMobile ? "dataTables_paginate paging_simple_numbers" : "dataTables_paginate paging_simple_numbers pull-right"} style={isMobile ? {} : { textAlign: 'right' }}>
+                                                    <ul className="pagination" style={isMobile ? { margin: 0 } : {}}>
                                                         <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>Previous</a>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
                                                         </li>
                                                         {[...Array(totalPages)].map((_, i) => {
                                                             // Logic to show limited page numbers if too many pages
@@ -494,7 +563,7 @@ const FeesReceipt24 = () => {
                                                             );
                                                         })}
                                                         <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>Next</a>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
                                                         </li>
                                                     </ul>
                                                 </div>

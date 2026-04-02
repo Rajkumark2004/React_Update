@@ -13,6 +13,16 @@ const FeesForward = () => {
     const navigate = useNavigate();
     const { currentSession, clearSession } = useSession();
 
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     // Currency Symbol
     const currencySymbol = '₹';
 
@@ -360,9 +370,9 @@ const FeesForward = () => {
                         <form id="feesforward" onSubmit={handleSearchSubmit} method="post" acceptCharset="utf-8">
                             <div className="col-md-12">
                                 <div className="box box-primary">
-                                    <div className="box-header with-border">
-                                        <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
-                                        <div className="btn-group pull-right">
+                                    <div className="box-header with-border" style={isMobile ? { display: 'flex', alignItems: 'center', padding: '12px 15px' } : {}}>
+                                        <h3 className="box-title" style={isMobile ? { margin: 0, fontSize: '18px' } : {}}><i className="fa fa-search"></i> Select Criteria</h3>
+                                        <div className={isMobile ? "" : "btn-group pull-right"} style={isMobile ? { marginLeft: 'auto' } : {}}>
                                             <Link to="/studentfee" className="btn btn-primary btn-xs">
                                                 <i className="fa fa-arrow-left"></i> Back
                                             </Link>
@@ -429,9 +439,9 @@ const FeesForward = () => {
                                         <>
                                             <div className="box-header ptbnull"></div>
                                             <div className="">
-                                                <div className="box-header with-border">
-                                                    <h3 className="box-title titlefix">Previous Session Balance Fees</h3>
-                                                    <div className="pull-right">
+                                                <div className="box-header with-border" style={isMobile ? { display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', textAlign: 'center', padding: '15px' } : {}}>
+                                                    <h3 className="box-title titlefix" style={isMobile ? { margin: 0, fontSize: '18px' } : {}}>Previous Session Balance Fees</h3>
+                                                    <div className={isMobile ? "" : "pull-right"}>
                                                         <div className="form-group mb0">
                                                             <span className="text text-danger pt6 bolds">Due Date:</span> {dueDateFormatted}
                                                             <input
@@ -454,31 +464,42 @@ const FeesForward = () => {
                                                     )}
 
                                                     {/* DataTables Controls */}
-                                                    <div className="row mb-2" style={{ marginBottom: '10px' }}>
-                                                        <div className="col-sm-6">
-                                                            <div className="dataTables_filter pull-left">
-                                                                <label>Search:<input
+                                                    <div className="row mb-2" style={isMobile ? { marginBottom: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' } : { marginBottom: '10px' }}>
+                                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                                            <div className={isMobile ? "dataTables_filter" : "dataTables_filter pull-left"}>
+                                                                <input
                                                                     type="search"
                                                                     className="form-control input-sm"
-                                                                    placeholder=""
+                                                                    placeholder="Search..."
                                                                     value={searchTerm}
                                                                     onChange={(e) => {
                                                                         setSearchTerm(e.target.value);
                                                                         setCurrentPage(1);
                                                                     }}
-                                                                    style={{ display: 'inline-block', width: 'auto', marginLeft: '0.5em' }}
-                                                                /></label>
+                                                                    style={{ 
+                                                                        display: 'inline-block', 
+                                                                        width: '180px', 
+                                                                        border: 'none', 
+                                                                        borderBottom: '1px solid #ccc', 
+                                                                        borderRadius: '0', 
+                                                                        boxShadow: 'none',
+                                                                        backgroundColor: 'transparent',
+                                                                        paddingLeft: '0',
+                                                                        outline: 'none',
+                                                                        textAlign: isMobile ? 'center' : 'left'
+                                                                    }}
+                                                                />
                                                             </div>
                                                         </div>
-                                                        <div className="col-sm-6">
-                                                            <div className="pull-right dt-buttons btn-group">
-                                                                <button type="button" className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-files-o"></i></button>
+                                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                                            <div className={isMobile ? "dt-buttons btn-group" : "pull-right dt-buttons btn-group"}>
+                                                                <button type="button" className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => handleExport('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}><i className="fa fa-files-o"></i></button>
                                                                 <button type="button" className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
                                                                 <button type="button" className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>
                                                                 <button type="button" className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
                                                                 <button type="button" className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
                                                                 <div className="btn-group" ref={columnDropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
-                                                                    <button type="button" className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnDropdown(!showColumnDropdown)}>
+                                                                    <button type="button" className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnDropdown(!showColumnDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
                                                                         <i className="fa fa-columns"></i>
                                                                     </button>
                                                                     {showColumnDropdown && (
@@ -490,7 +511,7 @@ const FeesForward = () => {
                                                                                 if (col === 'Father Name' && !schSetting.father_name) return null;
 
                                                                                 return (
-                                                                                    <label key={col} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', whiteSpace: 'nowrap' }}>
+                                                                                    <label key={col} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', whiteSpace: 'nowrap', textAlign: 'left' }}>
                                                                                         <input
                                                                                             type="checkbox"
                                                                                             checked={visibleColumns.has(col)}
@@ -510,24 +531,24 @@ const FeesForward = () => {
 
                                                     {studentDueFee.length > 0 ? (
                                                         <>
-                                                            <div className="table-responsive mailbox-messages overflow-visible">
-                                                                <table id="fees-carry-forward-table" className="table table-striped table-bordered table-hover example">
+                                                            <div className="table-responsive mailbox-messages" style={isMobile ? { overflowX: 'auto', WebkitOverflowScrolling: 'touch', display: 'block', width: '100%' } : { overflow: 'visible' }}>
+                                                                <table id="fees-carry-forward-table" className="table table-striped table-bordered table-hover example" style={isMobile ? { minWidth: '800px', tableLayout: 'fixed' } : {}}>
                                                                     <thead>
                                                                         <tr>
-                                                                            {visibleColumns.has('Student Name') && <th className="text text-left">Student Name</th>}
-                                                                            {visibleColumns.has('Admission No') && <th className="text text-left">Admission No</th>}
+                                                                            {visibleColumns.has('Student Name') && <th className="text text-left" style={isMobile ? { borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '180px' } : {}}>Student Name</th>}
+                                                                            {visibleColumns.has('Admission No') && <th className="text text-left" style={isMobile ? { borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '140px' } : {}}>Adm No</th>}
                                                                             {schSetting.admission_date && visibleColumns.has('Admission Date') && (
-                                                                                <th className="text text-left">Admission Date</th>
+                                                                                <th className="text text-left" style={isMobile ? { borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '120px' } : {}}>Adm Date</th>
                                                                             )}
                                                                             {schSetting.roll_no && visibleColumns.has('Roll Number') && (
-                                                                                <th className="text text-left">Roll Number</th>
+                                                                                <th className="text text-left" style={isMobile ? { borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '100px' } : {}}>Roll No</th>
                                                                             )}
                                                                             {schSetting.father_name && visibleColumns.has('Father Name') && (
-                                                                                <th className="text text-left">Father Name</th>
+                                                                                <th className="text text-left" style={isMobile ? { borderLeft: 'none', borderRight: 'none', fontSize: '12px', padding: '10px 4px', width: '130px' } : {}}>Father Name</th>
                                                                             )}
                                                                             {visibleColumns.has('Balance') && (
-                                                                                <th className="text-right">
-                                                                                    Balance <span>({currencySymbol})</span>
+                                                                                <th className="text-left" style={{ borderLeft: 'none', borderRight: 'none', fontSize: isMobile ? '12px' : 'inherit', padding: '10px 2px', paddingLeft: '12px !important', paddingRight: '4px !important', width: '150px', textAlign: 'left !important', background: 'none !important' }}>
+                                                                                    Bal <span>({currencySymbol})</span>
                                                                                 </th>
                                                                             )}
                                                                         </tr>
@@ -543,10 +564,9 @@ const FeesForward = () => {
                                                                                 const originalIndex = studentDueFee.findIndex(s => s.student_session_id === dueFee.student_session_id);
                                                                                 const i = originalIndex + 1;
 
-                                                                                return (
-                                                                                    <tr key={dueFee.student_session_id}>
+                                                                                return (                                                                                    <tr key={dueFee.student_session_id}>
                                                                                         {visibleColumns.has('Student Name') && (
-                                                                                            <td>
+                                                                                            <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', wordBreak: 'break-word', width: '180px' } : {}}>
                                                                                                 <input
                                                                                                     type="hidden"
                                                                                                     name="student_counter[]"
@@ -560,32 +580,33 @@ const FeesForward = () => {
                                                                                                 {dueFee.name}
                                                                                             </td>
                                                                                         )}
-                                                                                        {visibleColumns.has('Admission No') && <td>{dueFee.admission_no}</td>}
+                                                                                        {visibleColumns.has('Admission No') && <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', wordBreak: 'break-word', width: '140px' } : {}}>{dueFee.admission_no}</td>}
                                                                                         {schSetting.admission_date && visibleColumns.has('Admission Date') && (
-                                                                                            <td>{dueFee.admission_date}</td>
+                                                                                            <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', wordBreak: 'break-word', width: '120px' } : {}}>{dueFee.admission_date}</td>
                                                                                         )}
                                                                                         {schSetting.roll_no && visibleColumns.has('Roll Number') && (
-                                                                                            <td>{dueFee.roll_no}</td>
+                                                                                            <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', wordBreak: 'break-word', width: '100px' } : {}}>{dueFee.roll_no}</td>
                                                                                         )}
                                                                                         {schSetting.father_name && visibleColumns.has('Father Name') && (
-                                                                                            <td>{dueFee.father_name}</td>
+                                                                                            <td style={isMobile ? { borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 4px', fontSize: '12px', wordBreak: 'break-word', width: '130px' } : {}}>{dueFee.father_name}</td>
                                                                                         )}
                                                                                         {visibleColumns.has('Balance') && (
-                                                                                            <td className="text text-right">
+                                                                                             <td className="text text-left" style={{ borderLeft: 'none', borderRight: 'none', verticalAlign: 'top', padding: '10px 2px', paddingLeft: '12px !important', paddingRight: '4px !important', fontSize: isMobile ? '12px' : 'inherit', width: '150px', textAlign: 'left !important' }}>
                                                                                                 <span className="hidden">
                                                                                                     {formatCurrency(dueFee.balance)}
                                                                                                 </span>
                                                                                                 <input
                                                                                                     type="text"
                                                                                                     name={`amount[${i}]`}
-                                                                                                    className="form-control tddm200 text-right"
+                                                                                                    className="form-control tddm200 text-left"
                                                                                                     value={amounts[i] || formatCurrency(dueFee.balance)}
                                                                                                     onChange={(e) => handleAmountChange(i, e.target.value)}
-                                                                                                    style={{ width: '200px', display: 'inline-block' }}
+                                                                                                    style={{ width: '100%', fontSize: isMobile ? '12px' : 'inherit', padding: '2px 4px', paddingLeft: '4px !important', height: 'auto', display: 'inline-block', textAlign: 'left' }}
                                                                                                 />
                                                                                             </td>
                                                                                         )}
                                                                                     </tr>
+
                                                                                 );
                                                                             })
                                                                         )}
@@ -595,14 +616,14 @@ const FeesForward = () => {
 
                                                             {/* Pagination Info & Controls */}
                                                             {filteredStudents.length > 0 && (
-                                                                <div className="row">
-                                                                    <div className="col-sm-5">
+                                                                <div className="row" style={isMobile ? { marginTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' } : { marginTop: '15px' }}>
+                                                                    <div className={isMobile ? "text-center" : "col-sm-5"}>
                                                                         <div className="dataTables_info" role="status" aria-live="polite">
                                                                             Showing {indexOfFirstEntry + 1} to {Math.min(indexOfLastEntry, filteredStudents.length)} of {filteredStudents.length} entries
                                                                         </div>
                                                                     </div>
-                                                                    <div className="col-sm-7">
-                                                                        <div className="dataTables_paginate paging_simple_numbers pull-right">
+                                                                    <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                                        <div className={isMobile ? "dataTables_paginate paging_simple_numbers" : "dataTables_paginate paging_simple_numbers pull-right"}>
                                                                             <ul className="pagination" style={{ margin: 0 }}>
                                                                                 <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
                                                                                     <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
