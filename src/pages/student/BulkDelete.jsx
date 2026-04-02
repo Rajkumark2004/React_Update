@@ -6,6 +6,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import '../../utils/include_files';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
 const BulkDelete = () => {
     const navigate = useNavigate();
@@ -20,6 +21,9 @@ const BulkDelete = () => {
     
     // UI state for search results
     const [hasSearched, setHasSearched] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
 
     // Checkbox UI states
     const [selectedStudents, setSelectedStudents] = useState([]);
@@ -81,6 +85,7 @@ const BulkDelete = () => {
             setHasSearched(true);
             setSelectedStudents([]);
             setIsAllSelected(false);
+            setCurrentPage(1);
         } catch (error) {
             console.error('Error fetching students:', error);
             setStudents([]);
@@ -88,6 +93,37 @@ const BulkDelete = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Filtering and Pagination Logic
+    const filteredStudents = students.filter(student => {
+        const searchText = searchTerm.toLowerCase();
+        const fullName = (student.full_name || (student.firstname + ' ' + (student.lastname || ''))).toLowerCase();
+        const admissionNo = (student.admission_no || '').toLowerCase();
+        return fullName.includes(searchText) || admissionNo.includes(searchText);
+    });
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
+    const getExportData = () => {
+        const headers = ['Admission No', 'Student Name', 'Class', 'Date Of Birth', 'Gender', 'Category', 'Mobile Number'];
+        const rows = filteredStudents.map(s => [
+            s.admission_no, 
+            s.full_name || (s.firstname + ' ' + (s.lastname || '')), 
+            s.class && s.section ? `${s.class} (${s.section})` : (s.class_section || s.class),
+            s.dob, 
+            s.gender, 
+            s.category, 
+            s.mobile_no || s.mobileno || s.mobile
+        ].map(v => String(v ?? '')));
+        return { headers, rows };
     };
 
     const handleDelete = async () => {
@@ -124,7 +160,7 @@ const BulkDelete = () => {
         const checked = e.target.checked;
         setIsAllSelected(checked);
         if (checked) {
-            setSelectedStudents(students.map(s => s.id));
+            setSelectedStudents(filteredStudents.map(s => s.id));
         } else {
             setSelectedStudents([]);
         }
@@ -139,7 +175,7 @@ const BulkDelete = () => {
             newSelected = newSelected.filter(sid => sid !== id);
         }
         setSelectedStudents(newSelected);
-        setIsAllSelected(newSelected.length === students.length && students.length > 0);
+        setIsAllSelected(newSelected.length === filteredStudents.length && filteredStudents.length > 0);
     };
 
     return (
@@ -230,6 +266,49 @@ const BulkDelete = () => {
                                                         )}
                                                     </div>
 
+                                                    <div className="row" style={{ marginTop: '10px' }}>
+                                                        <div className="col-md-6">
+                                                            <div className="dt-buttons btn-group">
+                                                                <button className="btn btn-default btn-xs" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                                    <i className="fa fa-files-o"></i>
+                                                                </button>
+                                                                <button className="btn btn-default btn-xs" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'bulk_delete_list.xls'); }}>
+                                                                    <i className="fa fa-file-excel-o"></i>
+                                                                </button>
+                                                                <button className="btn btn-default btn-xs" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'bulk_delete_list.csv'); }}>
+                                                                    <i className="fa fa-file-text-o"></i>
+                                                                </button>
+                                                                <button className="btn btn-default btn-xs" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'bulk_delete_list.pdf', 'Bulk Delete List'); }}>
+                                                                    <i className="fa fa-file-pdf-o"></i>
+                                                                </button>
+                                                                <button className="btn btn-default btn-xs" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Bulk Delete List'); }}>
+                                                                    <i className="fa fa-print"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-md-6">
+                                                            <div className="dataTables_filter" style={{ textAlign: 'right' }}>
+                                                                <input
+                                                                    type="search"
+                                                                    placeholder="Search..."
+                                                                    value={searchTerm}
+                                                                    onChange={(e) => {
+                                                                        setSearchTerm(e.target.value);
+                                                                        setCurrentPage(1);
+                                                                    }}
+                                                                    style={{
+                                                                        border: 'none',
+                                                                        borderBottom: '1px solid #ccc',
+                                                                        outline: 'none',
+                                                                        padding: '5px 0',
+                                                                        background: 'transparent',
+                                                                        width: 'auto'
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                     <div className="table-responsive pt15 clearboth">
                                                         <div className="download_label">Bulk Delete</div>
                                                         <table className="table table-striped table-bordered table-hover example" cellSpacing="0" width="100%">
@@ -246,14 +325,14 @@ const BulkDelete = () => {
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                {students.length === 0 ? (
+                                                                {currentItems.length === 0 ? (
                                                                     <tr>
                                                                         <td colSpan="8" className="text-center">
                                                                             No data available in table
                                                                         </td>
                                                                     </tr>
                                                                 ) : (
-                                                                    students.map((student) => (
+                                                                    currentItems.map((student) => (
                                                                         <tr key={student.id}>
                                                                             <td>
                                                                                 <input 
@@ -278,6 +357,56 @@ const BulkDelete = () => {
                                                                 )}
                                                             </tbody>
                                                         </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {hasSearched && filteredStudents.length > 0 && (
+                                    <div className="box-footer">
+                                        <div className="mailbox-controls">
+                                            <div className="row">
+                                                <div className="col-sm-6">
+                                                    <div className="pull-left" style={{ padding: '8px 0' }}>
+                                                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredStudents.length)} of {filteredStudents.length} entries
+                                                    </div>
+                                                </div>
+                                                <div className="col-sm-6">
+                                                    <div className="pull-right">
+                                                        <ul className="pagination pagination-sm no-margin">
+                                                            <li className={currentPage === 1 ? 'disabled' : ''}>
+                                                                <button
+                                                                    className="btn btn-default btn-xs"
+                                                                    onClick={() => handlePageChange(currentPage - 1)}
+                                                                    disabled={currentPage === 1}
+                                                                    style={{ marginRight: '5px' }}
+                                                                >
+                                                                    Previous
+                                                                </button>
+                                                            </li>
+                                                            {[...Array(totalPages)].map((_, i) => (
+                                                                <li key={i + 1} className={currentPage === i + 1 ? 'active' : ''}>
+                                                                    <button
+                                                                        className={`btn btn-xs ${currentPage === i + 1 ? 'btn-primary' : 'btn-default'}`}
+                                                                        onClick={() => handlePageChange(i + 1)}
+                                                                        style={{ marginRight: '5px' }}
+                                                                    >
+                                                                        {i + 1}
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                            <li className={currentPage === totalPages ? 'disabled' : ''}>
+                                                                <button
+                                                                    className="btn btn-default btn-xs"
+                                                                    onClick={() => handlePageChange(currentPage + 1)}
+                                                                    disabled={currentPage === totalPages}
+                                                                >
+                                                                    Next
+                                                                </button>
+                                                            </li>
+                                                        </ul>
                                                     </div>
                                                 </div>
                                             </div>

@@ -6695,9 +6695,9 @@ export const api = {
         }
     },
 
-    generateCBSETemplateWiseRank: async (templateId, payload) => {
+    generateCBSETemplateWiseRank: async (payload) => {
         try {
-            const response = await fetch(`${API_BASE}/cbseexam/template/templatewiserank/${templateId}`, createFetchOptions('POST', payload));
+            const response = await fetch(`${API_BASE}/cbseexam/exam/rankgenerate`, createFetchOptions('POST', payload));
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

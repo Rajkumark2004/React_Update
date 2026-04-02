@@ -17,6 +17,8 @@ const TemplateWiseRank = () => {
     const [studentList, setStudentList] = useState([]);
     const [schSetting, setSchSetting] = useState({});
     const [hasRanksGenerated, setHasRanksGenerated] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState([]);
+    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         if (templateId) {
@@ -51,11 +53,18 @@ const TemplateWiseRank = () => {
         e.preventDefault();
         setGenerating(true);
         try {
+            if (selectedStudents.length === 0) {
+                toast.error("Please select at least one student.");
+                setGenerating(false);
+                return;
+            }
+
             const payload = {
-                student_session_id: studentList.map(s => s.student_session_id)
+                cbse_template_id: parseInt(templateId),
+                student_session_id: selectedStudents
             };
 
-            const response = await api.generateCBSETemplateWiseRank(templateId, payload);
+            const response = await api.generateCBSETemplateWiseRank(payload);
             if (response && response.status) {
                 toast.success(response.message || "Rank Generated Successfully");
                 fetchTemplateRankData();
@@ -69,6 +78,26 @@ const TemplateWiseRank = () => {
             setGenerating(false);
         }
     };
+
+    const handleSelectStudent = (id) => {
+        setSelectedStudents(prev =>
+            prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = (e) => {
+        if (e.target.checked) {
+            setSelectedStudents(filteredStudents.map(s => parseInt(s.student_session_id)));
+        } else {
+            setSelectedStudents([]);
+        }
+    };
+
+    const filteredStudents = studentList.filter(s => {
+        const fullName = `${s.firstname} ${s.middlename || ""} ${s.lastname || ""}`.toLowerCase();
+        const admissionNo = (s.admission_no || "").toLowerCase();
+        return fullName.includes(searchTerm.toLowerCase()) || admissionNo.includes(searchTerm.toLowerCase());
+    });
 
     const getFullName = (s) => {
         let name = s.firstname;
@@ -111,7 +140,7 @@ const TemplateWiseRank = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ marginTop: '17px' }}>
+            <div className="content-wrapper" style={{ marginTop: '0px' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">
@@ -123,7 +152,20 @@ const TemplateWiseRank = () => {
                                 </div>
 
                                 <div className="box-body">
-                                    <div className="download_label">Generate Rank</div>
+                                    <div className="row" style={{ marginBottom: '10px' }}>
+                                        <div className="col-md-6">
+                                            <div className="download_label">Generate Rank</div>
+                                        </div>
+                                        <div className="col-md-6 text-right">
+                                            <input
+                                                type="search"
+                                                placeholder="Search..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: '200px' }}
+                                            />
+                                        </div>
+                                    </div>
 
                                     {hasRanksGenerated && (
                                         <div className="alert alert-info" role="alert">
@@ -143,6 +185,13 @@ const TemplateWiseRank = () => {
                                                 >
                                                     <thead>
                                                         <tr>
+                                                            <th width="30">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    onChange={handleSelectAll}
+                                                                    checked={filteredStudents.length > 0 && selectedStudents.length === filteredStudents.length}
+                                                                />
+                                                            </th>
                                                             <th>Admission No</th>
                                                             <th>Student Name</th>
                                                             <th>Class</th>
@@ -154,8 +203,15 @@ const TemplateWiseRank = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {studentList.map((student, index) => (
+                                                        {filteredStudents.map((student, index) => (
                                                             <tr key={index}>
+                                                                <td>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selectedStudents.includes(parseInt(student.student_session_id))}
+                                                                        onChange={() => handleSelectStudent(parseInt(student.student_session_id))}
+                                                                    />
+                                                                </td>
                                                                 <td>
                                                                     <input
                                                                         type="hidden"

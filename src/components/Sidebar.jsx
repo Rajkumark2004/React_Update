@@ -182,7 +182,36 @@ const Sidebar = ({
         '/admin/content/editpost',
         '/admin/content/search',
         '/admin/video_tutorial',
-        '/admin/reports/student_information'
+        '/admin/reports/student_information',
+        '/cbseexam/exam',
+        '/cbseexam/examschedule',
+        '/cbseexam/result/marksheet',
+        '/cbseexam/examgrade',
+        '/cbseexam/assessment',
+        '/cbseexam/term',
+        '/cbseexam/template',
+        '/cbseexam/report',
+        '/cbseexam/settings',
+        '/admin/reports/student_information',
+        '/admin/reports/finance',
+        '/admin/reports/attendance',
+        '/admin/reports/staff',
+        '/admin/reports/rank',
+        '/admin/reports/transport',
+        '/admin/reports/hostel',
+        '/admin/reports/alumni',
+        '/admin/reports/user_log',
+        '/admin/reports/audit_trail',
+        '/admin/certificate/student_certificate',
+        '/admin/certificate/generate_certificate',
+        '/admin/certificate/student_id_card',
+        '/admin/certificate/generate_id_card',
+        '/admin/certificate/staff_id_card',
+        '/admin/certificate/generate_staff_id_card',
+        '/settings/notification-setting',
+        '/settings/payment_methods',
+        '/settings/roles',
+        '/settings/modules'
     ];
 
 
@@ -275,7 +304,15 @@ const Sidebar = ({
         ],
         7: [ // State Examinations
             { label: 'Exam', url: '/cbseexam/exam', icon: 'fa fa-pencil-square-o' },
-            { label: 'Rank', url: '/admin/rank', icon: 'fa fa-trophy' }
+            { label: 'Exam Schedule', url: '/cbseexam/examschedule', icon: 'fa fa-calendar' },
+            { label: 'Print Marksheet', url: '/cbseexam/result/marksheet', icon: 'fa fa-file-text-o' },
+            { label: 'Exam Grade', url: '/cbseexam/examgrade', icon: 'fa fa-list-ol' },
+            { label: 'Assessment', url: '/cbseexam/assessment', icon: 'fa fa-columns' },
+            { label: 'Term', url: '/cbseexam/term', icon: 'fa fa-th-list' },
+            { label: 'Template', url: '/cbseexam/template', icon: 'fa fa-file-code-o' },
+            { label: 'Reports', url: '/cbseexam/report', icon: 'fa fa-bar-chart' },
+            { label: 'Setting', url: '/cbseexam/settings', icon: 'fa fa-cogs' },
+            //{ label: 'Rank', url: '/admin/rank', icon: 'fa fa-trophy' }
         ],
         9: [ // Transport
             { label: 'Routes', url: '/admin/route', icon: 'fa fa-road' },
@@ -305,6 +342,14 @@ const Sidebar = ({
             { label: 'Worksheets', url: '/admin/content/worksheets', icon: 'fa fa-file-o' },
             { label: 'Video Tutorial', url: '/admin/video_tutorial', icon: 'fa fa-video-camera' }
         ],
+        13: [ // Certificate
+            // { label: 'Student Certificate', url: '/admin/certificate/student_certificate', icon: 'fa fa-newspaper-o' },
+            // { label: 'Generate Certificate', url: '/admin/certificate/generate_certificate', icon: 'fa fa-check-square-o' },
+            { label: 'Student ID Card', url: '/admin/certificate/student_id_card', icon: 'fa fa-id-card-o' },
+            { label: 'Generate ID Card', url: '/admin/certificate/generate_id_card', icon: 'fa fa-id-badge' },
+            { label: 'Staff ID Card', url: '/admin/certificate/staff_id_card', icon: 'fa fa-id-card' },
+            { label: 'Generate Staff ID Card', url: '/admin/certificate/generate_staff_id_card', icon: 'fa fa-address-card-o' }
+        ],
         14: [ // Income
             { label: 'Income', url: '/admin/income', icon: 'fa fa-line-chart' },
             { label: 'Income Head', url: '/admin/incomehead', icon: 'fa fa-list-alt' }
@@ -318,6 +363,30 @@ const Sidebar = ({
             { label: 'Student Hostel Report', url: '/admin/studenthostelreport', icon: 'fa fa-bar-chart' },
             { label: 'Room Type', url: '/admin/roomtype', icon: 'fa fa-th' },
             { label: 'Hostel', url: '/admin/hostel', icon: 'fa fa-home' }
+        ],
+        17: [ // Reports
+            { label: 'Student Information Report', url: '/admin/reports/student_information', icon: 'fa fa-users' },
+            { label: 'Finance Report', url: '/admin/reports/finance', icon: 'fa fa-money' },
+            { label: 'Attendance Report', url: '/admin/reports/attendance', icon: 'fa fa-calendar-check-o' },
+            //  { label: 'Staff Report', url: '/admin/reports/staff', icon: 'fa fa-address-book' },
+            // { label: 'Exam Rank Report', url: '/admin/reports/rank', icon: 'fa fa-trophy' },
+            // { label: 'Transport Report', url: '/admin/reports/transport', icon: 'fa fa-bus' },
+            //{ label: 'Hostel Report', url: '/admin/reports/hostel', icon: 'fa fa-building-o' },
+            // { label: 'Alumni Report', url: '/admin/reports/alumni', icon: 'fa fa-graduation-cap' },
+            { label: 'User Log', url: '/admin/reports/user_log', icon: 'fa fa-user-secret' },
+            //{ label: 'Audit Trail', url: '/admin/reports/audit_trail', icon: 'fa fa-history' }
+        ],
+        18: [ // System Settings
+            { label: 'General Setting', url: '/settings', icon: 'fa fa-gear' },
+            { label: 'Session Setting', url: '/sessions', icon: 'fa fa-calendar-plus-o' },
+            { label: 'Notification Setting', url: '/settings/notification-setting', icon: 'fa fa-bell-o' },
+            { label: 'SMS Setting', url: '/sms-settings', icon: 'fa fa-commenting-o' },
+            { label: 'Email Setting', url: '/email-settings', icon: 'fa fa-envelope-o' },
+            { label: 'Payment Methods', url: '/settings/payment_methods', icon: 'fa fa-credit-card' },
+            { label: 'Print Header Footer', url: '/print-header-footer', icon: 'fa fa-print' },
+            { label: 'Front CMS Setting', url: '/settings/front-cms', icon: 'fa fa-television' },
+            { label: 'Roles Permissions', url: '/settings/roles', icon: 'fa fa-key' },
+            { label: 'Modules', url: '/settings/modules', icon: 'fa fa-th-large' }
         ]
     };
 
