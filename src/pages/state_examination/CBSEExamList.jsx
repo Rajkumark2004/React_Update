@@ -584,7 +584,7 @@ const CBSEExamList = () => {
                     margin-bottom: 15px; 
                     border-bottom: 1px solid #e7e7e7;
                     padding-bottom: 5px;
-                    background: #fafafa;
+                    background: transparent;
                     padding: 5px 10px;
                 }
                 .dt-buttons { display: flex; gap: 2px; }
@@ -641,14 +641,20 @@ const CBSEExamList = () => {
                                     <div className="row">
                                         <div className="col-md-12">
                                             <div className="dt-header">
-                                                <div className="input-group">
+                                                <div className="dataTables_filter" style={{ textAlign: 'left' }}>
                                                     <input
-                                                        type="text"
-                                                        className="form-control input-sm"
+                                                        type="search"
                                                         placeholder="Search..."
                                                         value={searchTerm}
                                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                                        style={{ width: '200px' }}
+                                                        style={{
+                                                            border: 'none',
+                                                            borderBottom: '1px solid #ccc',
+                                                            outline: 'none',
+                                                            padding: '5px 0',
+                                                            background: 'transparent',
+                                                            width: 'auto'
+                                                        }}
                                                     />
                                                 </div>
                                                 <div className="dt-buttons btn-group">
