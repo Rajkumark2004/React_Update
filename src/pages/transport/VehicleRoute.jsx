@@ -117,7 +117,7 @@ const VehicleRoute = () => {
             return next;
         });
     };
- 
+
     const handleRouteCHange = (val) => {
         setSelectedRoute(val);
         if (errors.route_id) {
@@ -132,30 +132,30 @@ const VehicleRoute = () => {
     const handleSave = async (e) => {
         e.preventDefault();
         setErrors({});
- 
+
         let hasError = false;
         const newErrors = {};
- 
+
         if (!selectedRoute) {
             newErrors.route_id = 'The Route field is required.';
             hasError = true;
         }
- 
+
         if (selectedVehicles.length === 0) {
             newErrors.vehicle = 'At least one vehicle must be selected.';
             hasError = true;
         }
- 
+
         if (hasError) {
             setErrors(newErrors);
             return;
         }
- 
+
         let payload = {
             route_id: selectedRoute,
             vehicle: selectedVehicles.map(String) // Ensure IDs are strings
         };
- 
+
         if (isEditMode) {
             payload = {
                 ...payload,
@@ -163,7 +163,7 @@ const VehicleRoute = () => {
                 prev_vec_route: originalVehicleIds.map(String)
             };
         }
- 
+
         setSubmitting(true);
         try {
             let response;
@@ -172,7 +172,7 @@ const VehicleRoute = () => {
             } else {
                 response = await api.addAssignVehicleRouteList(payload);
             }
- 
+
             if (response.status === 'success' || response.status === true) {
                 toast.success(response.message || 'Record Saved Successfully');
                 fetchData(); // Refresh list on both create and edit
@@ -334,15 +334,13 @@ const VehicleRoute = () => {
                                             <div className="dataTables_wrapper no-footer">
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
                                                     <div className="dataTables_filter" style={{ textAlign: 'left' }}>
-                                                        <label>Search:
-                                                            <input
-                                                                type="search"
-                                                                placeholder=""
-                                                                value={searchTerm}
-                                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                                style={{ marginLeft: '0.5em', display: 'inline-block', width: 'auto' }}
-                                                            />
-                                                        </label>
+                                                        <input
+                                                            type="search"
+                                                            placeholder="Search..."
+                                                            value={searchTerm}
+                                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                                            style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                        />
                                                     </div>
                                                     <div className="dt-buttons btn-group">
                                                         <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>

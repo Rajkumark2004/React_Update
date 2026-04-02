@@ -324,15 +324,21 @@ const Source = () => {
                                             </div>
                                         </div>
                                         <div className="col-md-6">
-                                            <div className="input-group input-group-sm">
+                                            <div className="dataTables_filter" style={{ textAlign: 'right' }}>
                                                 <input
-                                                    type="text"
-                                                    className="form-control"
+                                                    type="search"
                                                     placeholder="Search..."
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
+                                                    style={{
+                                                        border: 'none',
+                                                        borderBottom: '1px solid #ccc',
+                                                        outline: 'none',
+                                                        padding: '5px 0',
+                                                        background: 'transparent',
+                                                        width: 'auto'
+                                                    }}
                                                 />
-                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
                                             </div>
                                         </div>
                                     </div>

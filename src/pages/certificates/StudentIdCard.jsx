@@ -543,9 +543,7 @@ const StudentIdCard = () => {
                                         <div className="row pb10">
                                             <div className="col-sm-6">
                                                 <div className="pull-left">
-                                                    <label style={{ fontWeight: 'normal' }}>Search:
-                                                        <input type="search" className="form-control input-sm" placeholder="" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ display: 'inline-block', width: 'auto', marginLeft: '5px' }} />
-                                                    </label>
+                                                    <input type="search" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }} />
                                                 </div>
                                             </div>
                                             <div className="col-sm-6">

@@ -281,12 +281,11 @@ const AttendanceReport = () => {
                                                 <div className="row mb-3" style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <div className="col-sm-6">
                                                         <input
-                                                            type="text"
-                                                            className="form-control"
+                                                            type="search"
                                                             placeholder="Search..."
                                                             value={searchTerm}
                                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                                            style={{ maxWidth: '300px' }}
+                                                            style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                         />
                                                     </div>
                                                     <div className="col-sm-6 text-right">

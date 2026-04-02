@@ -389,39 +389,42 @@ const OnlineStudentList = () => {
                                         <div className="table-responsive mailbox-messages overflow-visible">
 
                                             {students.length > 0 && (
-                                                <div className="row mb-10 no-print">
-                                                    <div className="row mb-10">
-                                                        <div className="col-sm-12">
-                                                            <div className="pull-left">
-                                                                <label>Search:
-                                                                    <input
-                                                                        type="search"
-                                                                        className="form-control input-sm"
-                                                                        placeholder=""
-                                                                        aria-controls="student-list"
-                                                                        value={searchTerm}
-                                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                                        style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                            <div className="dt-buttons btn-group pull-right">
-                                                                <button className="btn btn-default btn-xs" title="Copy" onClick={handleCopy}>
-                                                                    <i className="fa fa-files-o"></i>
-                                                                </button>
-                                                                <button className="btn btn-default btn-xs" title="Excel" onClick={handleDownloadExcel}>
-                                                                    <i className="fa fa-file-excel-o"></i>
-                                                                </button>
-                                                                <button className="btn btn-default btn-xs" title="CSV" onClick={handleDownloadCSV}>
-                                                                    <i className="fa fa-file-text-o"></i>
-                                                                </button>
-                                                                <button className="btn btn-default btn-xs" title="PDF" onClick={handleDownloadPDF}>
-                                                                    <i className="fa fa-file-pdf-o"></i>
-                                                                </button>
-                                                                <button className="btn btn-default btn-xs" title="Print" onClick={handleListPrint}>
-                                                                    <i className="fa fa-print"></i>
-                                                                </button>
-                                                            </div>
+                                                <div className="row" style={{ marginBottom: '10px' }}>
+                                                    <div className="col-md-6">
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-xs" title="Copy" onClick={handleCopy}>
+                                                                <i className="fa fa-files-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-xs" title="Excel" onClick={handleDownloadExcel}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-xs" title="CSV" onClick={handleDownloadCSV}>
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-xs" title="PDF" onClick={handleDownloadPDF}>
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-xs" title="Print" onClick={handleListPrint}>
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-md-6">
+                                                        <div className="dataTables_filter" style={{ textAlign: 'right' }}>
+                                                            <input
+                                                                type="search"
+                                                                placeholder="Search..."
+                                                                value={searchTerm}
+                                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                                style={{
+                                                                    border: 'none',
+                                                                    borderBottom: '1px solid #ccc',
+                                                                    outline: 'none',
+                                                                    padding: '5px 0',
+                                                                    background: 'transparent',
+                                                                    width: 'auto'
+                                                                }}
+                                                            />
                                                         </div>
                                                     </div>
                                                 </div>

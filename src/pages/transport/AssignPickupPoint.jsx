@@ -299,17 +299,14 @@ const AssignPickupPoint = () => {
                                         <div className="row" style={{ marginBottom: '10px' }}>
                                             <div className="col-sm-6">
                                                 <div className="pull-left">
-                                                    <label>Search:
-                                                        <input
-                                                            type="search"
-                                                            className="form-control input-sm"
-                                                            placeholder=""
-                                                            aria-controls="DataTables_Table_0"
-                                                            value={searchTerm}
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                                            style={{ display: 'inline-block', width: 'auto', marginLeft: '10px' }}
-                                                        />
-                                                    </label>
+                                                    <input
+                                                        type="search"
+                                                        placeholder="Search..."
+                                                        aria-controls="DataTables_Table_0"
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="col-sm-6">

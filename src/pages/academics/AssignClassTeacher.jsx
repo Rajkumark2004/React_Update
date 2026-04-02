@@ -409,15 +409,14 @@ const AssignClassTeacher = () => {
 
                                                 {/* Search Left */}
                                                 <div id="DataTables_Table_0_filter" className="dataTables_filter" style={{ textAlign: 'left' }}>
-                                                    <label>Search:<input
+                                                    <input
                                                         type="search"
-                                                        className=""
-                                                        placeholder=""
+                                                        placeholder="Search..."
                                                         aria-controls="DataTables_Table_0"
-                                                        style={{ marginLeft: '0.5em', display: 'inline-block', width: 'auto' }}
                                                         value={searchTerm}
                                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                                    /></label>
+                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                    />
                                                 </div>
 
                                                 {/* Export Icons Right */}

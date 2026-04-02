@@ -671,13 +671,11 @@ const StudentDiaryList = () => {
                                                 </div>
                                             </div>
                                             <div className="box-header ptbnull clearfix" style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
-                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    <label style={{ margin: 0, fontWeight: 'normal', fontSize: '13px' }}>Search:</label>
+                                                <div className="pull-left">
                                                     <input
-                                                        type="text"
-                                                        className="form-control input-sm"
-                                                        style={{ width: '180px' }}
+                                                        type="search"
                                                         placeholder="Search..."
+                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                         onChange={(e) => {
                                                             const val = e.target.value.toLowerCase();
                                                             const table = document.querySelector('.studentdairy-list');

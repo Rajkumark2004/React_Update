@@ -432,19 +432,13 @@ const CBSEGradeList = () => {
                                     <div className="row mobile-stack">
                                         <div className="col-md-6 col-sm-12">
                                             <div className="pull-left mb10">
-                                                <div className="input-group" style={{ width: '200px', display: 'inline-table', verticalAlign: 'middle' }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control input-sm"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                        style={{ fontSize: '13px' }}
-                                                    />
-                                                    <span className="input-group-addon">
-                                                        <i className="fa fa-search"></i>
-                                                    </span>
-                                                </div>
+                                                <input
+                                                    type="search"
+                                                    placeholder="Search..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                />
                                             </div>
                                         </div>
                                         <div className="col-md-6 col-sm-12">

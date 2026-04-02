@@ -346,8 +346,8 @@ const StudentSearch = () => {
                                     </ul>
                                     <div className="tab-content">
                                         <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} table-responsive no-padding`} id="tab_1">
-                                            <div className="row" style={{ margin: '10px 0' }}>
-                                                <div className="col-sm-6">
+                                            <div className="row" style={{ marginBottom: '10px' }}>
+                                                <div className="col-md-6">
                                                     {filteredStudents.length > 0 && (
                                                         <div className="dt-buttons btn-group">
                                                             <button className="btn btn-default btn-xs" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
@@ -368,18 +368,23 @@ const StudentSearch = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="col-sm-6">
+                                                <div className="col-md-6">
                                                     {students.length > 0 && (
-                                                        <div className="pull-right">
-                                                            <label>Search:
-                                                                <input
-                                                                    type="search"
-                                                                    className="form-control input-sm"
-                                                                    value={tableSearchTerm}
-                                                                    onChange={(e) => setTableSearchTerm(e.target.value)}
-                                                                    style={{ marginLeft: '10px', display: 'inline-block', width: 'auto' }}
-                                                                />
-                                                            </label>
+                                                        <div className="dataTables_filter" style={{ textAlign: 'right' }}>
+                                                            <input
+                                                                type="search"
+                                                                placeholder="Search..."
+                                                                value={tableSearchTerm}
+                                                                onChange={(e) => setTableSearchTerm(e.target.value)}
+                                                                style={{
+                                                                    border: 'none',
+                                                                    borderBottom: '1px solid #ccc',
+                                                                    outline: 'none',
+                                                                    padding: '5px 0',
+                                                                    background: 'transparent',
+                                                                    width: 'auto'
+                                                                }}
+                                                            />
                                                         </div>
                                                     )}
                                                 </div>

@@ -417,15 +417,13 @@ const SubjectGroupList = () => {
                                         <div className="dataTables_wrapper no-footer">
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
                                                 <div className="dataTables_filter" style={{ textAlign: 'left' }}>
-                                                    <label>Search:
-                                                        <input
-                                                            type="search"
-                                                            placeholder=""
-                                                            value={searchTerm}
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                                            style={{ marginLeft: '0.5em', display: 'inline-block', width: 'auto' }}
-                                                        />
-                                                    </label>
+                                                    <input
+                                                        type="search"
+                                                        placeholder="Search..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                    />
                                                 </div>
                                                 <div className="dt-buttons btn-group">
                                                     <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>

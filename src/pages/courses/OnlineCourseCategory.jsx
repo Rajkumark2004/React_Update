@@ -186,7 +186,7 @@ const OnlineCourseCategory = () => {
                                         <div className="box-body p0">
                                             <div className="mailbox-messages">
                                                 <div style={{ padding: '10px', display: 'inline-block' }}>
-                                                    <label>Search: <input type="search" className="form-control input-sm" placeholder="" aria-controls="example" style={{ display: 'inline-block', width: 'auto' }} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></label>
+                                                    <input type="search" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }} />
                                                 </div>
 
                                                 <div className="dt-buttons btn-group pull-right" style={{ padding: '10px', marginBottom: '10px' }}>
