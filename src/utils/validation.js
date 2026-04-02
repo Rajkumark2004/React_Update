@@ -11,38 +11,45 @@
 // ─── Sanitizers (use in onChange) ────────────────────────────────────
 
 /** Letters, spaces, dots, hyphens only. Max 50 chars. */
-export const sanitizeName = (value) => value;
-//    value.replace(/[^a-zA-Z\s.\-]/g, '').slice(0, 50);
+export const sanitizeName = (value) =>
+    (value || '').replace(/[^a-zA-Z\s.\-]/g, '').slice(0, 50);
 
 /** Letters, numbers, spaces, dots, hyphens only. Max 50 chars. */
-export const sanitizeNameWithNumbers = (value) => value;
-//    value.replace(/[^a-zA-Z0-9\s.\-]/g, '').slice(0, 50);
+export const sanitizeNameWithNumbers = (value) =>
+    (value || '').replace(/[^a-zA-Z0-9\s.\-]/g, '').slice(0, 50);
 
 /** Digits only. Max 15 chars. */
-export const sanitizePhone = (value) => value;
-//    value.replace(/[^0-9]/g, '').slice(0, 15);
+export const sanitizePhone = (value) =>
+    (value || '').replace(/[^0-9]/g, '').slice(0, 15);
 
 /** Letters and spaces only. Max 100 chars. */
-export const sanitizeAlphaWithSpaces = (value) => value;
-//    value.replace(/[^a-zA-Z\s]/g, '').slice(0, 100);
+export const sanitizeAlphaWithSpaces = (value) =>
+    (value || '').replace(/[^a-zA-Z\s]/g, '').slice(0, 100);
 
 /** Digits only. Max 5 chars. */
-export const sanitizeNumbers = (value) => value;
-//    value.replace(/[^0-9]/g, '').slice(0, 5);
+export const sanitizeNumbers = (value) =>
+    (value || '').replace(/[^0-9]/g, '').slice(0, 5);
 
 /** Decimal numbers only. Max 10 chars. */
-export const sanitizeDecimal = (value) => value;
-/* {
+export const sanitizeDecimal = (value) => {
     // Allows at most one decimal point
-    const sanitized = value.replace(/[^0-9.]/g, '');
+    const sanitized = (value || '').replace(/[^0-9.]/g, '');
     const parts = sanitized.split('.');
     if (parts.length > 2) {
         return parts[0] + '.' + parts.slice(1).join('');
     }
     return sanitized.slice(0, 10);
-}; */
+};
 
 // ─── Validators (use in onSubmit) ───────────────────────────────────
+
+/** Validate positive integer. Returns error string or empty string. */
+export const validatePositiveInteger = (value, fieldName = 'Field') => {
+    const trimmed = (String(value) || '').trim();
+    if (!trimmed) return `${fieldName} is required`;
+    if (!/^[1-9][0-9]*$/.test(trimmed)) return `${fieldName} must be greater than zero`;
+    return '';
+};
 
 /** Validate a name field. Returns error string or empty string. */
 export const validateName = (value) => {

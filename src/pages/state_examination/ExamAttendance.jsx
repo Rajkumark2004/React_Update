@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
+import { validateDateRange, sanitizeNumbers, validatePositiveInteger } from '../../utils/validation';
 
 /**
  * ExamAttendance Component
@@ -23,6 +24,7 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
     const [presentDays, setPresentDays] = useState({});
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (examId) {
@@ -31,6 +33,14 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
     }, [examId]);
 
     const fetchAttendanceData = async () => {
+        // Validation: From Date should be less than or equal to To Date
+        const dateRangeError = validateDateRange(fromDate, toDate, 'From Date', 'To Date');
+        if (dateRangeError) {
+            setErrors(prev => ({ ...prev, toDate: dateRangeError }));
+            return;
+        }
+        setErrors(prev => ({ ...prev, toDate: '' }));
+
         setLoading(true);
         try {
             // Format dates to DD/MM/YYYY for the backend if they are in YYYY-MM-DD
@@ -107,12 +117,23 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        console.log('Validating Total Attendance:', { totalWorkingDays, type: typeof totalWorkingDays });
+        const newErrors = {};
 
-        // Validation: Total attendance should be greater than 0 days
-        const workingDays = Number(totalWorkingDays);
-        if (isNaN(workingDays) || workingDays <= 0) {
-            toast.error('Total attendance should be greater than 0 days');
+        // 1. Date Range Validation
+        const dateRangeError = validateDateRange(fromDate, toDate, 'From Date', 'To Date');
+        if (dateRangeError) {
+            newErrors.toDate = dateRangeError;
+        }
+
+        // 2. Total Attendance Validation
+        const workingDaysError = validatePositiveInteger(totalWorkingDays, 'Total attendance days');
+        if (workingDaysError) {
+            newErrors.totalWorkingDays = workingDaysError;
+        }
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            toast.error('Please fix the errors before saving.');
             return;
         }
 
@@ -174,10 +195,14 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
                         <label>From Date</label>
                         <input
                             type="date"
-                            className="form-control"
+                            className={`form-control ${errors.fromDate ? 'is-invalid' : ''}`}
                             value={fromDate}
-                            onChange={(e) => setFromDate(e.target.value)}
+                            onChange={(e) => {
+                                setFromDate(e.target.value);
+                                setErrors(prev => ({ ...prev, fromDate: '', toDate: '' }));
+                            }}
                         />
+                        {errors.fromDate && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.fromDate}</span>}
                     </div>
                 </div>
                 <div className="col-md-4">
@@ -185,10 +210,14 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
                         <label>To Date</label>
                         <input
                             type="date"
-                            className="form-control"
+                            className={`form-control ${errors.toDate ? 'is-invalid' : ''}`}
                             value={toDate}
-                            onChange={(e) => setToDate(e.target.value)}
+                            onChange={(e) => {
+                                setToDate(e.target.value);
+                                setErrors(prev => ({ ...prev, fromDate: '', toDate: '' }));
+                            }}
                         />
+                        {errors.toDate && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.toDate}</span>}
                     </div>
                 </div>
                 <div className="col-md-2">
@@ -213,10 +242,18 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
                         <div className="col-sm-2">
                             <input
                                 type="text"
-                                className="form-control"
+                                className={`form-control ${errors.totalWorkingDays ? 'is-invalid' : ''}`}
                                 value={totalWorkingDays}
-                                onChange={(e) => setTotalWorkingDays(e.target.value)}
+                                onChange={(e) => {
+                                    setTotalWorkingDays(sanitizeNumbers(e.target.value));
+                                    setErrors(prev => ({ ...prev, totalWorkingDays: '' }));
+                                }}
                             />
+                            {errors.totalWorkingDays && (
+                                <span className="text-danger" style={{ fontSize: '12px' }}>
+                                    {errors.totalWorkingDays}
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -4,6 +4,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import api from '../../services/api';
 import '../../utils/include_files';
+import { sanitizeDecimal, validatePositiveInteger } from '../../utils/validation';
 import { useSession } from '../../context/SessionContext';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 
@@ -56,7 +57,19 @@ const Assessment = () => {
 
     const handleRowChange = (index, field, value) => {
         const newRows = [...formData.rows];
-        newRows[index][field] = value;
+        let sanitizedValue = value;
+        if (field === 'maximum_marks' || field === 'pass_percentage') {
+            sanitizedValue = sanitizeDecimal(value);
+        }
+        newRows[index][field] = sanitizedValue;
+        
+        // Clear specific error on change
+        if (errors.rows && errors.rows[index] && errors.rows[index][field]) {
+            const newRowErrors = [...errors.rows];
+            newRowErrors[index] = { ...newRowErrors[index], [field]: '' };
+            setErrors({ ...errors, rows: newRowErrors });
+        }
+        
         setFormData({ ...formData, rows: newRows });
     };
 
@@ -86,8 +99,20 @@ const Assessment = () => {
             const currentLineErrors = {};
             if (!row.type_name.trim()) currentLineErrors.type_name = "This field is required";
             if (!row.code.trim()) currentLineErrors.code = "This field is required";
-            if (!String(row.maximum_marks).trim()) currentLineErrors.maximum_marks = "This field is required";
-            if (!String(row.pass_percentage).trim()) currentLineErrors.pass_percentage = "This field is required";
+            
+            const maxMarksError = validatePositiveInteger(row.maximum_marks, 'Maximum marks');
+            if (maxMarksError) {
+                currentLineErrors.maximum_marks = maxMarksError;
+            }
+
+            const passPercent = parseFloat(row.pass_percentage);
+            if (!String(row.pass_percentage).trim()) {
+                currentLineErrors.pass_percentage = "This field is required";
+            } else if (isNaN(passPercent) || passPercent < 0) {
+                currentLineErrors.pass_percentage = "Must be non-negative";
+            } else if (passPercent > 100) {
+                currentLineErrors.pass_percentage = "Must not exceed 100";
+            }
 
             if (Object.keys(currentLineErrors).length > 0) {
                 rowErrors[index] = currentLineErrors;
@@ -569,11 +594,11 @@ const Assessment = () => {
                                                     {errors.rows && errors.rows[index] && errors.rows[index].code && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].code}</span>}
                                                 </div>
                                                 <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].maximum_marks ? 'has-error' : ''}`}>
-                                                    <input type="number" className="form-control input-sm" value={row.maximum_marks} onChange={(e) => handleRowChange(index, 'maximum_marks', e.target.value)} />
+                                                    <input type="text" className="form-control input-sm" value={row.maximum_marks} onChange={(e) => handleRowChange(index, 'maximum_marks', e.target.value)} />
                                                     {errors.rows && errors.rows[index] && errors.rows[index].maximum_marks && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].maximum_marks}</span>}
                                                 </div>
                                                 <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].pass_percentage ? 'has-error' : ''}`}>
-                                                    <input type="number" className="form-control input-sm" value={row.pass_percentage} onChange={(e) => handleRowChange(index, 'pass_percentage', e.target.value)} />
+                                                    <input type="text" className="form-control input-sm" value={row.pass_percentage} onChange={(e) => handleRowChange(index, 'pass_percentage', e.target.value)} />
                                                     {errors.rows && errors.rows[index] && errors.rows[index].pass_percentage && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].pass_percentage}</span>}
                                                 </div>
                                                 <div className="col-md-3">

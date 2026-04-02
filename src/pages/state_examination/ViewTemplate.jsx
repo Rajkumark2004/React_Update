@@ -6,10 +6,10 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
     // Helper to get base URL for images - adjust as per your backend structure
     const getUploadUrl = (type, filename) => {
         if (!filename) return "";
-        return `/uploads/cbseexam/template/${type}/${filename}`;
+        return `https://newlayout.wisibles.com/uploads/cbseexam/template/${type}/${filename}`;
     };
 
-    const studentImageUrl = "/uploads/student_images/default_male.jpg"; // Fallback or from session
+    const studentImageUrl = "https://newlayout.wisibles.com/uploads/student_images/default_male.jpg?1685767171"; // Fallback or from session
 
     return (
         <div style={{ padding: '20px', background: '#fff' }}>
@@ -281,9 +281,9 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
                                 <td>
                                     <b>Attendance :</b> 200/300
                                     <br />
-                                    {template.remark === "1" && (
+                                    {template.is_remark === "1" && (
                                         <>
-                                            <b>Teacher Remark :</b> Good Student in Class
+                                            <b>Teacher Remark :</b> please do extra classes
                                         </>
                                     )}
                                 </td>

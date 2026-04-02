@@ -418,20 +418,21 @@ const Template = () => {
     const handleLinkExamSubmit = async (e) => {
         e.preventDefault();
         try {
-            const payload = {
-                template_id: parseInt(currentTemplateId),
-                marksheet: marksheetType,
-                grading: linkExamFormData.grading ? parseInt(linkExamFormData.grading) : '',
-                teacher_remark: linkExamFormData.teacher_remark ? parseInt(linkExamFormData.teacher_remark) : '',
-            };
+            const formData = new FormData();
+            formData.append('template_id', currentTemplateId);
+            formData.append('marksheet', marksheetType);
+            formData.append('grading', linkExamFormData.grading || '');
+            formData.append('teacher_remark', linkExamFormData.teacher_remark || '');
 
             if (marksheetType === 'term_wise' || marksheetType === 'all_term') {
-                payload.terms = linkExamFormData.terms;
-                payload.term_weightage = linkExamFormData.term_weightage;
+                // Append terms and their weightages
+                linkExamFormData.terms.forEach(termId => {
+                    formData.append('terms[]', termId);
+                    if (linkExamFormData.term_weightage[termId]) {
+                        formData.append(`term_weightage[${termId}]`, linkExamFormData.term_weightage[termId]);
+                    }
+                });
 
-                // Nested format: exam[termId][examId] and weightage[termId][examId]
-                const nestedExams = {};
-                const nestedWeightages = {};
                 const source = linkExamData.result || linkExamData.exam_data || [];
                 const terms = Array.isArray(source) ? source : Object.entries(source).map(([id, val]) => ({ ...val, id: id }));
 
@@ -442,30 +443,21 @@ const Template = () => {
                             .filter(ex => linkExamFormData.exams.includes(parseInt(ex.id)))
                             .map(ex => parseInt(ex.id));
 
-                        if (examsForTerm.length > 0) {
-                            nestedExams[termId] = examsForTerm;
-                            nestedWeightages[termId] = {};
-                            examsForTerm.forEach(examId => {
-                                nestedWeightages[termId][examId] = linkExamFormData.weightages[examId];
-                            });
-                        }
+                        examsForTerm.forEach(examId => {
+                            formData.append(`exam[${termId}][${examId}]`, examId);
+                            // Exam level weightage removed as per requirement
+                        });
                     }
                 });
-                payload.exam = nestedExams;
-                payload.weightage = nestedWeightages;
             } else {
                 // Flat format for exam_wise
-                payload.exam = linkExamFormData.exams.map(id => parseInt(id));
-
-                // Only include weightages for selected exams
-                const filteredWeightages = {};
-                linkExamFormData.exams.forEach(id => {
-                    filteredWeightages[id] = linkExamFormData.weightages[id];
+                linkExamFormData.exams.forEach(examId => {
+                    formData.append('exam[]', examId);
+                    // Exam level weightage removed as per requirement
                 });
-                payload.weightage = filteredWeightages;
             }
 
-            const response = await api.linkCBSEExams(payload);
+            const response = await api.linkCBSEExams(formData);
             if (response.status) {
                 toast.success(response.message || "Record Saved Successfully");
                 setShowLinkModal(false);
@@ -1080,43 +1072,15 @@ const Template = () => {
                                                     </div>
                                                 ) : linkExamData && (linkExamData.result || linkExamData.exam_data || linkExamData.subjectgroupList) ? (
                                                     <div className="table-responsive">
-                                                        {marksheetType === 'all_term' && (linkExamData.result || linkExamData.exam_data) && (
-                                                            <table className="table table-striped table-bordered mb10">
-                                                                <thead>
-                                                                    <tr className="active">
-                                                                        <th>Term</th>
-                                                                        <th>Weightage</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {(Array.isArray(linkExamData.result || linkExamData.exam_data)
-                                                                        ? (linkExamData.result || linkExamData.exam_data)
-                                                                        : Object.entries(linkExamData.result || linkExamData.exam_data || {}).map(([id, val]) => ({ ...val, id: id }))
-                                                                    ).map(term => (
-                                                                        <tr key={term.id || Math.random()}>
-                                                                            <td>{term.name}</td>
-                                                                            <td>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    className="form-control"
-                                                                                    value={linkExamFormData.term_weightage[term.id] || ''}
-                                                                                    onChange={(e) => setLinkExamFormData({
-                                                                                        ...linkExamFormData,
-                                                                                        term_weightage: { ...linkExamFormData.term_weightage, [term.id]: e.target.value }
-                                                                                    })}
-                                                                                />
-                                                                            </td>
-                                                                        </tr>
-                                                                    ))}
-                                                                </tbody>
-                                                            </table>
-                                                        )}
+
                                                         <table className="table table-striped table-bordered">
                                                             <thead>
                                                                 <tr className="active">
                                                                     <th width="5%">Select</th>
                                                                     <th>Term / Exam Name</th>
                                                                     <th width="15%">Weightage</th>
+                                                                    <th width="10%">Grading</th>
+                                                                    <th width="15%">Teacher Remark</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -1144,7 +1108,20 @@ const Template = () => {
                                                                                         />
                                                                                     )}
                                                                                 </td>
-                                                                                <td colSpan={2}><strong>{term.name}</strong></td>
+                                                                                <td><strong>{term.name}</strong></td>
+                                                                                <td>
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        className="form-control"
+                                                                                        value={linkExamFormData.term_weightage[term.id] || ''}
+                                                                                        onChange={(e) => setLinkExamFormData({
+                                                                                            ...linkExamFormData,
+                                                                                            term_weightage: { ...linkExamFormData.term_weightage, [term.id]: e.target.value }
+                                                                                        })}
+                                                                                        disabled={!linkExamFormData.terms.includes(parseInt(term.id))}
+                                                                                    />
+                                                                                </td>
+                                                                                <td colSpan={2}></td>
                                                                             </tr>
                                                                             {(term.exam || []).map(exam => (
                                                                                 <tr key={exam.id}>
@@ -1156,12 +1133,22 @@ const Template = () => {
                                                                                         />
                                                                                     </td>
                                                                                     <td>&nbsp;&nbsp;&nbsp;{exam.name}</td>
-                                                                                    <td>
+                                                                                    <td></td>
+                                                                                    <td className="text-center">
                                                                                         <input
-                                                                                            type="number"
-                                                                                            className="form-control"
-                                                                                            value={linkExamFormData.weightages[exam.id] || ''}
-                                                                                            onChange={(e) => handleWeightageChange(exam.id, e.target.value)}
+                                                                                            type="radio"
+                                                                                            name="grading"
+                                                                                            checked={parseInt(linkExamFormData.grading) === parseInt(exam.id)}
+                                                                                            onChange={() => setLinkExamFormData(prev => ({ ...prev, grading: parseInt(exam.id) }))}
+                                                                                            disabled={!linkExamFormData.exams.includes(parseInt(exam.id))}
+                                                                                        />
+                                                                                    </td>
+                                                                                    <td className="text-center">
+                                                                                        <input
+                                                                                            type="radio"
+                                                                                            name="teacher_remark"
+                                                                                            checked={parseInt(linkExamFormData.teacher_remark) === parseInt(exam.id)}
+                                                                                            onChange={() => setLinkExamFormData(prev => ({ ...prev, teacher_remark: parseInt(exam.id) }))}
                                                                                             disabled={!linkExamFormData.exams.includes(parseInt(exam.id))}
                                                                                         />
                                                                                     </td>

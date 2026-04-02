@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { ClockInput } from '../../utils/clock';
+import { sanitizeNumbers, validatePositiveInteger } from '../../utils/validation';
 
 const AssignExamSubjects = ({ examId, handleClose }) => {
     const [loading, setLoading] = useState(true);
@@ -56,7 +57,8 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                         date: '',
                         time_from: '',
                         duration: '',
-                        room_no: ''
+                        room_no: '',
+                        errors: {}
                     }]);
                 }
             } else {
@@ -77,7 +79,8 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
             date: '',
             time_from: '',
             duration: '',
-            room_no: ''
+            room_no: '',
+            errors: {}
         }]);
     };
 
@@ -86,35 +89,36 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
     };
 
     const handleRowChange = (id, field, value) => {
-        setRows(rows.map(r => r.id === id ? { ...r, [field]: value } : r));
+        let sanitizedValue = value;
+        if (field === 'duration') {
+            sanitizedValue = sanitizeNumbers(value);
+        }
+        setRows(rows.map(r => r.id === id ? { 
+            ...r, 
+            [field]: sanitizedValue,
+            errors: { ...r.errors, [field]: '' } // Clear error on change
+        } : r));
     };
 
     const handleSave = async (e) => {
         e.preventDefault();
 
-        // Manual validation for all required fields (especially start time which uses ClockInput)
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row.subject_id) {
-                alert(`Row ${i + 1}: Please select a Subject.`);
-                return;
+        let hasErrors = false;
+        const updatedRows = rows.map((row, i) => {
+            const errors = {};
+            
+            const durationError = validatePositiveInteger(row.duration, 'Duration');
+            if (durationError) {
+                errors.duration = durationError;
+                hasErrors = true;
             }
-            if (!row.date) {
-                alert(`Row ${i + 1}: Please select a Date.`);
-                return;
-            }
-            if (!row.time_from) {
-                alert(`Row ${i + 1}: Please select a Start Time.`);
-                return;
-            }
-            if (!row.duration) {
-                alert(`Row ${i + 1}: Please enter Duration.`);
-                return;
-            }
-            if (!row.room_no) {
-                alert(`Row ${i + 1}: Please enter Room No.`);
-                return;
-            }
+            
+            return { ...row, errors };
+        });
+
+        if (hasErrors) {
+            setRows(updatedRows);
+            return;
         }
 
         setSaving(true);
@@ -253,11 +257,16 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                                                         <td>
                                                             <input
                                                                 type="text"
-                                                                className="form-control"
+                                                                className={`form-control ${row.errors?.duration ? 'is-invalid' : ''}`}
                                                                 value={row.duration}
                                                                 onChange={(e) => handleRowChange(row.id, 'duration', e.target.value)}
                                                                 required
                                                             />
+                                                            {row.errors?.duration && (
+                                                                <span className="text-danger" style={{ fontSize: '12px' }}>
+                                                                    {row.errors.duration}
+                                                                </span>
+                                                            )}
                                                         </td>
                                                         <td>
                                                             <input
