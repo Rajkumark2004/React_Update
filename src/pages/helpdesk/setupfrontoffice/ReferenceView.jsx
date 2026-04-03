@@ -5,6 +5,7 @@ import '../../../utils/include_files.js';
 import Header from '../../../components/Header.jsx';
 import Sidebar from '../../../components/Sidebar.jsx';
 import Footer from '../../../components/Footer.jsx';
+import Loader from '../../../components/Loader.jsx';
 import { useSession } from '../../../context/SessionContext.jsx';
 import { api } from '../../../services/api';
 import { sanitizeAlphaWithSpaces, validateReference } from '../../../utils/validation';
@@ -59,6 +60,7 @@ const ReferenceView = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState(''); // Global search term
+    const [initialLoading, setInitialLoading] = useState(true);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     useEffect(() => {
@@ -100,6 +102,7 @@ const ReferenceView = () => {
     }, []);
 
     const fetchReferenceList = async () => {
+        setInitialLoading(true);
         try {
             const data = await api.getReferenceList();
             if (data.status && data.data) {
@@ -108,6 +111,8 @@ const ReferenceView = () => {
         } catch (error) {
             console.error('Error fetching reference list:', error);
             toast.error('Failed to fetch reference list');
+        } finally {
+            setInitialLoading(false);
         }
     };
 
@@ -407,22 +412,34 @@ const ReferenceView = () => {
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                {currentItems.map((value, key) => (
-                                                    <tr key={key}>
-                                                        {refColumns.map(col => refVisibleCols.has(col.key) && (
-                                                            <td key={col.key} className="mailbox-name">{value[col.key]}</td>
-                                                        ))}
-                                                        <td className="mailbox-date pull-right">
-                                                            <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                                <i className="fa fa-pencil"></i>
-                                                            </Link>
-                                                            <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
-                                                                <i className="fa fa-remove"></i>
-                                                            </Link>
+                                             <tbody>
+                                                {initialLoading ? (
+                                                    <tr>
+                                                        <td colSpan={refVisibleCols.size + 1} className="text-center">
+                                                            <Loader type="table" rows={recordsPerPage === -1 ? 10 : recordsPerPage} />
                                                         </td>
                                                     </tr>
-                                                ))}
+                                                ) : currentItems.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={refVisibleCols.size + 1} className="text-center text-danger">No data available in table</td>
+                                                    </tr>
+                                                ) : (
+                                                    currentItems.map((value, key) => (
+                                                        <tr key={key}>
+                                                            {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                                                <td key={col.key} className="mailbox-name">{value[col.key]}</td>
+                                                            ))}
+                                                            <td className="mailbox-date pull-right">
+                                                                <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                                    <i className="fa fa-pencil"></i>
+                                                                </Link>
+                                                                <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                                    <i className="fa fa-remove"></i>
+                                                                </Link>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>

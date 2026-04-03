@@ -198,6 +198,9 @@ const EnquiryView = () => {
     const handleSearch = (e) => {
         e.preventDefault();
 
+        if (loading || initialLoading) return; //search button weas flashing blue color on initial loading so added this
+
+
         const errors = {};
         if (!filterForm.from_date) {
             errors.from_date = 'The Enquiry From Date field is required.';
@@ -401,362 +404,363 @@ const EnquiryView = () => {
 
                         {/* Main Content Area */}
                         <div className="col-md-10">
-                            {initialLoading ? (
-                                <Loader />
-                            ) : (
-                                <div className="box box-primary">
-                                    <div className="box-header with-border">
-                                        <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
+                            <div className="box box-primary">
+                                <div className="box-header with-border">
+                                    <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
+                                </div>
+
+                                {/* Flash Message */}
+                                {flashMessage && (
+                                    <div className="col-md-12">
+                                        <div className="alert alert-info">{flashMessage}</div>
                                     </div>
+                                )}
 
-                                    {/* Flash Message */}
-                                    {flashMessage && (
-                                        <div className="col-md-12">
-                                            <div className="alert alert-info">{flashMessage}</div>
-                                        </div>
-                                    )}
-
-                                    {/* Filter Form */}
-                                    <form role="form" onSubmit={handleSearch}>
-                                        <div className="box-body row">
-                                            {/* Class */}
-                                            <div className="col-sm-6 col-md-2 col-lg-2">
-                                                <div className="form-group">
-                                                    <label>Class</label>
-                                                    <select
-                                                        id="class"
-                                                        name="class_id"
-                                                        className="form-control"
-                                                        value={filterForm.class_id}
-                                                        onChange={handleFilterChange}
-                                                    >
-                                                        <option value="">Select</option>
-                                                        {classList.map(cls => (
-                                                            <option key={cls.id} value={cls.id}>{cls.class}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            {/* Source */}
-                                            <div className="col-sm-6 col-md-2 col-lg-2">
-                                                <div className="form-group">
-                                                    <label>Source</label>
-                                                    <select
-                                                        id="source"
-                                                        name="source"
-                                                        className="form-control"
-                                                        value={filterForm.source}
-                                                        onChange={handleFilterChange}
-                                                    >
-                                                        <option value="">Select</option>
-                                                        {sourceList.map((src, idx) => (
-                                                            <option key={idx} value={src.source}>{src.source}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            {/* From Date */}
-                                            <div className="col-sm-3 col-md-2 col-lg-2">
-                                                <div className="form-group">
-                                                    <label>Enquiry From Date<small className="req"> *</small></label>
-                                                    <input
-                                                        type="date"
-                                                        autoComplete="off"
-                                                        name="from_date"
-                                                        className="form-control"
-                                                        value={filterForm.from_date}
-                                                        onChange={handleFilterChange}
-                                                    />
-                                                    {validationErrors.from_date && <span className="text-danger">{validationErrors.from_date}</span>}
-                                                </div>
-                                            </div>
-
-                                            {/* To Date */}
-                                            <div className="col-sm-3 col-md-2 col-lg-2">
-                                                <div className="form-group">
-                                                    <label>Enquiry To Date<small className="req"> *</small></label>
-                                                    <input
-                                                        type="date"
-                                                        autoComplete="off"
-                                                        name="to_date"
-                                                        className="form-control"
-                                                        value={filterForm.to_date}
-                                                        onChange={handleFilterChange}
-                                                    />
-                                                    {validationErrors.to_date && <span className="text-danger">{validationErrors.to_date}</span>}
-                                                </div>
-                                            </div>
-
-                                            {/* Status */}
-                                            <div className="col-sm-3 col-md-2 col-lg-2">
-                                                <div className="form-group">
-                                                    <label>Status</label>
-                                                    <select
-                                                        id="status"
-                                                        name="status"
-                                                        className="form-control"
-                                                        value={filterForm.status}
-                                                        onChange={handleFilterChange}
-                                                    >
-                                                        <option value="">Select</option>
-                                                        <option value="all">All</option>
-                                                        {Object.entries(enquiryStatus).map(([key, value]) => (
-                                                            <option key={key} value={key}>{value}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            {/* Search Button */}
-                                            <div className="col-sm-3 col-md-2 col-lg-2">
-                                                <div className="form-group pl10">
-                                                    <label className="displayblock opacity d-sm-none">&nbsp;</label>
-                                                    <button
-                                                        type="submit"
-                                                        name="search"
-                                                        className="btn btn-primary smallbtn28 btn-sm pull-right"
-                                                        disabled={loading}
-                                                    >
-                                                        {loading ? (
-                                                            <><i className="fa fa-spinner fa-spin"></i> Searching...</>
-                                                        ) : (
-                                                            <><i className="fa fa-search"></i> Search</>
-                                                        )}
-                                                    </button>
-                                                </div>
+                                {/* Filter Form */}
+                                <form role="form" onSubmit={handleSearch}>
+                                    <div className="box-body row">
+                                        {/* Class */}
+                                        <div className="col-sm-6 col-md-2 col-lg-2">
+                                            <div className="form-group">
+                                                <label>Class</label>
+                                                <select
+                                                    id="class"
+                                                    name="class_id"
+                                                    className="form-control"
+                                                    value={filterForm.class_id}
+                                                    onChange={handleFilterChange}
+                                                >
+                                                    <option value="">Select</option>
+                                                    {classList.map(cls => (
+                                                        <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                    ))}
+                                                </select>
                                             </div>
                                         </div>
-                                    </form>
 
-                                    {/* Enquiry List Section */}
-                                    <div className="ptt10">
-                                        <div className="bordertop">
-                                            <div className="box-header with-border">
-                                                <h3 className="box-title titlefix">Admission Enquiry</h3>
-                                                <div className="box-tools pull-right">
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-sm btn-primary"
-                                                        onClick={() => setShowAddModal(true)}
-                                                    >
-                                                        <i className="fa fa-plus"></i> Add
-                                                    </button>
-                                                </div>
+                                        {/* Source */}
+                                        <div className="col-sm-6 col-md-2 col-lg-2">
+                                            <div className="form-group">
+                                                <label>Source</label>
+                                                <select
+                                                    id="source"
+                                                    name="source"
+                                                    className="form-control"
+                                                    value={filterForm.source}
+                                                    onChange={handleFilterChange}
+                                                >
+                                                    <option value="">Select</option>
+                                                    {sourceList.map((src, idx) => (
+                                                        <option key={idx} value={src.source}>{src.source}</option>
+                                                    ))}
+                                                </select>
                                             </div>
-                                            <div className="box-body">
-                                                <div className="download_label">Admission Enquiry List</div>
+                                        </div>
 
-                                                {/* Toolbar: Records, Search, Export Buttons */}
+                                        {/* From Date */}
+                                        <div className="col-sm-3 col-md-2 col-lg-2">
+                                            <div className="form-group">
+                                                <label>Enquiry From Date<small className="req"> *</small></label>
+                                                <input
+                                                    type="date"
+                                                    autoComplete="off"
+                                                    name="from_date"
+                                                    className="form-control"
+                                                    value={filterForm.from_date}
+                                                    onChange={handleFilterChange}
+                                                />
+                                                {validationErrors.from_date && <span className="text-danger">{validationErrors.from_date}</span>}
+                                            </div>
+                                        </div>
+
+                                        {/* To Date */}
+                                        <div className="col-sm-3 col-md-2 col-lg-2">
+                                            <div className="form-group">
+                                                <label>Enquiry To Date<small className="req"> *</small></label>
+                                                <input
+                                                    type="date"
+                                                    autoComplete="off"
+                                                    name="to_date"
+                                                    className="form-control"
+                                                    value={filterForm.to_date}
+                                                    onChange={handleFilterChange}
+                                                />
+                                                {validationErrors.to_date && <span className="text-danger">{validationErrors.to_date}</span>}
+                                            </div>
+                                        </div>
+
+                                        {/* Status */}
+                                        <div className="col-sm-3 col-md-2 col-lg-2">
+                                            <div className="form-group">
+                                                <label>Status</label>
+                                                <select
+                                                    id="status"
+                                                    name="status"
+                                                    className="form-control"
+                                                    value={filterForm.status}
+                                                    onChange={handleFilterChange}
+                                                >
+                                                    <option value="">Select</option>
+                                                    <option value="all">All</option>
+                                                    {Object.entries(enquiryStatus).map(([key, value]) => (
+                                                        <option key={key} value={key}>{value}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* Search Button */}
+                                        <div className="col-sm-3 col-md-2 col-lg-2">
+                                            <div className="form-group pl10">
+                                                <label className="displayblock opacity d-sm-none">&nbsp;</label>
+                                                <button
+                                                    type="submit"
+                                                    name="search"
+                                                    className="btn btn-primary smallbtn28 btn-sm pull-right"
+                                                >
+                                                    {loading && !initialLoading ? (
+                                                        <><i className="fa fa-spinner fa-spin"></i> Searching...</>
+                                                    ) : (
+                                                        <><i className="fa fa-search"></i> Search</>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                {/* Enquiry List Section */}
+                                <div className="ptt10">
+                                    <div className="bordertop">
+                                        <div className="box-header with-border">
+                                            <h3 className="box-title titlefix">Admission Enquiry</h3>
+                                            <div className="box-tools pull-right">
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-sm btn-primary"
+                                                    onClick={() => setShowAddModal(true)}
+                                                >
+                                                    <i className="fa fa-plus"></i> Add
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="box-body">
+                                            <div className="download_label">Admission Enquiry List</div>
+
+                                            {/* Toolbar: Records, Search, Export Buttons */}
+                                            <div
+                                                className="row mb-2"
+                                                style={{
+                                                    marginBottom: '10px',
+                                                    display: isMobile ? 'flex' : 'block',
+                                                    flexDirection: isMobile ? 'column' : 'row',
+                                                    alignItems: isMobile ? 'center' : 'stretch',
+                                                    gap: isMobile ? '15px' : '0'
+                                                }}
+                                            >
                                                 <div
-                                                    className="row mb-2"
+                                                    className={isMobile ? "" : "col-sm-6"}
                                                     style={{
-                                                        marginBottom: '10px',
-                                                        display: isMobile ? 'flex' : 'block',
-                                                        flexDirection: isMobile ? 'column' : 'row',
-                                                        alignItems: isMobile ? 'center' : 'stretch',
-                                                        gap: isMobile ? '15px' : '0'
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: isMobile ? '15px' : '20px',
+                                                        justifyContent: isMobile ? 'center' : 'flex-start',
+                                                        flexWrap: 'wrap'
                                                     }}
                                                 >
-                                                    <div
-                                                        className={isMobile ? "" : "col-sm-6"}
-                                                        style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: isMobile ? '15px' : '20px',
-                                                            justifyContent: isMobile ? 'center' : 'flex-start',
-                                                            flexWrap: 'wrap'
-                                                        }}
-                                                    >
-                                                        <div className="dataTables_length">
-                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                                Records:
-                                                                <select
-                                                                    value={recordsPerPage}
-                                                                    onChange={(e) => {
-                                                                        setRecordsPerPage(Number(e.target.value));
-                                                                        setCurrentPage(1);
-                                                                    }}
-                                                                    className="form-control input-sm"
-                                                                    style={{ width: '80px', margin: '0 10px' }}
-                                                                >
-                                                                    <option value="10">10</option>
-                                                                    <option value="25">25</option>
-                                                                    <option value="50">50</option>
-                                                                    <option value="100">100</option>
-                                                                    <option value="-1">All</option>
-                                                                </select>
-                                                            </label>
-                                                        </div>
-                                                        <div className="dataTables_filter">
-                                                            <input
-                                                                type="search"
-                                                                className="form-control input-sm"
-                                                                placeholder="Search..."
-                                                                style={{
-                                                                    marginLeft: isMobile ? '0' : '10px',
-                                                                    display: 'inline-block',
-                                                                    width: isMobile ? '180px' : '180px',
-                                                                    border: 'none',
-                                                                    borderBottom: '1px solid #ccc',
-                                                                    borderRadius: '0',
-                                                                    boxShadow: 'none',
-                                                                    backgroundColor: 'transparent',
-                                                                    paddingLeft: '0',
-                                                                    outline: 'none',
-                                                                    textAlign: isMobile ? 'center' : 'left'
-                                                                }}
-                                                                value={searchTerm}
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
                                                                 onChange={(e) => {
-                                                                    setSearchTerm(e.target.value);
+                                                                    setRecordsPerPage(Number(e.target.value));
                                                                     setCurrentPage(1);
                                                                 }}
-                                                            />
-                                                        </div>
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
                                                     </div>
-                                                    <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                                        <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                                <i className="fa fa-files-o"></i>
+                                                    <div className="dataTables_filter">
+                                                        <input
+                                                            type="search"
+                                                            className="form-control input-sm"
+                                                            placeholder="Search..."
+                                                            style={{
+                                                                marginLeft: isMobile ? '0' : '10px',
+                                                                display: 'inline-block',
+                                                                width: isMobile ? '180px' : '180px',
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                borderRadius: '0',
+                                                                boxShadow: 'none',
+                                                                backgroundColor: 'transparent',
+                                                                paddingLeft: '0',
+                                                                outline: 'none',
+                                                                textAlign: isMobile ? 'center' : 'left'
+                                                            }}
+                                                            value={searchTerm}
+                                                            onChange={(e) => {
+                                                                setSearchTerm(e.target.value);
+                                                                setCurrentPage(1);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
+                                                    <div className="dt-buttons btn-group">
+                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                            <i className="fa fa-files-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'enquiry_list.csv'); }}>
+                                                            <i className="fa fa-file-text-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'enquiry_list.xls'); }}>
+                                                            <i className="fa fa-file-excel-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'enquiry_list.pdf', 'Admission Enquiry List'); }}>
+                                                            <i className="fa fa-file-pdf-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Admission Enquiry List'); }}>
+                                                            <i className="fa fa-print"></i>
+                                                        </button>
+                                                        <div className="btn-group">
+                                                            <button
+                                                                className="btn btn-default btn-sm"
+                                                                title="Columns"
+                                                                onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
+                                                                style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
+                                                            >
+                                                                <i className="fa fa-columns"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'enquiry_list.csv'); }}>
-                                                                <i className="fa fa-file-text-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'enquiry_list.xls'); }}>
-                                                                <i className="fa fa-file-excel-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'enquiry_list.pdf', 'Admission Enquiry List'); }}>
-                                                                <i className="fa fa-file-pdf-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Admission Enquiry List'); }}>
-                                                                <i className="fa fa-print"></i>
-                                                            </button>
-                                                            <div className="btn-group">
-                                                                <button
-                                                                    className="btn btn-default btn-sm"
-                                                                    title="Columns"
-                                                                    onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
-                                                                    style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
-                                                                >
-                                                                    <i className="fa fa-columns"></i>
-                                                                </button>
-                                                                {showColumnsDropdown && (
-                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                        {columns.map(col => (
-                                                                            <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                                <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
-                                                                                {col.label}
-                                                                            </label>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
+                                                            {showColumnsDropdown && (
+                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                    {columns.map(col => (
+                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                            <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                            {col.label}
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                <div className="mailbox-messages">
-                                                    <div className="table-responsive overflow-visible-lg">
-                                                        <table className="table table-hover table-striped table-bordered" id="enquirytable">
-                                                            <thead>
+                                            <div className="mailbox-messages">
+                                                <div className="table-responsive overflow-visible-lg">
+                                                    <table className="table table-hover table-striped table-bordered" id="enquirytable">
+                                                        <thead>
+                                                            <tr>
+                                                                {columns.map(col => visibleColumns.has(col.key) && (
+                                                                    <th key={col.key}
+                                                                        className={col.sortKey ? 'sorting' : ''}
+                                                                        style={col.sortKey ? { cursor: 'pointer' } : {}}
+                                                                        onClick={col.sortKey ? () => handleSort(col.sortKey) : undefined}
+                                                                    >
+                                                                        {col.label} {col.sortKey && getSortIcon(col.sortKey)}
+                                                                    </th>
+                                                                ))}
+                                                                <th className="text-right noExport">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {initialLoading ? (
                                                                 <tr>
-                                                                    {columns.map(col => visibleColumns.has(col.key) && (
-                                                                        <th key={col.key}
-                                                                            className={col.sortKey ? 'sorting' : ''}
-                                                                            style={col.sortKey ? { cursor: 'pointer' } : {}}
-                                                                            onClick={col.sortKey ? () => handleSort(col.sortKey) : undefined}
-                                                                        >
-                                                                            {col.label} {col.sortKey && getSortIcon(col.sortKey)}
-                                                                        </th>
-                                                                    ))}
-                                                                    <th className="text-right noExport">Action</th>
+                                                                    <td colSpan={visibleColumns.size + 1} className="text-center">
+                                                                        <Loader type="table" rows={recordsPerPage === -1 ? 10 : recordsPerPage} />
+                                                                    </td>
                                                                 </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {finalFilteredEnquiries.length === 0 ? (
-                                                                    <tr>
-                                                                        <td colSpan={visibleColumns.size + 1} className="text-center">
-                                                                            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-                                                                                <div style={{ color: 'red', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
-                                                                                <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
-                                                                                <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
-                                                                            </div>
+                                                            ) : finalFilteredEnquiries.length === 0 ? (
+                                                                <tr>
+                                                                    <td colSpan={visibleColumns.size + 1} className="text-center">
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                                                                            <div style={{ color: 'red', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
+                                                                            <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
+                                                                            <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            ) : (
+                                                                currentEnquiries.map((enquiry) => (
+                                                                    <tr key={enquiry.id} className={isOverdue(enquiry) ? 'danger' : ''}>
+                                                                        {columns.map(col => visibleColumns.has(col.key) && (
+                                                                            <td key={col.key} className="mailbox-name">{formatCell(enquiry, col.key)}</td>
+                                                                        ))}
+                                                                        <td className="mailbox-date text-right white-space-nowrap noExport">
+                                                                            <a
+                                                                                className="btn btn-default btn-xs"
+                                                                                onClick={() => handleFollowUp(enquiry)}
+                                                                                title="Follow Up Admission Enquiry"
+                                                                                style={{ cursor: 'pointer' }}
+                                                                            >
+                                                                                <i className="fa fa-phone"></i>
+                                                                            </a>
+                                                                            <a
+                                                                                className="btn btn-default btn-xs"
+                                                                                onClick={() => handleEdit(enquiry)}
+                                                                                title="Edit"
+                                                                                style={{ cursor: 'pointer' }}
+                                                                            >
+                                                                                <i className="fa fa-pencil"></i>
+                                                                            </a>
+                                                                            <a
+                                                                                className="btn btn-default btn-xs"
+                                                                                onClick={() => handleDelete(enquiry.id)}
+                                                                                title="Delete"
+                                                                                style={{ cursor: 'pointer' }}
+                                                                            >
+                                                                                <i className="fa fa-remove"></i>
+                                                                            </a>
                                                                         </td>
                                                                     </tr>
-                                                                ) : (
-                                                                    currentEnquiries.map((enquiry) => (
-                                                                        <tr key={enquiry.id} className={isOverdue(enquiry) ? 'danger' : ''}>
-                                                                            {columns.map(col => visibleColumns.has(col.key) && (
-                                                                                <td key={col.key} className="mailbox-name">{formatCell(enquiry, col.key)}</td>
-                                                                            ))}
-                                                                            <td className="mailbox-date text-right white-space-nowrap noExport">
-                                                                                <a
-                                                                                    className="btn btn-default btn-xs"
-                                                                                    onClick={() => handleFollowUp(enquiry)}
-                                                                                    title="Follow Up Admission Enquiry"
-                                                                                    style={{ cursor: 'pointer' }}
-                                                                                >
-                                                                                    <i className="fa fa-phone"></i>
-                                                                                </a>
-                                                                                <a
-                                                                                    className="btn btn-default btn-xs"
-                                                                                    onClick={() => handleEdit(enquiry)}
-                                                                                    title="Edit"
-                                                                                    style={{ cursor: 'pointer' }}
-                                                                                >
-                                                                                    <i className="fa fa-pencil"></i>
-                                                                                </a>
-                                                                                <a
-                                                                                    className="btn btn-default btn-xs"
-                                                                                    onClick={() => handleDelete(enquiry.id)}
-                                                                                    title="Delete"
-                                                                                    style={{ cursor: 'pointer' }}
-                                                                                >
-                                                                                    <i className="fa fa-remove"></i>
-                                                                                </a>
-                                                                            </td>
-                                                                        </tr>
-                                                                    ))
-                                                                )}
-                                                            </tbody>
-                                                        </table>
+                                                                ))
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            {/* Pagination Footer */}
+                                            <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
+                                                <div className={isMobile ? "text-center" : "col-sm-5"}>
+                                                    <div className="dataTables_info">
+                                                        Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
                                                     </div>
                                                 </div>
-
-                                                {/* Pagination Footer */}
-                                                <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
-                                                    <div className={isMobile ? "text-center" : "col-sm-5"}>
-                                                        <div className="dataTables_info">
-                                                            Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
-                                                        </div>
-                                                    </div>
-                                                    <div className={isMobile ? "text-center" : "col-sm-7"}>
-                                                        <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
-                                                            <ul className="pagination" style={{ margin: 0 }}>
-                                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                                    <a href="#" onClick={(e) => { e.preventDefault(); handlePrevious(); }}><i className="fa fa-angle-left"></i></a>
-                                                                </li>
-                                                                {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
-                                                                    const p = i + 1;
-                                                                    return (
-                                                                        <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
-                                                                            <a href="#" onClick={(e) => { e.preventDefault(); paginate(p); }}>{p}</a>
-                                                                        </li>
-                                                                    );
-                                                                })}
-                                                                <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                                    <a href="#" onClick={(e) => { e.preventDefault(); handleNext(); }}><i className="fa fa-angle-right"></i></a>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
+                                                <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                    <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
+                                                        <ul className="pagination" style={{ margin: 0 }}>
+                                                            <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                                <a href="#" onClick={(e) => { e.preventDefault(); handlePrevious(); }}><i className="fa fa-angle-left"></i></a>
+                                                            </li>
+                                                            {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
+                                                                const p = i + 1;
+                                                                return (
+                                                                    <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                                                        <a href="#" onClick={(e) => { e.preventDefault(); paginate(p); }}>{p}</a>
+                                                                    </li>
+                                                                );
+                                                            })}
+                                                            <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                                <a href="#" onClick={(e) => { e.preventDefault(); handleNext(); }}><i className="fa fa-angle-right"></i></a>
+                                                            </li>
+                                                        </ul>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </section>

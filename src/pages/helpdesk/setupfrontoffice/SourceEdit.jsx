@@ -4,6 +4,7 @@ import '../../../utils/include_files.js';
 import Header from '../../../components/Header';
 import Sidebar from '../../../components/Sidebar';
 import Footer from '../../../components/Footer';
+import Loader from '../../../components/Loader';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
 import { sanitizeAlphaWithSpaces, validateSource } from '../../../utils/validation';
@@ -30,12 +31,15 @@ const SourceEdit = () => {
     const [source_list, setSourceList] = useState([]);
 
     const fetchSourceList = async () => {
+        setInitialLoading(true);
         try {
             const data = await api.getSourceList();
             setSourceList(data.data || []);
         } catch (error) {
             console.error('Fetch Error:', error);
             setMessage({ type: 'danger', text: 'Failed to fetch source list' });
+        } finally {
+            setInitialLoading(false);
         }
     };
 
@@ -43,6 +47,7 @@ const SourceEdit = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState(''); // Global search term
+    const [initialLoading, setInitialLoading] = useState(true);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     useEffect(() => {
@@ -408,10 +413,9 @@ const SourceEdit = () => {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="download_label">Source List</div>
-                                <div className="table-responsive mailbox-messages overflow-visible">
-                                    <table className="table table-hover table-striped table-bordered example">
+                                    <div className="download_label">Source List</div>
+                                    <div className="table-responsive mailbox-messages overflow-visible">
+                                    <table className="table table-hover table-striped table-bordered example" style={{ tableLayout: 'fixed' }}>
                                         <thead>
                                             <tr>
                                                 {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
@@ -421,21 +425,35 @@ const SourceEdit = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {currentItems.map((value, key) => (
-                                                <tr key={key}>
-                                                    {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
-                                                        <td key={col.key} className="mailbox-name">{value[col.key]}</td>
-                                                    ))}
-                                                    <td className="mailbox-date pull-right noExport">
-                                                        <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                            <i className="fa fa-pencil"></i>
-                                                        </Link>
-                                                        <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
-                                                            <i className="fa fa-remove"></i>
-                                                        </Link>
+                                            {initialLoading ? (
+                                                <tr>
+                                                    <td colSpan={sourceVisibleCols.size + 1} className="text-center">
+                                                        <Loader type="table" rows={recordsPerPage === -1 ? 10 : recordsPerPage} />
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            ) : (
+                                                currentItems.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={sourceVisibleCols.size + 1} className="text-center text-danger">No data available in table</td>
+                                                    </tr>
+                                                ) : (
+                                                    currentItems.map((value, key) => (
+                                                        <tr key={key}>
+                                                            {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
+                                                                <td key={col.key} className="mailbox-name" style={{ wordBreak: 'break-word' }}>{value[col.key]}</td>
+                                                            ))}
+                                                            <td className="mailbox-date pull-right noExport">
+                                                                <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                                    <i className="fa fa-pencil"></i>
+                                                                </Link>
+                                                                <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                                    <i className="fa fa-remove"></i>
+                                                                </Link>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -467,6 +485,7 @@ const SourceEdit = () => {
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                             </div>
                         </div>
                     </div>
