@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -126,9 +126,9 @@ const ExamRank = () => {
                                                                                 {student.admission_no}
                                                                             </td>
                                                                             <td>
-                                                                                <a href={`/student/view/${student.id}`}>
+                                                                                <Link to={`/student/view/${student.id}`}>
                                                                                     {`${student.firstname} ${student.middlename} ${student.lastname}`.trim().replace(/\s+/g, ' ')}
-                                                                                </a>
+                                                                                </Link>
                                                                             </td>
                                                                             <td>{`${student.class}(${student.section})`}</td>
                                                                             <td>{student.father_name}</td>

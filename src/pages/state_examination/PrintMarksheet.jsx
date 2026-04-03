@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -309,7 +310,7 @@ const PrintMarksheet = () => {
                                                                 </td>
                                                                 <td>{student.admission_no}</td>
                                                                 <td>
-                                                                    <a href={`/student/view/${student.id}`}>{`${student.firstname} ${student.middlename || ''} ${student.lastname}`}</a>
+                                                                    <Link to={`/student/view/${student.id}`}>{`${student.firstname} ${student.middlename || ''} ${student.lastname}`}</Link>
                                                                 </td>
                                                                 <td>{student.father_name}</td>
                                                                 <td>{student.dob}</td>

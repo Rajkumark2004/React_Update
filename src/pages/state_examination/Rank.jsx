@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
@@ -78,7 +78,7 @@ const Rank = () => {
                                 <ul className="tablists">
                                     {cbseSubmenu.map((item, idx) => (
                                         <li key={idx}>
-                                            <a href={item.url} className={item.active ? "active" : ""}>
+                                            <Link to={item.url} className={item.active ? "active" : ""}>
                                                 <img
                                                     src={item.icon}
                                                     alt={item.label}
@@ -86,7 +86,7 @@ const Rank = () => {
                                                     style={{ width: '20px', marginRight: '5px' }}
                                                 />
                                                 {item.label}
-                                            </a>
+                                            </Link>
                                         </li>
                                     ))}
                                 </ul>

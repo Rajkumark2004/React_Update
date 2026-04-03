@@ -755,11 +755,11 @@ const CBSEExamList = () => {
                                                                 title="Edit"
                                                                 onClick={() => handleEdit(exam)}
                                                             ><i className="fa fa-pencil"></i></button>
-                                                            <a
-                                                                href={`/cbseexam/exam/examwiserank/${exam.id}`}
+                                                            <Link
+                                                                to={`/cbseexam/exam/examwiserank/${exam.id}`}
                                                                 className="btn btn-default btn-xs"
                                                                 title="Generate Rank"
-                                                            ><i className="fa fa-list-alt"></i></a>
+                                                            ><i className="fa fa-list-alt"></i></Link>
                                                             <Link
                                                                 to={`/cbseexam/exam/examwiseadmitcard/${exam.id}`}
                                                                 className="btn btn-default btn-xs"

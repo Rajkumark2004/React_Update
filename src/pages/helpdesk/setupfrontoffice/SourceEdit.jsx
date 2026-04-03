@@ -39,10 +39,19 @@ const SourceEdit = () => {
         }
     };
 
-    // Search & Pagination
-    const [searchTerm, setSearchTerm] = useState('');
+    // Pagination and responsive state
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [recordsPerPage, setRecordsPerPage] = useState(10);
+    const [searchTerm, setSearchTerm] = useState(''); // Global search term
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     // Column visibility
     const sourceColumns = [
@@ -57,10 +66,13 @@ const SourceEdit = () => {
         item.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    // Calculate pagination
+    const totalItems = filteredResults.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
 
     const changePage = (pageNumber) => {
         if (pageNumber < 1 || pageNumber > totalPages) return;
@@ -193,7 +205,7 @@ const SourceEdit = () => {
             />
 
             <div className="content-wrapper" style={{ minHeight: '710px', display: 'block' }}>
-                <section className="content-header" style={{ display: 'block', padding: '15px 15px 0 15px' }}>
+                <section className="content-header" style={{ display: 'block', padding: '0px 15px 0 15px' }}>
                 </section>
                 <section className="content" style={{ paddingBottom: '80px' }}>
                     <div className="row">
@@ -268,14 +280,79 @@ const SourceEdit = () => {
                                     <h3 className="box-title titlefix">Source List</h3>
                                 </div>
                                 <div className="box-body">
-                                    {/* Controls */}
-                                    <div className="row" style={{ marginBottom: '10px' }}>
-                                        <div className="col-md-6">
+                                    {/* Toolbar: Records, Search, Export Buttons */}
+                                    <div
+                                        className="row mb-2"
+                                        style={{
+                                            marginBottom: '10px',
+                                            display: isMobile ? 'flex' : 'block',
+                                            flexDirection: isMobile ? 'column' : 'row',
+                                            alignItems: isMobile ? 'center' : 'stretch',
+                                            gap: isMobile ? '15px' : '0'
+                                        }}
+                                    >
+                                        <div
+                                            className={isMobile ? "" : "col-sm-6"}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: isMobile ? '15px' : '20px',
+                                                justifyContent: isMobile ? 'center' : 'flex-start',
+                                                flexWrap: 'wrap'
+                                            }}
+                                        >
+                                            <div className="dataTables_length">
+                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                    Records:
+                                                    <select
+                                                        value={recordsPerPage}
+                                                        onChange={(e) => {
+                                                            setRecordsPerPage(Number(e.target.value));
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className="form-control input-sm"
+                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                    >
+                                                        <option value="10">10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                        <option value="100">100</option>
+                                                        <option value="-1">All</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                            <div className="dataTables_filter">
+                                                <input
+                                                    type="search"
+                                                    className="form-control input-sm"
+                                                    placeholder="Search..."
+                                                    style={{
+                                                        marginLeft: isMobile ? '0' : '10px',
+                                                        display: 'inline-block',
+                                                        width: isMobile ? '180px' : '180px',
+                                                        border: 'none',
+                                                        borderBottom: '1px solid #ccc',
+                                                        borderRadius: '0',
+                                                        boxShadow: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        paddingLeft: '0',
+                                                        outline: 'none',
+                                                        textAlign: isMobile ? 'center' : 'left'
+                                                    }}
+                                                    value={searchTerm}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
                                             <div className="dt-buttons btn-group">
                                                 <button className="btn btn-default btn-sm" title="Copy" onClick={() => {
                                                     const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
                                                     copyToClipboard(headers, rows);
-                                                }}>
+                                                }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="CSV" onClick={() => {
@@ -303,13 +380,18 @@ const SourceEdit = () => {
                                                     <i className="fa fa-print"></i>
                                                 </button>
                                                 <div className="btn-group">
-                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowSourceColsDd(!showSourceColsDd)}>
+                                                    <button
+                                                        className="btn btn-default btn-sm"
+                                                        title="Columns"
+                                                        onClick={() => setShowSourceColsDd(!showSourceColsDd)}
+                                                        style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
+                                                    >
                                                         <i className="fa fa-columns"></i>
                                                     </button>
                                                     {showSourceColsDd && (
-                                                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '160px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                             {sourceColumns.map(col => (
-                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
                                                                     <input type="checkbox" checked={sourceVisibleCols.has(col.key)} onChange={() => {
                                                                         setSourceVisibleCols(prev => {
                                                                             const next = new Set(prev);
@@ -323,18 +405,6 @@ const SourceEdit = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <div className="input-group input-group-sm">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    placeholder="Search..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                />
-                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
                                             </div>
                                         </div>
                                     </div>
@@ -369,30 +439,34 @@ const SourceEdit = () => {
                                         </tbody>
                                     </table>
                                 </div>
-                                <div className="row">
-                                    <div className="col-md-5">
-                                        <div className="dataTables_info">
-                                            Records: {filteredResults.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredResults.length)} of {filteredResults.length}
+                                    {/* Pagination Footer */}
+                                    <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
+                                        <div className={isMobile ? "text-center" : "col-sm-5"}>
+                                            <div className="dataTables_info">
+                                                Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="col-md-7">
-                                        <div className="dataTables_paginate paging_simple_numbers">
-                                            <ul className="pagination">
-                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}>Previous</a>
-                                                </li>
-                                                {[...Array(totalPages)].map((_, i) => (
-                                                    <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(i + 1); }}>{i + 1}</a>
+                                        <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                            <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
+                                                <ul className="pagination" style={{ margin: 0 }}>
+                                                    <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
                                                     </li>
-                                                ))}
-                                                <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}>Next</a>
-                                                </li>
-                                            </ul>
+                                                    {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
+                                                        const p = i + 1;
+                                                        return (
+                                                            <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(p); }}>{p}</a>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                    <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
+                                                    </li>
+                                                </ul>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
                             </div>
                         </div>
                     </div>
