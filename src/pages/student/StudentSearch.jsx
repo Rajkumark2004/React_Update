@@ -530,7 +530,14 @@ const StudentSearch = () => {
                                                             currentItems.map((student) => (
                                                                 <tr key={student.id}>
                                                                     {columns.map(col => visibleColumns.has(col.key) && (
-                                                                        <td key={col.key} style={{ wordBreak: 'break-word' }}>
+                                                                        <td
+                                                                            key={col.key}
+                                                                            style={{
+                                                                                wordBreak: 'break-word',
+                                                                                maxWidth: (col.key === 'name' || col.key === 'father_name') ? '130px' : undefined,
+                                                                                whiteSpace: (col.key === 'name' || col.key === 'father_name') ? 'normal' : undefined
+                                                                            }}
+                                                                        >
                                                                             {col.key === 'name' ? <Link to={`/student/view/${student.id}`}>{student[col.key]}</Link> : student[col.key]}
                                                                         </td>
                                                                     ))}

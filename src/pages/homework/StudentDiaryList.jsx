@@ -571,10 +571,42 @@ const StudentDiaryList = () => {
     }
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <style>{`
+                @media (max-width: 767px) {
+                    .student-diary-toolbar {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        gap: 15px !important;
+                        text-align: center !important;
+                    }
+                    .student-diary-toolbar .pull-left,
+                    .student-diary-toolbar .pull-right {
+                        float: none !important;
+                        width: 100% !important;
+                        display: flex !important;
+                        justify-content: center !important;
+                        margin: 0 !important;
+                    }
+                    .student-diary-toolbar input[type="search"] {
+                        width: 100% !important;
+                        max-width: 250px !important;
+                        text-align: center !important;
+                    }
+                    .student-diary-footer {
+                        text-align: center !important;
+                    }
+                    .student-diary-footer .pull-left {
+                        float: none !important;
+                        display: block !important;
+                        width: 100% !important;
+                    }
+                }
+            `}</style>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '828px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-flask"></i> Student Diary
@@ -670,7 +702,7 @@ const StudentDiaryList = () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div className="box-header ptbnull clearfix" style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                            <div className="box-header ptbnull clearfix student-diary-toolbar" style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
                                                 <div className="pull-left">
                                                     <input
                                                         type="search"
@@ -745,7 +777,7 @@ const StudentDiaryList = () => {
                                                 </div>
                                             </div>
                                             <div className="box-footer">
-                                                <div className="mailbox-controls">
+                                                <div className="mailbox-controls student-diary-footer">
                                                     <div className="pull-left">
                                                         {diaryList.length === 0 ? "Records 0 to 0 of 0" : `Records 1 to ${diaryList.length} of ${diaryList.length} `}
                                                     </div>

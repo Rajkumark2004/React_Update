@@ -274,7 +274,7 @@ const BulkDelete = () => {
                                             </div>
                                             <div className="col-sm-12">
                                                 <div className="form-group">
-                                                    <button type="submit" className="btn btn-primary btn-sm pull-right checkbox-toggle" disabled={loading}>
+                                                    <button type="submit" className="btn btn-primary btn-sm pull-right checkbox-toggle" style={{ padding: '6px 16px', marginBottom: '10px' }} disabled={loading}>
                                                         {loading ? <><i className="fa fa-spinner fa-spin"></i> Searching...</> : <><i className="fa fa-search"></i> Search</>}
                                                     </button>
                                                 </div>
@@ -288,7 +288,7 @@ const BulkDelete = () => {
                                         <div className="row">
                                             <div className="col-md-12 col-sm-12">
                                                 <div className="mt10">
-                                                    <div className="checkbox bordertop pt15">
+                                                    <div className="checkbox bordertop pt15" style={{ marginBottom: '10px', display: 'flow-root' }}>
                                                         <label style={{ fontWeight: 700 }}>
                                                             <input
                                                                 type="checkbox"
