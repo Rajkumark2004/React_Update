@@ -110,10 +110,10 @@ export const api = {
         }
     },
 
-    updateStudentIdCard: async (formData) => {
-        console.log('API Request: Update Student ID Card', formData);
+    updateStudentIdCard: async (id, formData) => {
+        console.log('API Request: Update Student ID Card', id, formData);
         try {
-            const response = await fetch(`${API_BASE}/admin/studentidcard/edit`, {
+            const response = await fetch(`${API_BASE}/admin/studentidcard/edit/${id}`, {
                 method: 'POST',
                 body: formData,
             });

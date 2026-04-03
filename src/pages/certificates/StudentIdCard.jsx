@@ -289,7 +289,7 @@ const StudentIdCard = () => {
 
         try {
             const response = isEditing
-                ? await api.updateStudentIdCard(formPayload)
+                ? await api.updateStudentIdCard(editId, formPayload)
                 : await api.createStudentIdCard(formPayload);
 
             if (response.status) {

@@ -21,9 +21,10 @@ const RolePermission = () => {
         setIsLoading(true);
         try {
             const response = await api.getRolePermissions(id);
-            if (response.status === 'success') {
-                setRole(response.role);
-                setRolePermissions(response.role_permission);
+            if (response.status) {
+                const data = response.data || response;
+                setRole(data.role || { name: '' });
+                setRolePermissions(data.role_permission || []);
             } else {
                 setError(response.message || 'Failed to fetch permissions');
             }
@@ -150,7 +151,7 @@ const RolePermission = () => {
                                                     {rolePermissions.map((module, mIdx) => (
                                                         <React.Fragment key={mIdx}>
                                                             {module.permission_category.map((perm, pIdx) => (
-                                                                <tr key={perm.id}>
+                                                                <tr key={`${mIdx}-${perm.id}-${pIdx}`}>
                                                                     {pIdx === 0 ? (
                                                                         <th style={{ verticalAlign: 'middle', fontWeight: 'bold' }}>
                                                                             {module.name}
