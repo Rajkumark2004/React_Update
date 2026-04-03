@@ -247,7 +247,7 @@
         display: none !important;
     }
 
-    .col-md-2:first-child {
+     .sidebar-menu-mobile-hide {
         display: none;
     }
 }

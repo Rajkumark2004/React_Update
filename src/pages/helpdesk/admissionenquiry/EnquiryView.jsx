@@ -350,7 +350,7 @@ const EnquiryView = () => {
                 <section className="content">
                     <div className="row">
                         {/* Left Sidebar - Front Office Menu */}
-                        <div className="col-md-2">
+                        <div className="col-md-2 sidebar-menu-mobile-hide">
                             <div className="box border0">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Help Desk</h3>
