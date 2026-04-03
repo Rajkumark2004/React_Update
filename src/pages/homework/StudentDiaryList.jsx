@@ -50,7 +50,8 @@ const ColumnVisibility = ({ columns, visibleColumns, toggleColumn }) => {
                     padding: '8px 10px',
                     minWidth: '225px',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    marginTop: '2px'
+                    marginTop: '2px',
+                    textAlign: 'left'
                 }}>
                     {columns.map(col => (
                         <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', margin: 0, fontWeight: 'normal', color: '#333' }}>
@@ -590,10 +591,9 @@ const StudentDiaryList = () => {
                         margin: 0 !important;
                     }
                     .student-diary-toolbar input[type="search"] {
-                        width: 100% !important;
-                        max-width: 250px !important;
                         text-align: center !important;
                     }
+
                     .student-diary-footer {
                         text-align: center !important;
                     }
