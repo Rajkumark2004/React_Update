@@ -319,7 +319,7 @@ const FeesReceipt24 = () => {
     const getExportData = () => buildExportData(columns, visibleColumns, sortedPayments, formatCellForExport);
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header
                 appName={appName}
                 userData={userData}
@@ -333,7 +333,7 @@ const FeesReceipt24 = () => {
                 currentUrl="/admin/feesreceipt24"
             />
 
-            <div className="content-wrapper" style={{ minHeight: '710px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-4">

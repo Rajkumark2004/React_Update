@@ -694,10 +694,10 @@ const StudentAddFee = () => {
 
     if (loading) {
         return (
-            <div className="wrapper theme-white-skin">
+            <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Header />
                 <Sidebar />
-                <div className="content-wrapper" style={{ minHeight: '850px' }}>
+                <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                     <section className="content">
                         <div className="text-center" style={{ padding: "100px" }}>
                             <Loader />
@@ -711,10 +711,10 @@ const StudentAddFee = () => {
 
     if (!student) {
         return (
-            <div className="wrapper theme-white-skin">
+            <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Header />
                 <Sidebar />
-                <div className="content-wrapper" style={{ minHeight: '850px' }}>
+                <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                     <div className="content">Student not found</div>
                 </div>
                 <Footer />
@@ -723,10 +723,10 @@ const StudentAddFee = () => {
     }
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '850px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 {/* section content-header (empty in PHP) */}
 
                 <section className="content">

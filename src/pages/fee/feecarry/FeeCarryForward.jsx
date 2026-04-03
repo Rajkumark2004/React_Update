@@ -342,7 +342,7 @@ const FeesForward = () => {
     const totalPages = Math.ceil(filteredStudents.length / entriesPerPage);
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header
                 appName={appName}
                 userData={userData}
@@ -356,7 +356,7 @@ const FeesForward = () => {
                 currentUrl="/admin/feesforward"
             />
 
-            <div className="content-wrapper" style={{ minHeight: '710px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 {/* Content Header (Page header) */}
                 <section className="content-header" >
                     <h1>
