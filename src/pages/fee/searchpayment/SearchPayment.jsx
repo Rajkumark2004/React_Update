@@ -317,7 +317,7 @@ const SearchPayment = () => {
                                             </h3>
                                             <div className="box-tools pull-right"></div>
                                         </div>
-                                        <div className="box-body table-responsive">
+                                        <div className="box-body">
                                             <div className="download_label">Payment ID Detail</div>
 
                                             {/* Toolbar: Records, Local Search, Export Buttons */}
@@ -328,7 +328,9 @@ const SearchPayment = () => {
                                                     display: isMobile ? 'flex' : 'block',
                                                     flexDirection: isMobile ? 'column' : 'row',
                                                     alignItems: isMobile ? 'center' : 'stretch',
-                                                    gap: isMobile ? '15px' : '0'
+                                                    gap: isMobile ? '15px' : '0',
+                                                    position: 'relative',
+                                                    zIndex: 100
                                                 }}
                                             >
                                                 <div
@@ -414,7 +416,7 @@ const SearchPayment = () => {
                                                                 <i className="fa fa-columns"></i>
                                                             </button>
                                                             {showColumnsDropdown && (
-                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 9999, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                                     {columns.map(col => (
                                                                         <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
                                                                             <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
@@ -427,8 +429,8 @@ const SearchPayment = () => {
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <table className="table table-striped table-bordered table-hover">
+                                            <div className="table-responsive" style={{ overflowX: 'auto' }}>
+                                                <table className="table table-striped table-bordered table-hover">
                                                 <thead>
                                                     <tr>
                                                         {columns.map(col => visibleColumns.has(col.key) && (
@@ -479,6 +481,7 @@ const SearchPayment = () => {
                                                     )}
                                                 </tbody>
                                             </table>
+                                            </div>
 
                                             {/* Pagination Footer */}
                                             <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>

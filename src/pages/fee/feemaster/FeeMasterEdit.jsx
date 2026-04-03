@@ -6,6 +6,7 @@ import Footer from '../../../components/Footer';
 import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../../utils/tableExport';
 
 const FeeMasterEdit = () => {
     const { id } = useParams();
@@ -23,6 +24,59 @@ const FeeMasterEdit = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
+    // Column definitions for export
+    const columns = [
+        { key: 'group_name', label: 'Fees Group' },
+        { key: 'fee_code', label: 'Fees Code' },
+        { key: 'amount', label: 'Amount' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    // Flatten nested fee master list for export
+    const getFlatExportRows = () => {
+        const filteredGroups = feeMasterList.filter(group =>
+            group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
+        );
+        const visibleCols = columns.filter(col => visibleColumns.has(col.key));
+        const headers = visibleCols.map(col => col.label);
+        const rows = [];
+        filteredGroups.forEach(group => {
+            if (group.feetypes && group.feetypes.length > 0) {
+                group.feetypes.forEach(ft => {
+                    const rowData = {
+                        group_name: group.group_name,
+                        fee_code: `${ft.type} (${ft.code})`,
+                        amount: `₹${ft.amount}`
+                    };
+                    rows.push(visibleCols.map(col => rowData[col.key] || ''));
+                });
+            } else {
+                const rowData = { group_name: group.group_name, fee_code: '', amount: '' };
+                rows.push(visibleCols.map(col => rowData[col.key] || ''));
+            }
+        });
+        return { headers, rows };
+    };
 
     const [formData, setFormData] = useState({
         fee_groups_id: '',
@@ -324,39 +378,62 @@ const FeeMasterEdit = () => {
                                 </div>
                                 <div className="box-body">
                                     <div className="download_label">Fees Master List</div>
-                                    <div className="row mb-2" style={{ marginBottom: '10px' }}>
-                                        <div className="col-sm-6">
-                                            <div className="dataTables_filter pull-left">
-                                                <label>Search:<input
+                                    <div className="row mb-2" style={isMobile ? { marginBottom: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' } : { marginBottom: '10px' }}>
+                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                            <div className={isMobile ? "dataTables_filter" : "dataTables_filter pull-left"}>
+                                                <input
                                                     type="search"
                                                     className="form-control input-sm"
-                                                    placeholder=""
-                                                    style={{ display: 'inline-block', width: 'auto', marginLeft: '0.5em' }}
+                                                    placeholder="Search..."
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                                /></label>
+                                                    style={{ 
+                                                        display: 'inline-block', 
+                                                        width: '180px', 
+                                                        border: 'none', 
+                                                        borderBottom: '1px solid #ccc', 
+                                                        borderRadius: '0', 
+                                                        boxShadow: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        paddingLeft: '0',
+                                                        outline: 'none',
+                                                        textAlign: isMobile ? 'center' : 'left'
+                                                    }}
+                                                />
                                             </div>
                                         </div>
-                                        <div className="col-sm-6">
-                                            <div className="pull-right dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy">
+                                        <div className={isMobile ? "" : "col-sm-6"}>
+                                            <div className={isMobile ? "dt-buttons btn-group" : "pull-right dt-buttons btn-group"}>
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getFlatExportRows(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel">
+                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getFlatExportRows(); downloadExcel(headers, rows, 'fees_master.xls'); }}>
                                                     <i className="fa fa-file-excel-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV">
+                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getFlatExportRows(); downloadCSV(headers, rows, 'fees_master.csv'); }}>
                                                     <i className="fa fa-file-text-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF">
+                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getFlatExportRows(); downloadPDF(headers, rows, 'fees_master.pdf', 'Fees Master List'); }}>
                                                     <i className="fa fa-file-pdf-o"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-print" onClick={() => window.print()} title="Print">
+                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getFlatExportRows(); printTable(headers, rows, 'Fees Master List'); }}>
                                                     <i className="fa fa-print"></i>
                                                 </button>
-                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns">
-                                                    <i className="fa fa-columns"></i>
-                                                </button>
+                                                <div className="btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                                        <i className="fa fa-columns"></i>
+                                                    </button>
+                                                    {showColumnsDropdown && (
+                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            {columns.map(col => (
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                    <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                    {col.label}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -366,10 +443,19 @@ const FeeMasterEdit = () => {
                                                 <tr>
                                                     <th>Fees Group</th>
                                                     <th>
-                                                        <div className="row">
-                                                            <div className="col-md-6">Fees Code</div>
-                                                            <div className="col-md-6">Amount</div>
-                                                        </div>
+                                                        {isMobile ? (
+                                                            <div>
+                                                                <div>Fees Code</div>
+                                                                <div>Amount</div>
+                                                                <i className="fa fa-caret-down" style={{ color: '#ccc', marginTop: '5px', display: 'block' }}></i>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="row">
+                                                                <div className="col-xs-6">Fees Code</div>
+                                                                <div className="col-xs-3">Amount</div>
+                                                                <div className="col-xs-3"></div>
+                                                            </div>
+                                                        )}
                                                     </th>
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
@@ -392,31 +478,50 @@ const FeeMasterEdit = () => {
                                                                 <ul className="liststyle1" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                                                     {group.feetypes && group.feetypes.map((ft) => (
                                                                         <li key={ft.id} style={{ padding: '0', margin: '0' }}>
-                                                                            <div className="row">
-                                                                                <div className="col-md-6">
-                                                                                    <i className="fa fa-money"></i> {ft.type} ({ft.code})
+                                                                            {isMobile ? (
+                                                                                <div style={{ wordBreak: 'break-word' }}>
+                                                                                    <div style={{ marginBottom: '2px' }}>
+                                                                                        <i className="fa fa-money"></i> {ft.type} ({ft.code})
+                                                                                    </div>
+                                                                                    <div style={{ fontWeight: 'normal', color: '#333', marginBottom: '4px' }}>
+                                                                                        ₹{ft.amount}
+                                                                                    </div>
+                                                                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                                                                        <Link to={`/admin/feemaster/edit/${ft.id}`} style={{ color: '#337ab7', fontSize: '14px' }} title="Edit">
+                                                                                            <i className="fa fa-pencil"></i>
+                                                                                        </Link>
+                                                                                        <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(ft.id) }} style={{ color: '#337ab7', fontSize: '14px' }} title="Delete">
+                                                                                            <i className="fa fa-remove" style={{ fontWeight: 'bold' }}></i>
+                                                                                        </a>
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div className="col-md-3">
-                                                                                    ₹{ft.amount}
+                                                                            ) : (
+                                                                                <div className="row">
+                                                                                    <div className="col-xs-6">
+                                                                                        <i className="fa fa-money"></i> {ft.type} ({ft.code})
+                                                                                    </div>
+                                                                                    <div className="col-xs-3">
+                                                                                        ₹{ft.amount}
+                                                                                    </div>
+                                                                                    <div className="col-xs-3 text-right">
+                                                                                        <Link to={`/admin/feemaster/edit/${ft.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                                                            <i className="fa fa-pencil"></i>
+                                                                                        </Link>
+                                                                                        <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(ft.id) }} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                                                            <i className="fa fa-remove"></i>
+                                                                                        </a>
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div className="col-md-3 text-right">
-                                                                                    <Link to={`/admin/feemaster/edit/${ft.id}`} className="btn btn-primary btn-xs" data-toggle="tooltip" title="Edit">
-                                                                                        <i className="fa fa-pencil"></i>
-                                                                                    </Link>
-                                                                                    <a href="#" onClick={(e) => { e.preventDefault(); handleDelete(ft.id) }} className="btn btn-primary btn-xs" data-toggle="tooltip" title="Delete">
-                                                                                        <i className="fa fa-remove"></i>
-                                                                                    </a>
-                                                                                </div>
-                                                                            </div>
+                                                                            )}
                                                                         </li>
                                                                     ))}
                                                                 </ul>
                                                             </td>
                                                             <td className="mailbox-date pull-right" style={{ verticalAlign: 'top' }}>
-                                                                <Link to={`/admin/feemaster/assign/${group.id}`} className="btn btn-primary btn-xs" data-toggle="tooltip" title="Assign / View Student">
+                                                                <Link to={`/admin/feemaster/assign/${group.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Assign / View Student">
                                                                     <i className="fa fa-tag"></i>
                                                                 </Link>
-                                                                <a href="#" onClick={(e) => { e.preventDefault(); handleDeleteGroup(group.id) }} className="btn btn-primary btn-xs" data-toggle="tooltip" title="Delete Group">
+                                                                <a href="#" onClick={(e) => { e.preventDefault(); handleDeleteGroup(group.id) }} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete Group">
                                                                     <i className="fa fa-remove"></i>
                                                                 </a>
                                                             </td>
@@ -426,49 +531,54 @@ const FeeMasterEdit = () => {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="row">
-                                        <div className="col-sm-5">
-                                            <div className="dataTables_info">
-                                                Showing {feeMasterList.length > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0} to {Math.min(currentPage * itemsPerPage, feeMasterList.filter(group =>
-                                                    group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                    (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                ).length)} of {feeMasterList.filter(group =>
-                                                    group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                    (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                ).length} entries
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-7">
-                                            <div className="dataTables_paginate paging_simple_numbers">
-                                                <ul className="pagination">
-                                                    <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                        <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>Previous</a>
-                                                    </li>
-                                                    {Array.from({
-                                                        length: Math.ceil(feeMasterList.filter(group =>
+                                    {feeMasterList.length > 0 && (
+                                        <div className="row" style={isMobile ? { marginTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' } : { marginTop: '15px' }}>
+                                            <div className={isMobile ? "text-center" : "col-sm-5"}>
+                                                <div className="dataTables_info">
+                                                    {(() => {
+                                                        const filteredItems = feeMasterList.filter(group =>
                                                             group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                                             (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                        ).length / itemsPerPage)
-                                                    }, (_, i) => (
-                                                        <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                                            <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
+                                                        );
+                                                        const totalCount = filteredItems.length;
+                                                        const from = totalCount > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0;
+                                                        const to = Math.min(currentPage * itemsPerPage, totalCount);
+                                                        return `Showing ${from} to ${to} of ${totalCount} entries`;
+                                                    })()}
+                                                </div>
+                                            </div>
+                                            <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                <div className={isMobile ? "dataTables_paginate paging_simple_numbers" : "dataTables_paginate paging_simple_numbers pull-right"}>
+                                                    <ul className="pagination" style={{ margin: 0 }}>
+                                                        <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
                                                         </li>
-                                                    ))}
-                                                    <li className={`paginate_button next ${currentPage === Math.ceil(feeMasterList.filter(group =>
-                                                        group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                    ).length / itemsPerPage) ? 'disabled' : ''}`}>
-                                                        <a href="#" onClick={(e) => {
-                                                            e.preventDefault(); if (currentPage < Math.ceil(feeMasterList.filter(group =>
+                                                        {Array.from({
+                                                            length: Math.ceil(feeMasterList.filter(group =>
                                                                 group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                                                 (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
-                                                            ).length / itemsPerPage)) setCurrentPage(currentPage + 1);
-                                                        }}>Next</a>
-                                                    </li>
-                                                </ul>
+                                                            ).length / itemsPerPage)
+                                                        }, (_, i) => (
+                                                            <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
+                                                                <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
+                                                            </li>
+                                                        ))}
+                                                        <li className={`paginate_button next ${currentPage === Math.ceil(feeMasterList.filter(group =>
+                                                            group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                            (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
+                                                        ).length / itemsPerPage) ? 'disabled' : ''}`}>
+                                                            <a href="#" onClick={(e) => {
+                                                                e.preventDefault(); if (currentPage < Math.ceil(feeMasterList.filter(group =>
+                                                                    group.group_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                                    (group.feetypes && group.feetypes.some(ft => ft.type.toLowerCase().includes(searchTerm.toLowerCase()) || ft.code.toLowerCase().includes(searchTerm.toLowerCase())))
+                                                                ).length / itemsPerPage)) setCurrentPage(currentPage + 1);
+                                                            }}><i className="fa fa-angle-right"></i></a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
