@@ -294,10 +294,10 @@ const StudentAttendance = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-calendar-check-o"></i> Attendance <small>by date</small>
@@ -389,7 +389,7 @@ const StudentAttendance = () => {
                                                 <h3 className="box-title"><i className="fa fa-users"></i> Student List</h3>
                                             </div>
                                             <div className="box-body">
-                                                <div className="mailbox-controls">
+                                                <div className="mailbox-controls" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
                                                     <span className="button-checkbox">
                                                         <button
                                                             type="button"
@@ -399,11 +399,11 @@ const StudentAttendance = () => {
                                                             <i className={`state-icon glyphicon ${isHoliday ? 'glyphicon-check' : 'glyphicon-unchecked'}`}></i> Mark as Holiday
                                                         </button>
                                                     </span>
-                                                    <div className="pull-right">
-                                                        <button type="button" onClick={handleDelete} className="btn btn-default btn-sm pull-left checkbox-toggle" style={{ marginRight: '5px' }}>
+                                                    <div style={{ display: 'flex', gap: '5px' }}>
+                                                        <button type="button" onClick={handleDelete} className="btn btn-primary btn-sm checkbox-toggle">
                                                             <i className="fa fa-trash"></i> Delete
                                                         </button>
-                                                        <button type="button" onClick={handleSave} className="btn btn-primary btn-sm pull-right checkbox-toggle">
+                                                        <button type="button" onClick={handleSave} className="btn btn-primary btn-sm checkbox-toggle">
                                                             <i className="fa fa-save"></i> Save Attendance
                                                         </button>
                                                     </div>

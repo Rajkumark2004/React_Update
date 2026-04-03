@@ -174,7 +174,7 @@ const ApproveLeave = () => {
             const fd = new FormData();
             fd.append('class_id', filter.class_id);
             fd.append('section_id', filter.section_id);
-            
+
             const response = await api.searchApproveLeave(fd);
             if (response && response.status) {
                 setLeaveList(Array.isArray(response.results) ? response.results : []);
@@ -307,16 +307,39 @@ const ApproveLeave = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1><i className="fa fa-flask"></i> Approve Leave</h1>
                 </section>
 
-                <section className="content">
+                <section className="content al-responsive-content">
+                    <style>{`
+                        @media (max-width: 767px) {
+                            .al-responsive-content {
+                                padding: 10px !important;
+                            }
+                            .al-responsive-content > .col-md-12 {
+                                padding-left: 0px !important;
+                                padding-right: 0px !important;
+                            }
+                            .al-responsive-content .box-body {
+                                padding: 15px !important;
+                            }
+                            .al-responsive-content .table-responsive {
+                                border: 1px solid #f4f4f4 !important;
+                                border-radius: 4px;
+                            }
+                        }
+                        @media (min-width: 768px) {
+                            .al-responsive-content {
+                                padding: 5px !important;
+                            }
+                        }
+                    `}</style>
                     {initialLoading ? (
                         <Loader />
                     ) : (
@@ -393,8 +416,24 @@ const ApproveLeave = () => {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="box-header ptbnull clearfix" style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
-                                            <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <style>{`
+                                            @media (max-width: 767px) {
+                                                .approve-leave-toolbar {
+                                                    flex-direction: column !important;
+                                                    align-items: center !important;
+                                                    justify-content: center !important;
+                                                    border-bottom: none !important;
+                                                }
+                                                .approve-leave-toolbar .al-search-col,
+                                                .approve-leave-toolbar .al-btn-col {
+                                                    display: flex !important;
+                                                    justify-content: center !important;
+                                                    width: 100% !important;
+                                                }
+                                            }
+                                        `}</style>
+                                        <div className="approve-leave-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                            <div className="al-search-col">
                                                 <input
                                                     type="search"
                                                     placeholder="Search..."
@@ -403,74 +442,78 @@ const ApproveLeave = () => {
                                                     style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                 />
                                             </div>
-                                            <div className="dt-buttons btn-group pull-right" style={{ verticalAlign: 'middle' }}>
-                                                <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy"><i className="fa fa-files-o"></i></button>
-                                                <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print"><i className="fa fa-print"></i></button>
-                                                <ColumnVisibility columns={columns} visibleColumns={visibleColumns} toggleColumn={toggleColumn} />
+                                            <div className="al-btn-col">
+                                                <div className="dt-buttons btn-group">
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy"><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel"><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV"><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF"><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print"><i className="fa fa-print"></i></button>
+                                                    <ColumnVisibility columns={columns} visibleColumns={visibleColumns} toggleColumn={toggleColumn} />
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="box-body table-responsive overflow-visible-lg">
-                                            <table className="table table-hover table-striped table-bordered example">
-                                                <thead>
-                                                    <tr>
-                                                        {visibleColumns.has('firstname') && <th>Student Name</th>}
-                                                        {visibleColumns.has('class') && <th>Class</th>}
-                                                        {visibleColumns.has('section') && <th>Section</th>}
-                                                        {visibleColumns.has('apply_date') && <th>Apply Date</th>}
-                                                        {visibleColumns.has('from_date') && <th>From Date</th>}
-                                                        {visibleColumns.has('to_date') && <th>To Date</th>}
-                                                        {visibleColumns.has('status') && <th>Status</th>}
-                                                        {visibleColumns.has('staff_name') && <th>Approve/Disapprove By</th>}
-                                                        <th className="text-right noExport">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {loading ? (
-                                                        <tr><td colSpan="9" className="text-center">Loading...</td></tr>
-                                                    ) : filteredLeaveList.length > 0 ? (
-                                                        filteredLeaveList.map(leave => (
-                                                            <tr key={leave.id}>
-                                                                {visibleColumns.has('firstname') && <td>{leave.firstname} {leave.lastname} ({leave.admission_no})</td>}
-                                                                {visibleColumns.has('class') && <td>{leave.class}</td>}
-                                                                {visibleColumns.has('section') && <td>{leave.section}</td>}
-                                                                {visibleColumns.has('apply_date') && <td>{formatDate(leave.apply_date)}</td>}
-                                                                {visibleColumns.has('from_date') && <td>{formatDate(leave.from_date)}</td>}
-                                                                {visibleColumns.has('to_date') && <td>{formatDate(leave.to_date)}</td>}
-                                                                {visibleColumns.has('status') && <td>{getStatusLabel(leave.status, leave.approve_date)}</td>}
-                                                                {visibleColumns.has('staff_name') && <td>{leave.staff_name} {leave.surname} {leave.staff_id ? `(${leave.staff_id})` : ''}</td>}
-                                                                <td className="text-right white-space-nowrap">
-                                                                    {leave.docs && (
-                                                                        <a href={`https://newlayout.wisibles.com/admin/approve_leave/download/${leave.id}`} className="btn btn-default btn-xs" title="Download" target="_blank" rel="noopener noreferrer">
-                                                                            <i className="fa fa-download"></i>
-                                                                        </a>
-                                                                    )}
-                                                                    <button
-                                                                        onClick={() => handleEdit(leave)}
-                                                                        className="btn btn-default btn-xs"
-                                                                        title="Edit"
-                                                                        style={{ marginLeft: '3px' }}
-                                                                    >
-                                                                        <i className="fa fa-pencil"></i>
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleDelete(leave.id, leave.class_id, leave.section_id)}
-                                                                        className="btn btn-default btn-xs"
-                                                                        title="Delete"
-                                                                        style={{ marginLeft: '3px' }}
-                                                                    >
-                                                                        <i className="fa fa-trash"></i>
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    ) : (
-                                                        <tr><td colSpan="9" className="text-center">No data available in table</td></tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                        <div className="box-body">
+                                            <div className="table-responsive overflow-visible-lg">
+                                                <table className="table table-hover table-striped table-bordered example">
+                                                    <thead>
+                                                        <tr>
+                                                            {visibleColumns.has('firstname') && <th>Student Name</th>}
+                                                            {visibleColumns.has('class') && <th>Class</th>}
+                                                            {visibleColumns.has('section') && <th>Section</th>}
+                                                            {visibleColumns.has('apply_date') && <th>Apply Date</th>}
+                                                            {visibleColumns.has('from_date') && <th>From Date</th>}
+                                                            {visibleColumns.has('to_date') && <th>To Date</th>}
+                                                            {visibleColumns.has('status') && <th>Status</th>}
+                                                            {visibleColumns.has('staff_name') && <th>Approve/Disapprove By</th>}
+                                                            <th className="text-right noExport">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {loading ? (
+                                                            <tr><td colSpan="9" className="text-center">Loading...</td></tr>
+                                                        ) : filteredLeaveList.length > 0 ? (
+                                                            filteredLeaveList.map(leave => (
+                                                                <tr key={leave.id}>
+                                                                    {visibleColumns.has('firstname') && <td>{leave.firstname} {leave.lastname} ({leave.admission_no})</td>}
+                                                                    {visibleColumns.has('class') && <td>{leave.class}</td>}
+                                                                    {visibleColumns.has('section') && <td>{leave.section}</td>}
+                                                                    {visibleColumns.has('apply_date') && <td>{formatDate(leave.apply_date)}</td>}
+                                                                    {visibleColumns.has('from_date') && <td>{formatDate(leave.from_date)}</td>}
+                                                                    {visibleColumns.has('to_date') && <td>{formatDate(leave.to_date)}</td>}
+                                                                    {visibleColumns.has('status') && <td>{getStatusLabel(leave.status, leave.approve_date)}</td>}
+                                                                    {visibleColumns.has('staff_name') && <td>{leave.staff_name} {leave.surname} {leave.staff_id ? `(${leave.staff_id})` : ''}</td>}
+                                                                    <td className="text-right white-space-nowrap">
+                                                                        {leave.docs && (
+                                                                            <a href={`https://newlayout.wisibles.com/admin/approve_leave/download/${leave.id}`} className="btn btn-default btn-xs" title="Download" target="_blank" rel="noopener noreferrer">
+                                                                                <i className="fa fa-download"></i>
+                                                                            </a>
+                                                                        )}
+                                                                        <button
+                                                                            onClick={() => handleEdit(leave)}
+                                                                            className="btn btn-default btn-xs"
+                                                                            title="Edit"
+                                                                            style={{ marginLeft: '3px' }}
+                                                                        >
+                                                                            <i className="fa fa-pencil"></i>
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDelete(leave.id, leave.class_id, leave.section_id)}
+                                                                            className="btn btn-default btn-xs"
+                                                                            title="Delete"
+                                                                            style={{ marginLeft: '3px' }}
+                                                                        >
+                                                                            <i className="fa fa-trash"></i>
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr><td colSpan="9" className="text-center">No data available in table</td></tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -480,9 +523,7 @@ const ApproveLeave = () => {
                     )}
                 </section>
             </div >
-
             <Footer />
-
             <LeaveModal
                 show={showModal}
                 handleClose={() => setShowModal(false)}

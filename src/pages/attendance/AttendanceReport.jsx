@@ -185,10 +185,10 @@ const AttendanceReport = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-calendar-check-o"></i> Attendance <small>by date</small>
@@ -278,8 +278,25 @@ const AttendanceReport = () => {
                                                 <h3 className="box-title"><i className="fa fa-users"></i> Attendance List</h3>
                                             </div>
                                             <div className="box-body">
-                                                <div className="row mb-3" style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <div className="col-sm-6">
+                                                <style>{`
+                                                    @media (max-width: 767px) {
+                                                        .att-report-toolbar {
+                                                            flex-direction: column !important;
+                                                            align-items: center !important;
+                                                            justify-content: center !important;
+                                                            border-bottom: none !important;
+                                                        }
+                                                        .att-report-toolbar .att-search-col,
+                                                        .att-report-toolbar .att-btn-col {
+                                                            display: flex !important;
+                                                            justify-content: center !important;
+                                                            text-align: center !important;
+                                                            width: 100% !important;
+                                                        }
+                                                    }
+                                                `}</style>
+                                                <div className="att-report-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
+                                                    <div className="att-search-col">
                                                         <input
                                                             type="search"
                                                             placeholder="Search..."
@@ -288,7 +305,7 @@ const AttendanceReport = () => {
                                                             style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                         />
                                                     </div>
-                                                    <div className="col-sm-6 text-right">
+                                                    <div className="att-btn-col">
                                                         <div className="dt-buttons btn-group">
                                                             <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy">
                                                                 <i className="fa fa-files-o"></i>
