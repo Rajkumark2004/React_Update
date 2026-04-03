@@ -27,6 +27,20 @@ const StudentAttendance = () => {
     const [presentId, setPresentId] = useState(1);
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
+    const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
+
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     useEffect(() => {
         fetchClasses();
@@ -412,23 +426,23 @@ const StudentAttendance = () => {
                                                     <table className="table table-hover table-striped example">
                                                         <thead>
                                                             <tr>
-                                                                <th>
+                                                                <th width="5%">
                                                                     <input
                                                                         type="checkbox"
                                                                         checked={studentList.length > 0 && selectedStudents.length === studentList.length}
                                                                         onChange={handleSelectAll}
                                                                     />
                                                                 </th>
-                                                                <th>S.No</th>
-                                                                <th>Admission No</th>
-                                                                <th>Roll Number</th>
-                                                                <th>Name</th>
-                                                                <th width="30%">Attendance</th>
-                                                                <th>Note</th>
+                                                                <th width="5%">S.No</th>
+                                                                <th width="15%">Admission No</th>
+                                                                <th width="12%">Roll Number</th>
+                                                                <th width="20%">Name</th>
+                                                                <th width="28%">Attendance</th>
+                                                                <th width="15%" style={{ textAlign: 'left' }}>Note</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {studentList.map((student, index) => (
+                                                            {currentRecords.map((student, index) => (
                                                                 <tr key={student.student_session_id}>
                                                                     <td>
                                                                         <input
@@ -437,10 +451,10 @@ const StudentAttendance = () => {
                                                                             onChange={(e) => handleSelectStudent(student.student_session_id, e.target.checked)}
                                                                         />
                                                                     </td>
-                                                                    <td>{index + 1}</td>
+                                                                    <td>{indexOfFirstItem + index + 1}</td>
                                                                     <td>{student.admission_no}</td>
                                                                     <td>{student.roll_no}</td>
-                                                                    <td>{student.firstname} {student.lastname}</td>
+                                                                    <td style={{ wordBreak: 'break-word' }}>{student.firstname} {student.lastname}</td>
                                                                     <td>
                                                                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
                                                                             {!isHoliday && attendanceTypes.filter(type => type.type.toLowerCase() !== 'holiday').map(type => (
@@ -461,12 +475,12 @@ const StudentAttendance = () => {
                                                                             {isHoliday && <span className="text-danger">Holiday</span>}
                                                                         </div>
                                                                     </td>
-                                                                    <td style={{ verticalAlign: 'bottom', paddingBottom: '8px' }}>
-                                                                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                                                    <td style={{ verticalAlign: 'middle' }}>
+                                                                        <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control"
-                                                                                style={{ width: '100px', height: '24px', padding: '2px 5px', fontSize: '12px', border: '1px solid #777' }}
+                                                                                style={{ width: '100%', minWidth: '80px', height: '28px', padding: '2px 5px', fontSize: '12px', border: '1px solid #777' }}
                                                                                 value={attendanceState[student.student_session_id]?.remark || ''}
                                                                                 onChange={(e) => handleRemarkChange(student.student_session_id, e.target.value)}
                                                                                 disabled={isHoliday}

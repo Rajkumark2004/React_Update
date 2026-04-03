@@ -23,6 +23,18 @@ const AttendanceReport = () => {
 
     // New states for search and export
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
@@ -53,6 +65,18 @@ const AttendanceReport = () => {
             (student.remark || '').toLowerCase().includes(searchLower)
         );
     });
+
+    const totalItems = filteredList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentRecords = filteredList.slice(indexOfFirstItem, indexOfLastItem);
+
+    const changePage = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
+        setCurrentPage(pageNumber);
+    };
 
     const formatCell = (row, key) => {
         if (key === 'sno') return filteredList.indexOf(row) + 1;
@@ -278,64 +302,102 @@ const AttendanceReport = () => {
                                                 <h3 className="box-title"><i className="fa fa-users"></i> Attendance List</h3>
                                             </div>
                                             <div className="box-body">
-                                                <style>{`
-                                                    @media (max-width: 767px) {
-                                                        .att-report-toolbar {
-                                                            flex-direction: column !important;
-                                                            align-items: center !important;
-                                                            justify-content: center !important;
-                                                            border-bottom: none !important;
-                                                        }
-                                                        .att-report-toolbar .att-search-col,
-                                                        .att-report-toolbar .att-btn-col {
-                                                            display: flex !important;
-                                                            justify-content: center !important;
-                                                            text-align: center !important;
-                                                            width: 100% !important;
-                                                        }
-                                                    }
-                                                `}</style>
-                                                <div className="att-report-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '15px', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
-                                                    <div className="att-search-col">
-                                                        <input
-                                                            type="search"
-                                                            placeholder="Search..."
-                                                            value={searchTerm}
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                                            style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                        />
+                                                <div
+                                                    className="row mb-2"
+                                                    style={{
+                                                        marginBottom: '10px',
+                                                        display: isMobile ? 'flex' : 'block',
+                                                        flexDirection: isMobile ? 'column' : 'row',
+                                                        alignItems: isMobile ? 'center' : 'stretch',
+                                                        gap: isMobile ? '15px' : '0'
+                                                    }}
+                                                >
+                                                    <div
+                                                        className={isMobile ? "" : "col-sm-6"}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: isMobile ? '15px' : '20px',
+                                                            justifyContent: isMobile ? 'center' : 'flex-start',
+                                                            flexWrap: 'wrap'
+                                                        }}
+                                                    >
+                                                        <div className="dataTables_length">
+                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                                Records:
+                                                                <select
+                                                                    value={recordsPerPage}
+                                                                    onChange={(e) => {
+                                                                        setRecordsPerPage(Number(e.target.value));
+                                                                        setCurrentPage(1);
+                                                                    }}
+                                                                    className="form-control input-sm"
+                                                                    style={{ width: '80px', margin: '0 10px' }}
+                                                                >
+                                                                    <option value="10">10</option>
+                                                                    <option value="25">25</option>
+                                                                    <option value="50">50</option>
+                                                                    <option value="100">100</option>
+                                                                    <option value="-1">All</option>
+                                                                </select>
+                                                            </label>
+                                                        </div>
+                                                        <div className="dataTables_filter">
+                                                            <input
+                                                                type="search"
+                                                                className="form-control input-sm"
+                                                                placeholder="Search..."
+                                                                style={{
+                                                                    marginLeft: isMobile ? '0' : '10px',
+                                                                    display: 'inline-block',
+                                                                    width: '180px',
+                                                                    border: 'none',
+                                                                    borderBottom: '1px solid #ccc',
+                                                                    borderRadius: '0',
+                                                                    boxShadow: 'none',
+                                                                    backgroundColor: 'transparent',
+                                                                    paddingLeft: '0',
+                                                                    outline: 'none',
+                                                                    textAlign: isMobile ? 'center' : 'left'
+                                                                }}
+                                                                value={searchTerm}
+                                                                onChange={(e) => {
+                                                                    setSearchTerm(e.target.value);
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <div className="att-btn-col">
+                                                    <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
                                                         <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy">
+                                                            <button className="btn btn-default btn-sm" onClick={handleCopy} title="Copy" style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                                 <i className="fa fa-files-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel">
+                                                            <button className="btn btn-default btn-sm" onClick={handleExcel} title="Excel">
                                                                 <i className="fa fa-file-excel-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV">
+                                                            <button className="btn btn-default btn-sm" onClick={handleCSV} title="CSV">
                                                                 <i className="fa fa-file-text-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF">
+                                                            <button className="btn btn-default btn-sm" onClick={handlePDF} title="PDF">
                                                                 <i className="fa fa-file-pdf-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print">
+                                                            <button className="btn btn-default btn-sm" onClick={handlePrint} title="Print">
                                                                 <i className="fa fa-print"></i>
                                                             </button>
                                                             <div className="btn-group">
-                                                                <button className="btn btn-default btn-sm dt-button" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
                                                                     <i className="fa fa-columns"></i>
                                                                 </button>
                                                                 {showColumnsDropdown && (
-                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                                         {columns.map((col, idx) => (
-                                                                            <li key={idx}>
-                                                                                <label>
-                                                                                    <input type="checkbox" checked={!hiddenColumns.includes(idx)} onChange={() => toggleColumnVisibility(idx)} /> {col.label}
-                                                                                </label>
-                                                                            </li>
+                                                                            <label key={idx} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                                <input type="checkbox" checked={!hiddenColumns.includes(idx)} onChange={() => toggleColumnVisibility(idx)} style={{ marginRight: '6px' }} />
+                                                                                {col.label}
+                                                                            </label>
                                                                         ))}
-                                                                    </ul>
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -358,12 +420,12 @@ const AttendanceReport = () => {
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {filteredList.map((student, index) => {
+                                                            {currentRecords.map((student, index) => {
                                                                 const attLabel = student.att_type || 'Unknown';
                                                                 const attClass = getClassForType(attLabel);
                                                                 return (
                                                                     <tr key={index}>
-                                                                        {!hiddenColumns.includes(0) && <td>{filteredList.indexOf(student) + 1}</td>}
+                                                                        {!hiddenColumns.includes(0) && <td>{indexOfFirstItem + index + 1}</td>}
                                                                         {!hiddenColumns.includes(1) && <td>{student.admission_no}</td>}
                                                                         {!hiddenColumns.includes(2) && <td>{student.roll_no}</td>}
                                                                         {!hiddenColumns.includes(3) && <td>{student.firstname} {student.lastname}</td>}
@@ -378,6 +440,33 @@ const AttendanceReport = () => {
                                                             })}
                                                         </tbody>
                                                     </table>
+                                                </div>
+                                                <div className="row" style={{ display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0', marginTop: '10px' }}>
+                                                    <div className={isMobile ? "text-center" : "col-sm-5"}>
+                                                        <div className="dataTables_info">
+                                                            Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
+                                                        </div>
+                                                    </div>
+                                                    <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                        <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
+                                                            <ul className="pagination" style={{ margin: 0 }}>
+                                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
+                                                                </li>
+                                                                {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
+                                                                    const p = i + 1;
+                                                                    return (
+                                                                        <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                                                            <a href="#" onClick={(e) => { e.preventDefault(); changePage(p); }}>{p}</a>
+                                                                        </li>
+                                                                    );
+                                                                })}
+                                                                <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
