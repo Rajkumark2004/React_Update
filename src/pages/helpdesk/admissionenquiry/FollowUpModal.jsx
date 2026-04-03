@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { api } from '../../../services/api';
 import { toast } from 'react-hot-toast';
 
@@ -172,8 +173,8 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
 
   if (!show) return null;
 
-  return (
-    <div className="modal fade in" style={{ display: 'block', background: 'rgba(0,0,0,0.5)', overflowY: 'auto' }}>
+  return ReactDOM.createPortal(
+    <div className="modal fade in" style={{ display: 'block', background: 'rgba(0,0,0,0.5)', overflowY: 'auto', zIndex: 1050 }}>
       <div className="modal-dialog modal-xl">
         <div className="modal-content">
 
@@ -331,7 +332,8 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

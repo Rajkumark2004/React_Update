@@ -19,6 +19,17 @@ const DisableReasonEdit = () => {
     });
     const [results, setResults] = useState([]);
 
+    // Responsive state
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     // Fetch Data
     useEffect(() => {
         const fetchData = async () => {
@@ -97,13 +108,13 @@ const DisableReasonEdit = () => {
     const canDelete = true;
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
-                        <div className="col-md-4">
+                        <div className={isMobile ? "col-xs-12" : "col-md-4"}>
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title"><i className="fa fa-users"></i> Edit Disable Reason</h3>
@@ -135,7 +146,7 @@ const DisableReasonEdit = () => {
                         </div>
 
                         {/* List Column */}
-                        <div className="col-md-8">
+                        <div className={isMobile ? "col-xs-12" : "col-md-8"}>
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title"><i className="fa fa-users"></i> Disable Reason List</h3>
@@ -154,8 +165,8 @@ const DisableReasonEdit = () => {
                                                     <tbody>
                                                         {results.map((value) => (
                                                             <tr key={value.id}>
-                                                                <td>{value.reason}</td>
-                                                                <td className="text-right">
+                                                                <td style={{ wordBreak: 'break-word' }}>{value.reason}</td>
+                                                                <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                                                                     {canEdit && (
                                                                         <Link
                                                                             to={`/admin/disable_reason/edit/${value.id}`}
@@ -166,7 +177,6 @@ const DisableReasonEdit = () => {
                                                                             <i className="fa fa-pencil"></i>
                                                                         </Link>
                                                                     )}
-                                                                    {/* Mock Delete Link */}
                                                                     {canDelete && (
                                                                         <a
                                                                             href="#"

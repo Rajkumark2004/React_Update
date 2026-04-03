@@ -74,7 +74,7 @@ const Source = () => {
 
     // Pagination and responsive state
     const [currentPage, setCurrentPage] = useState(1);
-    const [recordsPerPage, setRecordsPerPage] = useState(10);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
     const [searchTerm, setSearchTerm] = useState(''); // Global search term
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);

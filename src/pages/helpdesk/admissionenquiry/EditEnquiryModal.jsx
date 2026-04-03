@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../../services/api';
 import { sanitizeName, sanitizePhone, validateName, validatePhone, validateDateRange } from '../../../utils/validation';
@@ -262,8 +263,8 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, staff
 
     if (!show) return null;
 
-    return (
-        <div className="modal fade in" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" role="dialog">
+    return ReactDOM.createPortal(
+        <div className="modal fade in" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050, overflowY: 'auto' }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content modal-media-content">
                     <div className="modal-header modal-media-header">
@@ -531,7 +532,8 @@ const EditEnquiryModal = ({ show, onClose, enquiry, classList, sourceList, staff
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

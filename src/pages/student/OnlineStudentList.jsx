@@ -1,14 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Loader from '../../components/Loader';
+import Footer from '../../components/Footer';
 
 import FollowUpModal from '../../components/FollowUpModal';
 
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+
 
 const OnlineStudentList = () => {
     // State
@@ -18,7 +21,47 @@ const OnlineStudentList = () => {
     const [showFollowUpModal, setShowFollowUpModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [initialLoading, setInitialLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [printLoading, setPrintLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    // Column definitions
+    const columns = [
+        { key: 'ref_no', label: 'Reference No', sortKey: 'ref_no' },
+        { key: 'admission_no', label: 'Admission No', sortKey: 'admission_no' },
+        { key: 'name', label: 'Student Name', sortKey: 'name' },
+        { key: 'class_name', label: 'Class', sortKey: 'class_name' },
+        { key: 'father_name', label: 'Father Name', sortKey: 'father_name' },
+        { key: 'dob', label: 'Date Of Birth', sortKey: 'dob' },
+        { key: 'gender', label: 'Gender', sortKey: 'gender' },
+        { key: 'category', label: 'Category', sortKey: 'category' },
+        { key: 'mobile', label: 'Mobile Number', sortKey: 'mobile' },
+        { key: 'form_status', label: 'Form Status', sortKey: 'form_status' },
+        { key: 'enrolled', label: 'Enrolled', sortKey: 'enrolled' },
+        { key: 'created_at', label: 'Created At', sortKey: 'created_at' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     // Mock settings (replace with actual context/API later)
     const sch_setting = {
@@ -49,7 +92,6 @@ const OnlineStudentList = () => {
                     }));
                     setStudents(formattedStudents);
                 } else {
-                    // Fallback if data is not in expected format
                     console.error("Invalid response format", response);
                 }
             } catch (error) {
@@ -98,7 +140,6 @@ const OnlineStudentList = () => {
 
     const printAdmission = async (d) => {
         try {
-            // Fetch header/footer settings for online_admission
             let headerImgUrl = '';
             let footerText = '';
             try {
@@ -117,7 +158,6 @@ const OnlineStudentList = () => {
             }
 
 
-            const studentName = [d.student?.firstname, d.student?.middlename, d.student?.lastname].filter(Boolean).join(' ');
             const refNo = d.reference_no || '-';
             const appDate = d.student?.application_date || d.created_at || '-';
             const formStatus = d.form_status === '1' ? 'Submitted' : 'Not Submitted';
@@ -254,7 +294,7 @@ const OnlineStudentList = () => {
       window.focus();
       window.print();
     }
-  <\/script>
+  </script>
 </body>
 </html>`;
 
@@ -273,35 +313,13 @@ const OnlineStudentList = () => {
         printTable(headers, rows, 'Student List');
     };
 
-    const handleOpenFollowUp = (student) => {
-        setSelectedStudent(student);
-        setShowFollowUpModal(true);
-    };
-
     const handleCloseFollowUp = () => {
         setShowFollowUpModal(false);
         setSelectedStudent(null);
     };
 
     // Export helpers
-    const getExportData = () => {
-        const headers = ['Reference No', 'Student Name', 'Class'];
-        if (sch_setting.father_name) headers.push('Father Name');
-        headers.push('Date Of Birth', 'Gender', 'Category');
-        if (sch_setting.mobile_no) headers.push('Mobile Number');
-        headers.push('Form Status', 'Enrolled', 'Created At');
-
-        const rows = filteredStudents.map(s => {
-            const row = [s.ref_no, s.name, s.class_name];
-            if (sch_setting.father_name) row.push(s.father_name);
-            row.push(s.dob, s.gender, s.category);
-            if (sch_setting.mobile_no) row.push(s.mobile);
-            row.push(s.form_status || '', s.enrolled, s.created_at);
-            return row.map(v => String(v ?? ''));
-        });
-
-        return { headers, rows };
-    };
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredStudents, (row, key) => row[key]);
 
     const handleCopy = () => {
         const { headers, rows } = getExportData();
@@ -355,26 +373,39 @@ const OnlineStudentList = () => {
         )
     );
 
+    // Pagination Logic
+    const totalItems = filteredStudents.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
+
+    const changePage = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
+        setCurrentPage(pageNumber);
+    };
+
     const getSortIcon = (columnName) => {
         if (sortConfig.key !== columnName) {
-            return <i className="fa fa-sort pull-right" style={{ color: '#ccc', opacity: 0.5 }}></i>;
+            return <i className="fa fa-angle-up pull-right" style={{ color: '#ccc', opacity: 0.5 }}></i>;
         }
         return sortConfig.direction === 'ascending' ?
-            <i className="fa fa-sort-asc pull-right"></i> :
-            <i className="fa fa-sort-desc pull-right"></i>;
+            <i className="fa fa-angle-up pull-right"></i> :
+            <i className="fa fa-angle-down pull-right"></i>;
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '828px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
-                    {initialLoading ? (
-                        <Loader />
-                    ) : (
-                        <div className="row">
-                            <div className="col-md-12">
+                    <div className="row">
+                        <div className="col-md-12">
+                            {initialLoading ? (
+                                <Loader />
+                            ) : (
                                 <div className="box box-primary" id="printable-list-container">
                                     <div className="box-header with-border">
                                         <h3 className="box-title">Student List</h3>
@@ -386,120 +417,148 @@ const OnlineStudentList = () => {
                                         </div>
                                     </div>
                                     <div className="box-body">
-                                        <div className="table-responsive mailbox-messages overflow-visible">
-
-                                            {students.length > 0 && (
-                                                <div className="row" style={{ marginBottom: '10px' }}>
-                                                    <div className="col-md-6">
-                                                        <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-xs" title="Copy" onClick={handleCopy}>
-                                                                <i className="fa fa-files-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" title="Excel" onClick={handleDownloadExcel}>
-                                                                <i className="fa fa-file-excel-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" title="CSV" onClick={handleDownloadCSV}>
-                                                                <i className="fa fa-file-text-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" title="PDF" onClick={handleDownloadPDF}>
-                                                                <i className="fa fa-file-pdf-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" title="Print" onClick={handleListPrint}>
-                                                                <i className="fa fa-print"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <div className="dataTables_filter" style={{ textAlign: 'right' }}>
-                                                            <input
-                                                                type="search"
-                                                                placeholder="Search..."
-                                                                value={searchTerm}
-                                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                                style={{
-                                                                    border: 'none',
-                                                                    borderBottom: '1px solid #ccc',
-                                                                    outline: 'none',
-                                                                    padding: '5px 0',
-                                                                    background: 'transparent',
-                                                                    width: 'auto'
+                                        <div className="mailbox-messages">
+                                            <div
+                                                className="row mb-2"
+                                                style={{
+                                                    marginBottom: '10px',
+                                                    display: isMobile ? 'flex' : 'block',
+                                                    flexDirection: isMobile ? 'column' : 'row',
+                                                    alignItems: isMobile ? 'center' : 'stretch',
+                                                    gap: isMobile ? '15px' : '0'
+                                                }}
+                                            >
+                                                <div
+                                                    className={isMobile ? "" : "col-sm-6"}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: isMobile ? '15px' : '20px',
+                                                        justifyContent: isMobile ? 'center' : 'flex-start',
+                                                        flexWrap: 'wrap'
+                                                    }}
+                                                >
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
                                                                 }}
-                                                            />
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <div className="dataTables_filter">
+                                                        <input
+                                                            type="search"
+                                                            className="form-control input-sm"
+                                                            placeholder="Search..."
+                                                            style={{
+                                                                marginLeft: isMobile ? '0' : '10px',
+                                                                display: 'inline-block',
+                                                                width: isMobile ? '180px' : '180px',
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                borderRadius: '0',
+                                                                boxShadow: 'none',
+                                                                backgroundColor: 'transparent',
+                                                                paddingLeft: '0',
+                                                                outline: 'none',
+                                                                textAlign: isMobile ? 'center' : 'left'
+                                                            }}
+                                                            value={searchTerm}
+                                                            onChange={(e) => {
+                                                                setSearchTerm(e.target.value);
+                                                                setCurrentPage(1);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
+                                                    <div className="dt-buttons btn-group">
+                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={handleCopy} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                            <i className="fa fa-files-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="Excel" onClick={handleDownloadExcel}>
+                                                            <i className="fa fa-file-excel-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="CSV" onClick={handleDownloadCSV}>
+                                                            <i className="fa fa-file-text-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={handleDownloadPDF}>
+                                                            <i className="fa fa-file-pdf-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm" title="Print" onClick={handleListPrint}>
+                                                            <i className="fa fa-print"></i>
+                                                        </button>
+                                                        <div className="btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                                                <i className="fa fa-columns"></i>
+                                                            </button>
+                                                            {showColumnsDropdown && (
+                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                    {columns.map(col => (
+                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                            <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                            {col.label}
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )}
+                                            </div>
 
-                                            <table className="table table-striped table-bordered table-hover student-list">
+                                            <div className="table-responsive overflow-visible-lg">
+                                                <table className="table table-striped table-bordered table-hover student-list">
                                                 <thead>
                                                     <tr>
-                                                        <th style={{ width: '5%', cursor: 'pointer' }} onClick={() => handleSort('ref_no')}>
-                                                            Reference No {getSortIcon('ref_no')}
-                                                        </th>
-                                                        <th style={{ cursor: 'pointer' }} onClick={() => handleSort('name')}>
-                                                            Student Name {getSortIcon('name')}
-                                                        </th>
-                                                        <th className="white-space-nowrap" style={{ cursor: 'pointer' }} onClick={() => handleSort('class_name')}>
-                                                            Class {getSortIcon('class_name')}
-                                                        </th>
-                                                        {sch_setting.father_name && (
-                                                            <th style={{ cursor: 'pointer' }} onClick={() => handleSort('father_name')}>
-                                                                Father Name {getSortIcon('father_name')}
+                                                        {columns.map(col => visibleColumns.has(col.key) && (
+                                                            <th key={col.key} className={col.sortKey ? "sorting" : ""} style={col.sortKey ? { cursor: 'pointer' } : {}} onClick={col.sortKey ? () => handleSort(col.sortKey) : undefined}>
+                                                                {col.label} {col.sortKey && getSortIcon(col.sortKey)}
                                                             </th>
-                                                        )}
-                                                        <th style={{ cursor: 'pointer' }} onClick={() => handleSort('dob')}>
-                                                            Date Of Birth {getSortIcon('dob')}
-                                                        </th>
-                                                        <th style={{ cursor: 'pointer' }} onClick={() => handleSort('gender')}>
-                                                            Gender {getSortIcon('gender')}
-                                                        </th>
-                                                        <th style={{ cursor: 'pointer' }} onClick={() => handleSort('category')}>
-                                                            Category {getSortIcon('category')}
-                                                        </th>
-                                                        {sch_setting.mobile_no && (
-                                                            <th style={{ width: '10%', cursor: 'pointer' }} onClick={() => handleSort('mobile')}>
-                                                                Student Mobile Number {getSortIcon('mobile')}
-                                                            </th>
-                                                        )}
-                                                        <th style={{ cursor: 'pointer' }} onClick={() => handleSort('form_status')}>
-                                                            Form Status {getSortIcon('form_status')}
-                                                        </th>
-
-                                                        <th style={{ cursor: 'pointer' }} onClick={() => handleSort('enrolled')}>
-                                                            Enrolled {getSortIcon('enrolled')}
-                                                        </th>
-                                                        <th style={{ cursor: 'pointer' }} onClick={() => handleSort('created_at')}>
-                                                            Created At {getSortIcon('created_at')}
-                                                        </th>
+                                                        ))}
                                                         <th className="text-right noExport">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {filteredStudents.length === 0 ? (
+                                                    {loading ? (
                                                         <tr>
-                                                            <td colSpan="13" className="dataTables_empty text-center">No data available in table</td>
+                                                            <td colSpan={visibleColumns.size + 1} className="text-center">
+                                                                <Loader type="table" rows={recordsPerPage === -1 ? 10 : recordsPerPage} />
+                                                            </td>
+                                                        </tr>
+                                                    ) : currentItems.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={visibleColumns.size + 1} className="dataTables_empty text-center">No data available in table</td>
                                                         </tr>
                                                     ) : (
-                                                        filteredStudents.map(student => (
+                                                        currentItems.map(student => (
                                                             <tr key={student.id}>
-                                                                <td>{student.ref_no}</td>
-                                                                <td>{student.name}</td>
-                                                                <td className="white-space-nowrap">{student.class_name}</td>
-                                                                {sch_setting.father_name && <td>{student.father_name}</td>}
-                                                                <td>{student.dob}</td>
-                                                                <td>{student.gender}</td>
-                                                                <td>{student.category}</td>
-                                                                {sch_setting.mobile_no && <td>{student.mobile}</td>}
-                                                                <td>
-                                                                    <span className={`label ${student.form_status === 'submitted' ? 'label-success' : 'label-danger'}`}>
-                                                                        {student.form_status ? student.form_status.replace(/_/g, ' ') : ''}
-                                                                    </span>
-                                                                </td>
-
-                                                                <td>
-                                                                    <i className={`fa ${student.enrolled === 'Yes' ? 'fa-check' : 'fa-times'}`} style={{ color: student.enrolled === 'Yes' ? 'green' : 'red' }}></i>
-                                                                </td>
-                                                                <td>{student.created_at}</td>
+                                                                {columns.map(col => visibleColumns.has(col.key) && (
+                                                                    <td key={col.key} style={{ wordBreak: 'break-word' }}>
+                                                                        {col.key === 'form_status' ? (
+                                                                            <span className={`label ${student.form_status === 'submitted' ? 'label-success' : 'label-danger'}`}>
+                                                                                {student.form_status ? student.form_status.replace(/_/g, ' ') : ''}
+                                                                            </span>
+                                                                        ) : col.key === 'enrolled' ? (
+                                                                            <i className={`fa ${student.enrolled === 'Yes' ? 'fa-check' : 'fa-times'}`} style={{ color: student.enrolled === 'Yes' ? 'green' : 'red' }}></i>
+                                                                        ) : col.key === 'name' ? (
+                                                                            <Link to={`/student/view/${student.id}`}>{student.name}</Link>
+                                                                        ) : (student[col.key] || '')}
+                                                                    </td>
+                                                                ))}
                                                                 <td className="text-right white-space-nowrap noExport">
                                                                     <button className="btn btn-default btn-xs" data-toggle="tooltip" title="Print" style={{ marginRight: '3px' }} onClick={() => handlePrint(student.ref_no)} disabled={printLoading}>
                                                                         <i className="fa fa-print"></i>
@@ -512,24 +571,44 @@ const OnlineStudentList = () => {
                                                         ))
                                                     )}
                                                 </tbody>
-                                            </table>
+                                                </table>
+                                            </div>
 
-                                            <div className="row">
-                                                <div className="col-sm-5">
-                                                    <div className="dataTables_info" role="status" aria-live="polite">
-                                                        Records {filteredStudents.length > 0 ? 1 : 0} to {filteredStudents.length} of {filteredStudents.length} entries
+                                            <div className="box-footer">
+                                                <div className="row" style={{ display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
+                                                    <div className={isMobile ? "text-center" : "col-sm-5"}>
+                                                        <div className="dataTables_info">
+                                                            Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="col-sm-7">
-                                                    {/* Pagination controls can go here if pagination is implemented */}
+                                                    <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                        <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
+                                                            <ul className="pagination" style={{ margin: 0 }}>
+                                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
+                                                                </li>
+                                                                {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
+                                                                    const p = i + 1;
+                                                                    return (
+                                                                        <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                                                            <a href="#" onClick={(e) => { e.preventDefault(); changePage(p); }}>{p}</a>
+                                                                        </li>
+                                                                    );
+                                                                })}
+                                                                <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </section>
 
 
@@ -540,6 +619,7 @@ const OnlineStudentList = () => {
                     studentName={selectedStudent?.name}
                 />
             </div>
+            <Footer />
         </div>
     );
 };

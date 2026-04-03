@@ -58,7 +58,7 @@ const ReferenceView = () => {
 
     // Pagination and responsive state
     const [currentPage, setCurrentPage] = useState(1);
-    const [recordsPerPage, setRecordsPerPage] = useState(10);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
     const [searchTerm, setSearchTerm] = useState(''); // Global search term
     const [initialLoading, setInitialLoading] = useState(true);
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);

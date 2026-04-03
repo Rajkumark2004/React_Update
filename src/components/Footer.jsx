@@ -102,7 +102,7 @@ const Footer = () => {
                             <ul className="nav navbar-nav headertopmenu">
                                 <li className="dropdown user-menu">
                                     <a
-                                        style={{ padding: '15px 12px' }}
+                                        style={{ padding: '0px' }}
                                         href={`/admin/staff/profile/${userData.id}`}
                                         data-original-title="My Profile"
                                         className="profile-text"
@@ -112,8 +112,8 @@ const Footer = () => {
                                             className="topuser-image"
                                             alt="User Image"
                                         />
-                                      
-                                      
+
+
                                         {' '}My Profile
                                     </a>
                                     <ul className="dropdown-menu dropdown-user menuboxshadow">

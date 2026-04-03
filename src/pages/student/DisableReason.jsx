@@ -6,7 +6,7 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import '../../utils/include_files';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 import { toast } from 'react-hot-toast';
 
 const DisableReason = () => {
@@ -19,6 +19,17 @@ const DisableReason = () => {
     const [loading, setLoading] = useState(true);
     const [results, setResults] = useState([]);
 
+    // Responsive state
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     useEffect(() => {
         fetchDisableReasons();
     }, []);
@@ -26,7 +37,6 @@ const DisableReason = () => {
     const fetchDisableReasons = async () => {
         try {
             setLoading(true);
-            // Use POST api with empty name to fetch list as per user requirement (refactored to getDisableReasonsList)
             const response = await api.getDisableReasonsList();
             if (response && response.data) {
                 setResults(response.data);
@@ -50,7 +60,7 @@ const DisableReason = () => {
         item.reason?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Column visibility (same pattern as EnquiryView)
+    // Column visibility
     const columns = [
         { key: 'reason', label: 'Disable Reason' },
     ];
@@ -66,21 +76,23 @@ const DisableReason = () => {
     };
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [recordsPerPage, setRecordsPerPage] = useState(10);
 
     // Pagination Logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const totalItems = filteredResults.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredResults.length / itemsPerPage);
 
     const changePage = (pageNumber) => {
         if (pageNumber < 1 || pageNumber > totalPages) return;
         setCurrentPage(pageNumber);
     };
 
-    // Edit State
-
+    // Export helpers
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredResults, (row, key) => row[key]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -108,11 +120,9 @@ const DisableReason = () => {
         setLoading(true);
         try {
             let response;
-            // Since edit is now on a separate page, we only handle add here
             response = await api.addDisableReason(formData);
 
             if (response.status) {
-                // Refresh list
                 fetchDisableReasons();
                 setFormData({ name: '' });
                 toast.success(response.message || 'Record Saved Successfully');
@@ -128,10 +138,10 @@ const DisableReason = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 {/* Main content */}
                 <section className="content">
                     <div className="row">
@@ -145,14 +155,7 @@ const DisableReason = () => {
                                     <li><Link to="/student/create"><img src="/images/student_admission.png" alt="icon2" className="img-fluid" style={{ width: '20px' }} /> Student Admission</Link></li>
                                     <li><Link to="/admin/onlinestudent"><img src="/images/online_admission.png" alt="icon3" className="img-fluid" style={{ width: '20px' }} /> Online Admission</Link></li>
                                     <li><Link to="/student/disabled"><img src="/images/disabled_students.png" alt="icon4" className="img-fluid" style={{ width: '20px' }} /> Disabled Students</Link></li>
-                                    {/* <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/student_details.png" alt="icon5" className="img-fluid" style={{ width: '20px' }} /> Multi Class Student</a></li>
-                                    <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/bulk_delete.png" alt="icon6" className="img-fluid" style={{ width: '20px' }} /> Bulk Delete</a></li>
-                                    <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/student_category.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Student Categories</a></li>
-                                    <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/student_house.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Student House</a></li>*/}
                                     <li><Link to="/admin/disable-reason" className="active"><img src="/images/disabled_reason.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Disable Reason</Link></li>
-                                    {/* <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/admission_intake.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Admissions Intake</a></li>
-                                    <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/behavioural_note.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Behavioural Note</a></li>
-                                    <li><a href="#" onClick={(e) => e.preventDefault()}><img src="/images/my_day_today.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> My Day Today</a></li>*/}
                                 </ul>
                             </div>
                         </div>
@@ -167,7 +170,6 @@ const DisableReason = () => {
                                             </div>
                                             <form id="form1" onSubmit={handleSubmit} name="employeeform" method="post" acceptCharset="utf-8">
                                                 <div className="box-body">
-                                                    {/* Flash messages would hide here */}
                                                     <div className="row">
                                                         <input type="hidden" id="reason_id" name="reason_id" />
                                                         <div className="col-sm-12">
@@ -206,53 +208,98 @@ const DisableReason = () => {
                                         <div className="box-body">
                                             <div className="download_label">Disable Reason List</div>
 
-                                            {/* DataTables Controls */}
-                                            <div className="row" style={{ marginBottom: '10px' }}>
-                                                <div className="col-md-6">
+                                            {/* Responsive Toolbar */}
+                                            <div
+                                                className="row mb-2"
+                                                style={{
+                                                    marginBottom: '10px',
+                                                    display: isMobile ? 'flex' : 'block',
+                                                    flexDirection: isMobile ? 'column' : 'row',
+                                                    alignItems: isMobile ? 'center' : 'stretch',
+                                                    gap: isMobile ? '15px' : '0'
+                                                }}
+                                            >
+                                                <div
+                                                    className={isMobile ? "" : "col-sm-6"}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: isMobile ? '15px' : '20px',
+                                                        justifyContent: isMobile ? 'center' : 'flex-start',
+                                                        flexWrap: 'wrap'
+                                                    }}
+                                                >
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <div className="dataTables_filter">
+                                                        <input
+                                                            type="search"
+                                                            className="form-control input-sm"
+                                                            placeholder="Search..."
+                                                            style={{
+                                                                marginLeft: isMobile ? '0' : '10px',
+                                                                display: 'inline-block',
+                                                                width: '180px',
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                borderRadius: '0',
+                                                                boxShadow: 'none',
+                                                                backgroundColor: 'transparent',
+                                                                paddingLeft: '0',
+                                                                outline: 'none',
+                                                                textAlign: isMobile ? 'center' : 'left'
+                                                            }}
+                                                            value={searchTerm}
+                                                            onChange={(e) => {
+                                                                setSearchTerm(e.target.value);
+                                                                setCurrentPage(1);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
                                                     <div className="dt-buttons btn-group">
-                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => {
-                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
-                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
-                                                            copyToClipboard(headers, rows);
-                                                        }}>
+                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                             <i className="fa fa-files-o"></i>
                                                         </button>
-                                                        <button className="btn btn-default btn-sm" title="CSV" onClick={() => {
-                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
-                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
-                                                            downloadCSV(headers, rows, 'disable_reasons.csv');
-                                                        }}>
+                                                        <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'disable_reasons.csv'); }}>
                                                             <i className="fa fa-file-text-o"></i>
                                                         </button>
-                                                        <button className="btn btn-default btn-sm" title="Excel" onClick={() => {
-                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
-                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
-                                                            downloadExcel(headers, rows, 'disable_reasons.xls');
-                                                        }}>
+                                                        <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'disable_reasons.xls'); }}>
                                                             <i className="fa fa-file-excel-o"></i>
                                                         </button>
-                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => {
-                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
-                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
-                                                            downloadPDF(headers, rows, 'disable_reasons.pdf', 'Disable Reason List');
-                                                        }}>
+                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'disable_reasons.pdf', 'Disable Reason List'); }}>
                                                             <i className="fa fa-file-pdf-o"></i>
                                                         </button>
-                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => {
-                                                            const headers = columns.filter(c => visibleColumns.has(c.key)).map(c => c.label);
-                                                            const rows = filteredResults.map(r => columns.filter(c => visibleColumns.has(c.key)).map(c => String(r[c.key] ?? '')));
-                                                            printTable(headers, rows, 'Disable Reason List');
-                                                        }}>
+                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Disable Reason List'); }}>
                                                             <i className="fa fa-print"></i>
                                                         </button>
                                                         <div className="btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
                                                                 <i className="fa fa-columns"></i>
                                                             </button>
                                                             {showColumnsDropdown && (
-                                                                <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                                     {columns.map(col => (
-                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
                                                                             <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
                                                                             {col.label}
                                                                         </label>
@@ -262,31 +309,14 @@ const DisableReason = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="col-md-6">
-                                                    <div className="dataTables_filter" style={{ textAlign: 'right' }}>
-                                                        <input
-                                                            type="search"
-                                                            placeholder="Search..."
-                                                            value={searchTerm}
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                                            style={{
-                                                                border: 'none',
-                                                                borderBottom: '1px solid #ccc',
-                                                                outline: 'none',
-                                                                padding: '5px 0',
-                                                                background: 'transparent',
-                                                                width: 'auto'
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
                                             </div>
-                                            {/* Flash messages here */}
+
+                                            {/* Table */}
                                             <div className="mailbox-messages">
                                                 {loading ? (
                                                     <Loader rows={5} />
                                                 ) : (
-                                                    <div className="slide-in">
+                                                    <div className="slide-in table-responsive overflow-visible-lg">
                                                         <table className="table table-hover table-striped table-bordered example">
                                                             <thead>
                                                                 <tr>
@@ -299,7 +329,7 @@ const DisableReason = () => {
                                                             <tbody>
                                                                 {currentItems.map((value) => (
                                                                     <tr key={value.id}>
-                                                                        {visibleColumns.has('reason') && <td>{value.reason}</td>}
+                                                                        {visibleColumns.has('reason') && <td style={{ wordBreak: 'break-word' }}>{value.reason}</td>}
                                                                         <td className="text-right">
                                                                             {canEdit && (
                                                                                 <Link
@@ -332,26 +362,29 @@ const DisableReason = () => {
                                                 )}
                                             </div>
 
-                                            {/* Pagination Footer */}
-                                            <div className="row">
-                                                <div className="col-md-5">
+                                            {/* Responsive Pagination Footer */}
+                                            <div className="row" style={{ display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
+                                                <div className={isMobile ? "text-center" : "col-sm-5"}>
                                                     <div className="dataTables_info">
-                                                        Records: {filteredResults.length > 0 ? indexOfFirstItem + 1 : 0} to {Math.min(indexOfLastItem, filteredResults.length)} of {filteredResults.length}
+                                                        Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
                                                     </div>
                                                 </div>
-                                                <div className="col-md-7">
-                                                    <div className="dataTables_paginate paging_simple_numbers">
-                                                        <ul className="pagination">
+                                                <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                    <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
+                                                        <ul className="pagination" style={{ margin: 0 }}>
                                                             <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}>Previous</a>
+                                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
                                                             </li>
-                                                            {[...Array(totalPages)].map((_, i) => (
-                                                                <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(i + 1); }}>{i + 1}</a>
-                                                                </li>
-                                                            ))}
-                                                            <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}>Next</a>
+                                                            {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
+                                                                const p = i + 1;
+                                                                return (
+                                                                    <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                                                        <a href="#" onClick={(e) => { e.preventDefault(); changePage(p); }}>{p}</a>
+                                                                    </li>
+                                                                );
+                                                            })}
+                                                            <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                                <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
                                                             </li>
                                                         </ul>
                                                     </div>

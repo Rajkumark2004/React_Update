@@ -53,7 +53,7 @@ const EnquiryView = () => {
 
     // Pagination and responsive state
     const [currentPage, setCurrentPage] = useState(1);
-    const [recordsPerPage, setRecordsPerPage] = useState(10);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
     const [searchTerm, setSearchTerm] = useState(''); // Global search term
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -335,10 +335,10 @@ const EnquiryView = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '828px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 {/* Content Header */}
                 <section className="content-header">
                     <h1>

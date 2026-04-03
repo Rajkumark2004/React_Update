@@ -40,23 +40,69 @@ const StudentSearch = () => {
     const [sections, setSections] = useState([]);
 
     const [tableSearchTerm, setTableSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     // Sorting Hook
-    const { sortedData: sortedStudents, requestSort, getSortIcon } = useTableSort(students);
+    const { sortedData: sortedStudents, requestSort, getSortIcon } = useTableSort(students, {
+        asc: <i className="fa fa-angle-up pull-right"></i>,
+        desc: <i className="fa fa-angle-down pull-right"></i>,
+        default: <i className="fa fa-angle-up pull-right" style={{ color: '#ccc', opacity: 0.5 }}></i>
+    });
+
+    // Column definitions
+    const columns = [
+        { key: 'admission_no', label: 'Admission No', sortKey: 'admission_no' },
+        { key: 'name', label: 'Student Name', sortKey: 'name' },
+        { key: 'class', label: 'Class', sortKey: 'class' },
+        { key: 'father_name', label: 'Father Name', sortKey: 'father_name' },
+        { key: 'dob', label: 'Date Of Birth', sortKey: 'dob' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'category', label: 'Category' },
+        { key: 'mobile', label: 'Mobile Number' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
 
     // Client-side table filter
     const filteredStudents = sortedStudents.filter(s =>
         tableSearchTerm === '' || Object.values(s).some(val => String(val).toLowerCase().includes(tableSearchTerm.toLowerCase()))
     );
 
-    // Export helpers
-    const getExportData = () => {
-        const headers = ['Admission No', 'Student Name', 'Class', 'Father Name', 'Date Of Birth', 'Gender', 'Category', 'Mobile Number'];
-        const rows = filteredStudents.map(s => [
-            s.admission_no, s.name, s.class, s.father_name, s.dob, s.gender, s.category, s.mobile
-        ].map(v => String(v ?? '')));
-        return { headers, rows };
+    // Calculate pagination
+    const totalItems = filteredStudents.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
+
+    const changePage = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
+        setCurrentPage(pageNumber);
     };
+
+    // Export helpers
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredStudents, (row, key) => row[key]);
 
 
     // Fetch classes on component mount
@@ -113,6 +159,7 @@ const StudentSearch = () => {
 
     const handleSearch = async (e, type) => {
         e.preventDefault();
+        if (loading || initialLoading) return;
         setError('');
 
         setLoading(true);
@@ -179,6 +226,7 @@ const StudentSearch = () => {
             const uniqueStudents = Array.from(new Map(mappedStudents.map(item => [item.id, item])).values());
 
             setStudents(uniqueStudents);
+            setCurrentPage(1); // Reset page on new search
             setTotalRecords(response.total || uniqueStudents.length);
         } catch (err) {
             console.error('Search Error:', err);
@@ -193,10 +241,10 @@ const StudentSearch = () => {
 
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '828px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 {/* Content Header (Page header) */}
                 <section className="content-header">
                     <h1>
@@ -283,7 +331,7 @@ const StudentSearch = () => {
                                                         <div className="col-sm-12">
                                                             <div className="form-group">
 
-                                                                <button type="submit" name="search" value="search_filter" className="btn btn-primary btn-sm pull-right checkbox-toggle" disabled={loading && searchType === 'filter'}>
+                                                                <button type="submit" name="search" value="search_filter" className="btn btn-primary btn-sm pull-right checkbox-toggle">
                                                                     {loading && searchType === 'filter' ? (
                                                                         <><i className="fa fa-spinner fa-spin"></i> Searching...</>
                                                                     ) : (
@@ -313,7 +361,7 @@ const StudentSearch = () => {
                                                                 />
                                                             </div>
                                                             <div className="form-group">
-                                                                <button type="submit" name="search" value="search_full" className="btn btn-primary pull-right btn-sm checkbox-toggle" disabled={loading && searchType === 'keyword'}>
+                                                                <button type="submit" name="search" value="search_full" className="btn btn-primary pull-right btn-sm checkbox-toggle">
                                                                     {loading && searchType === 'keyword' ? (
                                                                         <><i className="fa fa-spinner fa-spin"></i> Searching...</>
                                                                     ) : (
@@ -345,116 +393,171 @@ const StudentSearch = () => {
                                         </li>
                                     </ul>
                                     <div className="tab-content">
-                                        <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} table-responsive no-padding`} id="tab_1">
-                                            <div className="row" style={{ marginBottom: '10px' }}>
-                                                <div className="col-md-6">
+                                        <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} no-padding`} id="tab_1">
+                                            <div
+                                                className="row mb-2"
+                                                style={{
+                                                    marginBottom: '10px',
+                                                    display: isMobile ? 'flex' : 'block',
+                                                    flexDirection: isMobile ? 'column' : 'row',
+                                                    alignItems: isMobile ? 'center' : 'stretch',
+                                                    gap: isMobile ? '15px' : '0'
+                                                }}
+                                            >
+                                                <div
+                                                    className={isMobile ? "" : "col-sm-6"}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: isMobile ? '15px' : '20px',
+                                                        justifyContent: isMobile ? 'center' : 'flex-start',
+                                                        flexWrap: 'wrap'
+                                                    }}
+                                                >
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <div className="dataTables_filter">
+                                                        <input
+                                                            type="search"
+                                                            className="form-control input-sm"
+                                                            placeholder="Search..."
+                                                            style={{
+                                                                marginLeft: isMobile ? '0' : '10px',
+                                                                display: 'inline-block',
+                                                                width: '180px',
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                borderRadius: '0',
+                                                                boxShadow: 'none',
+                                                                backgroundColor: 'transparent',
+                                                                paddingLeft: '0',
+                                                                outline: 'none',
+                                                                textAlign: isMobile ? 'center' : 'left'
+                                                            }}
+                                                            value={tableSearchTerm}
+                                                            onChange={(e) => {
+                                                                setTableSearchTerm(e.target.value);
+                                                                setCurrentPage(1);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
                                                     {filteredStudents.length > 0 && (
                                                         <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-xs" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                                 <i className="fa fa-files-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_list.xls'); }}>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_list.xls'); }}>
                                                                 <i className="fa fa-file-excel-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_list.csv'); }}>
+                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_list.csv'); }}>
                                                                 <i className="fa fa-file-text-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
                                                                 <i className="fa fa-file-pdf-o"></i>
                                                             </button>
-                                                            <button className="btn btn-default btn-xs" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}>
+                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}>
                                                                 <i className="fa fa-print"></i>
                                                             </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="col-md-6">
-                                                    {students.length > 0 && (
-                                                        <div className="dataTables_filter" style={{ textAlign: 'right' }}>
-                                                            <input
-                                                                type="search"
-                                                                placeholder="Search..."
-                                                                value={tableSearchTerm}
-                                                                onChange={(e) => setTableSearchTerm(e.target.value)}
-                                                                style={{
-                                                                    border: 'none',
-                                                                    borderBottom: '1px solid #ccc',
-                                                                    outline: 'none',
-                                                                    padding: '5px 0',
-                                                                    background: 'transparent',
-                                                                    width: 'auto'
-                                                                }}
-                                                            />
+                                                            <div className="btn-group">
+                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showColumnsDropdown && (
+                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                        {columns.map(col => (
+                                                                            <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                                <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                                {col.label}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
-                                            <table className="table table-striped table-bordered table-hover student-list">
-                                                <thead>
-                                                    <tr>
-                                                        <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('admission_no')}>
-                                                            Admission No {getSortIcon('admission_no')}
-                                                        </th>
-                                                        <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('name')}>
-                                                            Student Name {getSortIcon('name')}
-                                                        </th>
-                                                        <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('class')}>
-                                                            Class {getSortIcon('class')}
-                                                        </th>
-                                                        <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('father_name')}>
-                                                            Father Name {getSortIcon('father_name')}
-                                                        </th>
-                                                        <th className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort('dob')}>
-                                                            Date Of Birth {getSortIcon('dob')}
-                                                        </th>
-                                                        <th>Gender</th>
-                                                        <th>Category</th>
-                                                        <th>Mobile Number</th>
-                                                        <th className="text-right noExport">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {filteredStudents.length === 0 ? (
+                                            <div className="table-responsive overflow-visible-lg">
+                                                <table className="table table-striped table-bordered table-hover student-list">
+                                                    <thead>
                                                         <tr>
-                                                            <td colSpan="9" className="text-center">
-                                                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-                                                                    <div style={{ color: '#ffb3b3ff', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
-                                                                    <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
-                                                                    <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
-                                                                </div>
-                                                            </td>
+                                                            {columns.map(col => visibleColumns.has(col.key) && (
+                                                                <th key={col.key} className={col.sortKey ? "sorting" : ""} style={col.sortKey ? { cursor: 'pointer' } : {}} onClick={col.sortKey ? () => requestSort(col.sortKey) : undefined}>
+                                                                    {col.label} {col.sortKey && getSortIcon(col.sortKey)}
+                                                                </th>
+                                                            ))}
+                                                            <th className="text-right noExport">Action</th>
                                                         </tr>
-                                                    ) : (
-                                                        filteredStudents.map((student) => (
-                                                            <tr key={student.id}>
-                                                                <td>{student.admission_no}</td>
-                                                                <td><Link to={`/student/view/${student.id}`}>{student.name}</Link></td>
-                                                                <td>{student.class}</td>
-                                                                <td>{student.father_name}</td>
-                                                                <td>{student.dob}</td>
-                                                                <td>{student.gender}</td>
-                                                                <td>{student.category}</td>
-                                                                <td>{student.mobile}</td>
-                                                                <td className="text-right noExport">
-                                                                    <Link to={`/student/view/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="View">
-                                                                        <i className="fa fa-reorder"></i>
-                                                                    </Link>
-                                                                    <Link to={`/student/edit/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                                        <i className="fa fa-pencil"></i>
-                                                                    </Link>
-                                                                    <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Add Fees">
-                                                                        ₹
-                                                                    </Link>
-
+                                                    </thead>
+                                                    <tbody>
+                                                        {loading ? (
+                                                            <tr>
+                                                                <td colSpan={visibleColumns.size + 1} className="text-center">
+                                                                    <Loader type="table" rows={10} />
                                                                 </td>
                                                             </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                                        ) : filteredStudents.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan={visibleColumns.size + 1} className="text-center">
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                                                                        <div style={{ color: '#ffb3b3ff', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
+                                                                        <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
+                                                                        <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ) : (
+                                                            currentItems.map((student) => (
+                                                                <tr key={student.id}>
+                                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                                        <td key={col.key} style={{ wordBreak: 'break-word' }}>
+                                                                            {col.key === 'name' ? <Link to={`/student/view/${student.id}`}>{student[col.key]}</Link> : student[col.key]}
+                                                                        </td>
+                                                                    ))}
+                                                                    <td className="text-right noExport">
+                                                                        <Link to={`/student/view/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="View">
+                                                                            <i className="fa fa-reorder"></i>
+                                                                        </Link>
+                                                                        <Link to={`/student/edit/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                                            <i className="fa fa-pencil"></i>
+                                                                        </Link>
+                                                                        <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Add Fees">
+                                                                            ₹
+                                                                        </Link>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                         <div className={`tab-pane ${activeTab === 'details' ? 'active' : ''}`} id="tab_2">
-                                            {students.length === 0 ? (
+                                            {loading ? (
+                                                <div className="text-center" style={{ padding: '20px' }}>
+                                                    <Loader type="table" rows={5} />
+                                                </div>
+                                            ) : students.length === 0 ? (
                                                 <div className="text-center" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px', minHeight: '200px' }}>
                                                     <div style={{ color: '#999', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
                                                     <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
@@ -520,9 +623,31 @@ const StudentSearch = () => {
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <div className="mailbox-controls">
-                                            <div className="pull-left">
-                                                {filteredStudents.length === 0 ? "Records 0 to 0 of 0" : `Records 1 to ${filteredStudents.length} of ${totalRecords} `}
+                                        <div className="row" style={{ display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
+                                            <div className={isMobile ? "text-center" : "col-sm-5"}>
+                                                <div className="dataTables_info">
+                                                    Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
+                                                </div>
+                                            </div>
+                                            <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
+                                                    <ul className="pagination" style={{ margin: 0 }}>
+                                                        <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
+                                                        </li>
+                                                        {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
+                                                            const p = i + 1;
+                                                            return (
+                                                                <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(p); }}>{p}</a>
+                                                                </li>
+                                                            );
+                                                        })}
+                                                        <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

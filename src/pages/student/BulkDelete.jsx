@@ -6,7 +6,8 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import '../../utils/include_files';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { useTableSort } from '../../hooks/useTableSort';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 
 const BulkDelete = () => {
     const navigate = useNavigate();
@@ -18,16 +19,57 @@ const BulkDelete = () => {
     const [sections, setSections] = useState([]);
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
-    
+
     // UI state for search results
     const [hasSearched, setHasSearched] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(100);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     // Checkbox UI states
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [isAllSelected, setIsAllSelected] = useState(false);
+
+    // Responsive state
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
+    // Column definitions
+    const columns = [
+        { key: 'admission_no', label: 'Admission No', sortKey: 'admission_no' },
+        { key: 'full_name', label: 'Student Name', sortKey: 'full_name' },
+        { key: 'class_display', label: 'Class', sortKey: 'class_display' },
+        { key: 'dob', label: 'Date Of Birth', sortKey: 'dob' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'category', label: 'Category' },
+        { key: 'mobile_display', label: 'Mobile Number' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
+
+    // Sorting Hook
+    const { sortedData: sortedStudents, requestSort, getSortIcon } = useTableSort(students, {
+        asc: <i className="fa fa-angle-up pull-right"></i>,
+        desc: <i className="fa fa-angle-down pull-right"></i>,
+        default: <i className="fa fa-angle-up pull-right" style={{ color: '#ccc', opacity: 0.5 }}></i>
+    });
 
     // Fetch classes on component mount
     useEffect(() => {
@@ -81,7 +123,16 @@ const BulkDelete = () => {
             } else if (Array.isArray(response)) {
                 sData = response;
             }
-            setStudents(sData);
+
+            // Map students to include display-friendly keys
+            const mappedStudents = sData.map(s => ({
+                ...s,
+                full_name: s.full_name || (s.firstname + ' ' + (s.lastname || '')),
+                class_display: s.class && s.section ? `${s.class} (${s.section})` : (s.class_section || s.class),
+                mobile_display: s.mobile_no || s.mobileno || s.mobile
+            }));
+
+            setStudents(mappedStudents);
             setHasSearched(true);
             setSelectedStudents([]);
             setIsAllSelected(false);
@@ -96,35 +147,27 @@ const BulkDelete = () => {
     };
 
     // Filtering and Pagination Logic
-    const filteredStudents = students.filter(student => {
+    const filteredStudents = sortedStudents.filter(student => {
         const searchText = searchTerm.toLowerCase();
-        const fullName = (student.full_name || (student.firstname + ' ' + (student.lastname || ''))).toLowerCase();
+        const fullName = (student.full_name || '').toLowerCase();
         const admissionNo = (student.admission_no || '').toLowerCase();
         return fullName.includes(searchText) || admissionNo.includes(searchText);
     });
 
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const totalItems = filteredStudents.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
 
-    const handlePageChange = (pageNumber) => {
+    const changePage = (pageNumber) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return;
         setCurrentPage(pageNumber);
     };
 
-    const getExportData = () => {
-        const headers = ['Admission No', 'Student Name', 'Class', 'Date Of Birth', 'Gender', 'Category', 'Mobile Number'];
-        const rows = filteredStudents.map(s => [
-            s.admission_no, 
-            s.full_name || (s.firstname + ' ' + (s.lastname || '')), 
-            s.class && s.section ? `${s.class} (${s.section})` : (s.class_section || s.class),
-            s.dob, 
-            s.gender, 
-            s.category, 
-            s.mobile_no || s.mobileno || s.mobile
-        ].map(v => String(v ?? '')));
-        return { headers, rows };
-    };
+    // Export helpers
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredStudents, (row, key) => row[key]);
 
     const handleDelete = async () => {
         if (selectedStudents.length === 0) {
@@ -179,10 +222,10 @@ const BulkDelete = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '828px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">
@@ -195,16 +238,16 @@ const BulkDelete = () => {
                                         </button>
                                     </div>
                                 </div>
-                                
+
                                 <div className="box-body pb0">
                                     <div className="row">
                                         <form role="form" onSubmit={handleSearch}>
                                             <div className="col-sm-6">
                                                 <div className="form-group">
                                                     <label>Class</label>
-                                                    <select 
-                                                        className="form-control" 
-                                                        value={classId} 
+                                                    <select
+                                                        className="form-control"
+                                                        value={classId}
                                                         onChange={handleClassChange}
                                                     >
                                                         <option value="">Select</option>
@@ -217,7 +260,7 @@ const BulkDelete = () => {
                                             <div className="col-sm-6">
                                                 <div className="form-group">
                                                     <label>Section</label>
-                                                    <select 
+                                                    <select
                                                         className="form-control"
                                                         value={sectionId}
                                                         onChange={(e) => setSectionId(e.target.value)}
@@ -247,16 +290,16 @@ const BulkDelete = () => {
                                                 <div className="mt10">
                                                     <div className="checkbox bordertop pt15">
                                                         <label style={{ fontWeight: 700 }}>
-                                                            <input 
-                                                                type="checkbox" 
+                                                            <input
+                                                                type="checkbox"
                                                                 checked={isAllSelected}
-                                                                onChange={handleSelectAll} 
+                                                                onChange={handleSelectAll}
                                                             /> <b>Select All</b>
                                                         </label>
-                                                        
+
                                                         {students.length > 0 && (
-                                                            <button 
-                                                                type="button" 
+                                                            <button
+                                                                type="button"
                                                                 className="btn btn-primary pull-right btn-sm"
                                                                 onClick={handleDelete}
                                                                 disabled={loading}
@@ -266,68 +309,129 @@ const BulkDelete = () => {
                                                         )}
                                                     </div>
 
-                                                    <div className="row" style={{ marginTop: '10px' }}>
-                                                        <div className="col-md-6">
-                                                            <div className="dt-buttons btn-group">
-                                                                <button className="btn btn-default btn-xs" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
-                                                                    <i className="fa fa-files-o"></i>
-                                                                </button>
-                                                                <button className="btn btn-default btn-xs" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'bulk_delete_list.xls'); }}>
-                                                                    <i className="fa fa-file-excel-o"></i>
-                                                                </button>
-                                                                <button className="btn btn-default btn-xs" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'bulk_delete_list.csv'); }}>
-                                                                    <i className="fa fa-file-text-o"></i>
-                                                                </button>
-                                                                <button className="btn btn-default btn-xs" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'bulk_delete_list.pdf', 'Bulk Delete List'); }}>
-                                                                    <i className="fa fa-file-pdf-o"></i>
-                                                                </button>
-                                                                <button className="btn btn-default btn-xs" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Bulk Delete List'); }}>
-                                                                    <i className="fa fa-print"></i>
-                                                                </button>
+                                                    {/* Responsive Toolbar */}
+                                                    <div
+                                                        className="row mb-2"
+                                                        style={{
+                                                            marginTop: '10px',
+                                                            marginBottom: '10px',
+                                                            display: isMobile ? 'flex' : 'block',
+                                                            flexDirection: isMobile ? 'column' : 'row',
+                                                            alignItems: isMobile ? 'center' : 'stretch',
+                                                            gap: isMobile ? '15px' : '0'
+                                                        }}
+                                                    >
+                                                        <div
+                                                            className={isMobile ? "" : "col-sm-6"}
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: isMobile ? '15px' : '20px',
+                                                                justifyContent: isMobile ? 'center' : 'flex-start',
+                                                                flexWrap: 'wrap'
+                                                            }}
+                                                        >
+                                                            <div className="dataTables_length">
+                                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                                    Records:
+                                                                    <select
+                                                                        value={recordsPerPage}
+                                                                        onChange={(e) => {
+                                                                            setRecordsPerPage(Number(e.target.value));
+                                                                            setCurrentPage(1);
+                                                                        }}
+                                                                        className="form-control input-sm"
+                                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                                    >
+                                                                        <option value="10">10</option>
+                                                                        <option value="25">25</option>
+                                                                        <option value="50">50</option>
+                                                                        <option value="100">100</option>
+                                                                        <option value="-1">All</option>
+                                                                    </select>
+                                                                </label>
                                                             </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="dataTables_filter" style={{ textAlign: 'right' }}>
+                                                            <div className="dataTables_filter">
                                                                 <input
                                                                     type="search"
+                                                                    className="form-control input-sm"
                                                                     placeholder="Search..."
+                                                                    style={{
+                                                                        marginLeft: isMobile ? '0' : '10px',
+                                                                        display: 'inline-block',
+                                                                        width: '180px',
+                                                                        border: 'none',
+                                                                        borderBottom: '1px solid #ccc',
+                                                                        borderRadius: '0',
+                                                                        boxShadow: 'none',
+                                                                        backgroundColor: 'transparent',
+                                                                        paddingLeft: '0',
+                                                                        outline: 'none',
+                                                                        textAlign: isMobile ? 'center' : 'left'
+                                                                    }}
                                                                     value={searchTerm}
                                                                     onChange={(e) => {
                                                                         setSearchTerm(e.target.value);
                                                                         setCurrentPage(1);
                                                                     }}
-                                                                    style={{
-                                                                        border: 'none',
-                                                                        borderBottom: '1px solid #ccc',
-                                                                        outline: 'none',
-                                                                        padding: '5px 0',
-                                                                        background: 'transparent',
-                                                                        width: 'auto'
-                                                                    }}
                                                                 />
                                                             </div>
                                                         </div>
+                                                        <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
+                                                            {filteredStudents.length > 0 && (
+                                                                <div className="dt-buttons btn-group">
+                                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                                        <i className="fa fa-files-o"></i>
+                                                                    </button>
+                                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'bulk_delete_list.xls'); }}>
+                                                                        <i className="fa fa-file-excel-o"></i>
+                                                                    </button>
+                                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'bulk_delete_list.csv'); }}>
+                                                                        <i className="fa fa-file-text-o"></i>
+                                                                    </button>
+                                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'bulk_delete_list.pdf', 'Bulk Delete List'); }}>
+                                                                        <i className="fa fa-file-pdf-o"></i>
+                                                                    </button>
+                                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Bulk Delete List'); }}>
+                                                                        <i className="fa fa-print"></i>
+                                                                    </button>
+                                                                    <div className="btn-group">
+                                                                        <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                                                            <i className="fa fa-columns"></i>
+                                                                        </button>
+                                                                        {showColumnsDropdown && (
+                                                                            <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                                {columns.map(col => (
+                                                                                    <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                                        <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
+                                                                                        {col.label}
+                                                                                    </label>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
 
-                                                    <div className="table-responsive pt15 clearboth">
+                                                    <div className="table-responsive overflow-visible-lg pt15 clearboth">
                                                         <div className="download_label">Bulk Delete</div>
                                                         <table className="table table-striped table-bordered table-hover example" cellSpacing="0" width="100%">
                                                             <thead>
                                                                 <tr>
                                                                     <th>#</th>
-                                                                    <th>Admission No</th>
-                                                                    <th>Student Name</th>
-                                                                    <th>Class</th>
-                                                                    <th>Date Of Birth</th>
-                                                                    <th>Gender</th>
-                                                                    <th>Category</th>
-                                                                    <th>Mobile Number</th>
+                                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                                        <th key={col.key} className={col.sortKey ? "sorting" : ""} style={col.sortKey ? { cursor: 'pointer' } : {}} onClick={col.sortKey ? () => requestSort(col.sortKey) : undefined}>
+                                                                            {col.label} {col.sortKey && getSortIcon(col.sortKey)}
+                                                                        </th>
+                                                                    ))}
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 {currentItems.length === 0 ? (
                                                                     <tr>
-                                                                        <td colSpan="8" className="text-center">
+                                                                        <td colSpan={visibleColumns.size + 1} className="text-center">
                                                                             No data available in table
                                                                         </td>
                                                                     </tr>
@@ -335,23 +439,23 @@ const BulkDelete = () => {
                                                                     currentItems.map((student) => (
                                                                         <tr key={student.id}>
                                                                             <td>
-                                                                                <input 
-                                                                                    type="checkbox" 
+                                                                                <input
+                                                                                    type="checkbox"
                                                                                     checked={selectedStudents.includes(student.id)}
                                                                                     onChange={(e) => handleSelectStudent(e, student.id)}
                                                                                 />
                                                                             </td>
-                                                                            <td>{student.admission_no}</td>
-                                                                            <td>
-                                                                                <Link to={`/student/view/${student.id}`}>{student.full_name || (student.firstname + ' ' + (student.lastname || ''))}</Link>
-                                                                            </td>
-                                                                            <td className="white-space-nowrap">
-                                                                                {student.class && student.section ? `${student.class} (${student.section})` : (student.class_section || student.class)}
-                                                                            </td>
-                                                                            <td>{student.dob}</td>
-                                                                            <td>{student.gender}</td>
-                                                                            <td>{student.category}</td>
-                                                                            <td>{student.mobile_no || student.mobileno || student.mobile}</td>
+                                                                            {columns.map(col => visibleColumns.has(col.key) && (
+                                                                                <td key={col.key} style={{ wordBreak: 'break-word' }}>
+                                                                                    {col.key === 'full_name' ? (
+                                                                                        <Link to={`/student/view/${student.id}`}>{student[col.key]}</Link>
+                                                                                    ) : col.key === 'class_display' ? (
+                                                                                        <span className="white-space-nowrap">{student[col.key]}</span>
+                                                                                    ) : (
+                                                                                        student[col.key]
+                                                                                    )}
+                                                                                </td>
+                                                                            ))}
                                                                         </tr>
                                                                     ))
                                                                 )}
@@ -364,50 +468,33 @@ const BulkDelete = () => {
                                     </div>
                                 )}
 
+                                {/* Responsive Pagination Footer */}
                                 {hasSearched && filteredStudents.length > 0 && (
                                     <div className="box-footer">
-                                        <div className="mailbox-controls">
-                                            <div className="row">
-                                                <div className="col-sm-6">
-                                                    <div className="pull-left" style={{ padding: '8px 0' }}>
-                                                        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredStudents.length)} of {filteredStudents.length} entries
-                                                    </div>
+                                        <div className="row" style={{ display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
+                                            <div className={isMobile ? "text-center" : "col-sm-5"}>
+                                                <div className="dataTables_info">
+                                                    Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} entries
                                                 </div>
-                                                <div className="col-sm-6">
-                                                    <div className="pull-right">
-                                                        <ul className="pagination pagination-sm no-margin">
-                                                            <li className={currentPage === 1 ? 'disabled' : ''}>
-                                                                <button
-                                                                    className="btn btn-default btn-xs"
-                                                                    onClick={() => handlePageChange(currentPage - 1)}
-                                                                    disabled={currentPage === 1}
-                                                                    style={{ marginRight: '5px' }}
-                                                                >
-                                                                    Previous
-                                                                </button>
-                                                            </li>
-                                                            {[...Array(totalPages)].map((_, i) => (
-                                                                <li key={i + 1} className={currentPage === i + 1 ? 'active' : ''}>
-                                                                    <button
-                                                                        className={`btn btn-xs ${currentPage === i + 1 ? 'btn-primary' : 'btn-default'}`}
-                                                                        onClick={() => handlePageChange(i + 1)}
-                                                                        style={{ marginRight: '5px' }}
-                                                                    >
-                                                                        {i + 1}
-                                                                    </button>
+                                            </div>
+                                            <div className={isMobile ? "text-center" : "col-sm-7"}>
+                                                <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
+                                                    <ul className="pagination" style={{ margin: 0 }}>
+                                                        <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
+                                                        </li>
+                                                        {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
+                                                            const p = i + 1;
+                                                            return (
+                                                                <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                                                    <a href="#" onClick={(e) => { e.preventDefault(); changePage(p); }}>{p}</a>
                                                                 </li>
-                                                            ))}
-                                                            <li className={currentPage === totalPages ? 'disabled' : ''}>
-                                                                <button
-                                                                    className="btn btn-default btn-xs"
-                                                                    onClick={() => handlePageChange(currentPage + 1)}
-                                                                    disabled={currentPage === totalPages}
-                                                                >
-                                                                    Next
-                                                                </button>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
+                                                            );
+                                                        })}
+                                                        <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
+                                                            <a href="#" onClick={(e) => { e.preventDefault(); changePage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
+                                                        </li>
+                                                    </ul>
                                                 </div>
                                             </div>
                                         </div>
