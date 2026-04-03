@@ -455,18 +455,19 @@ const FeeMaster = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Fees Group</th>
+                                                    {visibleColumns.has('group_name') && <th>Fees Group</th>}
                                                     <th>
                                                         {isMobile ? (
                                                             <div>
-                                                                <div>Fees Code</div>
-                                                                <div>Amount</div>
+                                                                {visibleColumns.has('fee_code') && <div>Fees Code</div>}
+                                                                {visibleColumns.has('amount') && <div>Amount</div>}
+                                                                {(!visibleColumns.has('fee_code') && !visibleColumns.has('amount')) && <div style={{height: '20px'}}></div>}
                                                                 <i className="fa fa-caret-down" style={{ color: '#ccc', marginTop: '5px', display: 'block' }}></i>
                                                             </div>
                                                         ) : (
                                                             <div className="row">
-                                                                <div className="col-xs-6">Fees Code</div>
-                                                                <div className="col-xs-3">Amount</div>
+                                                                {visibleColumns.has('fee_code') && <div className={visibleColumns.has('amount') ? "col-xs-6" : "col-xs-9"}>Fees Code</div>}
+                                                                {visibleColumns.has('amount') && <div className={visibleColumns.has('fee_code') ? "col-xs-3" : "col-xs-9"}>Amount</div>}
                                                                 <div className="col-xs-3"></div>
                                                             </div>
                                                         )}
@@ -487,21 +488,27 @@ const FeeMaster = () => {
                                                     .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                                                     .map((group, index) => (
                                                         <tr key={index}>
+                                                            {visibleColumns.has('group_name') && (
                                                             <td className="mailbox-name" style={{ verticalAlign: 'top', wordBreak: 'break-all' }}>
                                                                 {group.group_name}
                                                             </td>
+                                                            )}
                                                             <td className="mailbox-name">
                                                                 <ul className="liststyle1" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                                                                     {group.feetypes && group.feetypes.map((ft) => (
                                                                         <li key={ft.id} style={{ padding: '0', margin: '0' }}>
                                                                             {isMobile ? (
                                                                                 <div style={{ wordBreak: 'break-word' }}>
+                                                                                    {visibleColumns.has('fee_code') && (
                                                                                     <div style={{ marginBottom: '2px' }}>
                                                                                         <i className="fa fa-money"></i> {ft.type} ({ft.code})
                                                                                     </div>
+                                                                                    )}
+                                                                                    {visibleColumns.has('amount') && (
                                                                                     <div style={{ fontWeight: 'normal', color: '#333', marginBottom: '4px' }}>
                                                                                         ₹{ft.amount}
                                                                                     </div>
+                                                                                    )}
                                                                                     <div style={{ display: 'flex', gap: '8px' }}>
                                                                                         <Link to={`/admin/feemaster/edit/${ft.id}`} style={{ color: '#337ab7', fontSize: '14px' }} title="Edit">
                                                                                             <i className="fa fa-pencil"></i>
@@ -513,12 +520,16 @@ const FeeMaster = () => {
                                                                                 </div>
                                                                             ) : (
                                                                                 <div className="row">
-                                                                                    <div className="col-xs-6">
+                                                                                    {visibleColumns.has('fee_code') && (
+                                                                                    <div className={visibleColumns.has('amount') ? "col-xs-6" : "col-xs-9"}>
                                                                                         <i className="fa fa-money"></i> {ft.type} ({ft.code})
                                                                                     </div>
-                                                                                    <div className="col-xs-3">
+                                                                                    )}
+                                                                                    {visibleColumns.has('amount') && (
+                                                                                    <div className={visibleColumns.has('fee_code') ? "col-xs-3" : "col-xs-9"}>
                                                                                         ₹{ft.amount}
                                                                                     </div>
+                                                                                    )}
                                                                                     <div className="col-xs-3 text-right">
                                                                                         <Link to={`/admin/feemaster/edit/${ft.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
                                                                                             <i className="fa fa-pencil"></i>
