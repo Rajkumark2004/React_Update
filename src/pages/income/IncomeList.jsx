@@ -225,7 +225,7 @@ const IncomeList = () => {
     }, [searchTerm, recordsPerPage]);
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style>{`
                 .table-responsive table.example td.mailbox-name {
                     max-width: 150px;
@@ -241,7 +241,7 @@ const IncomeList = () => {
             `}</style>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '828px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         {/* Submenu Sidebar */}

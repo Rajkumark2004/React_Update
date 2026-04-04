@@ -231,10 +231,10 @@ const ExpenseEdit = () => {
     }, [searchTerm, recordsPerPage]);
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '850px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-4">
@@ -351,6 +351,13 @@ const ExpenseEdit = () => {
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Expense List</h3>
+                                    {!isMobile && (
+                                        <div className="box-tools pull-right">
+                                            <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs" style={{ marginRight: '5px' }}>
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="box-body">
                                     <div
