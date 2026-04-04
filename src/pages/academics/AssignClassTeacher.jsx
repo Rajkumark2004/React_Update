@@ -335,6 +335,11 @@ const AssignClassTeacher = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Assign Class Teacher</h3>
+                                    <div className="btn-group pull-right visible-xs-block visible-sm-block">
+                                        <button onClick={() => window.history.back()} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <form onSubmit={handleSave}>
                                     <div className="box-body">
@@ -388,88 +393,81 @@ const AssignClassTeacher = () => {
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Class Teacher List</h3>
-                                    <div className="btn-group pull-right">
+                                    <div className="btn-group pull-right hidden-xs hidden-sm">
                                         <button onClick={() => window.history.back()} className="btn btn-primary btn-xs">
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-controls">
-                                        <div className="pull-right">
+                                    <div className="dt-controls-between">
+                                        {/* Search Left */}
+                                        <div id="DataTables_Table_0_filter" className="dataTables_filter">
+                                            <input
+                                                type="search"
+                                                placeholder="Search..."
+                                                aria-controls="DataTables_Table_0"
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                            />
+                                        </div>
+
+                                        {/* Export Icons Right */}
+                                        <div className="dt-buttons btn-group">
+                                            <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>
+                                            <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Assign_Class_Teacher.csv'); }}><span><i className="fa fa-file-text-o"></i></span></a>
+                                            <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Assign_Class_Teacher.xls'); }}><span><i className="fa fa-file-excel-o"></i></span></a>
+                                            <a className="btn btn-default buttons-pdf buttons-html5 btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Assign_Class_Teacher.pdf'); }}><span><i className="fa fa-file-pdf-o"></i></span></a>
+                                            <a className="btn btn-default buttons-print btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Assign Class Teacher'); }}><span><i className="fa fa-print"></i></span></a>
+                                            <div className="btn-group">
+                                                <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
+                                                {showColumnsDropdown && (
+                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                        <li>
+                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Class</label>
+                                                        </li>
+                                                        <li>
+                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Section</label>
+                                                        </li>
+                                                        <li>
+                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Class Teacher</label>
+                                                        </li>
+                                                    </ul>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
                                     <div className="table-responsive mailbox-messages overflow-visible">
                                         <div className="download_label">Class Teacher List</div>
-
                                         <div className="dataTables_wrapper no-footer">
-                                            {/* Top Control Bar */}
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
-
-                                                {/* Search Left */}
-                                                <div id="DataTables_Table_0_filter" className="dataTables_filter" style={{ textAlign: 'left' }}>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        aria-controls="DataTables_Table_0"
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-
-                                                {/* Export Icons Right */}
-                                                <div className="dt-buttons btn-group">
-                                                    <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Assign_Class_Teacher.csv'); }}><span><i className="fa fa-file-text-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Assign_Class_Teacher.xls'); }}><span><i className="fa fa-file-excel-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-pdf buttons-html5 btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Assign_Class_Teacher.pdf'); }}><span><i className="fa fa-file-pdf-o"></i></span></a>
-                                                    <a className="btn btn-default buttons-print btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Assign Class Teacher'); }}><span><i className="fa fa-print"></i></span></a>
-                                                    <div className="btn-group">
-                                                        <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
-                                                        {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Class</label>
-                                                                </li>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Section</label>
-                                                                </li>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Class Teacher</label>
-                                                                </li>
-                                                            </ul>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
 
                                             {/* Table */}
                                             <table className="table table-striped table-bordered table-hover example" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info">
                                                 <thead>
                                                     <tr role="row">
-                                                        {!hiddenColumns.includes(0) && <th>Class</th>}
-                                                        {!hiddenColumns.includes(1) && <th>Section</th>}
-                                                        {!hiddenColumns.includes(2) && <th>Class Teacher</th>}
-                                                        <th className="text-right">Action</th>
+                                                        {!hiddenColumns.includes(0) && <th style={{ textAlign: 'left' }}>Class</th>}
+                                                        {!hiddenColumns.includes(1) && <th style={{ textAlign: 'left' }}>Section</th>}
+                                                        {!hiddenColumns.includes(2) && <th style={{ textAlign: 'left' }}>Class Teacher</th>}
+                                                        <th style={{ textAlign: 'right' }}>Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {filteredList.map((item, index) => (
                                                         <tr key={index} role="row" className={index % 2 === 0 ? "odd" : "even"}>
                                                             {!hiddenColumns.includes(0) && (
-                                                                <td className="mailbox-name">
+                                                                <td className="mailbox-name" style={{ textAlign: 'left' }}>
                                                                     {item.class || item.teachers?.[0]?.class}
                                                                 </td>
                                                             )}
                                                             {!hiddenColumns.includes(1) && (
-                                                                <td>
+                                                                <td style={{ textAlign: 'left' }}>
                                                                     {item.section || item.teachers?.[0]?.section}
                                                                 </td>
                                                             )}
                                                             {!hiddenColumns.includes(2) && (
-                                                                <td>
+                                                                <td style={{ textAlign: 'left' }}>
                                                                     {(item.teachers || []).map((t, idx) => (
                                                                         <div key={idx}>
                                                                             {t.name} {t.surname} ({t.employee_id})<br />
@@ -477,12 +475,11 @@ const AssignClassTeacher = () => {
                                                                     ))}
                                                                 </td>
                                                             )}
-                                                            <td className="mailbox-date pull-right">
+                                                            <td className="text-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
                                                                 <Link
                                                                     to={`/admin/teacher/update_class_teacher/${item.class_id}/${item.section_id}`}
                                                                     className="btn btn-default btn-xs"
                                                                     title="Edit"
-                                                                    style={{ marginRight: '5px' }}
                                                                 >
                                                                     <i className="fa fa-pencil"></i>
                                                                 </Link>
@@ -504,15 +501,13 @@ const AssignClassTeacher = () => {
                                                 </tbody>
                                             </table>
 
-                                            {/* Bottom Control Bar */}
-                                            <div className="row">
-                                                <div className="col-md-5">
-                                                    <div className="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-                                                        Records: 1 to {filteredList.length} of {assignTeacherList.length}
-                                                    </div>
-                                                </div>
+                                            </div> {/* Closes dataTables_wrapper */}
+                                    </div> {/* Closes table-responsive */}
 
-                                            </div>
+                                    {/* Bottom Control Bar Moved Outside */}
+                                    <div className="dt-info-left">
+                                        <div className="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
+                                            Records: 1 to {filteredList.length} of {assignTeacherList.length}
                                         </div>
                                     </div>
                                 </div> {/* Closes box-body */}

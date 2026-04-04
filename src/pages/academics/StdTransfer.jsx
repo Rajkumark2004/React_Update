@@ -311,10 +311,10 @@ const StdTransfer = () => {
                                         </div>
                                         <div className="box-body">
                                             <div className="table-responsive">
-                                                <table className="table table-striped">
-                                                    <tbody>
+                                                <table className="table table-striped" style={{ width: '100%', minWidth: '800px' }}>
+                                                    <thead>
                                                         <tr>
-                                                            <th>
+                                                            <th style={{ textAlign: 'left', width: '50px', padding: '10px 5px' }}>
                                                                 <input
                                                                     type="checkbox"
                                                                     className="checkbox"
@@ -323,16 +323,18 @@ const StdTransfer = () => {
                                                                     checked={selectedStudentIds.length === studentList.length && studentList.length > 0}
                                                                 /> All
                                                             </th>
-                                                            <th>Admission No</th>
-                                                            <th>Student Name</th>
-                                                            <th>Father Name</th>
-                                                            <th>Date of Birth</th>
-                                                            <th>Current Result</th>
-                                                            <th>Next Session Status</th>
+                                                            <th style={{ textAlign: 'left', minWidth: '100px', padding: '10px 5px' }}>Admission No</th>
+                                                            <th style={{ textAlign: 'left', minWidth: '150px', padding: '10px 5px' }}>Student Name</th>
+                                                            <th style={{ textAlign: 'left', minWidth: '150px', padding: '10px 5px' }}>Father Name</th>
+                                                            <th style={{ textAlign: 'left', minWidth: '110px', padding: '10px 5px' }}>Date of Birth</th>
+                                                            <th style={{ textAlign: 'left', minWidth: '140px', padding: '10px 5px' }}>Current Result</th>
+                                                            <th style={{ textAlign: 'left', minWidth: '160px', padding: '10px 5px' }}>Next Session Status</th>
                                                         </tr>
+                                                    </thead>
+                                                    <tbody>
                                                         {studentList.map(student => (
                                                             <tr key={student.id}>
-                                                                <td>
+                                                                <td style={{ textAlign: 'left', padding: '8px 5px' }}>
                                                                     <input
                                                                         type="checkbox"
                                                                         className="checkbox student-checkbox"
@@ -341,11 +343,11 @@ const StdTransfer = () => {
                                                                         onChange={() => handleStudentSelect(student.id)}
                                                                     />
                                                                 </td>
-                                                                <td>{student.admission_no}</td>
-                                                                <td>{student.firstname} {student.lastname}</td>
-                                                                <td>{student.father_name}</td>
-                                                                <td>{student.dob}</td>
-                                                                <td>
+                                                                <td style={{ textAlign: 'left', padding: '8px 5px' }}>{student.admission_no}</td>
+                                                                <td style={{ textAlign: 'left', padding: '8px 5px' }}>{student.firstname} {student.lastname}</td>
+                                                                <td style={{ textAlign: 'left', padding: '8px 5px' }}>{student.father_name}</td>
+                                                                <td style={{ textAlign: 'left', padding: '8px 5px' }}>{student.dob}</td>
+                                                                <td style={{ textAlign: 'left', padding: '8px 5px', whiteSpace: 'nowrap' }}>
                                                                     <div className="radio-inline">
                                                                         <label>
                                                                             <input
@@ -357,7 +359,7 @@ const StdTransfer = () => {
                                                                             /> Pass
                                                                         </label>
                                                                     </div>
-                                                                    <div className="radio-inline">
+                                                                    <div className="radio-inline" style={{ marginLeft: '10px' }}>
                                                                         <label>
                                                                             <input
                                                                                 type="radio"
@@ -369,7 +371,7 @@ const StdTransfer = () => {
                                                                         </label>
                                                                     </div>
                                                                 </td>
-                                                                <td>
+                                                                <td style={{ textAlign: 'left', padding: '8px 5px', whiteSpace: 'nowrap' }}>
                                                                     <div className="radio-inline">
                                                                         <label>
                                                                             <input
@@ -381,7 +383,7 @@ const StdTransfer = () => {
                                                                             /> Continue
                                                                         </label>
                                                                     </div>
-                                                                    <div className="radio-inline">
+                                                                    <div className="radio-inline" style={{ marginLeft: '10px' }}>
                                                                         <label>
                                                                             <input
                                                                                 type="radio"
