@@ -5,7 +5,8 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import api from '../../services/api';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const VehicleRoute = () => {
     const { id } = useParams();
@@ -26,7 +27,7 @@ const VehicleRoute = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isEditMode, setIsEditMode] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -219,12 +220,11 @@ const VehicleRoute = () => {
     );
 
     // Pagination Logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const totalItems = filteredList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredList.length / itemsPerPage);
-
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
@@ -260,6 +260,28 @@ const VehicleRoute = () => {
                         <i className="fa fa-credit-card"></i> Transport
                     </h1>
                 </section>
+                <style>
+                    {`
+                    @media (max-width: 767px) {
+                        .mobile-stack {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 15px;
+                        }
+                        .mobile-stack > div {
+                            width: 100% !important;
+                            text-align: center !important;
+                        }
+                        .mobile-stack .pull-right, .mobile-stack .pull-left {
+                            float: none !important;
+                        }
+                        .mobile-stack .dt-buttons {
+                            justify-content: center;
+                        }
+                    }
+                    `}
+                </style>
 
                 <section className="content">
                     <div className="row">
@@ -332,32 +354,60 @@ const VehicleRoute = () => {
                                         <div className="table-responsive overflow-visible">
                                             {/* DataTables Controls */}
                                             <div className="dataTables_wrapper no-footer">
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
-                                                    <div className="dataTables_filter" style={{ textAlign: 'left' }}>
-                                                        <input
-                                                            type="search"
-                                                            placeholder="Search..."
-                                                            value={searchTerm}
-                                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                                            style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                        />
+                                                <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                                    <div className="col-md-6 col-sm-12">
+                                                        <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                            <div className="dataTables_length">
+                                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                                    Records:
+                                                                    <select
+                                                                        value={recordsPerPage}
+                                                                        onChange={(e) => {
+                                                                            setRecordsPerPage(Number(e.target.value));
+                                                                            setCurrentPage(1);
+                                                                        }}
+                                                                        className="form-control input-sm"
+                                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                                    >
+                                                                        <option value="10">10</option>
+                                                                        <option value="25">25</option>
+                                                                        <option value="50">50</option>
+                                                                        <option value="100">100</option>
+                                                                        <option value="-1">All</option>
+                                                                    </select>
+                                                                </label>
+                                                            </div>
+                                                            <input
+                                                                type="search"
+                                                                placeholder="Search..."
+                                                                value={searchTerm}
+                                                                onChange={(e) => {
+                                                                    setSearchTerm(e.target.value);
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <div className="dt-buttons btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                        <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_Route_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                        <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_Route_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                        <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle Route List'); }}><i className="fa fa-print"></i></button>
+                                                    <div className="col-md-6 col-sm-12">
+                                                        <div className="dt-buttons btn-group pull-right">
+                                                            <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                            <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_Route_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                            <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_Route_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                            <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Vehicle_Route_List.pdf', 'Vehicle Route List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                            <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle Route List'); }}><i className="fa fa-print"></i></button>
 
-                                                        <div className="btn-group">
-                                                            <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                                <i className="fa fa-columns"></i>
-                                                            </button>
-                                                            {showColumnsDropdown && (
-                                                                <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                    <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Route</label></li>
-                                                                    <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Vehicle</label></li>
-                                                                </ul>
-                                                            )}
+                                                            <div className="btn-group">
+                                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showColumnsDropdown && (
+                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                        <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Route</label></li>
+                                                                        <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Vehicle</label></li>
+                                                                    </ul>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -411,33 +461,13 @@ const VehicleRoute = () => {
                                                     </tbody>
                                                 </table>
 
-                                                <div className="row">
-                                                    <div className="col-sm-5">
-                                                        <div className="dataTables_info" role="status" aria-live="polite">
-                                                            Records {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredList.length)} of {filteredList.length}
-                                                        </div>
-                                                    </div>
-                                                    <div className="col-sm-7">
-                                                        <div className="dataTables_paginate paging_simple_numbers">
-                                                            <ul className="pagination" style={{ margin: '0', float: 'right' }}>
-                                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                                    <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) paginate(currentPage - 1); }}>
-                                                                        <i className="fa fa-angle-left"></i>
-                                                                    </a>
-                                                                </li>
-                                                                {[...Array(totalPages)].map((_, i) => (
-                                                                    <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                                                        <a href="#" onClick={(e) => { e.preventDefault(); paginate(i + 1); }}>{i + 1}</a>
-                                                                    </li>
-                                                                ))}
-                                                                <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                                    <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) paginate(currentPage + 1); }}>
-                                                                        <i className="fa fa-angle-right"></i>
-                                                                    </a>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
+                                                <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                                    <Pagination 
+                                                        totalItems={totalItems} 
+                                                        itemsPerPage={recordsPerPage} 
+                                                        currentPage={currentPage}
+                                                        onPageChange={(page) => setCurrentPage(page)}
+                                                    />
                                                 </div>
 
                                             </div>

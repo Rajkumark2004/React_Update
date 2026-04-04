@@ -8,6 +8,7 @@ import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const VehicleList = () => {
     const navigate = useNavigate();
@@ -69,6 +70,8 @@ const VehicleList = () => {
 
     // Search state
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     // Filter vehicles logic
     const filteredVehicles = vehicles.filter(vehicle =>
@@ -76,6 +79,12 @@ const VehicleList = () => {
             String(value).toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
+
+    const totalItems = filteredVehicles.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredVehicles.slice(indexOfFirstItem, indexOfLastItem);
 
     const userData = loggedInUser ? {
         name: loggedInUser.username,
@@ -260,6 +269,24 @@ const VehicleList = () => {
     return (
         <div className="wrapper">
             <style>{`
+                @media (max-width: 767px) {
+                    .mobile-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    .mobile-stack > div {
+                        width: 100% !important;
+                        text-align: center !important;
+                    }
+                    .mobile-stack .pull-right, .mobile-stack .pull-left {
+                        float: none !important;
+                    }
+                    .mobile-stack .dt-buttons {
+                        justify-content: center;
+                    }
+                }
                 .modal-body-scroll::-webkit-scrollbar {
                     display: none;
                 }
@@ -301,20 +328,43 @@ const VehicleList = () => {
                                 <div className="box-body table-responsive">
                                     <div >
                                         <div className="download_label">Vehicle List</div>
-                                        <div className="row" style={{ marginBottom: '10px' }}>
-                                            <div className="col-sm-6">
-                                                <div className="pull-left">
+                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                            <div className="col-md-6 col-sm-12">
+                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
                                                     <input
                                                         type="search"
                                                         placeholder="Search..."
                                                         aria-controls="DataTables_Table_0"
                                                         value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                        onChange={(e) => {
+                                                            setSearchTerm(e.target.value);
+                                                            setCurrentPage(1);
+                                                        }}
                                                         style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="col-sm-6">
+                                            <div className="col-md-6 col-sm-12">
                                                 <div className="dt-buttons btn-group pull-right">
                                                     <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
                                                     <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
@@ -359,30 +409,42 @@ const VehicleList = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredVehicles.map((data) => (
-                                                    <tr key={data.id}>
-                                                        {!hiddenColumns.includes(0) && (
-                                                            <td className="mailbox-name">
-                                                                <a href="#" data-toggle="popover" className="detail_popover" >{data.vehicle_no}</a>
+                                                {currentItems.length === 0 ? (
+                                                    <tr><td colSpan="10" className="text-center">No Result Found</td></tr>
+                                                ) : (
+                                                    currentItems.map((data) => (
+                                                        <tr key={data.id}>
+                                                            {!hiddenColumns.includes(0) && (
+                                                                <td className="mailbox-name">
+                                                                    <a href="#" data-toggle="popover" className="detail_popover" >{data.vehicle_no}</a>
+                                                                </td>
+                                                            )}
+                                                            {!hiddenColumns.includes(1) && <td className="mailbox-name"> {data.vehicle_model}</td>}
+                                                            {!hiddenColumns.includes(2) && <td className="mailbox-name"> {data.manufacture_year}</td>}
+                                                            {!hiddenColumns.includes(3) && <td className="mailbox-name"> {data.registration_number}</td>}
+                                                            {!hiddenColumns.includes(4) && <td className="mailbox-name"> {data.chasis_number}</td>}
+                                                            {!hiddenColumns.includes(5) && <td className="mailbox-name"> {data.max_seating_capacity}</td>}
+                                                            {!hiddenColumns.includes(6) && <td className="mailbox-name"> {data.driver_name}</td>}
+                                                            {!hiddenColumns.includes(7) && <td className="mailbox-name"> {data.driver_licence}</td>}
+                                                            {!hiddenColumns.includes(8) && <td className="mailbox-name"> {data.driver_contact}</td>}
+                                                            <td className="mailbox-date pull-right no-print white-space-nowrap">
+                                                                <a className="btn btn-default btn-xs vehicledetails" data-toggle="tooltip" title="View" onClick={() => handleView(data.id)}><i className="fa fa-reorder"></i></a>
+                                                                <a className="btn btn-default btn-xs editvehicle" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data.id)}><i className="fa fa-pencil"></i></a>
+                                                                <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete" onClick={() => handleDelete(data.id)}><i className="fa fa-remove"></i></a>
                                                             </td>
-                                                        )}
-                                                        {!hiddenColumns.includes(1) && <td className="mailbox-name"> {data.vehicle_model}</td>}
-                                                        {!hiddenColumns.includes(2) && <td className="mailbox-name"> {data.manufacture_year}</td>}
-                                                        {!hiddenColumns.includes(3) && <td className="mailbox-name"> {data.registration_number}</td>}
-                                                        {!hiddenColumns.includes(4) && <td className="mailbox-name"> {data.chasis_number}</td>}
-                                                        {!hiddenColumns.includes(5) && <td className="mailbox-name"> {data.max_seating_capacity}</td>}
-                                                        {!hiddenColumns.includes(6) && <td className="mailbox-name"> {data.driver_name}</td>}
-                                                        {!hiddenColumns.includes(7) && <td className="mailbox-name"> {data.driver_licence}</td>}
-                                                        {!hiddenColumns.includes(8) && <td className="mailbox-name"> {data.driver_contact}</td>}
-                                                        <td className="mailbox-date pull-right no-print white-space-nowrap">
-                                                            <a className="btn btn-default btn-xs vehicledetails" data-toggle="tooltip" title="View" onClick={() => handleView(data.id)}><i className="fa fa-reorder"></i></a>
-                                                            <a className="btn btn-default btn-xs editvehicle" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data.id)}><i className="fa fa-pencil"></i></a>
-                                                            <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete" onClick={() => handleDelete(data.id)}><i className="fa fa-remove"></i></a>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
                                         </table>
+                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                            <Pagination 
+                                                totalItems={totalItems} 
+                                                itemsPerPage={recordsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

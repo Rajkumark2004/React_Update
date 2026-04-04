@@ -8,6 +8,7 @@ import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const CreateRoute = () => {
     const navigate = useNavigate();
@@ -50,9 +51,18 @@ const CreateRoute = () => {
     };
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+
     const filteredRoutes = routes.filter(route =>
         route.route_title.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const totalItems = filteredRoutes.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredRoutes.slice(indexOfFirstItem, indexOfLastItem);
 
 
     const userData = loggedInUser ? {
@@ -209,6 +219,28 @@ const CreateRoute = () => {
 
     return (
         <div className="wrapper">
+            <style>
+                {`
+                @media (max-width: 767px) {
+                    .mobile-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    .mobile-stack > div {
+                        width: 100% !important;
+                        text-align: center !important;
+                    }
+                    .mobile-stack .pull-right, .mobile-stack .pull-left {
+                        float: none !important;
+                    }
+                    .mobile-stack .dt-buttons {
+                        justify-content: center;
+                    }
+                }
+                `}
+            </style>
             <Header
                 appName="School Management System"
                 userData={userData}
@@ -311,20 +343,43 @@ const CreateRoute = () => {
                                     </div>
                                     <div className="mailbox-messages">
                                         <div className="download_label">Route List</div>
-                                        <div className="row" style={{ marginBottom: '10px' }}>
-                                            <div className="col-sm-6">
-                                                <div className="pull-left">
+                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                            <div className="col-md-6 col-sm-12">
+                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
                                                     <input
                                                         type="search"
                                                         placeholder="Search..."
                                                         aria-controls="DataTables_Table_0"
                                                         value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                        onChange={(e) => {
+                                                            setSearchTerm(e.target.value);
+                                                            setCurrentPage(1);
+                                                        }}
                                                         style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="col-sm-6">
+                                            <div className="col-md-6 col-sm-12">
                                                 <div className="dt-buttons btn-group pull-right">
                                                     <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
                                                     <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Route_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
@@ -356,10 +411,10 @@ const CreateRoute = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {filteredRoutes.length === 0 ? (
+                                                    {currentItems.length === 0 ? (
                                                         <tr><td colSpan="2" className="text-center">No Record Found</td></tr>
                                                     ) : (
-                                                        filteredRoutes.map((data) => (
+                                                        currentItems.map((data) => (
                                                             <tr key={data.id}>
                                                                 {!hiddenColumns.includes(0) && <td className="mailbox-name"> {data.route_title}</td>}
                                                                 <td className="mailbox-date pull-right no-print">
@@ -375,6 +430,14 @@ const CreateRoute = () => {
                                                     )}
                                                 </tbody>
                                             </table>
+                                        </div>
+                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                            <Pagination 
+                                                totalItems={totalItems} 
+                                                itemsPerPage={recordsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
                                         </div>
                                     </div>
                                 </div>
