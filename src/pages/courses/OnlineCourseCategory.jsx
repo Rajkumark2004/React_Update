@@ -7,6 +7,7 @@ import Footer from '../../components/Footer';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const OnlineCourseCategory = () => {
     const navigate = useNavigate();
@@ -18,6 +19,10 @@ const OnlineCourseCategory = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     // Fetch Categories function
     const fetchCategories = async () => {
@@ -46,6 +51,13 @@ const OnlineCourseCategory = () => {
     const filteredCategories = categories.filter(cat =>
         cat.category_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Calculate pagination
+    const totalItems = filteredCategories.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
 
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
@@ -163,6 +175,24 @@ const OnlineCourseCategory = () => {
                 .mailbox-messages input[type="search"] { border: none; border-bottom: 1px solid #ccc; box-shadow: none; border-radius: 0; outline: none; }
                 .mailbox-messages input[type="search"]:focus { border-bottom: 1px solid #3c8dbc; }
                 .req { color: red; }
+                @media (max-width: 767px) {
+                    .mobile-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    .mobile-stack > div {
+                        width: 100% !important;
+                        text-align: center !important;
+                    }
+                    .mobile-stack .pull-right, .mobile-stack .pull-left {
+                        float: none !important;
+                    }
+                    .mobile-stack .dt-buttons {
+                        justify-content: center;
+                    }
+                }
             `}</style>
 
             <Header />
@@ -185,28 +215,63 @@ const OnlineCourseCategory = () => {
                                     <div className="tab-pane active" id="tab_1">
                                         <div className="box-body p0">
                                             <div className="mailbox-messages">
-                                                <div style={{ padding: '10px', display: 'inline-block' }}>
-                                                    <input type="search" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }} />
-                                                </div>
+                                                <div className="row mobile-stack" style={{ marginBottom: '10px', padding: '10px' }}>
+                                                    <div className="col-md-6 col-sm-12">
+                                                        <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                            <div className="dataTables_length">
+                                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                                    Records:
+                                                                    <select
+                                                                        value={recordsPerPage}
+                                                                        onChange={(e) => {
+                                                                            setRecordsPerPage(Number(e.target.value));
+                                                                            setCurrentPage(1);
+                                                                        }}
+                                                                        className="form-control input-sm"
+                                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                                    >
+                                                                        <option value="10">10</option>
+                                                                        <option value="25">25</option>
+                                                                        <option value="50">50</option>
+                                                                        <option value="100">100</option>
+                                                                        <option value="-1">All</option>
+                                                                    </select>
+                                                                </label>
+                                                            </div>
+                                                            <input
+                                                                type="search"
+                                                                placeholder="Search..."
+                                                                value={searchTerm}
+                                                                onChange={(e) => {
+                                                                    setSearchTerm(e.target.value);
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                            />
+                                                        </div>
+                                                    </div>
 
-                                                <div className="dt-buttons btn-group pull-right" style={{ padding: '10px', marginBottom: '10px' }}>
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Category_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Category_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Category_List.pdf', 'Category List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Category List'); }}><i className="fa fa-print"></i></button>
+                                                    <div className="col-md-6 col-sm-12">
+                                                        <div className="dt-buttons btn-group pull-right">
+                                                            <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                            <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Category_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                            <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Category_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                            <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Category_List.pdf', 'Category List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                            <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Category List'); }}><i className="fa fa-print"></i></button>
 
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                            <i className="fa fa-columns"></i>
-                                                        </button>
-                                                        {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Category</label>
-                                                                </li>
-                                                            </ul>
-                                                        )}
+                                                            <div className="btn-group">
+                                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showColumnsDropdown && (
+                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                        <li>
+                                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Category</label>
+                                                                        </li>
+                                                                    </ul>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -219,7 +284,7 @@ const OnlineCourseCategory = () => {
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {filteredCategories.map((cat) => (
+                                                            {currentItems.map((cat) => (
                                                                 <tr key={cat.id}>
                                                                     {!hiddenColumns.includes(0) && <td>{cat.category_name}</td>}
                                                                     <td className="pull-right noExport">
@@ -229,8 +294,21 @@ const OnlineCourseCategory = () => {
                                                                     </td>
                                                                 </tr>
                                                             ))}
+                                                            {currentItems.length === 0 && (
+                                                                <tr>
+                                                                    <td colSpan="2" className="text-center">No data found</td>
+                                                                </tr>
+                                                            )}
                                                         </tbody>
                                                     </table>
+                                                </div>
+                                                <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                                    <Pagination 
+                                                        totalItems={totalItems} 
+                                                        itemsPerPage={recordsPerPage} 
+                                                        currentPage={currentPage}
+                                                        onPageChange={(page) => setCurrentPage(page)}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
