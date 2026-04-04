@@ -272,11 +272,11 @@ const SectionList = () => {
                                             <div className="btn-group">
                                                 <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
                                                 {showColumnsDropdown && (
-                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                        <li>
-                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Section</label>
-                                                        </li>
-                                                    </ul>
+                                                    <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                            <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Section
+                                                        </label>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>

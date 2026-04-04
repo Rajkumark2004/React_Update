@@ -465,28 +465,24 @@ const SubjectGroupList = () => {
                                             </div>
                                         </div>
 
-                                        {/* Export Icons Right */}
+                                        {/* Simplified Toolbar Right */}
                                         <div className="dt-buttons btn-group">
-                                            <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>
-                                            <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Subject_Group_List.csv'); }}><span><i className="fa fa-file-text-o"></i></span></a>
-                                            <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Subject_Group_List.xls'); }}><span><i className="fa fa-file-excel-o"></i></span></a>
-                                            <a className="btn btn-default buttons-print btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Subject Group List'); }}><span><i className="fa fa-print"></i></span></a>
-                                            <div className="btn-group">
-                                                <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
-                                                {showColumnsDropdown && (
-                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                        <li>
-                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Name</label>
-                                                        </li>
-                                                        <li>
-                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Class (Section)</label>
-                                                        </li>
-                                                        <li>
-                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Subject</label>
-                                                        </li>
-                                                    </ul>
-                                                )}
-                                            </div>
+                                            <a 
+                                                className="btn btn-default btn-sm" 
+                                                title="Excel" 
+                                                onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Subject_Group_List.xls'); }}
+                                                style={{ borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginRight: '5px' }}
+                                            >
+                                                <i className="fa fa-file-excel-o"></i>
+                                            </a>
+                                            <a 
+                                                className="btn btn-default btn-sm" 
+                                                title="Print" 
+                                                onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Subject Group List'); }}
+                                                style={{ borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                            >
+                                                <i className="fa fa-print"></i>
+                                            </a>
                                         </div>
                                     </div>
 
