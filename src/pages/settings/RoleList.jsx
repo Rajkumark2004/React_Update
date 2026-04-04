@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import api from '../../services/api';
 import '../../utils/include_files';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const RoleList = () => {
     const { id } = useParams();
@@ -16,6 +17,10 @@ const RoleList = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const recordsPerPage = 10; // Roles list is usually short, 10 is fine
 
     const columns = [
         { index: 0, label: 'Role' },
@@ -156,6 +161,16 @@ const RoleList = () => {
         return item.name.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
+    // Reset page on search
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+
+    // Paginated data
+    const indexOfLastRecord = currentPage * recordsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+    const currentRecords = filteredList.slice(indexOfFirstRecord, indexOfLastRecord);
+
     return (
         <div className="wrapper">
             <Header />
@@ -277,7 +292,7 @@ const RoleList = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredList.map((role) => (
+                                                {currentRecords.map((role) => (
                                                     <tr key={role.id} style={{ borderBottom: '1px solid #f4f4f4' }}>
                                                         {!hiddenColumns.includes(0) && <td style={{ padding: '8px', color: '#333', fontSize: '13px' }}>{role.name}</td>}
                                                         {!hiddenColumns.includes(1) && <td style={{ padding: '8px', color: '#333', fontSize: '13px' }}>
@@ -309,13 +324,13 @@ const RoleList = () => {
                                                 ))}
                                             </tbody>
                                         </table>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', color: '#666', fontSize: '12px' }}>
-                                            <div>Records: 1 to {filteredList.length} of {roleList.length}</div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                <span style={{ cursor: 'pointer' }}>&lt;</span>
-                                                <span style={{ background: '#f4f4f4', padding: '2px 8px', borderRadius: '2px', color: '#333' }}>1</span>
-                                                <span style={{ cursor: 'pointer' }}>&gt;</span>
-                                            </div>
+                                        <div className="pt15 pb15">
+                                            <Pagination 
+                                                totalItems={filteredList.length} 
+                                                itemsPerPage={recordsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
                                         </div>
                                     </div>
                                 </div>

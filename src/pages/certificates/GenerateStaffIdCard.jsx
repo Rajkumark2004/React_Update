@@ -11,6 +11,7 @@ import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } 
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import StaffIdCard from '../../components/StaffIdCard';
+import Pagination from '../../utils/Pagination';
 
 const GenerateStaffIdCard = () => {
     const navigate = useNavigate();
@@ -104,6 +105,22 @@ const GenerateStaffIdCard = () => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+
+    const filteredStaff = staffList.filter(s =>
+        ((s.name || '') + ' ' + (s.surname || '')).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, staffList?.length]);
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentData = filteredStaff.slice(indexOfFirstItem, indexOfLastItem);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -372,13 +389,7 @@ const GenerateStaffIdCard = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {staffList.filter(s =>
-                                                        ((s.name || '') + ' ' + (s.surname || '')).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
-                                                    ).length > 0 ? staffList.filter(s =>
-                                                        ((s.name || '') + ' ' + (s.surname || '')).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
-                                                    ).map(staff => (
+                                                    {currentData.length > 0 ? currentData.map(staff => (
                                                         <tr key={staff.id}>
                                                             <td className="text-center"><input type="checkbox" checked={selectedStaff.includes(staff.id)} onChange={() => handleSelectStaff(staff.id)} /></td>
                                                             {getVisibleColumns().map(col => {
@@ -403,27 +414,13 @@ const GenerateStaffIdCard = () => {
                                             </table>
                                         </div>
 
-                                        <div className="row mt10">
-                                            <div className="col-sm-5">
-                                                <div className="dataTables_info">
-                                                    Records: 1 to {staffList.filter(s =>
-                                                        (s.name + ' ' + s.surname).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        s.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
-                                                    ).length} of {staffList.filter(s =>
-                                                        (s.name + ' ' + s.surname).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        s.employee_id.toLowerCase().includes(searchTerm.toLowerCase())
-                                                    ).length}
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-7">
-                                                <div className="pull-right">
-                                                    <ul className="pagination pagination-sm" style={{ margin: 0 }}>
-                                                        <li className="disabled"><span>&lt;</span></li>
-                                                        <li className="active"><span>1</span></li>
-                                                        <li className="disabled"><span>&gt;</span></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
+                                        <div className="pt15 pb15 no-print">
+                                            <Pagination
+                                                totalItems={filteredStaff.length}
+                                                itemsPerPage={itemsPerPage}
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
                                         </div>
                                     </div>
                                 )}

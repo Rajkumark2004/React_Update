@@ -7,6 +7,7 @@ import '../../utils/include_files';
 import toast from 'react-hot-toast';
 import { usePermissions } from '../../context/PermissionContext';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const ModulePermissions = () => {
     const navigate = useNavigate();
@@ -20,6 +21,13 @@ const ModulePermissions = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 50;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab, searchTerm]);
 
     const columns = [
         { index: 0, label: 'Name' },
@@ -129,6 +137,9 @@ const ModulePermissions = () => {
 
     const renderTable = (list, type, statusKey, filename) => {
         const filtered = filterList(list);
+        const indexOfLastItem = currentPage * itemsPerPage;
+        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        const currentData = filtered.slice(indexOfFirstItem, indexOfLastItem);
 
         return (
             <div>
@@ -176,7 +187,7 @@ const ModulePermissions = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((item) => (
+                            {currentData.map((item) => (
                                 <tr key={item.id}>
                                     {!hiddenColumns.includes(0) && <td>{item.name}</td>}
                                     {!hiddenColumns.includes(1) && <td style={{ textAlign: "center" }}>
@@ -194,13 +205,13 @@ const ModulePermissions = () => {
                         </tbody>
                     </table>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0px', color: '#666', fontSize: '12px' }}>
-                    <div>Records: 1 to {filtered.length} of {list.length}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ cursor: 'pointer' }}>&lt;</span>
-                        <span style={{ background: '#f4f4f4', padding: '2px 8px', borderRadius: '2px', color: '#333' }}>1</span>
-                        <span style={{ cursor: 'pointer' }}>&gt;</span>
-                    </div>
+                <div className="pt15 pb15">
+                    <Pagination
+                        totalItems={filtered.length}
+                        itemsPerPage={itemsPerPage}
+                        currentPage={currentPage}
+                        onPageChange={(page) => setCurrentPage(page)}
+                    />
                 </div>
             </div>
         );

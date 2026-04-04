@@ -7,6 +7,7 @@ import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { api } from '../../services/api.js';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const StaffIdCard = () => {
     const navigate = useNavigate();
@@ -90,6 +91,17 @@ const StaffIdCard = () => {
     const filteredIdCards = idCardList.filter(item =>
         item.title && item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, idCardList.length]);
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentData = filteredIdCards.slice(indexOfFirstItem, indexOfLastItem);
 
     const getExportData = () => {
         const headers = [];
@@ -482,7 +494,7 @@ const StaffIdCard = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {filteredIdCards.map(item => (
+                                                    {currentData.map(item => (
                                                         <tr key={item.id}>
                                                             {!hiddenColumns.includes(0) && <td><a href="#" onClick={(e) => { e.preventDefault(); setActiveViewItem(item); setShowViewModal(true); }}>{item.title}</a></td>}
                                                             {!hiddenColumns.includes(1) && <td>
@@ -499,21 +511,13 @@ const StaffIdCard = () => {
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <div className="row mt10">
-                                            <div className="col-sm-5">
-                                                <div className="dataTables_info">
-                                                    Records: 1 to {filteredIdCards.length} of {filteredIdCards.length}
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-7">
-                                                <div className="pull-right">
-                                                    <ul className="pagination pagination-sm" style={{ margin: 0 }}>
-                                                        <li className="disabled"><span>&lt;</span></li>
-                                                        <li className="active"><span>1</span></li>
-                                                        <li className="disabled"><span>&gt;</span></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
+                                        <div className="pt15 pb15 no-print">
+                                            <Pagination 
+                                                totalItems={filteredIdCards.length} 
+                                                itemsPerPage={itemsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
                                         </div>
                                     </div>
                                 </div>

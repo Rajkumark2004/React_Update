@@ -10,6 +10,7 @@ import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } 
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import StudentIdCard from '../../components/StudentIdCard';
+import Pagination from '../../utils/Pagination';
 
 const GenerateIdCard = () => {
     const navigate = useNavigate();
@@ -246,6 +247,17 @@ const GenerateIdCard = () => {
             s?.admission_no?.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(50);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, studentList?.length]);
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentData = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
+
     const getExportData = () => {
         const allHeaders = ['Student Name', 'Class', 'Father Name', 'Date of Birth', 'Mother Name', 'Gender', 'Category', 'Mobile No'];
         const allRowData = filteredStudents.map(s => [
@@ -390,7 +402,7 @@ const GenerateIdCard = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {filteredStudents.length > 0 ? filteredStudents.map(student => (
+                                                    {currentData.length > 0 ? currentData.map(student => (
                                                         <tr key={student.id}>
                                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                                                                 <input type="checkbox" className="checkbox center-block" checked={selectedStudents.includes(student.id)} onChange={() => handleSelectStudent(student.id)} />
@@ -413,21 +425,13 @@ const GenerateIdCard = () => {
                                             </table>
                                         </div>
 
-                                        <div className="row mt10">
-                                            <div className="col-sm-5">
-                                                <div className="dataTables_info">
-                                                    Records: 1 to {filteredStudents.length} of {filteredStudents.length}
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-7">
-                                                <div className="pull-right">
-                                                    <ul className="pagination pagination-sm" style={{ margin: 0 }}>
-                                                        <li className="disabled"><span>&lt;</span></li>
-                                                        <li className="active"><span>1</span></li>
-                                                        <li className="disabled"><span>&gt;</span></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
+                                        <div className="pt15 pb15 no-print">
+                                            <Pagination
+                                                totalItems={filteredStudents.length}
+                                                itemsPerPage={itemsPerPage}
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
                                         </div>
                                     </div>
                                 )}

@@ -22,18 +22,25 @@ const Pagination = ({
         e.preventDefault();
         if (page !== currentPage && page >= 1 && page <= totalPages) {
             onPageChange(page);
-            // Defer scrolling to next event loop tick so React finishes rendering the new shorter/longer DOM list.
-            // This prevents smooth scroll from glitching when the page height changes drastically (e.g. last page with few records).
+            // Capture target before entering setTimeout because React pools events
+            const target = e.currentTarget;
+            
+            // Defer scrolling to next event loop tick so React finishes rendering the new list.
             setTimeout(() => {
-                const element = e.target.closest('.box') || document.querySelector('.content-header') || document.documentElement;
+                const element = target.closest('.box') || 
+                                target.closest('.nav-tabs-custom') || 
+                                document.querySelector('.content-header') || 
+                                document.documentElement;
+                
                 if (element && element !== document.documentElement) {
-                     const rect = element.getBoundingClientRect();
-                     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                     window.scrollTo({ top: rect.top + scrollTop - 20, behavior: 'smooth' });
+                    const rect = element.getBoundingClientRect();
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    // Scroll to the top of the container with a small offset for the header
+                    window.scrollTo({ top: rect.top + scrollTop - 10, behavior: 'smooth' });
                 } else {
-                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
-            }, 50);
+            }, 100); // 100ms is safer for DOM updates
         }
     };
 
