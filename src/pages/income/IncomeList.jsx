@@ -7,6 +7,7 @@ import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 import { useTableSort } from '../../hooks/useTableSort';
+import Pagination from '../../utils/Pagination';
 
 
 
@@ -18,7 +19,16 @@ const IncomeList = () => {
     const [initialLoading, setInitialLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(100);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     const columns = [
         { key: 'name', label: 'Name', sortKey: 'name' },
@@ -203,18 +213,16 @@ const IncomeList = () => {
     const getExportData = () => buildExportData(columns, visibleColumns, filteredIncomeList, formatCell);
 
     // Pagination logic
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const totalItems = filteredIncomeList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredIncomeList.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredIncomeList.length / itemsPerPage);
-
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-    };
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm]);
+    }, [searchTerm, recordsPerPage]);
 
     return (
         <div className="wrapper theme-white-skin">
@@ -355,10 +363,75 @@ const IncomeList = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="row" style={{ marginBottom: '10px' }}>
-                                        <div className="col-md-6">
+                                    <div
+                                        className="row mb-2"
+                                        style={{
+                                            marginBottom: '10px',
+                                            display: isMobile ? 'flex' : 'block',
+                                            flexDirection: isMobile ? 'column' : 'row',
+                                            alignItems: isMobile ? 'center' : 'stretch',
+                                            gap: isMobile ? '15px' : '0'
+                                        }}
+                                    >
+                                        <div
+                                            className={isMobile ? "" : "col-sm-6"}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: isMobile ? '15px' : '20px',
+                                                justifyContent: isMobile ? 'center' : 'flex-start',
+                                                flexWrap: 'wrap'
+                                            }}
+                                        >
+                                            <div className="dataTables_length">
+                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                    Records:
+                                                    <select
+                                                        value={recordsPerPage}
+                                                        onChange={(e) => {
+                                                            setRecordsPerPage(Number(e.target.value));
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className="form-control input-sm"
+                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                    >
+                                                        <option value="10">10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                        <option value="100">100</option>
+                                                        <option value="-1">All</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                            <div className="dataTables_filter">
+                                                <input
+                                                    type="search"
+                                                    className="form-control input-sm"
+                                                    placeholder="Search..."
+                                                    style={{
+                                                        marginLeft: isMobile ? '0' : '10px',
+                                                        display: 'inline-block',
+                                                        width: isMobile ? '180px' : '180px',
+                                                        border: 'none',
+                                                        borderBottom: '1px solid #ccc',
+                                                        borderRadius: '0',
+                                                        boxShadow: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        paddingLeft: '0',
+                                                        outline: 'none',
+                                                        textAlign: isMobile ? 'center' : 'left'
+                                                    }}
+                                                    value={searchTerm}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
                                             <div className="dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'income_list.csv'); }}>
@@ -374,13 +447,13 @@ const IncomeList = () => {
                                                     <i className="fa fa-print"></i>
                                                 </button>
                                                 <div className="btn-group">
-                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
                                                         <i className="fa fa-columns"></i>
                                                     </button>
                                                     {showColumnsDropdown && (
-                                                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                             {columns.map(col => (
-                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
                                                                     <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
                                                                     {col.label}
                                                                 </label>
@@ -390,24 +463,9 @@ const IncomeList = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="col-md-6">
-                                            <div className="input-group input-group-sm">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    placeholder="Search..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => {
-                                                        setSearchTerm(e.target.value);
-                                                        setCurrentPage(1);
-                                                    }}
-                                                />
-                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    <div className="table-responsive mailbox-messages overflow-visible">
+                                    <div className="table-responsive mailbox-messages">
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
@@ -425,9 +483,13 @@ const IncomeList = () => {
                                             </thead>
                                             <tbody>
                                                 {initialLoading ? (
-                                                    <tr><td colSpan="7" className="text-center">Loading...</td></tr>
+                                                    <tr>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center">Loading...</td>
+                                                    </tr>
                                                 ) : currentItems.length === 0 ? (
-                                                    <tr><td colSpan="7" className="text-center">No data available</td></tr>
+                                                    <tr>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center text-danger">No data available in table</td>
+                                                    </tr>
                                                 ) : (
                                                     currentItems.map((income) => (
                                                         <tr key={income.id}>
@@ -436,7 +498,7 @@ const IncomeList = () => {
                                                                     {formatCell(income, col.key)}
                                                                 </td>
                                                             ))}
-                                                            <td className="text-right white-space-nowrap">
+                                                            <td className="text-right white-space-nowrap noExport">
                                                                 {income.documents && (
                                                                     <a href={`https://newlayout.wisibles.com/admin/income/download/${income.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Download" style={{ marginRight: '2px' }}>
                                                                         <i className="fa fa-download"></i>
@@ -456,54 +518,15 @@ const IncomeList = () => {
                                         </table>
                                     </div>
 
-                                    {/* Pagination UI */}
-                                    {!initialLoading && filteredIncomeList.length > 0 && (
-                                        <div className="row mt-3">
-                                            <div className="col-sm-5">
-                                                <div className="dataTables_info" style={{ padding: '8px 0' }}>
-                                                    Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredIncomeList.length)} of {filteredIncomeList.length} entries
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-7">
-                                                <div className="dataTables_paginate paging_simple_numbers pull-right">
-                                                    <ul className="pagination pagination-sm no-margin">
-                                                        <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                            <button
-                                                                onClick={() => handlePageChange(currentPage - 1)}
-                                                                disabled={currentPage === 1}
-                                                                className="btn btn-default btn-sm"
-                                                                style={{ marginRight: '5px' }}
-                                                            >
-                                                                Previous
-                                                            </button>
-                                                        </li>
-
-                                                        {[...Array(totalPages)].map((_, index) => (
-                                                            <li key={index + 1} className={`paginate_button ${currentPage === index + 1 ? 'active' : ''}`}>
-                                                                <button
-                                                                    onClick={() => handlePageChange(index + 1)}
-                                                                    className={`btn btn-sm ${currentPage === index + 1 ? 'btn-primary' : 'btn-default'}`}
-                                                                    style={{ marginRight: '5px' }}
-                                                                >
-                                                                    {index + 1}
-                                                                </button>
-                                                            </li>
-                                                        ))}
-
-                                                        <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                                            <button
-                                                                onClick={() => handlePageChange(currentPage + 1)}
-                                                                disabled={currentPage === totalPages}
-                                                                className="btn btn-default btn-sm"
-                                                            >
-                                                                Next
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
+                                    {/* Pagination Footer */}
+                                    <div className="pt15 pb15">
+                                        <Pagination
+                                            totalItems={totalItems}
+                                            itemsPerPage={recordsPerPage}
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

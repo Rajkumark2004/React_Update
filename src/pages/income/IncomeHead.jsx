@@ -7,6 +7,7 @@ import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 import { useTableSort } from '../../hooks/useTableSort';
+import Pagination from '../../utils/Pagination';
 
 
 const IncomeHead = () => {
@@ -19,6 +20,17 @@ const IncomeHead = () => {
         description: ''
     });
     const [initialLoading, setInitialLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     const columns = [
         { key: 'income_category', label: 'Income Head', sortKey: 'income_category' },
@@ -110,6 +122,18 @@ const IncomeHead = () => {
         )
     );
 
+    // Pagination logic
+    const totalItems = filteredIncomeHeadList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredIncomeHeadList.slice(indexOfFirstItem, indexOfLastItem);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, recordsPerPage]);
+
     const getExportData = () => buildExportData(columns, visibleColumns, filteredIncomeHeadList, formatCell);
 
     return (
@@ -194,10 +218,75 @@ const IncomeHead = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="row" style={{ marginBottom: '10px' }}>
-                                        <div className="col-md-6">
+                                    <div
+                                        className="row mb-2"
+                                        style={{
+                                            marginBottom: '10px',
+                                            display: isMobile ? 'flex' : 'block',
+                                            flexDirection: isMobile ? 'column' : 'row',
+                                            alignItems: isMobile ? 'center' : 'stretch',
+                                            gap: isMobile ? '15px' : '0'
+                                        }}
+                                    >
+                                        <div
+                                            className={isMobile ? "" : "col-sm-6"}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: isMobile ? '15px' : '20px',
+                                                justifyContent: isMobile ? 'center' : 'flex-start',
+                                                flexWrap: 'wrap'
+                                            }}
+                                        >
+                                            <div className="dataTables_length">
+                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                    Records:
+                                                    <select
+                                                        value={recordsPerPage}
+                                                        onChange={(e) => {
+                                                            setRecordsPerPage(Number(e.target.value));
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className="form-control input-sm"
+                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                    >
+                                                        <option value="10">10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                        <option value="100">100</option>
+                                                        <option value="-1">All</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                            <div className="dataTables_filter">
+                                                <input
+                                                    type="search"
+                                                    className="form-control input-sm"
+                                                    placeholder="Search..."
+                                                    style={{
+                                                        marginLeft: isMobile ? '0' : '10px',
+                                                        display: 'inline-block',
+                                                        width: isMobile ? '180px' : '180px',
+                                                        border: 'none',
+                                                        borderBottom: '1px solid #ccc',
+                                                        borderRadius: '0',
+                                                        boxShadow: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        paddingLeft: '0',
+                                                        outline: 'none',
+                                                        textAlign: isMobile ? 'center' : 'left'
+                                                    }}
+                                                    value={searchTerm}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
                                             <div className="dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
                                                     <i className="fa fa-files-o"></i>
                                                 </button>
                                                 <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'income_head_list.csv'); }}>
@@ -213,13 +302,13 @@ const IncomeHead = () => {
                                                     <i className="fa fa-print"></i>
                                                 </button>
                                                 <div className="btn-group">
-                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                    <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
                                                         <i className="fa fa-columns"></i>
                                                     </button>
                                                     {showColumnsDropdown && (
-                                                        <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                             {columns.map(col => (
-                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
+                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
                                                                     <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
                                                                     {col.label}
                                                                 </label>
@@ -229,21 +318,9 @@ const IncomeHead = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="col-md-6">
-                                            <div className="input-group input-group-sm">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    placeholder="Search..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                />
-                                                <span className="input-group-addon"><i className="fa fa-search"></i></span>
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    <div className="table-responsive mailbox-messages overflow-visible">
+                                    <div className="table-responsive mailbox-messages">
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
@@ -262,21 +339,21 @@ const IncomeHead = () => {
                                             <tbody>
                                                 {initialLoading ? (
                                                     <tr>
-                                                        <td colSpan="2" className="text-center">Loading...</td>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center">Loading...</td>
                                                     </tr>
-                                                ) : filteredIncomeHeadList.length === 0 ? (
+                                                ) : currentItems.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan="2" className="text-center">No data available</td>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center text-danger">No data available in table</td>
                                                     </tr>
                                                 ) : (
-                                                    filteredIncomeHeadList.map((head) => (
+                                                    currentItems.map((head) => (
                                                         <tr key={head.id}>
                                                             {columns.map(col => visibleColumns.has(col.key) && (
                                                                 <td key={col.key} className="mailbox-name">
                                                                     {formatCell(head, col.key)}
                                                                 </td>
                                                             ))}
-                                                            <td className="mailbox-date pull-right">
+                                                            <td className="mailbox-date text-right noExport">
                                                                 <Link
                                                                     to={`/admin/incomehead/edit/${head.id}`}
                                                                     className="btn btn-default btn-xs"
@@ -300,7 +377,16 @@ const IncomeHead = () => {
                                                 )}
                                             </tbody>
                                         </table>
+                                        {/* Pagination Footer */}
+                                    <div className="pt15 pb15">
+                                        <Pagination
+                                            totalItems={totalItems}
+                                            itemsPerPage={recordsPerPage}
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
+                                </div>
                                 </div>
                             </div>
                         </div>
