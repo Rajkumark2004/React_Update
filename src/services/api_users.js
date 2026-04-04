@@ -664,8 +664,9 @@ const api_users = {
             }
 
             // Also attach file if present
-            if (leaveData.file) {
-                formData.append('file', leaveData.file);
+            const fileToUpload = leaveData.files || leaveData.file || leaveData.docs;
+            if (fileToUpload) {
+                formData.append('files', fileToUpload);
             }
 
             const response = await fetch(`${API_BASE}/user/apply_leave/add`, {

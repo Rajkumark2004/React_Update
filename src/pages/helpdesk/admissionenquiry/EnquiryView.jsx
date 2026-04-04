@@ -804,7 +804,6 @@ const EnquiryView = () => {
                     onClose={() => setShowFollowUpModal(false)}
                     enquiry={selectedEnquiry}
                     onSuccess={() => {
-                        setShowFollowUpModal(false);
                         setFlashMessage('Follow up recorded successfully');
                         fetchEnquiryList(); // Refresh list
                         setTimeout(() => setFlashMessage(''), 3000);

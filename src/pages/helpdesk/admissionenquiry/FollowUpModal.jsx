@@ -132,13 +132,13 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
       const msg = response?.message || 'Follow up saved successfully';
       toast.success(msg);
 
+      // Always update internal list
+      const listRes = await api.getFollowUpList(enquiry.id);
+      setHistory(listRes.data?.follow_up_list || []);
+      setFormData(prev => ({ ...prev, response: '', note: '' }));
+
       if (onSuccess) {
           onSuccess();
-      } else {
-          // Fallback if onSuccess not provided
-          const listRes = await api.getFollowUpList(enquiry.id);
-          setHistory(listRes.data?.follow_up_list || []);
-          setFormData(prev => ({ ...prev, response: '', note: '' }));
       }
 
     } catch (err) {
@@ -159,6 +159,27 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'Failed to update status');
+    }
+  };
+
+  const handleDeleteFollowUp = async (id) => {
+    if (window.confirm('Are you sure you want to delete this follow up?')) {
+      try {
+        const response = await api.deleteFollowUp(id, enquiry.id);
+        toast.success(response.message || 'Follow up deleted successfully');
+        
+        // Update history directly from response
+        if (response.data && response.data.follow_up_list) {
+          setHistory(response.data.follow_up_list);
+        } else {
+          // Fallback if not returned
+          const listRes = await api.getFollowUpList(enquiry.id);
+          setHistory(listRes.data?.follow_up_list || []);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error(err.message || 'Failed to delete follow up');
+      }
     }
   };
 
@@ -271,6 +292,14 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
                                 <span className="ml-2">
                                   By: {item.name} {item.surname ? item.surname : ''} ({item.employee_id})
                                 </span>
+                                <a
+                                  className="pull-right text-danger"
+                                  style={{ cursor: 'pointer' }}
+                                  onClick={() => handleDeleteFollowUp(item.id)}
+                                  title="Delete Follow Up"
+                                >
+                                  <i className="fa fa-remove"></i>
+                                </a>
                               </h3>
                               <div className="timeline-body">
                                 {item.note || 'No note provided.'}

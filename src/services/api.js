@@ -4244,6 +4244,25 @@ export const api = {
         return data;
     },
 
+    // FOLLOW UP DELETE
+    deleteFollowUp: async (id, enquiryId) => {
+        const url = `${API_BASE}/admin/enquiry/follow_up_delete/${id}/${enquiryId}`;
+        try {
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (!response.ok || data.status === 'error' || data.status === false) {
+                throw new Error(data.message || 'Failed to delete follow up');
+            }
+            return data;
+        } catch (err) {
+            console.error('API Error details:', err);
+            throw err;
+        }
+    },
+
     // CHANGE ENQUIRY STATUS
     changeEnquiryStatus: async (id, status) => {
         const url = `${API_BASE}/admin/enquiry/change_status/`;
@@ -8327,6 +8346,8 @@ export const api = {
             throw error;
         }
     },
+
+
 
     viewCalendarEvent: async (eventId) => {
         console.log('API Request: View Calendar Event', eventId);

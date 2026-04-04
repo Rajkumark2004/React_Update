@@ -123,7 +123,7 @@ const ApplyLeave = () => {
                 from_date: leaveData.from_date.split('-').reverse().join('-'),
                 to_date: leaveData.to_date.split('-').reverse().join('-'),
                 message: leaveData.reason,
-                docs: leaveData.file
+                files: leaveData.file
             });
 
             if (result.status) {
@@ -151,7 +151,7 @@ const ApplyLeave = () => {
                 from_date: leaveData.from_date.split('-').reverse().join('-'),
                 to_date: leaveData.to_date.split('-').reverse().join('-'),
                 message: leaveData.reason,
-                docs: leaveData.file
+                files: leaveData.file
             });
 
             if (result.status) {
