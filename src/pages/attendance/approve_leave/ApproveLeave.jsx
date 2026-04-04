@@ -5,6 +5,7 @@ import Footer from '../../../components/Footer';
 import Loader from '../../../components/Loader';
 import api from '../../../services/api';
 import LeaveModal from './LeaveModal';
+import Pagination from '../../../utils/Pagination';
 // AttendanceSidebar removed as per request 
 
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
@@ -80,6 +81,20 @@ const ApproveLeave = () => {
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
     const [filter, setFilter] = useState({ class_id: '', section_id: '', search_text: '' });
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
 
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -281,6 +296,13 @@ const ApproveLeave = () => {
             statusStr.includes(searchText);
     });
 
+    // Calculate pagination
+    const totalItems = filteredLeaveList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredLeaveList.slice(indexOfFirstItem, indexOfLastItem);
+
     const handleCopy = () => {
         const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
         copyToClipboard(headers, rows);
@@ -438,7 +460,10 @@ const ApproveLeave = () => {
                                                     type="search"
                                                     placeholder="Search..."
                                                     value={filter.search_text}
-                                                    onChange={(e) => setFilter(prev => ({ ...prev, search_text: e.target.value }))}
+                                                    onChange={(e) => {
+                                                        setFilter(prev => ({ ...prev, search_text: e.target.value }));
+                                                        setCurrentPage(1);
+                                                    }}
                                                     style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                 />
                                             </div>
@@ -472,8 +497,8 @@ const ApproveLeave = () => {
                                                     <tbody>
                                                         {loading ? (
                                                             <tr><td colSpan="9" className="text-center">Loading...</td></tr>
-                                                        ) : filteredLeaveList.length > 0 ? (
-                                                            filteredLeaveList.map(leave => (
+                                                        ) : currentItems.length > 0 ? (
+                                                            currentItems.map(leave => (
                                                                 <tr key={leave.id}>
                                                                     {visibleColumns.has('firstname') && <td>{leave.firstname} {leave.lastname} ({leave.admission_no})</td>}
                                                                     {visibleColumns.has('class') && <td>{leave.class}</td>}
@@ -513,6 +538,14 @@ const ApproveLeave = () => {
                                                         )}
                                                     </tbody>
                                                 </table>
+                                            </div>
+                                            <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                                <Pagination
+                                                    totalItems={totalItems}
+                                                    itemsPerPage={recordsPerPage}
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         </div>
                                     </div>

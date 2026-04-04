@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import api from '../../services/api';
 import '../../utils/include_files';
 import { useSession } from '../../context/SessionContext';
+import Pagination from '../../utils/Pagination';
 
 const PrintMarksheet = () => {
     const { sessionYear } = useSession();
@@ -13,6 +14,10 @@ const PrintMarksheet = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [studentList, setStudentList] = useState(null);
     const [selectedStudents, setSelectedStudents] = useState([]);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
@@ -278,8 +283,28 @@ const PrintMarksheet = () => {
 
                                 {studentList && (
                                     <div className="box-body">
-                                        <div className="box-header ptbnull">
+                                        <div className="box-header ptbnull" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
                                             <h3 className="box-title titlefix"><i className="fa fa-users"></i> Student List</h3>
+                                            <div className="dataTables_length">
+                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                    Records:
+                                                    <select
+                                                        value={recordsPerPage}
+                                                        onChange={(e) => {
+                                                            setRecordsPerPage(Number(e.target.value));
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className="form-control input-sm"
+                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                    >
+                                                        <option value="10">10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                        <option value="100">100</option>
+                                                        <option value="-1">All</option>
+                                                    </select>
+                                                </label>
+                                            </div>
                                         </div>
                                         <div className="table-responsive mailbox-messages">
                                             <table className="table table-striped table-bordered table-hover" width="100%">
@@ -296,10 +321,16 @@ const PrintMarksheet = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {studentList.length === 0 ? (
-                                                        <tr><td colSpan="8" className="text-center text-danger">No Record Found</td></tr>
-                                                    ) : (
-                                                        studentList.map(student => (
+                                                    {(() => {
+                                                        const totalItems = studentList.length;
+                                                        const safeRpp = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+                                                        const idxLast = currentPage * safeRpp;
+                                                        const idxFirst = idxLast - safeRpp;
+                                                        const currentStudents = studentList.slice(idxFirst, idxLast);
+                                                        return currentStudents.length === 0 ? (
+                                                            <tr><td colSpan="8" className="text-center text-danger">No Record Found</td></tr>
+                                                        ) : (
+                                                            currentStudents.map(student => (
                                                             <tr key={student.id}>
                                                                 <td className="text-center">
                                                                     <input
@@ -320,10 +351,19 @@ const PrintMarksheet = () => {
                                                                     <button className="btn btn-default btn-xs" title="Download" onClick={() => handlePrint(student)}><i className="fa fa-download"></i></button>
                                                                 </td>
                                                             </tr>
-                                                        ))
-                                                    )}
+                                                            ))
+                                                        );
+                                                    })()}
                                                 </tbody>
                                             </table>
+                                        </div>
+                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                            <Pagination 
+                                                totalItems={studentList.length} 
+                                                itemsPerPage={recordsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
                                         </div>
                                     </div>
                                 )}

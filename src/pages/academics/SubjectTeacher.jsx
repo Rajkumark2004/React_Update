@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const SubjectTeacher = () => {
     const navigate = useNavigate();
@@ -24,6 +25,10 @@ const SubjectTeacher = () => {
     const [assignmentList, setAssignmentList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
@@ -157,6 +162,13 @@ const SubjectTeacher = () => {
         item.subject_name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Calculate pagination
+    const totalItems = filteredList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
+
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
@@ -251,16 +263,41 @@ const SubjectTeacher = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="dt-controls-between">
-                                        {/* Search Left */}
-                                        <div id="DataTables_Table_0_filter" className="dataTables_filter">
-                                            <input
-                                                type="search"
-                                                placeholder="Search..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                            />
+                                    <div className="dt-controls-between" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', marginBottom: '10px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                            <div className="dataTables_length">
+                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                    Records:
+                                                    <select
+                                                        value={recordsPerPage}
+                                                        onChange={(e) => {
+                                                            setRecordsPerPage(Number(e.target.value));
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className="form-control input-sm"
+                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                    >
+                                                        <option value="10">10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                        <option value="100">100</option>
+                                                        <option value="-1">All</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                            {/* Search */}
+                                            <div id="DataTables_Table_0_filter" className="dataTables_filter" style={{ display: 'flex', alignItems: 'center' }}>
+                                                <input
+                                                    type="search"
+                                                    placeholder="Search..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                    style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Export Icons Right */}
@@ -306,7 +343,7 @@ const SubjectTeacher = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {filteredList.map(item => (
+                                                    {currentItems.map(item => (
                                                         <tr key={item.stid}>
                                                             {!hiddenColumns.includes(0) && <td className="mailbox-name" style={{ textAlign: 'left' }}>{item.class}</td>}
                                                             {!hiddenColumns.includes(1) && <td style={{ textAlign: 'left' }}>{item.section}</td>}
@@ -329,7 +366,7 @@ const SubjectTeacher = () => {
                                                             </td>
                                                         </tr>
                                                     ))}
-                                                    {filteredList.length === 0 && (
+                                                    {currentItems.length === 0 && (
                                                         <tr>
                                                             <td colSpan="5" className="text-center">No Result Found</td>
                                                         </tr>
@@ -339,11 +376,13 @@ const SubjectTeacher = () => {
                                         </div>
                                     </div>
 
-                                    {/* Records Info Outside */}
-                                    <div className="dt-info-left">
-                                        <div className="dataTables_info">
-                                            Records: 1 to {filteredList.length} of {assignmentList.length}
-                                        </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination 
+                                            totalItems={totalItems} 
+                                            itemsPerPage={recordsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div>
                             </div>

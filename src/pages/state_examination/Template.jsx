@@ -10,6 +10,7 @@ import DragDropFileUpload from '../../components/DragDropFileUpload';
 import toast from 'react-hot-toast';
 import ViewTemplate from './ViewTemplate';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 
 const Template = () => {
@@ -70,6 +71,10 @@ const Template = () => {
     const [loading, setLoading] = useState(true);
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     const fetchTemplates = async () => {
         try {
@@ -614,6 +619,13 @@ const Template = () => {
         (t.name || t.template || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Calculate pagination
+    const totalItems = filteredTemplates.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredTemplates.slice(indexOfFirstItem, indexOfLastItem);
+
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
@@ -667,19 +679,64 @@ const Template = () => {
                                 <div className="box-body">
                                     <div className="sss"></div>
                                     <div className="download_label">Template List</div>
-                                    <div className="row" style={{ marginBottom: '10px' }}>
-                                        <div className="col-md-6">
-                                            <div className="pull-left">
+                                    <style>
+                                        {`
+                                            @media (max-width: 767px) {
+                                                .mobile-stack {
+                                                    display: flex;
+                                                    flex-direction: column;
+                                                    align-items: center;
+                                                    gap: 15px;
+                                                }
+                                                .mobile-stack > div {
+                                                    width: 100% !important;
+                                                    text-align: center !important;
+                                                }
+                                                .mobile-stack .pull-right, .mobile-stack .pull-left {
+                                                    float: none !important;
+                                                }
+                                                .mobile-stack .dt-buttons {
+                                                    justify-content: center;
+                                                }
+                                            }
+                                        `}
+                                    </style>
+                                    <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                        <div className="col-md-6 col-sm-12">
+                                            <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                <div className="dataTables_length">
+                                                    <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                        Records:
+                                                        <select
+                                                            value={recordsPerPage}
+                                                            onChange={(e) => {
+                                                                setRecordsPerPage(Number(e.target.value));
+                                                                setCurrentPage(1);
+                                                            }}
+                                                            className="form-control input-sm"
+                                                            style={{ width: '80px', margin: '0 10px' }}
+                                                        >
+                                                            <option value="10">10</option>
+                                                            <option value="25">25</option>
+                                                            <option value="50">50</option>
+                                                            <option value="100">100</option>
+                                                            <option value="-1">All</option>
+                                                        </select>
+                                                    </label>
+                                                </div>
                                                 <input
                                                     type="search"
                                                     placeholder="Search..."
                                                     value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
                                                     style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                 />
                                             </div>
                                         </div>
-                                        <div className="col-md-6">
+                                        <div className="col-md-6 col-sm-12">
                                             <div className="pull-right dt-buttons btn-group">
                                                 <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
                                                 <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Template_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
@@ -716,7 +773,7 @@ const Template = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredTemplates.map(template => (
+                                                {currentItems.map(template => (
                                                     <tr key={template.id}>
                                                         {!hiddenColumns.includes(0) && <td>{template.name}</td>}
                                                         {!hiddenColumns.includes(1) && <td>{template.class_sections}</td>}
@@ -743,19 +800,13 @@ const Template = () => {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="row">
-                                        <div className="col-sm-5">
-                                            <div className="dataTables_info">Showing 1 to {filteredTemplates.length} of {templates.length}</div>
-                                        </div>
-                                        <div className="col-sm-7">
-                                            <div className="dataTables_paginate paging_simple_numbers">
-                                                <ul className="pagination" style={{ margin: '0', float: 'right' }}>
-                                                    <li className="paginate_button previous disabled"><a href="#"><i className="fa fa-angle-left"></i></a></li>
-                                                    <li className="paginate_button active"><a href="#">1</a></li>
-                                                    <li className="paginate_button next disabled"><a href="#"><i className="fa fa-angle-right"></i></a></li>
-                                                </ul>
-                                            </div>
-                                        </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination 
+                                            totalItems={totalItems} 
+                                            itemsPerPage={recordsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div>
                             </div>

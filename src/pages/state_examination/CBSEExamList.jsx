@@ -11,6 +11,7 @@ import AssignExamSubjects from './AssignExamSubjects';
 import TeacherRemark from './TeacherRemark';
 import ExamAttendance from './ExamAttendance';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const CBSEExamList = () => {
     const { currentSession } = useSession();
@@ -496,6 +497,10 @@ const CBSEExamList = () => {
     const [exams, setExams] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+
     useEffect(() => {
         fetchExams();
     }, []);
@@ -529,6 +534,13 @@ const CBSEExamList = () => {
         exam.term_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         exam.class_sections.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Calculate pagination
+    const totalItems = filteredExams.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredExams.slice(indexOfFirstItem, indexOfLastItem);
 
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
@@ -591,6 +603,20 @@ const CBSEExamList = () => {
                 .mb10 { margin-bottom: 10px; }
                 .noExport { }
                 .input-group-sm .form-control { height: 30px; }
+                @media (max-width: 767px) {
+                    .dt-header {
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    .dt-header > div {
+                        justify-content: center;
+                        width: 100%;
+                    }
+                    .dt-header .dt-buttons {
+                        justify-content: center;
+                    }
+                }
             `}</style>
             <Header />
             <Sidebar />
@@ -641,21 +667,46 @@ const CBSEExamList = () => {
                                     <div className="row">
                                         <div className="col-md-12">
                                             <div className="dt-header">
-                                                <div className="dataTables_filter" style={{ textAlign: 'left' }}>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                        style={{
-                                                            border: 'none',
-                                                            borderBottom: '1px solid #ccc',
-                                                            outline: 'none',
-                                                            padding: '5px 0',
-                                                            background: 'transparent',
-                                                            width: 'auto'
-                                                        }}
-                                                    />
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <div className="dataTables_filter" style={{ textAlign: 'left' }}>
+                                                        <input
+                                                            type="search"
+                                                            placeholder="Search..."
+                                                            value={searchTerm}
+                                                            onChange={(e) => {
+                                                                setSearchTerm(e.target.value);
+                                                                setCurrentPage(1);
+                                                            }}
+                                                            style={{
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                outline: 'none',
+                                                                padding: '5px 0',
+                                                                background: 'transparent',
+                                                                width: 'auto'
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
                                                 <div className="dt-buttons btn-group">
                                                     <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-files-o"></i></button>
@@ -698,7 +749,7 @@ const CBSEExamList = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredExams.map((exam) => (
+                                                {currentItems.map((exam) => (
                                                     <tr key={exam.id}>
                                                         {!hiddenColumns.includes(0) && <td style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>{exam.name}</td>}
                                                         {!hiddenColumns.includes(1) && <td style={{ paddingLeft: '5px' }}>{exam.class_sections}</td>}
@@ -775,6 +826,14 @@ const CBSEExamList = () => {
                                                 ))}
                                             </tbody>
                                         </table>
+                                    </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination 
+                                            totalItems={totalItems} 
+                                            itemsPerPage={recordsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div>
                             </div>

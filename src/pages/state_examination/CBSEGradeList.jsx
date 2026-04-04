@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import '../../utils/include_files';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const CBSEGradeList = () => {
     const { sessionYear } = useSession();
@@ -32,6 +33,10 @@ const CBSEGradeList = () => {
 
     const [gradeList, setGradeList] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     const fetchGradeList = async () => {
         console.log("fetchGradeList called");
@@ -271,6 +276,13 @@ const CBSEGradeList = () => {
         (grade.description && grade.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    // Calculate pagination
+    const totalItems = filteredGradeList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredGradeList.slice(indexOfFirstItem, indexOfLastItem);
+
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
@@ -431,12 +443,35 @@ const CBSEGradeList = () => {
                                     </style>
                                     <div className="row mobile-stack">
                                         <div className="col-md-6 col-sm-12">
-                                            <div className="pull-left mb10">
+                                            <div className="pull-left mb10" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                <div className="dataTables_length">
+                                                    <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                        Records:
+                                                        <select
+                                                            value={recordsPerPage}
+                                                            onChange={(e) => {
+                                                                setRecordsPerPage(Number(e.target.value));
+                                                                setCurrentPage(1);
+                                                            }}
+                                                            className="form-control input-sm"
+                                                            style={{ width: '80px', margin: '0 10px' }}
+                                                        >
+                                                            <option value="10">10</option>
+                                                            <option value="25">25</option>
+                                                            <option value="50">50</option>
+                                                            <option value="100">100</option>
+                                                            <option value="-1">All</option>
+                                                        </select>
+                                                    </label>
+                                                </div>
                                                 <input
                                                     type="search"
                                                     placeholder="Search..."
                                                     value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
                                                     style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
                                                 />
                                             </div>
@@ -478,7 +513,7 @@ const CBSEGradeList = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredGradeList.map((grade) => (
+                                                {currentItems.map((grade) => (
                                                     <tr key={grade.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
                                                         <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
                                                             <strong>{grade.name}</strong>
@@ -529,25 +564,13 @@ const CBSEGradeList = () => {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="row">
-                                        <div className="col-md-5">
-                                            <div className="dataTables_info" style={{ paddingTop: '8px', fontSize: '13px' }}>
-                                                Showing 1 to {filteredGradeList.length} of {filteredGradeList.length} records
-                                            </div>
-                                        </div>
-                                        <div className="col-md-7">
-                                            <div className="dataTables_paginate paging_simple_numbers pull-right" style={{ fontSize: '13px' }}>
-                                                <ul className="pagination">
-                                                    <li className="paginate_button previous disabled">
-                                                        <a href="#"><i className="fa fa-angle-left"></i></a>
-                                                    </li>
-                                                    <li className="paginate_button active"><a href="#">1</a></li>
-                                                    <li className="paginate_button next disabled">
-                                                        <a href="#"><i className="fa fa-angle-right"></i></a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination 
+                                            totalItems={totalItems} 
+                                            itemsPerPage={recordsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div>
                             </div>

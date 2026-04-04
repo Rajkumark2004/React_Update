@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 import '../../utils/include_files';
 
 const AssignClassTeacher = () => {
@@ -22,6 +23,19 @@ const AssignClassTeacher = () => {
     const [assignTeacherList, setAssignTeacherList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
 
     // Edit tracking states
     const [prevIds, setPrevIds] = useState([]);
@@ -291,6 +305,13 @@ const AssignClassTeacher = () => {
         return classMatch || sectionMatch || teacherMatch;
     });
 
+    // Calculate pagination
+    const totalItems = filteredList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
+
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
@@ -400,17 +421,42 @@ const AssignClassTeacher = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="dt-controls-between">
-                                        {/* Search Left */}
-                                        <div id="DataTables_Table_0_filter" className="dataTables_filter">
-                                            <input
-                                                type="search"
-                                                placeholder="Search..."
-                                                aria-controls="DataTables_Table_0"
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                            />
+                                    <div className="dt-controls-between" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', marginBottom: '10px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                            <div className="dataTables_length">
+                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                    Records:
+                                                    <select
+                                                        value={recordsPerPage}
+                                                        onChange={(e) => {
+                                                            setRecordsPerPage(Number(e.target.value));
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className="form-control input-sm"
+                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                    >
+                                                        <option value="10">10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                        <option value="100">100</option>
+                                                        <option value="-1">All</option>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                            {/* Search Left */}
+                                            <div id="DataTables_Table_0_filter" className="dataTables_filter" style={{ display: 'flex', alignItems: 'center' }}>
+                                                <input
+                                                    type="search"
+                                                    placeholder="Search..."
+                                                    aria-controls="DataTables_Table_0"
+                                                    value={searchTerm}
+                                                    onChange={(e) => {
+                                                        setSearchTerm(e.target.value);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                    style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Export Icons Right */}
@@ -454,7 +500,7 @@ const AssignClassTeacher = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {filteredList.map((item, index) => (
+                                                    {currentItems.map((item, index) => (
                                                         <tr key={index} role="row" className={index % 2 === 0 ? "odd" : "even"}>
                                                             {!hiddenColumns.includes(0) && (
                                                                 <td className="mailbox-name" style={{ textAlign: 'left' }}>
@@ -493,7 +539,7 @@ const AssignClassTeacher = () => {
                                                             </td>
                                                         </tr>
                                                     ))}
-                                                    {filteredList.length === 0 && (
+                                                    {currentItems.length === 0 && (
                                                         <tr>
                                                             <td colSpan="4" className="text-center">No Result Found</td>
                                                         </tr>
@@ -504,11 +550,13 @@ const AssignClassTeacher = () => {
                                             </div> {/* Closes dataTables_wrapper */}
                                     </div> {/* Closes table-responsive */}
 
-                                    {/* Bottom Control Bar Moved Outside */}
-                                    <div className="dt-info-left">
-                                        <div className="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-                                            Records: 1 to {filteredList.length} of {assignTeacherList.length}
-                                        </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination 
+                                            totalItems={totalItems} 
+                                            itemsPerPage={recordsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div> {/* Closes box-body */}
                             </div> {/* Closes box box-primary */}
