@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
 import { validateMaxLength, validateDescription, sanitizeName } from '../../utils/validation';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const HostelEdit = () => {
     const navigate = useNavigate();
@@ -24,7 +26,36 @@ const HostelEdit = () => {
     const [errors, setErrors] = useState({});
 
     const [hostellist, setHostelList] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+
     const hostelTypes = ['Boys', 'Girls', 'Combined'];
+
+    const filteredHostelList = hostellist.filter(hostel =>
+        Object.values(hostel).some(value =>
+            String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    );
+
+    const totalItems = filteredHostelList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredHostelList.slice(indexOfFirstItem, indexOfLastItem);
+
+    const columns = [
+        { key: 'hostel_name', label: 'Hostel Name' },
+        { key: 'type', label: 'Type' },
+        { key: 'address', label: 'Address' },
+        { key: 'intake', label: 'Intake' }
+    ];
+
+    const getExportData = () => {
+        const headers = columns.map(c => c.label);
+        const rows = filteredHostelList.map(h => [h.hostel_name, h.type, h.address, h.intake]);
+        return { headers, rows };
+    };
 
     useEffect(() => {
         fetchData();
@@ -160,6 +191,26 @@ const HostelEdit = () => {
 
     return (
         <div className="wrapper">
+            <style>{`
+                @media (max-width: 767px) {
+                    .mobile-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    .mobile-stack > div {
+                        width: 100% !important;
+                        text-align: center !important;
+                    }
+                    .mobile-stack .pull-right, .mobile-stack .pull-left {
+                        float: none !important;
+                    }
+                    .mobile-stack .dt-buttons {
+                        justify-content: center;
+                    }
+                }
+            `}</style>
             <Header />
             <Sidebar />
 
@@ -271,6 +322,54 @@ const HostelEdit = () => {
                                     <h3 className="box-title titlefix">Hostel List</h3>
                                 </div>
                                 <div className="box-body">
+                                    <div className="mailbox-controls">
+                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                            <div className="col-md-6 col-sm-12">
+                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <input
+                                                        type="search"
+                                                        placeholder="Search..."
+                                                        aria-controls="DataTables_Table_0"
+                                                        value={searchTerm}
+                                                        onChange={(e) => {
+                                                            setSearchTerm(e.target.value);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6 col-sm-12">
+                                                <div className="dt-buttons btn-group pull-right">
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'hostel_list.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'hostel_list.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'hostel_list.pdf', 'Hostel List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Hostel List'); }}><i className="fa fa-print"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div className="mailbox-messages table-responsive overflow-visible">
                                         <div className="download_label">Hostel List</div>
                                         <table className="table table-striped table-bordered table-hover example">
@@ -284,12 +383,12 @@ const HostelEdit = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {hostellist.length === 0 ? (
+                                                {currentItems.length === 0 ? (
                                                     <tr>
                                                         <td colSpan="5" className="text-center">No Record Found</td>
                                                     </tr>
                                                 ) : (
-                                                    hostellist.map(hostel => (
+                                                    currentItems.map(hostel => (
                                                         <tr key={hostel.id}>
                                                             <td className="mailbox-name">
                                                                 <a
@@ -328,6 +427,14 @@ const HostelEdit = () => {
                                                 )}
                                             </tbody>
                                         </table>
+                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                            <Pagination 
+                                                totalItems={totalItems} 
+                                                itemsPerPage={recordsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

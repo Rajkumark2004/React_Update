@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
 import { validateName, validateDescription, sanitizeName } from '../../utils/validation';
+import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const RoomTypeEdit = () => {
     const navigate = useNavigate();
@@ -21,6 +23,31 @@ const RoomTypeEdit = () => {
     const [errors, setErrors] = useState({});
 
     const [roomtypelist, setRoomTypeList] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+
+    const filteredRoomTypeList = roomtypelist.filter(roomtype =>
+        Object.values(roomtype).some(value =>
+            String(value).toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    );
+
+    const totalItems = filteredRoomTypeList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredRoomTypeList.slice(indexOfFirstItem, indexOfLastItem);
+
+    const columns = [
+        { key: 'room_type', label: 'Room Type' }
+    ];
+
+    const getExportData = () => {
+        const headers = columns.map(c => c.label);
+        const rows = filteredRoomTypeList.map(rt => [rt.room_type]);
+        return { headers, rows };
+    };
 
     useEffect(() => {
         fetchData();
@@ -129,6 +156,26 @@ const RoomTypeEdit = () => {
 
     return (
         <div className="wrapper">
+            <style>{`
+                @media (max-width: 767px) {
+                    .mobile-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    .mobile-stack > div {
+                        width: 100% !important;
+                        text-align: center !important;
+                    }
+                    .mobile-stack .pull-right, .mobile-stack .pull-left {
+                        float: none !important;
+                    }
+                    .mobile-stack .dt-buttons {
+                        justify-content: center;
+                    }
+                }
+            `}</style>
             <Header />
             <Sidebar />
 
@@ -195,6 +242,54 @@ const RoomTypeEdit = () => {
                                     <h3 className="box-title titlefix">Room Type List</h3>
                                 </div>
                                 <div className="box-body">
+                                    <div className="mailbox-controls">
+                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                            <div className="col-md-6 col-sm-12">
+                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <input
+                                                        type="search"
+                                                        placeholder="Search..."
+                                                        aria-controls="DataTables_Table_0"
+                                                        value={searchTerm}
+                                                        onChange={(e) => {
+                                                            setSearchTerm(e.target.value);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6 col-sm-12">
+                                                <div className="dt-buttons btn-group pull-right">
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'room_type_list.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'room_type_list.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'room_type_list.pdf', 'Room Type List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Room Type List'); }}><i className="fa fa-print"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div className="mailbox-messages">
                                         <div className="download_label">Room Type List</div>
                                         <div className="table-responsive overflow-visible">
@@ -206,12 +301,12 @@ const RoomTypeEdit = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {roomtypelist.length === 0 ? (
+                                                    {currentItems.length === 0 ? (
                                                         <tr>
                                                             <td colSpan="2" className="text-center">No Record Found</td>
                                                         </tr>
                                                     ) : (
-                                                        roomtypelist.map(roomtype => (
+                                                        currentItems.map(roomtype => (
                                                             <tr key={roomtype.id}>
                                                                 <td className="mailbox-name">
                                                                     <a
@@ -247,6 +342,14 @@ const RoomTypeEdit = () => {
                                                     )}
                                                 </tbody>
                                             </table>
+                                            <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                                <Pagination 
+                                                    totalItems={totalItems} 
+                                                    itemsPerPage={recordsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

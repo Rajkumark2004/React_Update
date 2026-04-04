@@ -9,6 +9,7 @@ import '../../utils/include_files';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
 import { useTableSort } from '../../hooks/useTableSort';
 import { validateName, validateDescription, sanitizeName } from '../../utils/validation';
+import Pagination from '../../utils/Pagination';
 
 const RoomType = () => {
     const navigate = useNavigate();
@@ -21,6 +22,8 @@ const RoomType = () => {
     const [errors, setErrors] = useState({});
     const [roomtypelist, setRoomTypeList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     // Columns
     const columns = [
@@ -43,6 +46,12 @@ const RoomType = () => {
             String(value).toLowerCase().includes(searchTerm.toLowerCase())
         )
     );
+
+    const totalItems = filteredRoomTypeList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredRoomTypeList.slice(indexOfFirstItem, indexOfLastItem);
 
     // Export Data formatting
     const formatCell = (row, key) => {
@@ -153,6 +162,26 @@ const RoomType = () => {
 
     return (
         <div className="wrapper">
+            <style>{`
+                @media (max-width: 767px) {
+                    .mobile-stack {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    .mobile-stack > div {
+                        width: 100% !important;
+                        text-align: center !important;
+                    }
+                    .mobile-stack .pull-right, .mobile-stack .pull-left {
+                        float: none !important;
+                    }
+                    .mobile-stack .dt-buttons {
+                        justify-content: center;
+                    }
+                }
+            `}</style>
             <Header />
             <Sidebar />
 
@@ -223,55 +252,71 @@ const RoomType = () => {
                                 </div>
                                 <div className="box-body">
                                     <div className="mailbox-controls">
-                                        <div className="pull-left">
-                                            <div className="btn-group">
-                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
-                                                    <i className="fa fa-files-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'room_type_list.csv'); }}>
-                                                    <i className="fa fa-file-text-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'room_type_list.xls'); }}>
-                                                    <i className="fa fa-file-excel-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'room_type_list.pdf', 'Room Type List'); }}>
-                                                    <i className="fa fa-file-pdf-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Room Type List'); }}>
-                                                    <i className="fa fa-print"></i>
-                                                </button>
-                                                <div className="btn-group">
-                                                    <button type="button" className="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false" title="Columns">
-                                                        <i className="fa fa-columns"></i> <span ></span>
-                                                    </button>
-                                                    <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
-                                                        {columns.map(col => (
-                                                            <li key={col.key} style={{ padding: '0px' }}>
-                                                                <label style={{ display: 'block', margin: '0', fontWeight: 'normal', cursor: 'pointer' }}>
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={visibleColumns.has(col.key)}
-                                                                        onChange={() => toggleColumn(col.key)}
-                                                                        style={{ marginRight: '8px' }}
-                                                                    />
-                                                                    {col.label}
-                                                                </label>
-                                                            </li>
-                                                        ))}
-                                                    </ul>
+                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                            <div className="col-md-6 col-sm-12">
+                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={recordsPerPage}
+                                                                onChange={(e) => {
+                                                                    setRecordsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <input
+                                                        type="search"
+                                                        placeholder="Search..."
+                                                        aria-controls="DataTables_Table_0"
+                                                        value={searchTerm}
+                                                        onChange={(e) => {
+                                                            setSearchTerm(e.target.value);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                    />
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="pull-right">
-                                            <div className="has-feedback">
-                                                <input
-                                                    type="text"
-                                                    className="form-control input-sm"
-                                                    placeholder="Search..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                />
-                                                <span className="glyphicon glyphicon-search form-control-feedback"></span>
+                                            <div className="col-md-6 col-sm-12">
+                                                <div className="dt-buttons btn-group pull-right">
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'room_type_list.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'room_type_list.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'room_type_list.pdf', 'Room Type List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Room Type List'); }}><i className="fa fa-print"></i></button>
+
+                                                    <div className="btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <i className="fa fa-columns"></i> <span ></span>
+                                                        </button>
+                                                        <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
+                                                            {columns.map(col => (
+                                                                <li key={col.key} style={{ padding: '0px' }}>
+                                                                    <label style={{ display: 'block', margin: '0', fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={visibleColumns.has(col.key)}
+                                                                            onChange={() => toggleColumn(col.key)}
+                                                                            style={{ marginRight: '8px' }}
+                                                                        />
+                                                                        {col.label}
+                                                                    </label>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -288,12 +333,12 @@ const RoomType = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredRoomTypeList.length === 0 ? (
+                                                {currentItems.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={visibleColumns.size + 1} className="text-center">No Record Found</td>
                                                     </tr>
                                                 ) : (
-                                                    filteredRoomTypeList.map(roomtype => (
+                                                    currentItems.map(roomtype => (
                                                         <tr key={roomtype.id}>
                                                             {visibleColumns.has('room_type') && <td className="mailbox-name">
                                                                 <a
@@ -329,6 +374,14 @@ const RoomType = () => {
                                                 )}
                                             </tbody>
                                         </table>
+                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                            <Pagination 
+                                                totalItems={totalItems} 
+                                                itemsPerPage={recordsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
