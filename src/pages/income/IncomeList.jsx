@@ -226,6 +226,19 @@ const IncomeList = () => {
 
     return (
         <div className="wrapper theme-white-skin">
+            <style>{`
+                .table-responsive table.example td.mailbox-name {
+                    max-width: 150px;
+                    word-wrap: break-word !important;
+                    word-break: break-all !important;
+                    white-space: normal !important;
+                }
+                .table-responsive table.example td.nowrap-cell {
+                    white-space: nowrap !important;
+                    word-wrap: normal !important;
+                    word-break: normal !important;
+                }
+            `}</style>
             <Header />
             <Sidebar />
             <div className="content-wrapper" style={{ minHeight: '828px' }}>
@@ -494,7 +507,7 @@ const IncomeList = () => {
                                                     currentItems.map((income) => (
                                                         <tr key={income.id}>
                                                             {columns.map(col => visibleColumns.has(col.key) && (
-                                                                <td key={col.key} className={col.key === 'amount' ? "mailbox-name text-right" : "mailbox-name"}>
+                                                                <td key={col.key} className={`mailbox-name ${col.key === 'amount' || col.key === 'date' ? 'nowrap-cell' : ''}`}>
                                                                     {formatCell(income, col.key)}
                                                                 </td>
                                                             ))}

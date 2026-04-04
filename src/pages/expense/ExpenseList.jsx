@@ -237,6 +237,19 @@ const ExpenseList = () => {
 
     return (
         <div className="wrapper theme-white-skin">
+            <style>{`
+                .table-responsive table.example td.mailbox-name {
+                    max-width: 150px;
+                    word-wrap: break-word !important;
+                    word-break: break-all !important;
+                    white-space: normal !important;
+                }
+                .table-responsive table.example td.nowrap-cell {
+                    white-space: nowrap !important;
+                    word-wrap: normal !important;
+                    word-break: normal !important;
+                }
+            `}</style>
             <Header />
             <Sidebar />
             <div className="content-wrapper" style={{ minHeight: '828px' }}>
@@ -480,7 +493,7 @@ const ExpenseList = () => {
                                             <thead>
                                                 <tr>
                                                     {columns.map(col => visibleColumns.has(col.key) && (
-                                                        <th key={col.key} onClick={() => requestSort(col.sortKey)} style={{ cursor: 'pointer' }} className={col.key === 'amount' ? 'text-right' : ''}>
+                                                        <th key={col.key} onClick={() => requestSort(col.sortKey)} style={{ cursor: 'pointer' }}>
                                                             {col.label} {getSortIcon(col.sortKey)}
                                                         </th>
                                                     ))}
@@ -500,7 +513,7 @@ const ExpenseList = () => {
                                                     currentItems.map((expense) => (
                                                         <tr key={expense.id}>
                                                             {columns.map(col => visibleColumns.has(col.key) && (
-                                                                <td key={col.key} className={col.key === 'amount' ? "mailbox-name text-right" : "mailbox-name"}>
+                                                                <td key={col.key} className={`mailbox-name ${col.key === 'amount' || col.key === 'date' ? 'nowrap-cell' : ''}`}>
                                                                     {formatCell(expense, col.key)}
                                                                 </td>
                                                             ))}
