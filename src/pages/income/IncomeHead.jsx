@@ -353,7 +353,7 @@ const IncomeHead = () => {
                                                                     {formatCell(head, col.key)}
                                                                 </td>
                                                             ))}
-                                                            <td className="mailbox-date text-right noExport">
+                                                            <td className="mailbox-date text-right noExport white-space-nowrap">
                                                                 <Link
                                                                     to={`/admin/incomehead/edit/${head.id}`}
                                                                     className="btn btn-default btn-xs"
@@ -377,17 +377,17 @@ const IncomeHead = () => {
                                                 )}
                                             </tbody>
                                         </table>
+                                        </div>
                                         {/* Pagination Footer */}
-                                    <div className="pt15 pb15">
-                                        <Pagination
-                                            totalItems={totalItems}
-                                            itemsPerPage={recordsPerPage}
-                                            currentPage={currentPage}
-                                            onPageChange={(page) => setCurrentPage(page)}
-                                        />
+                                        <div className="pt15 pb15">
+                                            <Pagination
+                                                totalItems={totalItems}
+                                                itemsPerPage={recordsPerPage}
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                                </div>
                             </div>
                         </div>
                     </div>
