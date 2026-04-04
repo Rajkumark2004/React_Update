@@ -22,7 +22,7 @@ const Pagination = ({
         <div className="row" style={{ display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
             <div className={isMobile ? "text-center" : "col-sm-5"}>
                 <div className="dataTables_info">
-                    Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} bug
+                    Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} Records
                 </div>
             </div>
             <div className={isMobile ? "text-center" : "col-sm-7"}>
