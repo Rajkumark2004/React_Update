@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import Pagination from '../../utils/Pagination';
 
 const DisableReasonEdit = () => {
     const { id } = useParams();
@@ -18,6 +19,14 @@ const DisableReasonEdit = () => {
         name: ''
     });
     const [results, setResults] = useState([]);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage] = useState(10);
+
+    const indexOfLastItem = currentPage * recordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - recordsPerPage;
+    const currentItems = results.slice(indexOfFirstItem, indexOfLastItem);
+    const totalItems = results.length;
 
     // Responsive state
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -163,7 +172,7 @@ const DisableReasonEdit = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {results.map((value) => (
+                                                        {currentItems.map((value) => (
                                                             <tr key={value.id}>
                                                                 <td style={{ wordBreak: 'break-word' }}>{value.reason}</td>
                                                                 <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
@@ -192,6 +201,16 @@ const DisableReasonEdit = () => {
                                                         ))}
                                                     </tbody>
                                                 </table>
+                                            </div>
+                                        )}
+                                        {!pageLoading && totalItems > 0 && (
+                                            <div className="pt15 pb15">
+                                                <Pagination 
+                                                    totalItems={totalItems} 
+                                                    itemsPerPage={recordsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         )}
                                     </div>
