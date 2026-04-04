@@ -1,0 +1,182 @@
+/* StudentSearch.css */
+
+.student-search-container {
+    min-height: 828px;
+}
+
+.tab-icon {
+    width: 20px;
+    height: auto;
+}
+
+.export-buttons-row {
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.table-search-input {
+    margin-left: 10px;
+    display: inline-block;
+    width: auto !important;
+}
+
+.empty-state-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+    min-height: 300px;
+    text-align: center;
+}
+
+.empty-state-icon-circle {
+    background: #f1f5f9;
+    padding: 24px;
+    border-radius: 50%;
+    margin-bottom: 16px;
+    transition: transform 0.3s ease;
+}
+
+.empty-state-container:hover .empty-state-icon-circle {
+    transform: scale(1.1);
+}
+
+.empty-state-title {
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+.empty-state-description {
+    color: #64748b;
+    max-width: 350px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.empty-state-image {
+    width: 150px;
+    margin-top: 20px;
+    opacity: 0.7;
+}
+
+/* Premium Search Form Improvements */
+.search-box-premium {
+    border-top: 3px solid #3c8dbc;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.search-box-premium:hover {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.form-control-premium {
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    height: auto;
+    transition: all 0.2s ease;
+}
+
+.form-control-premium:focus {
+    border-color: #3c8dbc;
+    box-shadow: 0 0 0 3px rgba(60, 141, 188, 0.1);
+    outline: none;
+}
+
+.btn-search-premium {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-search-premium:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(60, 141, 188, 0.3);
+}
+
+.btn-search-premium:active {
+    transform: translateY(0);
+}
+
+/* Carousel/Details View Improvements */
+.student-card-premium {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.student-card-premium:hover {
+    border-color: #3c8dbc;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.student-img-container {
+    padding: 15px;
+    background: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+}
+
+.student-img-premium {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.student-card-premium:hover .student-img-premium {
+    transform: scale(1.05);
+}
+
+.student-details-premium {
+    padding: 20px;
+}
+
+.student-name-premium {
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.student-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.info-item-premium {
+    font-size: 14px;
+    color: #475569;
+}
+
+.info-label-premium {
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    margin-bottom: 2px;
+    display: block;
+}
+
+.student-card-footer {
+    padding: 12px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
