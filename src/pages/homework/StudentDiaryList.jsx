@@ -8,6 +8,7 @@ import '../../utils/include_files';
 import { api } from '../../services/api';
 // FileUpload removed in favor of Dropify as per user request
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 import toast from 'react-hot-toast';
 
 /**
@@ -146,6 +147,14 @@ const StudentDiaryList = () => {
     const [diaryList, setDiaryList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+
+    const indexOfLastRecord = currentPage * recordsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+    const currentRecords = diaryList.slice(indexOfFirstRecord, indexOfLastRecord);
 
     const [errors, setErrors] = useState({});
 
@@ -318,6 +327,7 @@ const StudentDiaryList = () => {
 
             if (response && response.status && response.data) {
                 setDiaryList(response.data);
+                setCurrentPage(1); // Reset page on new search
             } else {
                 setDiaryList([]);
             }
@@ -752,7 +762,7 @@ const StudentDiaryList = () => {
                                                                     </td>
                                                                 </tr>
                                                             ) : (
-                                                                diaryList.map(item => (
+                                                                currentRecords.map(item => (
                                                                     <tr key={item.id}>
                                                                         {visibleColumns.has('class') && <td>{item.class}</td>}
                                                                         {visibleColumns.has('section') && <td>{item.section}</td>}
@@ -776,12 +786,13 @@ const StudentDiaryList = () => {
                                                     </table>
                                                 </div>
                                             </div>
-                                            <div className="box-footer">
-                                                <div className="mailbox-controls student-diary-footer">
-                                                    <div className="pull-left">
-                                                        {diaryList.length === 0 ? "Records 0 to 0 of 0" : `Records 1 to ${diaryList.length} of ${diaryList.length} `}
-                                                    </div>
-                                                </div>
+                                            <div className="box-footer pt15 pb15">
+                                                <Pagination 
+                                                    totalItems={diaryList.length} 
+                                                    itemsPerPage={recordsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         </div>
                                     </div>

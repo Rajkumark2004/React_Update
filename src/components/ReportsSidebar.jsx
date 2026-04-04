@@ -1,9 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const ReportsSidebar = ({ activeGroup }) => {
-    const navigate = useNavigate();
-
     const baseUrl = 'https://newlayout.wisibles.com/backend/images/sidebar/submenu/reports/';
     const reportGroups = [
         { name: 'SIS', label: 'SIS', img: '1.png' },
@@ -33,23 +31,25 @@ const ReportsSidebar = ({ activeGroup }) => {
         'Audit Trail Log': '/admin/reports/audit_trail'
     };
 
-    const handleGroupClick = (group) => {
-        if (routeMap[group]) {
-            navigate(routeMap[group]);
-        }
-    };
-
     return (
-        <div className="internal-sidebar-box">
-            <div className="sidebar-title">Reports</div>
-            <ul className="internal-nav">
-                {reportGroups.map((group, idx) => (
-                    <li key={idx} className={activeGroup === group.name ? 'active' : ''} onClick={() => handleGroupClick(group.name)}>
-                        <img src={`${baseUrl}${group.img}`} alt={group.name} />
-                        {group.label}
-                    </li>
-                ))}
-            </ul>
+        <div className="col-md-2 hide-mobile">
+            <div className="box border0">
+                <div className="box-header with-border">
+                    <h3 className="box-title">Reports</h3>
+                </div>
+                <ul className="tablists">
+                    {reportGroups.map((group, idx) => (
+                        <li key={idx}>
+                            <Link 
+                                to={routeMap[group.name] || '#'} 
+                                className={activeGroup === group.name ? "active" : ""}
+                            >
+                                <img src={`${baseUrl}${group.img}`} alt={group.name} className="img-fluid" style={{ width: '20px' }} /> {group.label}
+                            </Link>
+                        </li>
+                    ))}
+                </ul>
+            </div>
         </div>
     );
 };

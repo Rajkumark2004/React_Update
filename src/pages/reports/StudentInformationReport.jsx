@@ -1054,13 +1054,15 @@ const StudentInformationReport = () => {
 
             <div className="content-wrapper" style={{ minHeight: '946px' }}>
                 <section className="content">
-                    <div className="report-flex-container">
+                    <div className="row">
                         <ReportsSidebar activeGroup="SIS" />
 
-                        <div className="main-report-box">
-                            <div className="page-header">
-                                <h3>Student Information Report</h3>
-                            </div>
+                        <div className="col-md-10">
+                            <div className="box box-primary">
+                                <div className="box-header with-border">
+                                    <h3 className="box-title">Student Information Report</h3>
+                                </div>
+                                <div className="box-body">
 
                             <ul className="reportlists">
                                 {sisReports.flat().map((report, idx) => (
@@ -1291,6 +1293,8 @@ const StudentInformationReport = () => {
                                 </div>
                             )}
 
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>

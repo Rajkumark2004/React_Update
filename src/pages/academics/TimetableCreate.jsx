@@ -508,7 +508,7 @@ const TimetableCreate = () => {
                                                             <label>Period Start Time<small className="req"> *</small></label>
                                                             <div className="input-group">
                                                                 <input type="time" className="form-control" value={startTime} onChange={(e) => setStartTime(e.target.value)} required />
-                                                                <div className="input-group-addon"><i className="fa fa-clock-o"></i></div>
+                                                                {/* <div className="input-group-addon"><i className="fa fa-clock-o"></i></div> */}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -574,8 +574,8 @@ const TimetableCreate = () => {
                                                                             <table className="table table-bordered table-hover">
                                                                                 <thead>
                                                                                     <tr>
-                                                                                        <th>Subject</th>
-                                                                                        <th>Teacher</th>
+                                                                                        <th>Subject <small className="astrike"> *</small></th>
+                                                                                        <th>Teacher <small className="astrike"> *</small></th>
                                                                                         <th>Time From<small className="astrike"> *</small></th>
                                                                                         <th>Time To<small className="astrike"> *</small></th>
                                                                                         <th>Room No<small className="astrike"> *</small></th>

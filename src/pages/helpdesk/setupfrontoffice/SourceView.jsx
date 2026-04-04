@@ -14,36 +14,6 @@ import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, b
 const Source = () => {
     const navigate = useNavigate();
     const { currentSession, clearSession } = useSession();
-
-    // Stats/Session info
-    const sessionYear = currentSession?.session || '2024-25';
-    const appName = 'School Management System';
-
-    // Mock User Data
-    const [loggedInUser, setLoggedInUser] = useState(null);
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                setLoggedInUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error('Failed to parse user data:', e);
-            }
-        }
-    }, []);
-
-    const userData = loggedInUser ? {
-        name: loggedInUser.username,
-        role: Object.keys(loggedInUser.roles || {})[0] || 'User',
-        id: loggedInUser.id,
-        avatar: loggedInUser.image || '/uploads/staff_images/default_male.jpg'
-    } : {
-        name: 'Admin User',
-        role: 'Super Admin',
-        id: 1,
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
-
     const pendingTasks = [];
 
     // Form State
@@ -190,18 +160,9 @@ const Source = () => {
 
     return (
         <div className="wrapper">
-            <Header
-                appName={appName}
-                userData={userData}
-                pendingTasks={pendingTasks}
-                handleLogout={handleLogout}
-            />
+            <Header />
 
-            <Sidebar
-                handleSearch={handleSearch}
-                sessionYear={sessionYear}
-                currentUrl="/admin/source"
-            />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '710px', display: 'block' }}>
                 <section className="content-header" style={{ display: 'block', padding: '0px 15px 0 15px' }}>
@@ -420,7 +381,7 @@ const Source = () => {
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
-                                             <tbody>
+                                            <tbody>
                                                 {initialLoading ? (
                                                     <tr>
                                                         <td colSpan={sourceVisibleCols.size + 1} className="text-center">

@@ -15,9 +15,6 @@ const SourceEdit = () => {
     const { id } = useParams();
     const { currentSession, clearSession } = useSession();
 
-    // Stats/Session info
-    const sessionYear = currentSession?.session || '2024-25';
-    const appName = 'School Management System';
 
     // Form State
     const [formData, setFormData] = useState({
@@ -98,31 +95,6 @@ const SourceEdit = () => {
         }
     }, [id, source_list]);
 
-    // Mock User Data
-    const [loggedInUser, setLoggedInUser] = useState(null);
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                setLoggedInUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error('Failed to parse user data:', e);
-            }
-        }
-    }, []);
-
-    const userData = loggedInUser ? {
-        name: loggedInUser.username,
-        role: Object.keys(loggedInUser.roles || {})[0] || 'User',
-        id: loggedInUser.id,
-        avatar: loggedInUser.image || '/uploads/staff_images/default_male.jpg'
-    } : {
-        name: 'Admin User',
-        role: 'Super Admin',
-        id: 1,
-        avatar: '/uploads/staff_images/default_male.jpg'
-    };
-
     const pendingTasks = [];
 
     // Handlers
@@ -182,13 +154,6 @@ const SourceEdit = () => {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        clearSession();
-        navigate('/login');
-    };
-
     const handleSearch = (e) => {
         e.preventDefault();
         console.log('Searching...');
@@ -196,18 +161,9 @@ const SourceEdit = () => {
 
     return (
         <div className="wrapper">
-            <Header
-                appName={appName}
-                userData={userData}
-                pendingTasks={pendingTasks}
-                handleLogout={handleLogout}
-            />
+            <Header />
 
-            <Sidebar
-                handleSearch={handleSearch}
-                sessionYear={sessionYear}
-                currentUrl="/admin/source"
-            />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ minHeight: '710px', display: 'block' }}>
                 <section className="content-header" style={{ display: 'block', padding: '0px 15px 0 15px' }}>
@@ -415,48 +371,48 @@ const SourceEdit = () => {
                                     </div>
                                     <div className="download_label">Source List</div>
                                     <div className="table-responsive mailbox-messages overflow-visible">
-                                    <table className="table table-hover table-striped table-bordered example" style={{ tableLayout: 'fixed' }}>
-                                        <thead>
-                                            <tr>
-                                                {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
-                                                    <th key={col.key}>{col.label}</th>
-                                                ))}
-                                                <th className="text-right noExport">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {initialLoading ? (
+                                        <table className="table table-hover table-striped table-bordered example" style={{ tableLayout: 'fixed' }}>
+                                            <thead>
                                                 <tr>
-                                                    <td colSpan={sourceVisibleCols.size + 1} className="text-center">
-                                                        <Loader type="table" rows={recordsPerPage === -1 ? 10 : recordsPerPage} />
-                                                    </td>
+                                                    {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
+                                                        <th key={col.key}>{col.label}</th>
+                                                    ))}
+                                                    <th className="text-right noExport">Action</th>
                                                 </tr>
-                                            ) : (
-                                                currentItems.length === 0 ? (
+                                            </thead>
+                                            <tbody>
+                                                {initialLoading ? (
                                                     <tr>
-                                                        <td colSpan={sourceVisibleCols.size + 1} className="text-center text-danger">No data available in table</td>
+                                                        <td colSpan={sourceVisibleCols.size + 1} className="text-center">
+                                                            <Loader type="table" rows={recordsPerPage === -1 ? 10 : recordsPerPage} />
+                                                        </td>
                                                     </tr>
                                                 ) : (
-                                                    currentItems.map((value, key) => (
-                                                        <tr key={key}>
-                                                            {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
-                                                                <td key={col.key} className="mailbox-name" style={{ wordBreak: 'break-word' }}>{value[col.key]}</td>
-                                                            ))}
-                                                            <td className="mailbox-date pull-right noExport">
-                                                                <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                                    <i className="fa fa-pencil"></i>
-                                                                </Link>
-                                                                <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
-                                                                    <i className="fa fa-remove"></i>
-                                                                </Link>
-                                                            </td>
+                                                    currentItems.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan={sourceVisibleCols.size + 1} className="text-center text-danger">No data available in table</td>
                                                         </tr>
-                                                    ))
-                                                )
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                    ) : (
+                                                        currentItems.map((value, key) => (
+                                                            <tr key={key}>
+                                                                {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
+                                                                    <td key={col.key} className="mailbox-name" style={{ wordBreak: 'break-word' }}>{value[col.key]}</td>
+                                                                ))}
+                                                                <td className="mailbox-date pull-right noExport">
+                                                                    <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
+                                                                        <i className="fa fa-pencil"></i>
+                                                                    </Link>
+                                                                    <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
+                                                                        <i className="fa fa-remove"></i>
+                                                                    </Link>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                     {/* Pagination Footer */}
                                     <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
                                         <div className={isMobile ? "text-center" : "col-sm-5"}>

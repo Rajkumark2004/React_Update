@@ -358,46 +358,30 @@ const StudentIdCard = () => {
                 <section className="content">
                     <div className="row">
                         {/* Sub Menu / Tabs */}
-                        <div className="col-md-2">
+                        <div className="col-md-2 hide-mobile">
                             <div className="box border0">
-                                <div className="box-header with-border" style={{ padding: '10px 0' }}>
-                                    <h3 className="box-title" style={{ fontSize: '15px' }}>Certificate</h3>
+                                <div className="box-header with-border">
+                                    <h3 className="box-title">Certificate</h3>
                                 </div>
-                                <ul className="tablists list-unstyled">
-                                    {/*<li style={{ marginBottom: '10px' }}>
-                                        <Link to="/admin/certificate/student_certificate" style={{ display: 'block', padding: '5px', color: '#333' }}>
-                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/1.png" alt="icon" style={{ width: '20px', marginRight: '10px' }} />
-                                            Student Certificate
-                                        </Link>
-                                    </li>*/}
-                                    {/*  <li style={{ marginBottom: '10px' }}>
-                                        <a href="#" onClick={(e) => e.preventDefault()} style={{ display: 'block', padding: '5px', color: '#333' }}>
-                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/2.png" alt="icon" style={{ width: '20px', marginRight: '10px' }} />
-                                            Generate Certificate
-                                        </a>
-                                    </li>*/}
-                                    <li style={{ marginBottom: '10px' }}>
-                                        <Link to="/admin/certificate/student_id_card" className="active" style={{ display: 'block', padding: '5px', background: '#f4f4f4', borderLeft: '3px solid #3c8dbc', fontWeight: 'bold', color: '#000' }}>
-                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/3.png" alt="icon" style={{ width: '20px', marginRight: '10px' }} />
-                                            Student ID Card
+                                <ul className="tablists">
+                                    <li>
+                                        <Link to="/admin/certificate/student_id_card" className="active">
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/3.png" alt="icon" className="img-fluid" style={{ width: '20px' }} /> Student ID Card
                                         </Link>
                                     </li>
-                                    <li style={{ marginBottom: '10px' }}>
-                                        <Link to="/admin/certificate/generate_id_card" style={{ display: 'block', padding: '5px', color: '#333' }}>
-                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/4.png" alt="icon" style={{ width: '20px', marginRight: '10px' }} />
-                                            Generate ID Card
+                                    <li>
+                                        <Link to="/admin/certificate/generate_id_card">
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/4.png" alt="icon" className="img-fluid" style={{ width: '20px' }} /> Generate ID Card
                                         </Link>
                                     </li>
-                                    <li style={{ marginBottom: '10px' }}>
-                                        <Link to="/admin/certificate/staff_id_card" style={{ display: 'block', padding: '5px', color: '#333' }}>
-                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/5.png" alt="icon" style={{ width: '20px', marginRight: '10px' }} />
-                                            Staff ID Card
+                                    <li>
+                                        <Link to="/admin/certificate/staff_id_card">
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/5.png" alt="icon" className="img-fluid" style={{ width: '20px' }} /> Staff ID Card
                                         </Link>
                                     </li>
-                                    <li style={{ marginBottom: '10px' }}>
-                                        <Link to="/admin/certificate/generate_staff_id_card" style={{ display: 'block', padding: '5px', color: '#333' }}>
-                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/6.png" alt="icon" style={{ width: '20px', marginRight: '10px' }} />
-                                            Generate Staff ID Card
+                                    <li>
+                                        <Link to="/admin/certificate/generate_staff_id_card">
+                                            <img src="https://newlayout.wisibles.com//backend/images/sidebar/submenu/certificates/6.png" alt="icon" className="img-fluid" style={{ width: '20px' }} /> Generate Staff ID Card
                                         </Link>
                                     </li>
                                 </ul>
