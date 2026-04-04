@@ -8,6 +8,7 @@ import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import { sanitizeNameWithNumbers } from '../../../utils/validation';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import Pagination from '../../../utils/Pagination';
 
 const FeeGroup = () => {
     const { currentSession } = useSession();
@@ -360,35 +361,13 @@ const FeeGroup = () => {
                                         </table>
                                     </div>
                                     {feegroupList.length > 0 && (
-                                        <div className="row" style={isMobile ? { marginTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' } : { marginTop: '15px' }}>
-                                            <div className={isMobile ? "text-center" : "col-sm-5"}>
-                                                <div className="dataTables_info">
-                                                    {(() => {
-                                                        const filteredItems = feegroupList.filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase()));
-                                                        const totalCount = filteredItems.length;
-                                                        const from = totalCount > 0 ? ((currentPage - 1) * itemsPerPage) + 1 : 0;
-                                                        const to = Math.min(currentPage * itemsPerPage, totalCount);
-                                                        return `Showing ${from} to ${to} of ${totalCount} entries`;
-                                                    })()}
-                                                </div>
-                                            </div>
-                                            <div className={isMobile ? "text-center" : "col-sm-7"}>
-                                                <div className={isMobile ? "dataTables_paginate paging_simple_numbers" : "dataTables_paginate paging_simple_numbers pull-right"}>
-                                                    <ul className="pagination" style={{ margin: 0 }}>
-                                                        <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
-                                                        </li>
-                                                        {Array.from({ length: Math.ceil(feegroupList.filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase())).length / itemsPerPage) }, (_, i) => (
-                                                            <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                                                <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
-                                                            </li>
-                                                        ))}
-                                                        <li className={`paginate_button next ${currentPage === Math.ceil(feegroupList.filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase())).length / itemsPerPage) ? 'disabled' : ''}`}>
-                                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < Math.ceil(feegroupList.filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase())).length / itemsPerPage)) setCurrentPage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
+                                        <div className="pt15 pb15">
+                                            <Pagination 
+                                                totalItems={feegroupList.filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase())).length} 
+                                                itemsPerPage={itemsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
                                         </div>
                                     )}
                                 </div>

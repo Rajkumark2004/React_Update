@@ -7,6 +7,7 @@ import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../../utils/tableExport';
+import Pagination from '../../../utils/Pagination';
 import toast from 'react-hot-toast';
 
 const FeesForward = () => {
@@ -616,35 +617,13 @@ const FeesForward = () => {
 
                                                             {/* Pagination Info & Controls */}
                                                             {filteredStudents.length > 0 && (
-                                                                <div className="row" style={isMobile ? { marginTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' } : { marginTop: '15px' }}>
-                                                                    <div className={isMobile ? "text-center" : "col-sm-5"}>
-                                                                        <div className="dataTables_info" role="status" aria-live="polite">
-                                                                            Showing {indexOfFirstEntry + 1} to {Math.min(indexOfLastEntry, filteredStudents.length)} of {filteredStudents.length} entries
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className={isMobile ? "text-center" : "col-sm-7"}>
-                                                                        <div className={isMobile ? "dataTables_paginate paging_simple_numbers" : "dataTables_paginate paging_simple_numbers pull-right"}>
-                                                                            <ul className="pagination" style={{ margin: 0 }}>
-                                                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                                                    <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
-                                                                                </li>
-                                                                                {[...Array(totalPages)].map((_, i) => {
-                                                                                    if (totalPages > 10 && Math.abs(currentPage - (i + 1)) > 4 && i !== 0 && i !== totalPages - 1) {
-                                                                                        if (Math.abs(currentPage - (i + 1)) === 5) return <li key={i} className="paginate_button disabled"><a href="#">...</a></li>;
-                                                                                        return null;
-                                                                                    }
-                                                                                    return (
-                                                                                        <li key={i} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                                                                            <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
-                                                                                        </li>
-                                                                                    );
-                                                                                })}
-                                                                                <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                                                    <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
-                                                                                </li>
-                                                                            </ul>
-                                                                        </div>
-                                                                    </div>
+                                                                <div className="pt15 pb15">
+                                                                    <Pagination 
+                                                                        totalItems={filteredStudents.length} 
+                                                                        itemsPerPage={entriesPerPage} 
+                                                                        currentPage={currentPage}
+                                                                        onPageChange={(page) => setCurrentPage(page)}
+                                                                    />
                                                                 </div>
                                                             )}
 

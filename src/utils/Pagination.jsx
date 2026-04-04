@@ -18,6 +18,14 @@ const Pagination = ({
     // Optional: detect if the device is mobile for responsiveness (mimicking StudentSearch.jsx logic)
     const isMobile = window.innerWidth < 768;
 
+    const handlePageClick = (e, page) => {
+        e.preventDefault();
+        if (page !== currentPage && page >= 1 && page <= totalPages) {
+            onPageChange(page);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
     return (
         <div className="row" style={{ display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
             <div className={isMobile ? "text-center" : "col-sm-5"}>
@@ -29,10 +37,7 @@ const Pagination = ({
                 <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
                     <ul className="pagination" style={{ margin: 0 }}>
                         <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                            <a href="#" onClick={(e) => {
-                                e.preventDefault();
-                                if (currentPage > 1) onPageChange(currentPage - 1);
-                            }}>
+                            <a href="#" onClick={(e) => handlePageClick(e, currentPage - 1)}>
                                 <i className="fa fa-angle-left"></i>
                             </a>
                         </li>
@@ -41,10 +46,7 @@ const Pagination = ({
                             const p = i + 1;
                             return (
                                 <li key={p} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
-                                    <a href="#" onClick={(e) => {
-                                        e.preventDefault();
-                                        onPageChange(p);
-                                    }}>
+                                    <a href="#" onClick={(e) => handlePageClick(e, p)}>
                                         {p}
                                     </a>
                                 </li>
@@ -52,10 +54,7 @@ const Pagination = ({
                         })}
 
                         <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                            <a href="#" onClick={(e) => {
-                                e.preventDefault();
-                                if (currentPage < totalPages) onPageChange(currentPage + 1);
-                            }}>
+                            <a href="#" onClick={(e) => handlePageClick(e, currentPage + 1)}>
                                 <i className="fa fa-angle-right"></i>
                             </a>
                         </li>

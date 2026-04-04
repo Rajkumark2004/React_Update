@@ -8,6 +8,7 @@ import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
+import Pagination from '../../../utils/Pagination';
 import '../../../utils/include_files';
 
 const amountFormat = (amount) => {
@@ -787,39 +788,13 @@ const StudentFeeSearch = () => {
                                                 </div>
 
                                                 {/* Pagination Footer */}
-                                                <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
-                                                    <div className={isMobile ? "text-center" : "col-sm-5"}>
-                                                        <div className="dataTables_info">
-                                                            Showing {currentTotal === 0 ? 0 : indexOfFirstRecord + 1} to {Math.min(indexOfLastRecord, currentTotal)} of {currentTotal} entries
-                                                        </div>
-                                                    </div>
-                                                    <div className={isMobile ? "text-center" : "col-sm-7"}>
-                                                        <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
-                                                            <ul className="pagination" style={{ margin: 0 }}>
-                                                                <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                                    <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
-                                                                </li>
-                                                                {[...Array(totalPages)].map((_, i) => {
-                                                                    const p = i + 1;
-                                                                    if (totalPages > 7) {
-                                                                        if (p !== 1 && p !== totalPages && Math.abs(currentPage - p) > 1) {
-                                                                            if (p === 2 && currentPage > 3) return <li key={`ellipsis-${i}`} className="paginate_button disabled"><a>...</a></li>;
-                                                                            if (p === totalPages - 1 && currentPage < totalPages - 2) return <li key={`ellipsis-${i}`} className="paginate_button disabled"><a>...</a></li>;
-                                                                            return null;
-                                                                        }
-                                                                    }
-                                                                    return (
-                                                                        <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
-                                                                            <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(p); }}>{p}</a>
-                                                                        </li>
-                                                                    );
-                                                                })}
-                                                                <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                                    <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
+                                                <div className="pt15 pb15">
+                                                    <Pagination 
+                                                        totalItems={currentTotal} 
+                                                        itemsPerPage={recordsPerPage} 
+                                                        currentPage={currentPage}
+                                                        onPageChange={(page) => setCurrentPage(page)}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

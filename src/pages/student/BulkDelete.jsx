@@ -430,7 +430,11 @@ const BulkDelete = () => {
                                                                 {currentItems.length === 0 ? (
                                                                     <tr>
                                                                         <td colSpan={visibleColumns.size + 1} className="text-center">
-                                                                            No data available in table
+                                                                            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                                                                                <div style={{ color: '#ffb3b3ff', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
+                                                                                <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
+                                                                                <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
+                                                                            </div>
                                                                         </td>
                                                                     </tr>
                                                                 ) : (

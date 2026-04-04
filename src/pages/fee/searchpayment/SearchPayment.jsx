@@ -7,6 +7,7 @@ import { api } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { useSession } from '../../../context/SessionContext';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
+import Pagination from '../../../utils/Pagination';
 import '../../../utils/include_files';
 
 const SearchPayment = () => {
@@ -484,32 +485,13 @@ const SearchPayment = () => {
                                             </div>
 
                                             {/* Pagination Footer */}
-                                            <div className="row" style={{ marginTop: '15px', display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
-                                                <div className={isMobile ? "text-center" : "col-sm-5"}>
-                                                    <div className="dataTables_info">
-                                                        Showing {currentTotal === 0 ? 0 : indexOfFirstRecord + 1} to {Math.min(indexOfLastRecord, currentTotal)} of {currentTotal} entries
-                                                    </div>
-                                                </div>
-                                                <div className={isMobile ? "text-center" : "col-sm-7"}>
-                                                    <div className={`dataTables_paginate paging_simple_numbers ${isMobile ? '' : 'pull-right'}`}>
-                                                        <ul className="pagination" style={{ margin: 0 }}>
-                                                            <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                                <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage - 1); }}><i className="fa fa-angle-left"></i></a>
-                                                            </li>
-                                                            {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
-                                                                const p = i + 1;
-                                                                return (
-                                                                    <li key={i} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
-                                                                        <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(p); }}>{p}</a>
-                                                                    </li>
-                                                                );
-                                                            })}
-                                                            <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
-                                                                <a href="#" onClick={(e) => { e.preventDefault(); handlePageChange(currentPage + 1); }}><i className="fa fa-angle-right"></i></a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
+                                            <div className="pt15 pb15">
+                                                <Pagination 
+                                                    totalItems={currentTotal} 
+                                                    itemsPerPage={safeRecordsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={handlePageChange}
+                                                />
                                             </div>
                                         </div>
                                     </div>

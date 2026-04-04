@@ -8,6 +8,7 @@ import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import { sanitizeNameWithNumbers } from '../../../utils/validation';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import Pagination from '../../../utils/Pagination';
 
 const FeeGroupEdit = () => {
     const { id } = useParams();
@@ -375,6 +376,16 @@ const FeeGroupEdit = () => {
                                             </tbody>
                                         </table>
                                     </div>
+                                    {feegroupList.length > 0 && (
+                                        <div className="pt15 pb15">
+                                            <Pagination 
+                                                totalItems={feegroupList.filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase())).length} 
+                                                itemsPerPage={itemsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
