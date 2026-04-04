@@ -203,7 +203,7 @@ const OnlineCourseList = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style>{`
                 .content-wrapper { min-height: 90vh; }
                 .box-header .box-title { font-size: 18px; margin: 0; line-height: 1; }
@@ -307,7 +307,7 @@ const OnlineCourseList = () => {
             <Header />
             <Sidebar currentUrl="/admin/onlinecourse" />
 
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">

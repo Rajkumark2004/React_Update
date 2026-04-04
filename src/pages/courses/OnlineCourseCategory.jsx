@@ -109,7 +109,7 @@ const OnlineCourseCategory = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             {/* Styling to match the PHP/AdminLTE look */}
             <style>{`
                 .content-wrapper { min-height: 90vh; }
@@ -198,7 +198,7 @@ const OnlineCourseCategory = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">
