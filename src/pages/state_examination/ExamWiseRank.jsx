@@ -93,10 +93,10 @@ const ExamWiseRank = () => {
 
   if (loading) {
     return (
-      <div className="wrapper theme-white-skin">
+      <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Header />
         <Sidebar />
-        <div className="content-wrapper" style={{ marginTop: '0px' }}>
+        <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
           <div className="text-center" style={{ padding: "100px" }}>
             <i className="fa fa-spinner fa-spin fa-3x"></i>
             <p>Loading...</p>
@@ -108,11 +108,11 @@ const ExamWiseRank = () => {
   }
 
   return (
-    <div className="wrapper theme-white-skin">
+    <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
       <Sidebar />
 
-      <div className="content-wrapper" style={{ marginTop: '0px' }}>
+      <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
         <section className="content">
           <div className="row">
             <div className="col-md-12">

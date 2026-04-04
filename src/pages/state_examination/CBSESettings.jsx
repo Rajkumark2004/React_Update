@@ -11,11 +11,11 @@ const CBSESettings = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ marginTop: '17px', minHeight: '560px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1><i className="fa fa-ioxhost" style={{ marginRight: '5px' }}></i> Setting</h1>
                 </section>

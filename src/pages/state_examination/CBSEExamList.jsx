@@ -587,27 +587,78 @@ const CBSEExamList = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style>{`
                 .dt-header { 
                     display: flex; 
                     justify-content: space-between; 
                     align-items: center; 
-                    margin-bottom: 15px; 
-                    border-bottom: 1px solid #e7e7e7;
-                    padding-bottom: 5px;
-                    background: transparent;
-                    padding: 5px 10px;
+                    margin-bottom: 0px; 
+                    background: none;
+                    padding: 0px;
                 }
-                .dt-buttons { display: flex; gap: 2px; }
+                .dt-buttons { display: flex; gap: 0px; }
                 .mb10 { margin-bottom: 10px; }
                 .noExport { }
                 .input-group-sm .form-control { height: 30px; }
+                .table-responsive {
+                    overflow: hidden !important;
+                }
+                .table-responsive table.example {
+                    table-layout: fixed !important;
+                    width: 100% !important;
+                }
+                .table-responsive table.example th {
+                    white-space: normal !important;
+                    vertical-align: top !important;
+                    background-color: transparent !important;
+                    padding: 8px 5px !important;
+                    font-weight: 600;
+                    border-bottom: 2px solid #eee;
+                }
+                .table-responsive table.example th:nth-child(1) { width: 15% !important; } 
+                .table-responsive table.example th:nth-child(2) { width: 12% !important; } 
+                .table-responsive table.example th:nth-child(3) { width: 6% !important; } 
+                .table-responsive table.example th:nth-child(4) { width: 8% !important; } 
+                .table-responsive table.example th:nth-child(5) { width: 8% !important; } 
+                .table-responsive table.example th:nth-child(6) { width: 8% !important; } 
+                .table-responsive table.example th:nth-child(7) { width: 10% !important; } 
+                .table-responsive table.example th:nth-child(8) { width: 10% !important; } 
+                .table-responsive table.example th:nth-child(9) { width: 280px !important; } 
+
+                .table-responsive table.example td {
+                    word-wrap: break-word !important;
+                    word-break: break-all !important;
+                    white-space: normal !important;
+                    vertical-align: top !important;
+                    padding: 8px 5px !important;
+                    border-bottom: 1px solid #eee;
+                }
+                .table-responsive table.example td.text-right, .table-responsive table.example th.text-right {
+                    white-space: nowrap !important;
+                    width: 280px !important;
+                    text-align: right !important;
+                }
+                .dt-footer {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 15px 0;
+                    font-size: 13px;
+                }
                 @media (max-width: 767px) {
+                    .table-responsive table.example {
+                        min-width: 1200px !important;
+                    }
+                    .table-responsive {
+                        overflow-x: auto !important;
+                        display: block !important;
+                    }
                     .dt-header {
                         flex-direction: column;
                         align-items: center;
                         gap: 15px;
+                        margin-bottom: 20px;
                     }
                     .dt-header > div {
                         justify-content: center;
@@ -616,12 +667,27 @@ const CBSEExamList = () => {
                     .dt-header .dt-buttons {
                         justify-content: center;
                     }
+                    .table-responsive table.example td.text-right, 
+                    .table-responsive table.example th.text-right {
+                        display: grid !important;
+                        grid-template-columns: repeat(5, auto);
+                        gap: 2px;
+                        justify-content: end !important;
+                        width: auto !important;
+                        min-width: 0 !important;
+                        white-space: normal !important;
+                        padding: 5px !important;
+                    }
+                    .table-responsive table.example td.text-right button,
+                    .table-responsive table.example td.text-right a {
+                        margin: 0 !important;
+                    }
                 }
             `}</style>
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ marginTop: '0px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         {/* Left Sidebar (CBSE Submenu) */}
@@ -663,11 +729,11 @@ const CBSEExamList = () => {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="box-body">
+                                <div className="box-body" style={{ fontSize: '13px' }}>
                                     <div className="row">
                                         <div className="col-md-12">
                                             <div className="dt-header">
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0px', flexWrap: 'wrap' }}>
                                                     <div className="dataTables_length">
                                                         <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                             Records:
@@ -688,45 +754,52 @@ const CBSEExamList = () => {
                                                             </select>
                                                         </label>
                                                     </div>
-                                                    <div className="dataTables_filter" style={{ textAlign: 'left' }}>
-                                                        <input
-                                                            type="search"
-                                                            placeholder="Search..."
-                                                            value={searchTerm}
-                                                            onChange={(e) => {
-                                                                setSearchTerm(e.target.value);
-                                                                setCurrentPage(1);
-                                                            }}
-                                                            style={{
-                                                                border: 'none',
-                                                                borderBottom: '1px solid #ccc',
-                                                                outline: 'none',
-                                                                padding: '5px 0',
-                                                                background: 'transparent',
-                                                                width: 'auto'
-                                                            }}
-                                                        />
-                                                    </div>
+                                                    <input
+                                                        type="search"
+                                                        placeholder="Search..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => {
+                                                            setSearchTerm(e.target.value);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                    />
                                                 </div>
                                                 <div className="dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-files-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
+                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
                                                     <div className="btn-group">
-                                                        <a className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
+                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
                                                         {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Exam Name</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Class (Sections)</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Term</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(3)} onChange={() => toggleColumnVisibility(3)} /> Subjects Included</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(4)} onChange={() => toggleColumnVisibility(4)} /> Exam Published</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(5)} onChange={() => toggleColumnVisibility(5)} /> Published Result</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(6)} onChange={() => toggleColumnVisibility(6)} /> Description</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(7)} onChange={() => toggleColumnVisibility(7)} /> Created At</label></li>
-                                                            </ul>
+                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '170px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Exam Name
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Class (Sections)
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Term
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(3)} onChange={() => toggleColumnVisibility(3)} style={{ marginRight: '8px' }} /> Subjects Included
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(4)} onChange={() => toggleColumnVisibility(4)} style={{ marginRight: '8px' }} /> Exam Published
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(5)} onChange={() => toggleColumnVisibility(5)} style={{ marginRight: '8px' }} /> Published Result
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(6)} onChange={() => toggleColumnVisibility(6)} style={{ marginRight: '8px' }} /> Description
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(7)} onChange={() => toggleColumnVisibility(7)} style={{ marginRight: '8px' }} /> Created At
+                                                                </label>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
@@ -737,7 +810,7 @@ const CBSEExamList = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    {!hiddenColumns.includes(0) && <th style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>Exam Name</th>}
+                                                    {!hiddenColumns.includes(0) && <th style={{ paddingRight: '5px' }}>Exam Name</th>}
                                                     {!hiddenColumns.includes(1) && <th style={{ paddingLeft: '5px' }}>Class (Sections)</th>}
                                                     {!hiddenColumns.includes(2) && <th>Term</th>}
                                                     {!hiddenColumns.includes(3) && <th>Subjects Included</th>}
@@ -751,7 +824,7 @@ const CBSEExamList = () => {
                                             <tbody>
                                                 {currentItems.map((exam) => (
                                                     <tr key={exam.id}>
-                                                        {!hiddenColumns.includes(0) && <td style={{ whiteSpace: 'nowrap', paddingRight: '5px' }}>{exam.name}</td>}
+                                                        {!hiddenColumns.includes(0) && <td>{exam.name}</td>}
                                                         {!hiddenColumns.includes(1) && <td style={{ paddingLeft: '5px' }}>{exam.class_sections}</td>}
                                                         {!hiddenColumns.includes(2) && <td>{exam.term_name}</td>}
                                                         {!hiddenColumns.includes(3) && <td>{exam.subjectsincluded}</td>}
@@ -774,7 +847,7 @@ const CBSEExamList = () => {
                                                             </td>
                                                         )}
                                                         {!hiddenColumns.includes(6) && <td>{exam.description}</td>}
-                                                        {!hiddenColumns.includes(7) && <td style={{ whiteSpace: 'nowrap' }}>{exam.created_at}</td>}
+                                                        {!hiddenColumns.includes(7) && <td>{exam.created_at ? exam.created_at.split(' ')[0].split('-').reverse().join('/') : ''}</td>}
                                                         <td className="text-right white-space-nowrap">
                                                             <button
                                                                 className="btn btn-default btn-xs"
@@ -828,9 +901,9 @@ const CBSEExamList = () => {
                                         </table>
                                     </div>
                                     <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                        <Pagination 
-                                            totalItems={totalItems} 
-                                            itemsPerPage={recordsPerPage} 
+                                        <Pagination
+                                            totalItems={totalItems}
+                                            itemsPerPage={recordsPerPage}
                                             currentPage={currentPage}
                                             onPageChange={(page) => setCurrentPage(page)}
                                         />
@@ -862,7 +935,7 @@ const CBSEExamList = () => {
                                                         className="form-control"
                                                         name="exam_name"
                                                         required
-                                                        style={{ whiteSpace: 'nowrap' }}
+                                                        style={{}}
                                                         value={examName}
                                                         onChange={(e) => setExamName(e.target.value)}
                                                     />
@@ -1009,7 +1082,7 @@ const CBSEExamList = () => {
                                                     <select
                                                         required
                                                         value={selectedSections.length > 0 ? 'selected' : ''}
-                                                        onChange={() => {}}
+                                                        onChange={() => { }}
                                                         style={{ position: 'absolute', left: '50%', top: '100%', opacity: 0, height: 0, width: 0, pointerEvents: 'none' }}
                                                         tabIndex={-1}
                                                     >

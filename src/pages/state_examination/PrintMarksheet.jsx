@@ -208,11 +208,11 @@ const PrintMarksheet = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '710px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1><i className="fa fa-map-o"></i> Examinations <small>Student Fee1</small></h1>
                 </section>
@@ -331,26 +331,26 @@ const PrintMarksheet = () => {
                                                             <tr><td colSpan="8" className="text-center text-danger">No Record Found</td></tr>
                                                         ) : (
                                                             currentStudents.map(student => (
-                                                            <tr key={student.id}>
-                                                                <td className="text-center">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={selectedStudents.includes(student.student_session_id)}
-                                                                        onChange={() => handleStudentSelect(student.student_session_id)}
-                                                                    />
-                                                                </td>
-                                                                <td>{student.admission_no}</td>
-                                                                <td>
-                                                                    <Link to={`/student/view/${student.id}`}>{`${student.firstname} ${student.middlename || ''} ${student.lastname}`}</Link>
-                                                                </td>
-                                                                <td>{student.father_name}</td>
-                                                                <td>{student.dob}</td>
-                                                                <td>{student.gender}</td>
-                                                                <td>{student.mobileno}</td>
-                                                                <td className="text-right">
-                                                                    <button className="btn btn-default btn-xs" title="Download" onClick={() => handlePrint(student)}><i className="fa fa-download"></i></button>
-                                                                </td>
-                                                            </tr>
+                                                                <tr key={student.id}>
+                                                                    <td className="text-center">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={selectedStudents.includes(student.student_session_id)}
+                                                                            onChange={() => handleStudentSelect(student.student_session_id)}
+                                                                        />
+                                                                    </td>
+                                                                    <td>{student.admission_no}</td>
+                                                                    <td>
+                                                                        <Link to={`/student/view/${student.id}`}>{`${student.firstname} ${student.middlename || ''} ${student.lastname}`}</Link>
+                                                                    </td>
+                                                                    <td>{student.father_name}</td>
+                                                                    <td>{student.dob}</td>
+                                                                    <td>{student.gender}</td>
+                                                                    <td>{student.mobileno}</td>
+                                                                    <td className="text-right">
+                                                                        <button className="btn btn-default btn-xs" title="Download" onClick={() => handlePrint(student)}><i className="fa fa-download"></i></button>
+                                                                    </td>
+                                                                </tr>
                                                             ))
                                                         );
                                                     })()}
@@ -358,9 +358,9 @@ const PrintMarksheet = () => {
                                             </table>
                                         </div>
                                         <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                            <Pagination 
-                                                totalItems={studentList.length} 
-                                                itemsPerPage={recordsPerPage} 
+                                            <Pagination
+                                                totalItems={studentList.length}
+                                                itemsPerPage={recordsPerPage}
                                                 currentPage={currentPage}
                                                 onPageChange={(page) => setCurrentPage(page)}
                                             />

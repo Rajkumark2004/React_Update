@@ -176,11 +176,11 @@ const Term = () => {
     const currentItems = filteredTerms.slice(indexOfFirstItem, indexOfLastItem);
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '710px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content" style={{ marginTop: '0px' }}>
                     <div className="row">
                         <div className="col-md-12">
@@ -226,75 +226,77 @@ const Term = () => {
                                                 }
                                             `}
                                         </style>
-                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
+                                        <div style={{ padding: '10px 0' }}>
+                                            <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                                <div className="col-md-6 col-sm-12">
+                                                    <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                        <div className="dataTables_length">
+                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                                Records:
+                                                                <select
+                                                                    value={recordsPerPage}
+                                                                    onChange={(e) => {
+                                                                        setRecordsPerPage(Number(e.target.value));
+                                                                        setCurrentPage(1);
+                                                                    }}
+                                                                    className="form-control input-sm"
+                                                                    style={{ width: '80px', margin: '0 10px' }}
+                                                                >
+                                                                    <option value="10">10</option>
+                                                                    <option value="25">25</option>
+                                                                    <option value="50">50</option>
+                                                                    <option value="100">100</option>
+                                                                    <option value="-1">All</option>
+                                                                </select>
+                                                            </label>
+                                                        </div>
+                                                        <input
+                                                            type="search"
+                                                            placeholder="Search..."
+                                                            value={searchTerm}
+                                                            onChange={(e) => {
+                                                                setSearchTerm(e.target.value);
+                                                                setCurrentPage(1);
+                                                            }}
+                                                            style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
+                                                        />
                                                     </div>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
                                                 </div>
-                                            </div>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-right dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
-                                                        <i className="fa fa-files-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Term_List.xls'); }}>
-                                                        <i className="fa fa-file-excel-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Term_List.csv'); }}>
-                                                        <i className="fa fa-file-text-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Term_List.pdf', 'Term List'); }}>
-                                                        <i className="fa fa-file-pdf-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Term List'); }}>
-                                                        <i className="fa fa-print"></i>
-                                                    </button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                            <i className="fa fa-columns"></i>
+                                                <div className="col-md-6 col-sm-12">
+                                                    <div className="pull-right dt-buttons btn-group">
+                                                        <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
+                                                            <i className="fa fa-files-o"></i>
                                                         </button>
-                                                        {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Name</label>
-                                                                </li>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Code</label>
-                                                                </li>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Description</label>
-                                                                </li>
-                                                            </ul>
-                                                        )}
+                                                        <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Term_List.xls'); }}>
+                                                            <i className="fa fa-file-excel-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Term_List.csv'); }}>
+                                                            <i className="fa fa-file-text-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Term_List.pdf', 'Term List'); }}>
+                                                            <i className="fa fa-file-pdf-o"></i>
+                                                        </button>
+                                                        <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Term List'); }}>
+                                                            <i className="fa fa-print"></i>
+                                                        </button>
+                                                        <div className="btn-group">
+                                                            <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                <i className="fa fa-columns"></i>
+                                                            </button>
+                                                            {showColumnsDropdown && (
+                                                                <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                    <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                        <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Name
+                                                                    </label>
+                                                                    <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                        <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Code
+                                                                    </label>
+                                                                    <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                        <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Description
+                                                                    </label>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -342,9 +344,9 @@ const Term = () => {
                                             </table>
                                         </div>
                                         <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                            <Pagination 
-                                                totalItems={totalItems} 
-                                                itemsPerPage={recordsPerPage} 
+                                            <Pagination
+                                                totalItems={totalItems}
+                                                itemsPerPage={recordsPerPage}
                                                 currentPage={currentPage}
                                                 onPageChange={(page) => setCurrentPage(page)}
                                             />

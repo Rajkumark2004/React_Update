@@ -351,7 +351,7 @@ const Assessment = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style>
                 {`
                     .hide-scrollbar::-webkit-scrollbar {
@@ -390,7 +390,7 @@ const Assessment = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '850px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1><i className="fa fa-money"></i> State Examination</h1>
                 </section>
@@ -417,6 +417,7 @@ const Assessment = () => {
                                 </div>
                                 <div className="box-body">
                                     <div className="mailbox-messages">
+                                    <div style={{ padding: '10px 0' }}>
                                         <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
                                             <div className="col-md-6 col-sm-12">
                                                 <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
@@ -462,22 +463,23 @@ const Assessment = () => {
                                                     <div className="btn-group">
                                                         <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
                                                         {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Assessment</label>
-                                                                </li>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Assessment Description</label>
-                                                                </li>
-                                                                <li>
-                                                                    <label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Assessment Type</label>
-                                                                </li>
-                                                            </ul>
+                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '170px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Assessment
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Assessment Description
+                                                                </label>
+                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
+                                                                    <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Assessment Type
+                                                                </label>
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
                                         <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                                             <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                                 <thead>
