@@ -5,6 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const FinanceReport = () => {
     const navigate = useNavigate();
@@ -366,6 +367,17 @@ const FinanceReport = () => {
             pending: (acc.pending || 0) + (parseFloat(curr.pending) || 0)
         }), { amount: 0, discount: 0, fine: 0, paid: 0, balance: 0, total: 0, net: 0, basic: 0, earning: 0, deduction: 0, gross: 0, tax: 0, pending: 0 });
     }, [filteredData]);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeReport, isSearched, searchTerm, filteredData.length]);
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentData = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
     const handleReportClick = (report) => {
         setActiveReport(report);
@@ -795,7 +807,15 @@ const FinanceReport = () => {
                 const response = await api.searchStudentAcademicFeeReceipt(payload);
                 if (response?.status && response?.result) {
                     const result = response.result;
-                    setNoDueData(Array.isArray(result) ? result : Object.values(result));
+                    let flattenedStudents = [];
+                    if (result && typeof result === 'object') {
+                        Object.values(result).forEach(classStudents => {
+                            if (Array.isArray(classStudents)) {
+                                flattenedStudents = [...flattenedStudents, ...classStudents];
+                            }
+                        });
+                    }
+                    setNoDueData(flattenedStudents);
                 } else {
                     setNoDueData([]);
                 }
@@ -1719,8 +1739,8 @@ const FinanceReport = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {filteredData.map((row, index) => (
-                                                        <tr key={index}>{renderRow(row, index)}</tr>
+                                                    {currentData.map((row, index) => (
+                                                        <tr key={indexOfFirstItem + index}>{renderRow(row, indexOfFirstItem + index)}</tr>
                                                     ))}
                                                     {(activeReport === 'Balance Fees Statement' || activeReport === 'Fees Statement') && (
                                                         <tr className="total-row">
@@ -1781,14 +1801,14 @@ const FinanceReport = () => {
                                     )
                                 )}
 
-                                {!currentConfig.hidePagination && !currentConfig.hideTable && (
-                                    <div className="pagination-wrapper no-print">
-                                        <div>Records {filteredData.length > 0 ? 1 : 0} to {filteredData.length} of {filteredData.length}</div>
-                                        <ul className="pagination-list">
-                                            <li>&lt;</li>
-                                            <li className="active">1</li>
-                                            <li>&gt;</li>
-                                        </ul>
+                                {!currentConfig.hidePagination && !currentConfig.hideTable && filteredData.length > 0 && (
+                                    <div className="pt15 pb15 no-print">
+                                        <Pagination 
+                                            totalItems={filteredData.length} 
+                                            itemsPerPage={itemsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 )}
                             </div>

@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import '../../styles/reports.css';
 import { api } from '../../services/api';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const UserLog = () => {
     const navigate = useNavigate();
@@ -260,32 +261,13 @@ const UserLog = () => {
                 </table>
 
                 {/* Record count and pagination */}
-                <div className="row" style={{ marginTop: '10px' }}>
-                    <div className="col-sm-5">
-                        <div className="dataTables_info" style={{ paddingLeft: '10px', fontSize: '12px' }}>
-                            Records: {filteredData.length > 0 ? indexOfFirstRecord + 1 : 0} to {Math.min(indexOfLastRecord, filteredData.length)} of {filteredData.length}
-                            {tableSearch[tab] && getTabData(tab).length !== filteredData.length && ` (filtered from ${getTabData(tab).length} total)`}
-                        </div>
-                    </div>
-                    <div className="col-sm-7">
-                        {totalPages > 1 && (
-                            <div className="dataTables_paginate paging_simple_numbers" style={{ textAlign: 'right', paddingRight: '10px' }}>
-                                <ul className="pagination" style={{ margin: '0', float: 'right', fontSize: '12px' }}>
-                                    <li className={`paginate_button previous ${currentPage === 1 ? 'disabled' : ''}`}>
-                                        <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }} style={{ padding: '5px 10px', border: 'none', background: 'transparent' }}>&lt;</a>
-                                    </li>
-                                    {[...Array(totalPages)].map((_, i) => (
-                                        <li key={i + 1} className={`paginate_button ${currentPage === i + 1 ? 'active' : ''}`}>
-                                            <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }} style={{ padding: '5px 10px' }}>{i + 1}</a>
-                                        </li>
-                                    ))}
-                                    <li className={`paginate_button next ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                        <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }} style={{ padding: '5px 10px', border: 'none', background: 'transparent' }}>&gt;</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        )}
-                    </div>
+                <div className="pt15 pb15">
+                    <Pagination 
+                        totalItems={filteredData.length} 
+                        itemsPerPage={recordsPerPage} 
+                        currentPage={currentPage}
+                        onPageChange={(page) => setCurrentPage(page)}
+                    />
                 </div>
             </div>
         );

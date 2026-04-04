@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import '../../styles/reports.css';
 import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const AttendanceReport = () => {
     const navigate = useNavigate();
@@ -623,6 +624,52 @@ const AttendanceReport = () => {
             }
         }, 800);
     };
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
+
+    const getFilteredData = () => {
+        if (!reportData) return [];
+        switch (activeReport) {
+            case 'class_attendance':
+                return (reportData.students || []).filter(s =>
+                    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    s.admission_no.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            case 'type_report':
+                return (Array.isArray(reportData) ? reportData : []).filter(s =>
+                    (s.name && s.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (s.admission_no && s.admission_no.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    (s.father_name && s.father_name.toLowerCase().includes(searchTerm.toLowerCase()))
+                );
+            case 'daily_report':
+                return (Array.isArray(reportData.list) ? reportData.list : []).filter(r => 
+                    (r.class_section || '').toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            case 'staff_report':
+                return (reportData.staff || []).filter(s =>
+                    (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            case 'late_report':
+                return (Array.isArray(reportData) ? reportData : []).filter(r =>
+                    `${r.firstname || ''} ${r.lastname || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (r.admission_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (r.class || '').toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            default:
+                return [];
+        }
+    };
+    
+    const filteredData = getFilteredData();
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentData = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeReport, searched, searchTerm, month, year, classId, sectionId, date, dateFrom, dateTo, role, attendanceType, studentId, searchType]);
+
     const handleReportClick = (reportKey) => {
         setActiveReport(reportKey);
         setSearched(false);
@@ -1099,25 +1146,19 @@ const AttendanceReport = () => {
                                                     <tr>{attTypes.concat([{ key: 'H', type: 'Holiday' }]).map(t => <th key={t.key}>{t.key}</th>)}</tr>
                                                 </thead>
                                                 <tbody>
-                                                    {reportData.students
-                                                        ?.filter(s =>
-                                                            s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                            s.admission_no.toLowerCase().includes(searchTerm.toLowerCase())
-                                                        )
-                                                        .map(s => (
-                                                            <tr key={s.id}><td style={{ textAlign: 'left' }}>{s.name} (Adm: {s.admission_no})</td><td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td><td>{s.counts.P}</td><td>{s.counts.L}</td><td>{s.counts.A}</td><td>{s.counts.F}</td><td>{s.counts.H}</td>{days.map(d => <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""} dangerouslySetInnerHTML={{ __html: s.daily[d.getDate()] || '-' }}></td>)}</tr>
-                                                        ))
-                                                    }
+                                                    {currentData.map(s => (
+                                                        <tr key={s.id}><td style={{ textAlign: 'left' }}>{s.name} (Adm: {s.admission_no})</td><td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td><td>{s.counts.P}</td><td>{s.counts.L}</td><td>{s.counts.A}</td><td>{s.counts.F}</td><td>{s.counts.H}</td>{days.map(d => <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""} dangerouslySetInnerHTML={{ __html: s.daily[d.getDate()] || '-' }}></td>)}</tr>
+                                                    ))}
                                                 </tbody>
                                             </table>
 
-                                            <div className="dt-footer">
-                                                <div>Records: 1 to {reportData.students?.length || 0} of {reportData.students?.length || 0}</div>
-                                                <ul className="dt-pagination">
-                                                    <li>&lt;</li>
-                                                    <li className="active">1</li>
-                                                    <li>&gt;</li>
-                                                </ul>
+                                            <div className="pt15 pb15 no-print">
+                                                <Pagination 
+                                                    totalItems={filteredData.length} 
+                                                    itemsPerPage={itemsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -1127,23 +1168,17 @@ const AttendanceReport = () => {
                                             {renderExportToolbar(exportTypeReport, ['Admission No', 'Student Name', 'Class (Section)', 'Father Name', 'Date Of Birth', 'Adm Date', 'Gender', 'Mobile', 'Count'])}
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>Admission No</th><th>Student Name</th><th>Class (Section)</th><th>Father Name</th><th>Date Of Birth</th><th>Adm Date</th><th>Gender</th><th>Mobile</th><th>Count</th></tr></thead>
-                                                <tbody>{Array.isArray(reportData) && reportData
-                                                    .filter(s =>
-                                                        (s.name && s.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                                                        (s.admission_no && s.admission_no.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                                                        (s.father_name && s.father_name.toLowerCase().includes(searchTerm.toLowerCase()))
-                                                    )
-                                                    .map(s => (
+                                                <tbody>{currentData.map(s => (
                                                         <tr key={s.id}><td>{s.admission_no}</td><td>{s.name}</td><td>{s.class} ({s.section})</td><td>{s.father_name}</td><td>{s.dob}</td><td>{s.admission_date}</td><td>{s.gender}</td><td>{s.mobile}</td><td>{s.count}</td></tr>
                                                     ))}</tbody>
                                             </table>
-                                            <div className="dt-footer">
-                                                <div>Records: 1 to {(reportData || []).length} of {(reportData || []).length}</div>
-                                                <ul className="dt-pagination">
-                                                    <li>&lt;</li>
-                                                    <li className="active">1</li>
-                                                    <li>&gt;</li>
-                                                </ul>
+                                            <div className="pt15 pb15 no-print">
+                                                <Pagination 
+                                                    totalItems={filteredData.length} 
+                                                    itemsPerPage={itemsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -1154,10 +1189,8 @@ const AttendanceReport = () => {
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>Class (Section)</th><th>Total Present</th><th>Total Absent</th><th>Present %</th><th>Absent %</th></tr></thead>
                                                 <tbody>
-                                                    {Array.isArray(reportData.list) && reportData.list
-                                                        .filter(r => (r.class_section || '').toLowerCase().includes(searchTerm.toLowerCase()))
-                                                        .map((r, i) => (
-                                                            <tr key={i}>
+                                                    {currentData.map((r, i) => (
+                                                            <tr key={r.id || indexOfFirstItem + i}>
                                                                 <td>{r.class_section || r.class_name || '-'}</td>
                                                                 <td>{r.total_present}</td>
                                                                 <td>{r.total_absent}</td>
@@ -1177,13 +1210,13 @@ const AttendanceReport = () => {
                                                     )}
                                                 </tbody>
                                             </table>
-                                            <div className="dt-footer">
-                                                <div>Records: 1 to {reportData.list.length + 1} of {reportData.list.length + 1}</div>
-                                                <ul className="dt-pagination">
-                                                    <li>&lt;</li>
-                                                    <li className="active">1</li>
-                                                    <li>&gt;</li>
-                                                </ul>
+                                            <div className="pt15 pb15 no-print">
+                                                <Pagination 
+                                                    totalItems={filteredData.length} 
+                                                    itemsPerPage={itemsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -1197,24 +1230,19 @@ const AttendanceReport = () => {
                                                     <tr>{attTypes.concat([{ key: 'H', type: 'Holiday' }]).map(t => <th key={t.key}>{t.key}</th>)}</tr>
                                                 </thead>
                                                 <tbody>
-                                                    {(reportData.staff || [])
-                                                        .filter(s =>
-                                                            (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                            (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
-                                                        )
-                                                        .map(s => (
+                                                    {currentData.map(s => (
                                                             <tr key={s.id}><td style={{ textAlign: 'left' }}>{s.name} (ID: {s.employee_id})</td><td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td><td>{s.counts.P}</td><td>{s.counts.L}</td><td>{s.counts.A}</td><td>{s.counts.H}</td><td>{s.counts.F}</td>{days.map(d => <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{s.daily[d.getDate()] || '-'}</td>)}</tr>
                                                         ))
                                                     }
                                                 </tbody>
                                             </table>
-                                            <div className="dt-footer">
-                                                <div>Records: 1 to {reportData.staff.length} of {reportData.staff.length}</div>
-                                                <ul className="dt-pagination">
-                                                    <li>&lt;</li>
-                                                    <li className="active">1</li>
-                                                    <li>&gt;</li>
-                                                </ul>
+                                            <div className="pt15 pb15 no-print">
+                                                <Pagination 
+                                                    totalItems={filteredData.length} 
+                                                    itemsPerPage={itemsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -1224,15 +1252,9 @@ const AttendanceReport = () => {
                                             {renderExportToolbar(exportLateReport, ['S.No', 'Name', 'Admission No', 'Class (Section)', 'Date', 'Time', 'Roll No'])}
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>S.No</th><th>Name</th><th>Admission No</th><th>Class (Section)</th><th>Date</th><th>Time</th><th>Roll No</th></tr></thead>
-                                                <tbody>{Array.isArray(reportData) && reportData
-                                                    .filter(r =>
-                                                        `${r.firstname || ''} ${r.lastname || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        (r.admission_no || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                                        (r.class || '').toLowerCase().includes(searchTerm.toLowerCase())
-                                                    )
-                                                    .map((r, i) => (
-                                                        <tr key={r.id || i}>
-                                                            <td>{i + 1}</td>
+                                                <tbody>{currentData.map((r, i) => (
+                                                        <tr key={r.id || indexOfFirstItem + i}>
+                                                            <td>{indexOfFirstItem + i + 1}</td>
                                                             <td>{r.firstname} {r.lastname}</td>
                                                             <td>{r.admission_no}</td>
                                                             <td>{r.class} ({r.section})</td>
@@ -1242,13 +1264,13 @@ const AttendanceReport = () => {
                                                         </tr>
                                                     ))}</tbody>
                                             </table>
-                                            <div className="dt-footer">
-                                                <div>Records: 1 to {reportData.length} of {reportData.length}</div>
-                                                <ul className="dt-pagination">
-                                                    <li>&lt;</li>
-                                                    <li className="active">1</li>
-                                                    <li>&gt;</li>
-                                                </ul>
+                                            <div className="pt15 pb15 no-print">
+                                                <Pagination 
+                                                    totalItems={filteredData.length} 
+                                                    itemsPerPage={itemsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         </div>
                                     )}

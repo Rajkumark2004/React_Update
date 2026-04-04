@@ -22,7 +22,18 @@ const Pagination = ({
         e.preventDefault();
         if (page !== currentPage && page >= 1 && page <= totalPages) {
             onPageChange(page);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Defer scrolling to next event loop tick so React finishes rendering the new shorter/longer DOM list.
+            // This prevents smooth scroll from glitching when the page height changes drastically (e.g. last page with few records).
+            setTimeout(() => {
+                const element = e.target.closest('.box') || document.querySelector('.content-header') || document.documentElement;
+                if (element && element !== document.documentElement) {
+                     const rect = element.getBoundingClientRect();
+                     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                     window.scrollTo({ top: rect.top + scrollTop - 20, behavior: 'smooth' });
+                } else {
+                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }, 50);
         }
     };
 
@@ -42,16 +53,37 @@ const Pagination = ({
                             </a>
                         </li>
 
-                        {totalPages > 0 && totalPages < 1000 && [...Array(totalPages)].map((_, i) => {
-                            const p = i + 1;
-                            return (
-                                <li key={p} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
-                                    <a href="#" onClick={(e) => handlePageClick(e, p)}>
-                                        {p}
-                                    </a>
-                                </li>
-                            );
-                        })}
+                        {(() => {
+                            const pages = [];
+                            if (totalPages <= 7) {
+                                for (let i = 1; i <= totalPages; i++) pages.push(i);
+                            } else {
+                                if (currentPage <= 4) {
+                                    pages.push(1, 2, 3, 4, 5, '...', totalPages);
+                                } else if (currentPage >= totalPages - 3) {
+                                    pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                                } else {
+                                    pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+                                }
+                            }
+                            
+                            return pages.map((p, i) => {
+                                if (p === '...') {
+                                    return (
+                                        <li key={`ellipsis-${i}`} className="paginate_button disabled">
+                                            <span style={{ padding: '6px 12px', border: '1px solid transparent', background: 'transparent', color: '#777' }}>...</span>
+                                        </li>
+                                    );
+                                }
+                                return (
+                                    <li key={p} className={`paginate_button ${currentPage === p ? 'active' : ''}`}>
+                                        <a href="#" onClick={(e) => handlePageClick(e, p)}>
+                                            {p}
+                                        </a>
+                                    </li>
+                                );
+                            });
+                        })()}
 
                         <li className={`paginate_button next ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}`}>
                             <a href="#" onClick={(e) => handlePageClick(e, currentPage + 1)}>

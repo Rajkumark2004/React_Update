@@ -8,6 +8,7 @@ import '../../styles/reports.css';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from '../../utils/Pagination';
 
 const StudentInformationReport = () => {
     const navigate = useNavigate();
@@ -27,6 +28,22 @@ const StudentInformationReport = () => {
     const [loading, setLoading] = useState(true);
     const [classes, setClasses] = useState([]);
     const [sections, setSections] = useState([]);
+
+    // Shared Form states
+    const [classId, setClassId] = useState('');
+    const [sectionId, setSectionId] = useState('');
+    const [admissionDate, setAdmissionDate] = useState('');
+    const [searchType, setSearchType] = useState('today');
+    const [status, setStatus] = useState('');
+    const [admissionYear, setAdmissionYear] = useState('');
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(100);
+
+    // Reset page to 1 when filters or report changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeReport, searchTerm, classId, sectionId]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -132,13 +149,7 @@ const StudentInformationReport = () => {
         fetchReportData();
     }, [activeReport]);
 
-    // Shared Form states
-    const [classId, setClassId] = useState('');
-    const [sectionId, setSectionId] = useState('');
-    const [admissionDate, setAdmissionDate] = useState('');
-    const [searchType, setSearchType] = useState('today');
-    const [status, setStatus] = useState('');
-    const [admissionYear, setAdmissionYear] = useState('');
+
 
     useEffect(() => {
         const fetchSections = async () => {
@@ -172,7 +183,7 @@ const StudentInformationReport = () => {
 
     const reportConfigs = {
         'Student Report': {
-            filters: ['class', 'section'],
+            filters: [],
             headers: ["SNO", "Class", "Roll No.", "Student Name", "Mobile Number", "Gender", "Admission No", "Admission Date", "Caste", "Aadhar Number", "Date of Birth", "Father Name", "Mother Name", "Current Address", "Child ID"]
         },
         'Class & Section Report': {
@@ -224,7 +235,7 @@ const StudentInformationReport = () => {
             headers: ["Reference No", "Admission No", "Student Name", "Class", "Mobile No", "Date of Birth", "Gender", "Form Status", "Payment Status", "Enrolled", "Amount"]
         },
         'Student All Data Report': {
-            filters: ['class', 'section'],
+            filters: [],
             headers: ["SNO", "Class", "Roll No.", "Student Name", "Mobile Number", "Gender", "Admission No", "Admission Date", "Category", "Religion", "Caste", "Blood Group", "Height", "Weight", "Aadhar Number", "Date of Birth", "Father Name", "Mother Name", "Guardian Name", "Current Address", "Child ID"]
         },
         'App Install Users Report': {
@@ -507,6 +518,10 @@ const StudentInformationReport = () => {
         }
         return row[header] || '-';
     };
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentData = filteredData.slice(indexOfFirstItem, indexOfLastItem);
 
     const getVisibleHeaders = () => currentConfig.headers.filter(h => visibleColumns.has(h));
     const getExportRows = () => {
@@ -1175,10 +1190,10 @@ const StudentInformationReport = () => {
                                                     <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>Loading...</td></tr>
                                                 ) : activeReport === 'Sibling Report' ? (
                                                     <>
-                                                        {filteredData.map((group, gIdx) => {
+                                                        {currentData.map((group, gIdx) => {
                                                             const firstStudent = group[0];
                                                             return (
-                                                                <React.Fragment key={gIdx}>
+                                                                <React.Fragment key={indexOfFirstItem + gIdx}>
                                                                     {/* Parent info header row */}
                                                                     <tr style={{ backgroundColor: '#f5f5f5', borderTop: '2px solid #ddd' }}>
                                                                         <td><strong>{firstStudent.father_name || '-'}</strong></td>
@@ -1189,7 +1204,7 @@ const StudentInformationReport = () => {
                                                                     </tr>
                                                                     {/* Individual student rows */}
                                                                     {group.map((student, sIdx) => (
-                                                                        <tr key={`${gIdx}-${sIdx}`}>
+                                                                        <tr key={`${indexOfFirstItem + gIdx}-${sIdx}`}>
                                                                             <td colSpan="4"></td>
                                                                             <td>{student.firstname} {student.lastname || ''}</td>
                                                                             <td>{student.class} ({student.section})</td>
@@ -1200,29 +1215,39 @@ const StudentInformationReport = () => {
                                                                 </React.Fragment>
                                                             );
                                                         })}
-                                                        {filteredData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>No record found</td></tr>}
+                                                        {currentData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>No record found</td></tr>}
                                                     </>
                                                 ) : (
                                                     <>
-                                                        {filteredData.map((row, index) => (
-                                                            <tr key={index}>{renderRow(row, index)}</tr>
+                                                        {currentData.map((row, index) => (
+                                                            <tr key={indexOfFirstItem + index}>{renderRow(row, indexOfFirstItem + index)}</tr>
                                                         ))}
-                                                        {filteredData.length > 0 && activeReport === 'Student Gender Ratio Report' && (
+                                                        {currentData.length > 0 && activeReport === 'Student Gender Ratio Report' && (
                                                             <tr className="total-row">
                                                                 <td>Total</td><td>{totals.boys}</td><td>{totals.girls}</td><td>{totals.students}</td><td>{(totals.boys / totals.girls).toFixed(2)}</td>
                                                             </tr>
                                                         )}
-                                                        {filteredData.length > 0 && activeReport === 'Student Teacher Ratio Report' && (
+                                                        {currentData.length > 0 && activeReport === 'Student Teacher Ratio Report' && (
                                                             <tr className="total-row">
                                                                 <td>Total</td><td>{totals.students}</td><td>{totals.teachers}</td><td>{(totals.students / totals.teachers).toFixed(1)}:1</td>
                                                             </tr>
                                                         )}
-                                                        {filteredData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>No record found</td></tr>}
+                                                        {currentData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>No record found</td></tr>}
                                                     </>
                                                 )}
                                             </tbody>
                                         </table>
                                     </div>
+                                    {filteredData.length > 0 && (
+                                        <div className="pt15 pb15">
+                                            <Pagination 
+                                                totalItems={filteredData.length} 
+                                                itemsPerPage={itemsPerPage} 
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             )}
 
