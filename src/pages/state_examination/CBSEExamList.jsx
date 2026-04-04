@@ -646,9 +646,9 @@ const CBSEExamList = () => {
                     padding: 15px 0;
                     font-size: 13px;
                 }
-                @media (max-width: 767px) {
+                @media (max-width: 1177px) {
                     .table-responsive table.example {
-                        min-width: 1200px !important;
+                        min-width: 1300px !important;
                     }
                     .table-responsive {
                         overflow-x: auto !important;
