@@ -10,7 +10,7 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
   const [formData, setFormData] = useState({
     follow_up_date: '',
     next_follow_up_date: '',
-      response: '',
+    response: '',
     note: '',
     status: 'active'
   });
@@ -56,14 +56,15 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
 
         // 1️⃣ Find latest valid follow-up from history
         const validFollowUps = followList
-          .filter(f => isValidDate(f.follow_up_date))
+          .filter(f => isValidDate(f.date) || isValidDate(f.next_date))
           .sort((a, b) =>
-            new Date(b.follow_up_date) - new Date(a.follow_up_date)
+            new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
           );
 
-        let nextFollowUpDate = validFollowUps[0]?.follow_up_date || '';
+        let nextFollowUpDate = validFollowUps[0]?.next_date || '';
+        let lastFollowUpDate = validFollowUps[0]?.date || '';
 
-        // 2️⃣ Fallback to enquiry.follow_up_date
+        // 2️⃣ Fallback to enquiry fields if empty
         if (!isValidDate(nextFollowUpDate)) {
           nextFollowUpDate = enquiry.follow_up_date || '';
         }
@@ -73,28 +74,30 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
         setFormData(prev => ({
           ...prev,
           follow_up_date: todayStr,
-          next_follow_up_date: toInputDate(nextFollowUpDate),
+          next_follow_up_date: '',
           status: enquiry.status || 'active'
         }));
 
         // 4️⃣ Set SUMMARY data
+        const enqData = details.enquiry_data || enquiry;
         const staff = details.created_by_staff || {};
+
         setSummary({
-          enquiry_date: enquiry.date,
-          last_follow_up_date: validFollowUps[0]?.follow_up_date || '',
+          enquiry_date: enqData.date,
+          last_follow_up_date: lastFollowUpDate,
           next_follow_up_date: nextFollowUpDate,
-          phone: enquiry.contact,
-          reference: enquiry.reference,
-          source: enquiry.source,
-          email: enquiry.email,
-          address: enquiry.address,
-          class: enquiry.classname,
-          no_of_child: enquiry.no_of_child,
-          description: enquiry.description,
-          note: enquiry.note,
+          phone: enqData.contact,
+          reference: enqData.reference,
+          source: enqData.source,
+          email: enqData.email,
+          address: enqData.address,
+          class: enqData.classname,
+          no_of_child: enqData.no_of_child,
+          description: enqData.description,
+          note: enqData.note,
           created_by: staff.name
             ? `${staff.name} (${staff.employee_id})`
-            : (enquiry.staff_name ? `${enquiry.staff_name} (${enquiry.employee_id})` : '')
+            : (enqData.staff_name ? `${enqData.staff_name} (${enqData.employee_id})` : '')
         });
       })
       .catch(console.error)
@@ -138,7 +141,7 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
       setFormData(prev => ({ ...prev, response: '', note: '' }));
 
       if (onSuccess) {
-          onSuccess();
+        onSuccess();
       }
 
     } catch (err) {
@@ -167,7 +170,7 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
       try {
         const response = await api.deleteFollowUp(id, enquiry.id);
         toast.success(response.message || 'Follow up deleted successfully');
-        
+
         // Update history directly from response
         if (response.data && response.data.follow_up_list) {
           setHistory(response.data.follow_up_list);
@@ -270,7 +273,7 @@ const FollowUpModal = ({ show, onClose, enquiry, onSuccess }) => {
                     </div>
 
                     <div className="col-md-12 text-right mt-4">
-                      <button className="btn btn-purple" disabled={saving} onClick={handleSave}>
+                      <button className="btn btn-primary" disabled={saving} onClick={handleSave}>
                         {saving ? 'Saving...' : 'Save'}
                       </button>
                     </div>

@@ -10,6 +10,15 @@ import Pagination from '../../utils/Pagination';
 const FinanceReport = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
     const [activeReport, setActiveReport] = useState(location.state?.activeReport || 'Daily Collection Report');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearched, setIsSearched] = useState(false);
@@ -1250,7 +1259,7 @@ const FinanceReport = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
 
@@ -1270,37 +1279,83 @@ const FinanceReport = () => {
                 }}>
                     <div style={{
                         backgroundColor: '#fff',
-                        width: '90%',
+                        width: isMobile ? '98%' : '90%',
                         maxWidth: '1200px',
-                        maxHeight: '90vh',
+                        maxHeight: isMobile ? '95vh' : '90vh',
                         overflowY: 'auto',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        padding: '20px'
+                        padding: isMobile ? '12px' : '20px'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                            <h4 style={{ margin: 0 }}>Collection List</h4>
+                            <h4 style={{ margin: 0, fontSize: isMobile ? '14px' : '18px' }}>Collection List</h4>
                             <button onClick={closeModal} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
                         </div>
 
-                        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                                <div><strong>Collection Date: </strong> {selectedDateDetails?.date_col}</div>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Search..."
-                                    value={modalSearchTerm}
-                                    onChange={(e) => setModalSearchTerm(e.target.value)}
-                                    style={{ width: '200px', height: '30px', margin: 0 }}
-                                />
+                        <div style={{ marginBottom: '10px' }}>
+                            <div><strong>Collection Date: </strong> {selectedDateDetails?.date_col}</div>
+                        </div>
+                        <div
+                            className="row mb-2"
+                            style={{
+                                marginBottom: '10px',
+                                display: isMobile ? 'flex' : 'block',
+                                flexDirection: isMobile ? 'column' : 'row',
+                                alignItems: isMobile ? 'center' : 'stretch',
+                                gap: isMobile ? '15px' : '0'
+                            }}
+                        >
+                            <div
+                                className={isMobile ? '' : 'col-sm-6'}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: isMobile ? '15px' : '20px',
+                                    justifyContent: isMobile ? 'center' : 'flex-start',
+                                    flexWrap: 'wrap'
+                                }}
+                            >
+                                <div className="dataTables_filter">
+                                    <input
+                                        type="search"
+                                        className="form-control input-sm"
+                                        placeholder="Search..."
+                                        style={{
+                                            marginLeft: isMobile ? '0' : '10px',
+                                            display: 'inline-block',
+                                            width: '180px',
+                                            border: 'none',
+                                            borderBottom: '1px solid #ccc',
+                                            borderRadius: '0',
+                                            boxShadow: 'none',
+                                            backgroundColor: 'transparent',
+                                            paddingLeft: '0',
+                                            outline: 'none',
+                                            textAlign: isMobile ? 'center' : 'left'
+                                        }}
+                                        value={modalSearchTerm}
+                                        onChange={(e) => setModalSearchTerm(e.target.value)}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <button className="btn btn-default btn-xs" title="Copy" style={{ marginRight: '5px' }} onClick={() => handleModalExport('copy')}><i className="fa fa-files-o"></i></button>
-                                <button className="btn btn-default btn-xs" title="Excel" style={{ marginRight: '5px' }} onClick={() => handleModalExport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                <button className="btn btn-default btn-xs" title="CSV" style={{ marginRight: '5px' }} onClick={() => handleModalExport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                <button className="btn btn-default btn-xs" title="PDF" style={{ marginRight: '5px' }} onClick={() => handleModalExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
-                                <button className="btn btn-default btn-xs" title="Print" onClick={() => handleModalExport('print')}><i className="fa fa-print"></i></button>
+                            <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
+                                <div className="dt-buttons btn-group" style={{ float: 'right' }}>
+                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleModalExport('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                        <i className="fa fa-files-o"></i>
+                                    </button>
+                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleModalExport('excel')}>
+                                        <i className="fa fa-file-excel-o"></i>
+                                    </button>
+                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleModalExport('csv')}>
+                                        <i className="fa fa-file-text-o"></i>
+                                    </button>
+                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleModalExport('pdf')}>
+                                        <i className="fa fa-file-pdf-o"></i>
+                                    </button>
+                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => handleModalExport('print')} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                        <i className="fa fa-print"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -1439,6 +1494,19 @@ const FinanceReport = () => {
                 .btn-print-purple { background: #9429b8; color: #fff !important; border: none; padding: 10px 24px; border-radius: 20px; font-size: 13px; cursor: pointer; transition: 0.3s; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 8px; }
                 .btn-print-purple:hover { background: #7b2199; }
 
+                /* Mobile responsive styles */
+                @media (max-width: 767px) {
+                    .reportlists { grid-template-columns: 1fr !important; gap: 4px; }
+                    .reportlists li a { font-size: 12px; padding: 10px 12px; white-space: normal; }
+                    .filters-area .row { flex-direction: column !important; gap: 10px !important; }
+                    .filters-area .row > div { flex: 1 1 100% !important; width: 100% !important; }
+                    .select-criteria-header { font-size: 15px; text-align: center; }
+                    .table-custom td, .table-custom th { font-size: 12px; padding: 6px 8px !important; }
+                    .student-details-oneline { flex-direction: column; gap: 5px; }
+                    .box-profile { flex-direction: column; align-items: center; }
+                    .profile-grid { grid-template-columns: 1fr; }
+                }
+
                 @media print {
                     .no-print { display: none !important; }
                     .content-wrapper { padding: 0; margin: 0; }
@@ -1446,7 +1514,7 @@ const FinanceReport = () => {
                 }
             `}</style>
 
-            <div className="content-wrapper" style={{ minHeight: '946px', overflow: 'visible' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content" style={{ overflow: 'visible' }}>
                     <div className="main-report-box" style={{ overflow: 'visible' }}>
                         <div className="page-header no-print">
@@ -1647,41 +1715,117 @@ const FinanceReport = () => {
                                 )}
 
                                 {!currentConfig.hideHeaderIcons && !currentConfig.hideTable && (
-                                    <div className="dt-header no-print">
-                                        {!currentConfig.hideSearch && (
-                                            <div className="dt-search">
-                                                <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                                    <div
+                                        className="row mb-2 no-print"
+                                        style={{
+                                            marginBottom: '10px',
+                                            display: isMobile ? 'flex' : 'block',
+                                            flexDirection: isMobile ? 'column' : 'row',
+                                            alignItems: isMobile ? 'center' : 'stretch',
+                                            gap: isMobile ? '15px' : '0'
+                                        }}
+                                    >
+                                        <div
+                                            className={isMobile ? '' : 'col-sm-6'}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: isMobile ? '15px' : '20px',
+                                                justifyContent: isMobile ? 'center' : 'flex-start',
+                                                flexWrap: 'wrap'
+                                            }}
+                                        >
+                                            <div className="dataTables_length">
+                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                    Records:
+                                                    <select
+                                                        value={itemsPerPage}
+                                                        onChange={(e) => {
+                                                            setItemsPerPage(Number(e.target.value));
+                                                            setCurrentPage(1);
+                                                        }}
+                                                        className="form-control input-sm"
+                                                        style={{ width: '80px', margin: '0 10px' }}
+                                                    >
+                                                        <option value="10">10</option>
+                                                        <option value="25">25</option>
+                                                        <option value="50">50</option>
+                                                        <option value="100">100</option>
+                                                        <option value="-1">All</option>
+                                                    </select>
+                                                </label>
                                             </div>
-                                        )}
-                                        <div className="dt-buttons">
-                                            {!currentConfig.showExcelPrintOnly && (
-                                                <button className="dt-button buttons-copy buttons-html5" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-copy"></i></button>
+                                            {!currentConfig.hideSearch && (
+                                                <div className="dataTables_filter">
+                                                    <input
+                                                        type="search"
+                                                        className="form-control input-sm"
+                                                        placeholder="Search..."
+                                                        style={{
+                                                            marginLeft: isMobile ? '0' : '10px',
+                                                            display: 'inline-block',
+                                                            width: '180px',
+                                                            border: 'none',
+                                                            borderBottom: '1px solid #ccc',
+                                                            borderRadius: '0',
+                                                            boxShadow: 'none',
+                                                            backgroundColor: 'transparent',
+                                                            paddingLeft: '0',
+                                                            outline: 'none',
+                                                            textAlign: isMobile ? 'center' : 'left'
+                                                        }}
+                                                        value={searchTerm}
+                                                        onChange={(e) => {
+                                                            setSearchTerm(e.target.value);
+                                                            setCurrentPage(1);
+                                                        }}
+                                                    />
+                                                </div>
                                             )}
-                                            {!currentConfig.hideExportButtons && (
-                                                <>
-                                                    <button className="dt-button buttons-excel buttons-html5" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    {!currentConfig.showExcelPrintOnly && <button className="dt-button buttons-csv buttons-html5" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>}
-                                                    <button className="dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
-                                                </>
-                                            )}
-                                            {(activeReport === 'Daily Collection Report' || (!currentConfig.hidePrint && activeReport !== 'Daily Collection Report')) && (
-                                                <button className="dt-button buttons-print" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
-                                            )}
-                                            {!currentConfig.showExcelPrintOnly && (
-                                                <div className="btn-group">
-                                                    <button className="dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                        <i className="fa fa-columns"></i>
-                                                    </button>
-                                                    {showColumnsDropdown && (
-                                                        <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto', zIndex: 1050 }}>
-                                                            {currentConfig.headers.map((header, idx) => (
-                                                                <li key={idx}>
-                                                                    <label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}>
-                                                                        <input type="checkbox" checked={!hiddenColumns.includes(idx)} onChange={() => toggleColumnVisibility(idx)} style={{ marginRight: '10px' }} /> {header}
-                                                                    </label>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
+                                        </div>
+                                        <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
+                                            {filteredData.length > 0 && (
+                                                <div className="dt-buttons btn-group" style={{ float: isMobile ? 'none' : 'right' }}>
+                                                    {!currentConfig.showExcelPrintOnly && (
+                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleExport('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                            <i className="fa fa-files-o"></i>
+                                                        </button>
+                                                    )}
+                                                    {!currentConfig.hideExportButtons && (
+                                                        <>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleExport('excel')} style={currentConfig.showExcelPrintOnly ? { borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' } : {}}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            {!currentConfig.showExcelPrintOnly && (
+                                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleExport('csv')}>
+                                                                    <i className="fa fa-file-text-o"></i>
+                                                                </button>
+                                                            )}
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleExport('pdf')}>
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {(activeReport === 'Daily Collection Report' || (!currentConfig.hidePrint && activeReport !== 'Daily Collection Report')) && (
+                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => handleExport('print')}>
+                                                            <i className="fa fa-print"></i>
+                                                        </button>
+                                                    )}
+                                                    {!currentConfig.showExcelPrintOnly && (
+                                                        <div className="btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                                                <i className="fa fa-columns"></i>
+                                                            </button>
+                                                            {showColumnsDropdown && (
+                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                    {currentConfig.headers.map((header, idx) => (
+                                                                        <label key={idx} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                            <input type="checkbox" checked={!hiddenColumns.includes(idx)} onChange={() => toggleColumnVisibility(idx)} style={{ marginRight: '6px' }} /> {header}
+                                                                        </label>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </div>
                                             )}
@@ -1803,9 +1947,9 @@ const FinanceReport = () => {
 
                                 {!currentConfig.hidePagination && !currentConfig.hideTable && filteredData.length > 0 && (
                                     <div className="pt15 pb15 no-print">
-                                        <Pagination 
-                                            totalItems={filteredData.length} 
-                                            itemsPerPage={itemsPerPage} 
+                                        <Pagination
+                                            totalItems={filteredData.length}
+                                            itemsPerPage={itemsPerPage}
                                             currentPage={currentPage}
                                             onPageChange={(page) => setCurrentPage(page)}
                                         />
@@ -1834,29 +1978,83 @@ const FinanceReport = () => {
                     }}>
                         <div style={{
                             backgroundColor: '#fff',
-                            width: '90%',
+                            width: isMobile ? '98%' : '90%',
                             maxWidth: '1200px',
-                            maxHeight: '90vh',
+                            maxHeight: isMobile ? '95vh' : '90vh',
                             overflowY: 'auto',
                             borderRadius: '8px',
                             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                            padding: '20px'
+                            padding: isMobile ? '12px' : '20px'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-                                <h4 style={{ margin: 0 }}>Collection List</h4>
+                                <h4 style={{ margin: 0, fontSize: isMobile ? '14px' : '18px' }}>Collection List</h4>
                                 <button onClick={closeModal} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
                             </div>
 
-                            <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <strong>Collection Date: </strong> {selectedDateDetails?.date_col}
+                            <div style={{ marginBottom: '10px' }}>
+                                <strong>Collection Date: </strong> {selectedDateDetails?.date_col}
+                            </div>
+                            <div
+                                className="row mb-2"
+                                style={{
+                                    marginBottom: '10px',
+                                    display: isMobile ? 'flex' : 'block',
+                                    flexDirection: isMobile ? 'column' : 'row',
+                                    alignItems: isMobile ? 'center' : 'stretch',
+                                    gap: isMobile ? '15px' : '0'
+                                }}
+                            >
+                                <div
+                                    className={isMobile ? '' : 'col-sm-6'}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: isMobile ? '15px' : '20px',
+                                        justifyContent: isMobile ? 'center' : 'flex-start',
+                                        flexWrap: 'wrap'
+                                    }}
+                                >
+                                    <div className="dataTables_filter">
+                                        <input
+                                            type="search"
+                                            className="form-control input-sm"
+                                            placeholder="Search..."
+                                            style={{
+                                                marginLeft: isMobile ? '0' : '10px',
+                                                display: 'inline-block',
+                                                width: '180px',
+                                                border: 'none',
+                                                borderBottom: '1px solid #ccc',
+                                                borderRadius: '0',
+                                                boxShadow: 'none',
+                                                backgroundColor: 'transparent',
+                                                paddingLeft: '0',
+                                                outline: 'none',
+                                                textAlign: isMobile ? 'center' : 'left'
+                                            }}
+                                            value={modalSearchTerm}
+                                            onChange={(e) => setModalSearchTerm(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="dt-buttons btn-group">
-                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleModalExport('copy')}><i className="fa fa-files-o"></i></button>
-                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleModalExport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleModalExport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleModalExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
-                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => handleModalExport('print')}><i className="fa fa-print"></i></button>
+                                <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
+                                    <div className="dt-buttons btn-group" style={{ float: 'right' }}>
+                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleModalExport('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                            <i className="fa fa-files-o"></i>
+                                        </button>
+                                        <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleModalExport('excel')}>
+                                            <i className="fa fa-file-excel-o"></i>
+                                        </button>
+                                        <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleModalExport('csv')}>
+                                            <i className="fa fa-file-text-o"></i>
+                                        </button>
+                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleModalExport('pdf')}>
+                                            <i className="fa fa-file-pdf-o"></i>
+                                        </button>
+                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => handleModalExport('print')} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                            <i className="fa fa-print"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

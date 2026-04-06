@@ -10,7 +10,15 @@ import Pagination from '../../utils/Pagination';
 
 const UserLog = () => {
     const navigate = useNavigate();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
     // Active tab
     const [activeTab, setActiveTab] = useState('all_users');
     const [loading, setLoading] = useState(true);
@@ -26,7 +34,7 @@ const UserLog = () => {
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const recordsPerPage = 100;
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
 
     // Reset page on tab change
     useEffect(() => {
@@ -187,7 +195,7 @@ const UserLog = () => {
                 {/* Clear User Log button - only on All Users tab */}
                 {tab === 'all_users' && (
                     <div className="row">
-                        <div className="col-md-12">
+                        <div className="col-md-12" style={{ paddingBottom: '10px' }}>
                             <div className="form-group">
                                 <a className="btn btn-primary btn-sm pull-right checkbox-toggle" onClick={handleClearUserLog} style={{ cursor: 'pointer' }}>
                                     Clear Userlog Record
@@ -198,30 +206,86 @@ const UserLog = () => {
                 )}
 
                 {/* Table toolbar */}
-                <div className="row mb10">
-                    <div className="col-sm-12">
-                        <div className="pull-left">
-                            <div className="form-group mb0" style={{ paddingBottom: '5px' }}>
-                                <i className="fa fa-search" style={{ color: '#999', marginRight: '5px' }}></i>
-                                <input
-                                    type="text"
+                <div
+                    className="row mb-2 no-print"
+                    style={{
+                        marginBottom: '10px',
+                        display: isMobile ? 'flex' : 'block',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        alignItems: isMobile ? 'center' : 'stretch',
+                        gap: isMobile ? '15px' : '0'
+                    }}
+                >
+                    <div
+                        className={isMobile ? '' : 'col-sm-6'}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: isMobile ? '15px' : '20px',
+                            justifyContent: isMobile ? 'center' : 'flex-start',
+                            flexWrap: 'wrap'
+                        }}
+                    >
+                        <div className="dataTables_length">
+                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                Records:
+                                <select
+                                    value={recordsPerPage}
+                                    onChange={(e) => {
+                                        setRecordsPerPage(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
                                     className="form-control input-sm"
-                                    placeholder="Search..."
-                                    style={{ width: '200px', border: 'none', display: 'inline-block', background: 'transparent', boxShadow: 'none' }}
-                                    value={tableSearch[tab]}
-                                    onChange={(e) => handleSearchChange(tab, e.target.value)}
-                                />
-                            </div>
+                                    style={{ width: '80px', margin: '0 10px' }}
+                                >
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="-1">All</option>
+                                </select>
+                            </label>
                         </div>
-                        <div className="pull-right">
-                            <div className="dt-buttons btn-group" style={{ paddingBottom: '2px', marginTop: '10px' }}>
-                                <button className="btn btn-default dt-button buttons-copy buttons-html5" title="Copy" onClick={() => handleCopy(tab)}><i className="fa fa-copy"></i></button>
-                                <button className="btn btn-default dt-button buttons-excel buttons-html5" title="Excel" onClick={() => handleExcel(tab)}><i className="fa fa-file-excel-o"></i></button>
-                                <button className="btn btn-default dt-button buttons-csv buttons-html5" title="CSV" onClick={() => handleCSV(tab)}><i className="fa fa-file-text-o"></i></button>
-                                <button className="btn btn-default dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => handlePDF(tab)}><i className="fa fa-file-pdf-o"></i></button>
-                                <button className="btn btn-default dt-button buttons-print" title="Print" onClick={() => handlePrint(tab)}><i className="fa fa-print"></i></button>
-
-                            </div>
+                        <div className="dataTables_filter">
+                            <input
+                                type="search"
+                                className="form-control input-sm"
+                                placeholder="Search..."
+                                style={{
+                                    marginLeft: isMobile ? '0' : '10px',
+                                    display: 'inline-block',
+                                    width: '180px',
+                                    border: 'none',
+                                    borderBottom: '1px solid #ccc',
+                                    borderRadius: '0',
+                                    boxShadow: 'none',
+                                    backgroundColor: 'transparent',
+                                    paddingLeft: '0',
+                                    outline: 'none',
+                                    textAlign: isMobile ? 'center' : 'left'
+                                }}
+                                value={tableSearch[tab]}
+                                onChange={(e) => handleSearchChange(tab, e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
+                        <div className="dt-buttons btn-group" style={{ float: 'right' }}>
+                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleCopy(tab)} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                <i className="fa fa-files-o"></i>
+                            </button>
+                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleExcel(tab)}>
+                                <i className="fa fa-file-excel-o"></i>
+                            </button>
+                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleCSV(tab)}>
+                                <i className="fa fa-file-text-o"></i>
+                            </button>
+                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => handlePDF(tab)}>
+                                <i className="fa fa-file-pdf-o"></i>
+                            </button>
+                            <button className="btn btn-default btn-sm" title="Print" onClick={() => handlePrint(tab)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                <i className="fa fa-print"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -244,7 +308,14 @@ const UserLog = () => {
                         ) : error ? (
                             <tr><td colSpan={colCount} className="text-center text-danger">{error}</td></tr>
                         ) : filteredData.length === 0 ? (
-                            <tr><td colSpan={colCount} className="text-center">No data available in table</td></tr>
+                            <tr>
+                                <td colSpan={colCount} className="text-center" style={{ padding: '40px 15px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                                        <img src="/images/addnewitem.svg" alt="No data" style={{ width: '120px', opacity: 0.6 }} />
+                                        <span style={{ color: '#999', fontSize: '14px' }}>No data available in table</span>
+                                    </div>
+                                </td>
+                            </tr>
                         ) : (
                             currentRecords.map((item, index) => (
                                 <tr key={item.id || index}>
@@ -262,9 +333,9 @@ const UserLog = () => {
 
                 {/* Record count and pagination */}
                 <div className="pt15 pb15">
-                    <Pagination 
-                        totalItems={filteredData.length} 
-                        itemsPerPage={recordsPerPage} 
+                    <Pagination
+                        totalItems={filteredData.length}
+                        itemsPerPage={recordsPerPage}
                         currentPage={currentPage}
                         onPageChange={(page) => setCurrentPage(page)}
                     />
@@ -274,7 +345,7 @@ const UserLog = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
             <style>{`
@@ -285,9 +356,17 @@ const UserLog = () => {
                 .userlog-table td:last-child, .userlog-table th:last-child {
                     white-space: normal;
                 }
+
+                /* Mobile responsive styles */
+                @media (max-width: 767px) {
+                    .nav-tabs-custom .nav.nav-tabs { flex-wrap: wrap; }
+                    .nav-tabs-custom .nav.nav-tabs > li > a { font-size: 12px; padding: 8px 10px; }
+                    .userlog-table th, .userlog-table td { font-size: 12px; padding: 6px 8px !important; }
+                    .tab-content { padding: 10px !important; }
+                }
             `}</style>
 
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
 
                     <div className="nav-tabs-custom theme-shadow" style={{ marginTop: '0px' }}>

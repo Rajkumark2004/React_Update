@@ -11,7 +11,15 @@ import Pagination from '../../utils/Pagination';
 const AttendanceReport = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
     // Navigation and visibility state
     const [activeReport, setActiveReport] = useState(location.state?.activeReport || 'class_attendance');
 
@@ -642,7 +650,7 @@ const AttendanceReport = () => {
                     (s.father_name && s.father_name.toLowerCase().includes(searchTerm.toLowerCase()))
                 );
             case 'daily_report':
-                return (Array.isArray(reportData.list) ? reportData.list : []).filter(r => 
+                return (Array.isArray(reportData.list) ? reportData.list : []).filter(r =>
                     (r.class_section || '').toLowerCase().includes(searchTerm.toLowerCase())
                 );
             case 'staff_report':
@@ -660,7 +668,7 @@ const AttendanceReport = () => {
                 return [];
         }
     };
-    
+
     const filteredData = getFilteredData();
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -759,36 +767,103 @@ const AttendanceReport = () => {
     };
 
     const renderExportToolbar = (exportHandler, headers) => (
-        <div className="dt-header no-print">
-            <div className="dt-search">
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+        <div
+            className="row mb-2 no-print"
+            style={{
+                marginBottom: '10px',
+                display: isMobile ? 'flex' : 'block',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'center' : 'stretch',
+                gap: isMobile ? '15px' : '0'
+            }}
+        >
+            <div
+                className={isMobile ? '' : 'col-sm-6'}
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: isMobile ? '15px' : '20px',
+                    justifyContent: isMobile ? 'center' : 'flex-start',
+                    flexWrap: 'wrap'
+                }}
+            >
+                <div className="dataTables_length">
+                    <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                        Records:
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                            }}
+                            className="form-control input-sm"
+                            style={{ width: '80px', margin: '0 10px' }}
+                        >
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="-1">All</option>
+                        </select>
+                    </label>
+                </div>
+                <div className="dataTables_filter">
+                    <input
+                        type="search"
+                        className="form-control input-sm"
+                        placeholder="Search..."
+                        style={{
+                            marginLeft: isMobile ? '0' : '10px',
+                            display: 'inline-block',
+                            width: '180px',
+                            border: 'none',
+                            borderBottom: '1px solid #ccc',
+                            borderRadius: '0',
+                            boxShadow: 'none',
+                            backgroundColor: 'transparent',
+                            paddingLeft: '0',
+                            outline: 'none',
+                            textAlign: isMobile ? 'center' : 'left'
+                        }}
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                    />
+                </div>
             </div>
-            <div className="dt-buttons">
-                <button className="dt-button" title="Copy" onClick={() => exportHandler('copy')}><i className="fa fa-copy"></i></button>
-                <button className="dt-button" title="Excel" onClick={() => exportHandler('excel')}><i className="fa fa-file-excel-o"></i></button>
-                <button className="dt-button" title="CSV" onClick={() => exportHandler('csv')}><i className="fa fa-file-text-o"></i></button>
-                <button className="dt-button" title="PDF" onClick={() => exportHandler('pdf')}><i className="fa fa-file-pdf-o"></i></button>
-                <button className="dt-button" title="Print" onClick={() => exportHandler('print')}><i className="fa fa-print"></i></button>
-                <div className="btn-group" ref={dropdownRef}>
-                    <button className="dt-button" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                        <i className="fa fa-columns"></i>
+            <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
+                <div className="dt-buttons btn-group" style={{ float: 'right' }}>
+                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => exportHandler('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                        <i className="fa fa-files-o"></i>
                     </button>
-                    {showColumnsDropdown && (
-                        <ul className="dropdown-menu dropdown-menu-right" style={{ display: 'block', right: 0, left: 'auto', padding: '10px' }}>
-                            {headers.map((h, i) => (
-                                <li key={i} style={{ listStyle: 'none', margin: '5px 0' }}>
-                                    <label style={{ fontWeight: 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                                        <input type="checkbox" checked={!hiddenColumns.includes(i)} onChange={() => toggleColumnVisibility(i)} style={{ marginRight: '8px' }} /> {h}
+                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => exportHandler('excel')}>
+                        <i className="fa fa-file-excel-o"></i>
+                    </button>
+                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => exportHandler('csv')}>
+                        <i className="fa fa-file-text-o"></i>
+                    </button>
+                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => exportHandler('pdf')}>
+                        <i className="fa fa-file-pdf-o"></i>
+                    </button>
+                    <button className="btn btn-default btn-sm" title="Print" onClick={() => exportHandler('print')}>
+                        <i className="fa fa-print"></i>
+                    </button>
+                    <div className="btn-group" ref={dropdownRef}>
+                        <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                            <i className="fa fa-columns"></i>
+                        </button>
+                        {showColumnsDropdown && (
+                            <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                {headers.map((h, i) => (
+                                    <label key={i} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                        <input type="checkbox" checked={!hiddenColumns.includes(i)} onChange={() => toggleColumnVisibility(i)} style={{ marginRight: '6px' }} /> {h}
                                     </label>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
@@ -797,7 +872,7 @@ const AttendanceReport = () => {
     const days = (activeReport === 'class_attendance' || activeReport === 'staff_report') && reportData ? getDaysArray(reportData.month, reportData.year) : [];
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
 
@@ -922,9 +997,20 @@ const AttendanceReport = () => {
                 .dt-pagination { display: flex; list-style: none; padding: 0; margin: 0; }
                 .dt-pagination li { border: 1px solid #eee; padding: 2px 8px; cursor: pointer; background: #fff; margin-left: -1px; font-size: 10px; }
                 .dt-pagination li.active { border-color: #eee; color: #333; font-weight: bold; }
+
+                /* Mobile responsive styles */
+                @media (max-width: 767px) {
+                    .reportlists { grid-template-columns: 1fr !important; gap: 4px; }
+                    .reportlists li a { font-size: 12px; padding: 10px 12px; white-space: normal; }
+                    .row { flex-direction: column !important; }
+                    .row > [class*="col-"] { width: 100% !important; flex: 1 1 100% !important; }
+                    .select-criteria-header { font-size: 15px; text-align: center; }
+                    .attendance-table th, .attendance-table td { font-size: 11px; padding: 4px 3px !important; }
+                    .page-header h3, .box-title { font-size: 14px; }
+                }
             `}</style>
 
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="box box-primary">
                         <div className="box-header with-border">
@@ -1153,9 +1239,9 @@ const AttendanceReport = () => {
                                             </table>
 
                                             <div className="pt15 pb15 no-print">
-                                                <Pagination 
-                                                    totalItems={filteredData.length} 
-                                                    itemsPerPage={itemsPerPage} 
+                                                <Pagination
+                                                    totalItems={filteredData.length}
+                                                    itemsPerPage={itemsPerPage}
                                                     currentPage={currentPage}
                                                     onPageChange={(page) => setCurrentPage(page)}
                                                 />
@@ -1169,13 +1255,13 @@ const AttendanceReport = () => {
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>Admission No</th><th>Student Name</th><th>Class (Section)</th><th>Father Name</th><th>Date Of Birth</th><th>Adm Date</th><th>Gender</th><th>Mobile</th><th>Count</th></tr></thead>
                                                 <tbody>{currentData.map(s => (
-                                                        <tr key={s.id}><td>{s.admission_no}</td><td>{s.name}</td><td>{s.class} ({s.section})</td><td>{s.father_name}</td><td>{s.dob}</td><td>{s.admission_date}</td><td>{s.gender}</td><td>{s.mobile}</td><td>{s.count}</td></tr>
-                                                    ))}</tbody>
+                                                    <tr key={s.id}><td>{s.admission_no}</td><td>{s.name}</td><td>{s.class} ({s.section})</td><td>{s.father_name}</td><td>{s.dob}</td><td>{s.admission_date}</td><td>{s.gender}</td><td>{s.mobile}</td><td>{s.count}</td></tr>
+                                                ))}</tbody>
                                             </table>
                                             <div className="pt15 pb15 no-print">
-                                                <Pagination 
-                                                    totalItems={filteredData.length} 
-                                                    itemsPerPage={itemsPerPage} 
+                                                <Pagination
+                                                    totalItems={filteredData.length}
+                                                    itemsPerPage={itemsPerPage}
                                                     currentPage={currentPage}
                                                     onPageChange={(page) => setCurrentPage(page)}
                                                 />
@@ -1190,14 +1276,14 @@ const AttendanceReport = () => {
                                                 <thead><tr><th>Class (Section)</th><th>Total Present</th><th>Total Absent</th><th>Present %</th><th>Absent %</th></tr></thead>
                                                 <tbody>
                                                     {currentData.map((r, i) => (
-                                                            <tr key={r.id || indexOfFirstItem + i}>
-                                                                <td>{r.class_section || r.class_name || '-'}</td>
-                                                                <td>{r.total_present}</td>
-                                                                <td>{r.total_absent}</td>
-                                                                <td>{r.present_percent}</td>
-                                                                <td>{r.absent_persent || r.absent_percent}</td>
-                                                            </tr>
-                                                        ))
+                                                        <tr key={r.id || indexOfFirstItem + i}>
+                                                            <td>{r.class_section || r.class_name || '-'}</td>
+                                                            <td>{r.total_present}</td>
+                                                            <td>{r.total_absent}</td>
+                                                            <td>{r.present_percent}</td>
+                                                            <td>{r.absent_persent || r.absent_percent}</td>
+                                                        </tr>
+                                                    ))
                                                     }
                                                     {reportData.totals && (
                                                         <tr style={{ fontWeight: 'bold' }}>
@@ -1211,9 +1297,9 @@ const AttendanceReport = () => {
                                                 </tbody>
                                             </table>
                                             <div className="pt15 pb15 no-print">
-                                                <Pagination 
-                                                    totalItems={filteredData.length} 
-                                                    itemsPerPage={itemsPerPage} 
+                                                <Pagination
+                                                    totalItems={filteredData.length}
+                                                    itemsPerPage={itemsPerPage}
                                                     currentPage={currentPage}
                                                     onPageChange={(page) => setCurrentPage(page)}
                                                 />
@@ -1231,15 +1317,15 @@ const AttendanceReport = () => {
                                                 </thead>
                                                 <tbody>
                                                     {currentData.map(s => (
-                                                            <tr key={s.id}><td style={{ textAlign: 'left' }}>{s.name} (ID: {s.employee_id})</td><td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td><td>{s.counts.P}</td><td>{s.counts.L}</td><td>{s.counts.A}</td><td>{s.counts.H}</td><td>{s.counts.F}</td>{days.map(d => <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{s.daily[d.getDate()] || '-'}</td>)}</tr>
-                                                        ))
+                                                        <tr key={s.id}><td style={{ textAlign: 'left' }}>{s.name} (ID: {s.employee_id})</td><td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td><td>{s.counts.P}</td><td>{s.counts.L}</td><td>{s.counts.A}</td><td>{s.counts.H}</td><td>{s.counts.F}</td>{days.map(d => <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{s.daily[d.getDate()] || '-'}</td>)}</tr>
+                                                    ))
                                                     }
                                                 </tbody>
                                             </table>
                                             <div className="pt15 pb15 no-print">
-                                                <Pagination 
-                                                    totalItems={filteredData.length} 
-                                                    itemsPerPage={itemsPerPage} 
+                                                <Pagination
+                                                    totalItems={filteredData.length}
+                                                    itemsPerPage={itemsPerPage}
                                                     currentPage={currentPage}
                                                     onPageChange={(page) => setCurrentPage(page)}
                                                 />
@@ -1253,21 +1339,21 @@ const AttendanceReport = () => {
                                             <table className="table table-hover attendance-table minimal-table">
                                                 <thead><tr><th>S.No</th><th>Name</th><th>Admission No</th><th>Class (Section)</th><th>Date</th><th>Time</th><th>Roll No</th></tr></thead>
                                                 <tbody>{currentData.map((r, i) => (
-                                                        <tr key={r.id || indexOfFirstItem + i}>
-                                                            <td>{indexOfFirstItem + i + 1}</td>
-                                                            <td>{r.firstname} {r.lastname}</td>
-                                                            <td>{r.admission_no}</td>
-                                                            <td>{r.class} ({r.section})</td>
-                                                            <td>{r.date}</td>
-                                                            <td>{r.time}</td>
-                                                            <td>{r.roll_no}</td>
-                                                        </tr>
-                                                    ))}</tbody>
+                                                    <tr key={r.id || indexOfFirstItem + i}>
+                                                        <td>{indexOfFirstItem + i + 1}</td>
+                                                        <td>{r.firstname} {r.lastname}</td>
+                                                        <td>{r.admission_no}</td>
+                                                        <td>{r.class} ({r.section})</td>
+                                                        <td>{r.date}</td>
+                                                        <td>{r.time}</td>
+                                                        <td>{r.roll_no}</td>
+                                                    </tr>
+                                                ))}</tbody>
                                             </table>
                                             <div className="pt15 pb15 no-print">
-                                                <Pagination 
-                                                    totalItems={filteredData.length} 
-                                                    itemsPerPage={itemsPerPage} 
+                                                <Pagination
+                                                    totalItems={filteredData.length}
+                                                    itemsPerPage={itemsPerPage}
                                                     currentPage={currentPage}
                                                     onPageChange={(page) => setCurrentPage(page)}
                                                 />

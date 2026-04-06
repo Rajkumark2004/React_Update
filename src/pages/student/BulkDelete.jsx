@@ -111,7 +111,7 @@ const BulkDelete = () => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
-        if (!classId) return;
+        // Removed !classId check to allow searching without filters
 
         setLoading(true);
         try {

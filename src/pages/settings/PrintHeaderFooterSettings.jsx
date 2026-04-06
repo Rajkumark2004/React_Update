@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import SettingsMenu from "../../components/SettingsMenu";
 import "../../utils/include_files.js";
 import api from "../../services/api";
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const PrintHeaderFooterSettings = () => {
@@ -15,10 +14,10 @@ const PrintHeaderFooterSettings = () => {
         online_exam: { header_image: null, footer_content: '', current_image: '/online_exam.png' }
     });
 
-    const [isDragging, setIsDragging] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
+    const fileInputRef = useRef(null);
+    const [refreshKey, setRefreshKey] = useState(Date.now());
 
     useEffect(() => {
         fetchSettings();
@@ -51,11 +50,33 @@ const PrintHeaderFooterSettings = () => {
             }
         } catch (error) {
             console.error('Error fetching print settings:', error);
-            // setMessage({ type: 'error', text: 'Failed to load settings.' });
         } finally {
             setIsLoading(false);
         }
     };
+
+    // Initialize Dropify when tab changes
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            try {
+                const $ = window.jQuery;
+                if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                    const drEvent = $('.dropify').dropify();
+                    
+                    drEvent.on('dropify.afterClear', () => {
+                        setFormData(prev => ({
+                            ...prev,
+                            [activeTab]: { ...prev[activeTab], header_image: null }
+                        }));
+                    });
+                }
+            } catch (error) {
+                console.error('Dropify initialization error:', error);
+            }
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, [activeTab, refreshKey]);
 
     const handleTabClick = (tab) => {
         setActiveTab(tab);
@@ -126,10 +147,7 @@ const PrintHeaderFooterSettings = () => {
 
             if (response.status === 'success') {
                 setMessage({ type: 'success', text: response.msg || 'Settings saved successfully!' });
-
-                // If an image was uploaded, we might want to refresh to get the new URL, 
-                // or just rely on the local preview until refresh. 
-                // Ideally, we fetch settings again to ensure everything is consistent.
+                setRefreshKey(Date.now()); // Bust cache and re-init dropify
                 fetchSettings();
             } else {
                 setMessage({ type: 'error', text: response.msg || response.message || 'Failed to save settings.' });
@@ -142,24 +160,7 @@ const PrintHeaderFooterSettings = () => {
         }
     };
 
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
-
-    const handleDrop = (tab, e) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-            handleFileProcess(tab, file);
-        }
-    };
+// (Drag and drop helpers removed in favor of Dropify)
 
     const renderTabContent = (tabKey, title) => (
         <div className={`tab-pane ${activeTab === tabKey ? 'active' : ''}`}>
@@ -173,70 +174,17 @@ const PrintHeaderFooterSettings = () => {
                     <div className="col-md-12">
                         <div className="form-group">
                             <label>Header Image (2230px X 300px)<small className="req"> *</small></label>
-                            <div
-                                className={`drop-zone ${isDragging ? 'drag-over' : ''}`}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(tabKey, e)}
-                                onClick={() => document.getElementById(`fileInput-${tabKey}`).click()}
-                                onMouseEnter={() => setIsHovered(true)}
-                                onMouseLeave={() => setIsHovered(false)}
-                                style={{
-                                    border: '2px dashed #ccc',
-                                    borderRadius: '5px',
-                                    padding: '20px',
-                                    textAlign: 'center',
-                                    cursor: 'pointer',
-                                    backgroundColor: isDragging ? '#e9ecef' : '#f9f9f9',
-                                    marginBottom: '10px',
-                                    position: 'relative',
-                                    minHeight: '80px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                            >
-                                {formData[tabKey].current_image ? (
-                                    <>
-                                        <img
-                                            src={formData[tabKey].current_image}
-                                            alt="Header Preview"
-                                            style={{
-                                                width: '100%',
-                                                height: 'auto',
-                                                opacity: (isHovered || isDragging) ? 0.5 : 1,
-                                                transition: 'opacity 0.3s'
-                                            }}
-                                        />
-                                        {(isHovered || isDragging) && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '50%',
-                                                left: '50%',
-                                                transform: 'translate(-50%, -50%)',
-                                                color: '#333',
-                                                fontWeight: 'bold',
-                                                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                                padding: '10px 20px',
-                                                borderRadius: '5px'
-                                            }}>
-                                                Drag and drop or click to replace
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <p>Drag and drop an image here, or click to select</p>
-                                )}
-                                <input
-                                    id={`fileInput-${tabKey}`}
-                                    type="file"
-                                    className="form-control"
-                                    onChange={(e) => handleFileChange(tabKey, e)}
-                                    style={{ display: 'none' }}
-                                    accept="image/*"
-                                />
-                            </div>
-                            <span className="text-danger"></span>
+                            <input
+                                key={`${tabKey}-${refreshKey}`}
+                                id={`fileInput-${tabKey}`}
+                                type="file"
+                                className="dropify"
+                                data-height="150"
+                                data-default-file={formData[tabKey].current_image}
+                                onChange={(e) => handleFileChange(tabKey, e)}
+                                ref={fileInputRef}
+                                accept="image/*"
+                            />
                         </div>
                         <div className="form-group">
                             <label>Footer Content</label>
@@ -263,7 +211,7 @@ const PrintHeaderFooterSettings = () => {
 
     return (
         <SettingsMenu>
-            <div style={{ width: '100%', marginTop: '20px' }}>
+            <div style={{ width: '100%', marginTop: '0px' }}>
                 <div className="row">
                     <div className="col-md-12">
                         <div className="nav-tabs-custom box box-primary theme-shadow">

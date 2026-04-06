@@ -12,6 +12,15 @@ import Pagination from '../../utils/Pagination';
 
 const StudentInformationReport = () => {
     const navigate = useNavigate();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
     const [activeReport, setActiveReport] = useState('');
     const [subView, setSubView] = useState(null); // { type, data, title }
     const [searchTerm, setSearchTerm] = useState('');
@@ -885,7 +894,7 @@ const StudentInformationReport = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
             <style>{`
@@ -955,6 +964,22 @@ const StudentInformationReport = () => {
                 }
                 .reportlists li a i { margin-right: 8px; color: #666; font-size: 14px; }
                 .reportlists li a.active { background-color: #e2f0ff !important; color: #000; font-weight: 500; }
+
+                /* Mobile responsive styles */
+                @media (max-width: 767px) {
+                    .reportlists { grid-template-columns: 1fr !important; gap: 4px; }
+                    .reportlists li a { font-size: 12px; padding: 10px 12px; white-space: normal; }
+                    .filters-area .row { display: flex; flex-direction: column; }
+                    .filters-area .col-md-3 { width: 100%; padding: 0 15px; }
+                    .dt-header { flex-direction: column; align-items: center; gap: 10px; }
+                    .dt-search { width: 100%; text-align: center; }
+                    .dt-search input { width: 100% !important; text-align: center; }
+                    .dt-buttons { justify-content: center; flex-wrap: wrap; }
+                    .select-criteria-header { font-size: 15px; text-align: center; }
+                    .modal-dialog { width: 98% !important; max-height: 95vh !important; }
+                    .modal-header h4 { font-size: 14px; }
+                    .table-custom td, .table-custom th { font-size: 12px; padding: 6px 8px; }
+                }
 
                 .select-criteria-header { font-size: 17px; font-weight: 500; padding: 10px 0; border-bottom: 1px solid #eee; margin-bottom: 10px; color: #333; border-top: 1px solid #eee; margin-top: 15px; }
                 
@@ -1067,256 +1092,407 @@ const StudentInformationReport = () => {
                 .close-btn:hover { color: #333; }
             `}</style>
 
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         <ReportsSidebar activeGroup="SIS" />
 
-                        <div className="col-md-10">
+                        <div className={isMobile ? "col-xs-12" : "col-md-10"}>
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Student Information Report</h3>
                                 </div>
                                 <div className="box-body">
 
-                            <ul className="reportlists">
-                                {sisReports.flat().map((report, idx) => (
-                                    <li key={idx}>
-                                        <a className={activeReport === report ? "active" : ""} onClick={(e) => { e.preventDefault(); handleReportClick(report); }}>
-                                            <i className="fa fa-file-text-o"></i> {report}
-                                        </a>
-                                    </li>
-                                ))}
-                            </ul>
+                                    <ul className="reportlists">
+                                        {sisReports.flat().map((report, idx) => (
+                                            <li key={idx}>
+                                                <a className={activeReport === report ? "active" : ""} onClick={(e) => { e.preventDefault(); handleReportClick(report); }}>
+                                                    <i className="fa fa-file-text-o"></i> {report}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
 
-                            {activeReport && (
-                                <>
-                                    {currentConfig.filters.length > 0 && (
+                                    {activeReport && (
                                         <>
-                                            <div className="select-criteria-header"><i className="fa fa-search"></i> Select Criteria</div>
-                                            <div className="filters-area">
-                                                <div className="row">
-                                                    {currentConfig.filters.includes('class') && (
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Class <span className="req">*</span></label>
-                                                                <select className="form-control" value={classId} onChange={(e) => setClassId(e.target.value)} required>
-                                                                    <option value="">Select</option>
-                                                                    {classes.map((cls) => (
-                                                                        <option key={cls.id} value={cls.id}>{cls.class}</option>
-                                                                    ))}
-                                                                    {classes.length === 0 && <option value="1">Class 1</option>}
-                                                                </select>
-                                                                {errors.class && <span className="text-danger" style={{ fontSize: '11px', display: 'block', marginTop: '2px' }}>{errors.class}</span>}
+                                            {currentConfig.filters.length > 0 && (
+                                                <>
+                                                    <div className="select-criteria-header"><i className="fa fa-search"></i> Select Criteria</div>
+                                                    <div className="filters-area">
+                                                        <div className="row" style={isMobile ? { display: 'flex', flexDirection: 'column' } : {}}>
+                                                            {currentConfig.filters.includes('class') && (
+                                                                <div className={isMobile ? 'col-xs-12' : 'col-md-3'}>
+                                                                    <div className="form-group">
+                                                                        <label>Class <span className="req">*</span></label>
+                                                                        <select className="form-control" value={classId} onChange={(e) => setClassId(e.target.value)} required>
+                                                                            <option value="">Select</option>
+                                                                            {classes.map((cls) => (
+                                                                                <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                                            ))}
+                                                                            {classes.length === 0 && <option value="1">Class 1</option>}
+                                                                        </select>
+                                                                        {errors.class && <span className="text-danger" style={{ fontSize: '11px', display: 'block', marginTop: '2px' }}>{errors.class}</span>}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {currentConfig.filters.includes('section') && (
+                                                                <div className={isMobile ? 'col-xs-12' : 'col-md-3'}>
+                                                                    <div className="form-group">
+                                                                        <label>Section <span className="req">*</span></label>
+                                                                        <select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
+                                                                            <option value="">Select</option>
+                                                                            {sections.map((sec) => (
+                                                                                <option key={sec.id} value={sec.section_id}>{sec.section}</option>
+                                                                            ))}
+                                                                            {sections.length === 0 && <option value="1">Section A</option>}
+                                                                        </select>
+                                                                        {errors.section && <span className="text-danger" style={{ fontSize: '11px', display: 'block', marginTop: '2px' }}>{errors.section}</span>}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {currentConfig.filters.includes('admission_date') && (
+                                                                <div className="col-md-3"><div className="form-group"><label>Admission Date</label><input type="date" className="form-control" value={admissionDate} onChange={(e) => setAdmissionDate(e.target.value)} /></div></div>
+                                                            )}
+                                                            {currentConfig.filters.includes('search_type') && (
+                                                                <div className="col-md-3"><div className="form-group"><label>Search Type <span className="req">*</span></label><select className="form-control" value={searchType} onChange={(e) => setSearchType(e.target.value)} required><option value="today">Today</option></select></div></div>
+                                                            )}
+                                                            {currentConfig.filters.includes('status') && (
+                                                                <div className="col-md-3"><div className="form-group"><label>Status</label><select className="form-control" value={status} onChange={(e) => setStatus(e.target.value)}><option value="">Select</option><option value="pending">Pending</option></select></div></div>
+                                                            )}
+                                                            {currentConfig.filters.includes('admission_year') && (
+                                                                <div className="col-md-3"><div className="form-group"><label>Admission Year</label><select className="form-control" value={admissionYear} onChange={(e) => setAdmissionYear(e.target.value)}><option value="">Select</option><option value="2024">2024</option><option value="2025">2025</option></select></div></div>
+                                                            )}
+                                                            <div className="col-sm-12" style={{ textAlign: 'right', marginTop: '10px' }}>
+                                                                <div className="col-sm-12" style={{ textAlign: 'right', marginTop: '10px' }}>
+                                                                    <button className="btn btn-purple btn-sm" onClick={handleSearch}><i className="fa fa-search"></i> Search</button>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                    {currentConfig.filters.includes('section') && (
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Section <span className="req">*</span></label>
-                                                                <select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
-                                                                    <option value="">Select</option>
-                                                                    {sections.map((sec) => (
-                                                                        <option key={sec.id} value={sec.section_id}>{sec.section}</option>
-                                                                    ))}
-                                                                    {sections.length === 0 && <option value="1">Section A</option>}
-                                                                </select>
-                                                                {errors.section && <span className="text-danger" style={{ fontSize: '11px', display: 'block', marginTop: '2px' }}>{errors.section}</span>}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {currentConfig.filters.includes('admission_date') && (
-                                                        <div className="col-md-3"><div className="form-group"><label>Admission Date</label><input type="date" className="form-control" value={admissionDate} onChange={(e) => setAdmissionDate(e.target.value)} /></div></div>
-                                                    )}
-                                                    {currentConfig.filters.includes('search_type') && (
-                                                        <div className="col-md-3"><div className="form-group"><label>Search Type <span className="req">*</span></label><select className="form-control" value={searchType} onChange={(e) => setSearchType(e.target.value)} required><option value="today">Today</option></select></div></div>
-                                                    )}
-                                                    {currentConfig.filters.includes('status') && (
-                                                        <div className="col-md-3"><div className="form-group"><label>Status</label><select className="form-control" value={status} onChange={(e) => setStatus(e.target.value)}><option value="">Select</option><option value="pending">Pending</option></select></div></div>
-                                                    )}
-                                                    {currentConfig.filters.includes('admission_year') && (
-                                                        <div className="col-md-3"><div className="form-group"><label>Admission Year</label><select className="form-control" value={admissionYear} onChange={(e) => setAdmissionYear(e.target.value)}><option value="">Select</option><option value="2024">2024</option><option value="2025">2025</option></select></div></div>
-                                                    )}
-                                                    <div className="col-sm-12" style={{ textAlign: 'right', marginTop: '10px' }}>
-                                                        <div className="col-sm-12" style={{ textAlign: 'right', marginTop: '10px' }}>
-                                                            <button className="btn btn-purple btn-sm" onClick={handleSearch}><i className="fa fa-search"></i> Search</button>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    <div className="select-criteria-header" style={{ marginTop: '20px' }}> {activeReport}</div>
-
-                                    <div className="dt-header">
-                                        <div className="dt-search">
-                                            <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                                        </div>
-                                        <div className="dt-buttons" style={{ position: 'relative' }}>
-                                            <button className="dt-button" title="Copy" onClick={handleCopy}><i className="fa fa-copy"></i></button>
-                                            <button className="dt-button" title="Excel" onClick={handleExcel}><i className="fa fa-file-excel-o"></i></button>
-                                            <button className="dt-button" title="CSV" onClick={handleCSV}><i className="fa fa-file-text-o"></i></button>
-                                            <button className="dt-button" title="PDF" onClick={handlePDF}><i className="fa fa-file-pdf-o"></i></button>
-                                            <button className="dt-button" title="Print" onClick={handlePrint}><i className="fa fa-print"></i></button>
-                                            <button className="dt-button" title="Columns" onClick={() => setShowColumnsDropdown(v => !v)}>
-                                                <i className="fa fa-columns"></i>
-                                            </button>
-                                            {showColumnsDropdown && (
-                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '200px', maxHeight: '300px', overflowY: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                    {currentConfig.headers.map(h => (
-                                                        <label key={h} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
-                                                            <input type="checkbox" checked={visibleColumns.has(h)} onChange={() => toggleColumn(h)} style={{ marginRight: '6px' }} />
-                                                            {h}
-                                                        </label>
-                                                    ))}
-                                                </div>
+                                                </>
                                             )}
-                                        </div>
-                                    </div>
 
-                                    <div className="table-responsive">
-                                        <table className="table-custom">
-                                            <thead>
-                                                <tr>
-                                                    {currentConfig.headers.map((header, idx) => (
-                                                        <th key={idx}>{header} <i className="fa fa-sort"></i></th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {loading ? (
-                                                    <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>Loading...</td></tr>
-                                                ) : activeReport === 'Sibling Report' ? (
-                                                    <>
-                                                        {currentData.map((group, gIdx) => {
-                                                            const firstStudent = group[0];
-                                                            return (
-                                                                <React.Fragment key={indexOfFirstItem + gIdx}>
-                                                                    {/* Parent info header row */}
-                                                                    <tr style={{ backgroundColor: '#f5f5f5', borderTop: '2px solid #ddd' }}>
-                                                                        <td><strong>{firstStudent.father_name || '-'}</strong></td>
-                                                                        <td><strong>{firstStudent.mother_name || '-'}</strong></td>
-                                                                        <td><strong>{firstStudent.guardian_name || '-'}</strong></td>
-                                                                        <td><strong>{firstStudent.guardian_phone || '-'}</strong></td>
-                                                                        <td colSpan="4"></td>
-                                                                    </tr>
-                                                                    {/* Individual student rows */}
-                                                                    {group.map((student, sIdx) => (
-                                                                        <tr key={`${indexOfFirstItem + gIdx}-${sIdx}`}>
-                                                                            <td colSpan="4"></td>
-                                                                            <td>{student.firstname} {student.lastname || ''}</td>
-                                                                            <td>{student.class} ({student.section})</td>
-                                                                            <td>{student.admission_date || '-'}</td>
-                                                                            <td>{student.gender}</td>
-                                                                        </tr>
-                                                                    ))}
-                                                                </React.Fragment>
-                                                            );
-                                                        })}
-                                                        {currentData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>No record found</td></tr>}
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        {currentData.map((row, index) => (
-                                                            <tr key={indexOfFirstItem + index}>{renderRow(row, indexOfFirstItem + index)}</tr>
-                                                        ))}
-                                                        {currentData.length > 0 && activeReport === 'Student Gender Ratio Report' && (
-                                                            <tr className="total-row">
-                                                                <td>Total</td><td>{totals.boys}</td><td>{totals.girls}</td><td>{totals.students}</td><td>{(totals.boys / totals.girls).toFixed(2)}</td>
-                                                            </tr>
-                                                        )}
-                                                        {currentData.length > 0 && activeReport === 'Student Teacher Ratio Report' && (
-                                                            <tr className="total-row">
-                                                                <td>Total</td><td>{totals.students}</td><td>{totals.teachers}</td><td>{(totals.students / totals.teachers).toFixed(1)}:1</td>
-                                                            </tr>
-                                                        )}
-                                                        {currentData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>No record found</td></tr>}
-                                                    </>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    {filteredData.length > 0 && (
-                                        <div className="pt15 pb15">
-                                            <Pagination 
-                                                totalItems={filteredData.length} 
-                                                itemsPerPage={itemsPerPage} 
-                                                currentPage={currentPage}
-                                                onPageChange={(page) => setCurrentPage(page)}
-                                            />
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                                            <div className="select-criteria-header" style={{ marginTop: '20px' }}> {activeReport}</div>
 
-                            {/* Modal for Student List */}
-                            {subView && (
-                                <div className="modal-overlay" onClick={() => setSubView(null)}>
-                                    <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-                                        <div className="modal-header">
-                                            <h4 className="modal-title">{subView.title}</h4>
-                                            <button className="close-btn" onClick={() => setSubView(null)}>&times;</button>
-                                        </div>
-                                        <div className="modal-body">
-                                            <div className="dt-header">
-                                                <div className="dt-search">
-                                                    <input type="text" placeholder="Search..." value={subSearchTerm} onChange={(e) => setSubSearchTerm(e.target.value)} />
+                                            <div
+                                                className="row mb-2"
+                                                style={{
+                                                    marginBottom: '10px',
+                                                    display: isMobile ? 'flex' : 'block',
+                                                    flexDirection: isMobile ? 'column' : 'row',
+                                                    alignItems: isMobile ? 'center' : 'stretch',
+                                                    gap: isMobile ? '15px' : '0'
+                                                }}
+                                            >
+                                                <div
+                                                    className={isMobile ? "" : "col-sm-6"}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: isMobile ? '15px' : '20px',
+                                                        justifyContent: isMobile ? 'center' : 'flex-start',
+                                                        flexWrap: 'wrap'
+                                                    }}
+                                                >
+                                                    <div className="dataTables_length">
+                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                            Records:
+                                                            <select
+                                                                value={itemsPerPage}
+                                                                onChange={(e) => {
+                                                                    setItemsPerPage(Number(e.target.value));
+                                                                    setCurrentPage(1);
+                                                                }}
+                                                                className="form-control input-sm"
+                                                                style={{ width: '80px', margin: '0 10px' }}
+                                                            >
+                                                                <option value="10">10</option>
+                                                                <option value="25">25</option>
+                                                                <option value="50">50</option>
+                                                                <option value="100">100</option>
+                                                                <option value="-1">All</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <div className="dataTables_filter">
+                                                        <input
+                                                            type="search"
+                                                            className="form-control input-sm"
+                                                            placeholder="Search..."
+                                                            style={{
+                                                                marginLeft: isMobile ? '0' : '10px',
+                                                                display: 'inline-block',
+                                                                width: '180px',
+                                                                border: 'none',
+                                                                borderBottom: '1px solid #ccc',
+                                                                borderRadius: '0',
+                                                                boxShadow: 'none',
+                                                                backgroundColor: 'transparent',
+                                                                paddingLeft: '0',
+                                                                outline: 'none',
+                                                                textAlign: isMobile ? 'center' : 'left'
+                                                            }}
+                                                            value={searchTerm}
+                                                            onChange={(e) => {
+                                                                setSearchTerm(e.target.value);
+                                                                setCurrentPage(1);
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="dt-buttons" style={{ position: 'relative' }}>
-                                                    <button className="dt-button" title="Copy" onClick={handleSubCopy}><i className="fa fa-copy"></i></button>
-                                                    <button className="dt-button" title="Excel" onClick={handleSubExcel}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="dt-button" title="CSV" onClick={handleSubCSV}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="dt-button" title="PDF" onClick={handleSubPDF}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="dt-button" title="Print" onClick={handleSubPrint}><i className="fa fa-print"></i></button>
-                                                    <button className="dt-button" title="Columns" onClick={() => setShowSubColumnsDropdown(v => !v)}>
-                                                        <i className="fa fa-columns"></i>
-                                                    </button>
-                                                    {showSubColumnsDropdown && (
-                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '200px', maxHeight: '300px', overflowY: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                            {studentListConfig.headers.map(h => (
-                                                                <label key={h} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal' }}>
-                                                                    <input type="checkbox" checked={subVisibleColumns.has(h)} onChange={() => toggleSubColumn(h)} style={{ marginRight: '6px' }} />
-                                                                    {h}
-                                                                </label>
-                                                            ))}
+                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
+                                                    {filteredData.length > 0 && (
+                                                        <div className="dt-buttons btn-group" style={{ float: 'right' }}>
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={handleCopy} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                                <i className="fa fa-files-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={handleExcel}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={handleCSV}>
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={handlePDF}>
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Print" onClick={handlePrint}>
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
+                                                            <div className="btn-group">
+                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                                                    <i className="fa fa-columns"></i>
+                                                                </button>
+                                                                {showColumnsDropdown && (
+                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                        {currentConfig.headers.map(h => (
+                                                                            <label key={h} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                                <input type="checkbox" checked={visibleColumns.has(h)} onChange={() => toggleColumn(h)} style={{ marginRight: '6px' }} />
+                                                                                {h}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
+
                                             <div className="table-responsive">
                                                 <table className="table-custom">
                                                     <thead>
                                                         <tr>
-                                                            {studentListConfig.headers.filter(h => subVisibleColumns.has(h)).map((header, idx) => (
+                                                            {currentConfig.headers.map((header, idx) => (
                                                                 <th key={idx}>{header} <i className="fa fa-sort"></i></th>
                                                             ))}
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {filteredModalData.map((row, index) => (
-                                                            <tr key={index}>
-                                                                {subVisibleColumns.has("Admission No") && <td>{row.admission_no}</td>}
-                                                                {subVisibleColumns.has("Student Name") && <td><span className="student-link">{row.firstname} {row.lastname}</span></td>}
-                                                                {subVisibleColumns.has("Class") && <td>{row.class} ({row.section})</td>}
-                                                                {subVisibleColumns.has("Father Name") && <td>{row.father_name}</td>}
-                                                                {subVisibleColumns.has("Date of Birth") && <td>{row.dob}</td>}
-                                                                {subVisibleColumns.has("Gender") && <td>{row.gender}</td>}
-                                                                {subVisibleColumns.has("Category") && <td>{row.category}</td>}
-                                                                {subVisibleColumns.has("Mobile Number") && <td>{row.mobileno}</td>}
-                                                            </tr>
-                                                        ))}
-                                                        {filteredModalData.length === 0 && (
-                                                            <tr><td colSpan={studentListConfig.headers.length} style={{ textAlign: 'center' }}>No students found</td></tr>
+                                                        {loading ? (
+                                                            <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>Loading...</td></tr>
+                                                        ) : activeReport === 'Sibling Report' ? (
+                                                            <>
+                                                                {currentData.map((group, gIdx) => {
+                                                                    const firstStudent = group[0];
+                                                                    return (
+                                                                        <React.Fragment key={indexOfFirstItem + gIdx}>
+                                                                            {/* Parent info header row */}
+                                                                            <tr style={{ backgroundColor: '#f5f5f5', borderTop: '2px solid #ddd' }}>
+                                                                                <td><strong>{firstStudent.father_name || '-'}</strong></td>
+                                                                                <td><strong>{firstStudent.mother_name || '-'}</strong></td>
+                                                                                <td><strong>{firstStudent.guardian_name || '-'}</strong></td>
+                                                                                <td><strong>{firstStudent.guardian_phone || '-'}</strong></td>
+                                                                                <td colSpan="4"></td>
+                                                                            </tr>
+                                                                            {/* Individual student rows */}
+                                                                            {group.map((student, sIdx) => (
+                                                                                <tr key={`${indexOfFirstItem + gIdx}-${sIdx}`}>
+                                                                                    <td colSpan="4"></td>
+                                                                                    <td>{student.firstname} {student.lastname || ''}</td>
+                                                                                    <td>{student.class} ({student.section})</td>
+                                                                                    <td>{student.admission_date || '-'}</td>
+                                                                                    <td>{student.gender}</td>
+                                                                                </tr>
+                                                                            ))}
+                                                                        </React.Fragment>
+                                                                    );
+                                                                })}
+                                                                {currentData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                                                                        <div style={{ color: '#ffb3b3ff', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
+                                                                        <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
+                                                                        <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
+                                                                    </div>
+                                                                </td></tr>}
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                {currentData.map((row, index) => (
+                                                                    <tr key={indexOfFirstItem + index}>{renderRow(row, indexOfFirstItem + index)}</tr>
+                                                                ))}
+                                                                {currentData.length > 0 && activeReport === 'Student Gender Ratio Report' && (
+                                                                    <tr className="total-row">
+                                                                        <td>Total</td><td>{totals.boys}</td><td>{totals.girls}</td><td>{totals.students}</td><td>{(totals.boys / totals.girls).toFixed(2)}</td>
+                                                                    </tr>
+                                                                )}
+                                                                {currentData.length > 0 && activeReport === 'Student Teacher Ratio Report' && (
+                                                                    <tr className="total-row">
+                                                                        <td>Total</td><td>{totals.students}</td><td>{totals.teachers}</td><td>{(totals.students / totals.teachers).toFixed(1)}:1</td>
+                                                                    </tr>
+                                                                )}
+                                                                {currentData.length === 0 && <tr><td colSpan={currentConfig.headers.length} style={{ textAlign: 'center' }}>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                                                                        <div style={{ color: '#ffb3b3ff', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
+                                                                        <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
+                                                                        <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
+                                                                    </div>
+                                                                </td></tr>}
+                                                            </>
                                                         )}
                                                     </tbody>
                                                 </table>
                                             </div>
+                                            {filteredData.length > 0 && (
+                                                <div className="pt15 pb15">
+                                                    <Pagination
+                                                        totalItems={filteredData.length}
+                                                        itemsPerPage={itemsPerPage}
+                                                        currentPage={currentPage}
+                                                        onPageChange={(page) => setCurrentPage(page)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {/* Modal for Student List */}
+                                    {subView && (
+                                        <div className="modal-overlay" onClick={() => setSubView(null)}>
+                                            <div className="modal-dialog" style={isMobile ? { width: '98%', maxHeight: '95vh' } : {}} onClick={(e) => e.stopPropagation()}>
+                                                <div className="modal-header">
+                                                    <h4 className="modal-title" style={isMobile ? { fontSize: '14px' } : {}}>{subView.title}</h4>
+                                                    <button className="close-btn" onClick={() => setSubView(null)}>&times;</button>
+                                                </div>
+                                                <div className="modal-body">
+                                                    <div
+                                                        className="row mb-2"
+                                                        style={{
+                                                            marginBottom: '10px',
+                                                            display: isMobile ? 'flex' : 'block',
+                                                            flexDirection: isMobile ? 'column' : 'row',
+                                                            alignItems: isMobile ? 'center' : 'stretch',
+                                                            gap: isMobile ? '15px' : '0'
+                                                        }}
+                                                    >
+                                                        <div
+                                                            className={isMobile ? "" : "col-sm-6"}
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: isMobile ? '15px' : '20px',
+                                                                justifyContent: isMobile ? 'center' : 'flex-start',
+                                                                flexWrap: 'wrap'
+                                                            }}
+                                                        >
+                                                            <div className="dataTables_filter">
+                                                                <input
+                                                                    type="search"
+                                                                    className="form-control input-sm"
+                                                                    placeholder="Search..."
+                                                                    style={{
+                                                                        marginLeft: isMobile ? '0' : '10px',
+                                                                        display: 'inline-block',
+                                                                        width: '180px',
+                                                                        border: 'none',
+                                                                        borderBottom: '1px solid #ccc',
+                                                                        borderRadius: '0',
+                                                                        boxShadow: 'none',
+                                                                        backgroundColor: 'transparent',
+                                                                        paddingLeft: '0',
+                                                                        outline: 'none',
+                                                                        textAlign: isMobile ? 'center' : 'left'
+                                                                    }}
+                                                                    value={subSearchTerm}
+                                                                    onChange={(e) => setSubSearchTerm(e.target.value)}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
+                                                            {filteredModalData.length > 0 && (
+                                                                <div className="dt-buttons btn-group" style={{ float: 'right' }}>
+                                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={handleSubCopy} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                                        <i className="fa fa-files-o"></i>
+                                                                    </button>
+                                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={handleSubExcel}>
+                                                                        <i className="fa fa-file-excel-o"></i>
+                                                                    </button>
+                                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={handleSubCSV}>
+                                                                        <i className="fa fa-file-text-o"></i>
+                                                                    </button>
+                                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={handleSubPDF}>
+                                                                        <i className="fa fa-file-pdf-o"></i>
+                                                                    </button>
+                                                                    <button className="btn btn-default btn-sm" title="Print" onClick={handleSubPrint}>
+                                                                        <i className="fa fa-print"></i>
+                                                                    </button>
+                                                                    <div className="btn-group">
+                                                                        <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowSubColumnsDropdown(!showSubColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                                                            <i className="fa fa-columns"></i>
+                                                                        </button>
+                                                                        {showSubColumnsDropdown && (
+                                                                            <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                                {studentListConfig.headers.map(h => (
+                                                                                    <label key={h} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                                        <input type="checkbox" checked={subVisibleColumns.has(h)} onChange={() => toggleSubColumn(h)} style={{ marginRight: '6px' }} />
+                                                                                        {h}
+                                                                                    </label>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="table-responsive">
+                                                        <table className="table-custom">
+                                                            <thead>
+                                                                <tr>
+                                                                    {studentListConfig.headers.filter(h => subVisibleColumns.has(h)).map((header, idx) => (
+                                                                        <th key={idx}>{header} <i className="fa fa-sort"></i></th>
+                                                                    ))}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {filteredModalData.map((row, index) => (
+                                                                    <tr key={index}>
+                                                                        {subVisibleColumns.has("Admission No") && <td>{row.admission_no}</td>}
+                                                                        {subVisibleColumns.has("Student Name") && <td><span className="student-link">{row.firstname} {row.lastname}</span></td>}
+                                                                        {subVisibleColumns.has("Class") && <td>{row.class} ({row.section})</td>}
+                                                                        {subVisibleColumns.has("Father Name") && <td>{row.father_name}</td>}
+                                                                        {subVisibleColumns.has("Date of Birth") && <td>{row.dob}</td>}
+                                                                        {subVisibleColumns.has("Gender") && <td>{row.gender}</td>}
+                                                                        {subVisibleColumns.has("Category") && <td>{row.category}</td>}
+                                                                        {subVisibleColumns.has("Mobile Number") && <td>{row.mobileno}</td>}
+                                                                    </tr>
+                                                                ))}
+                                                                {filteredModalData.length === 0 && (
+                                                                    <tr><td colSpan={studentListConfig.headers.length} style={{ textAlign: 'center' }}>
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                                                                            <div style={{ color: '#ffb3b3ff', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
+                                                                            <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
+                                                                            <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
+                                                                        </div>
+                                                                    </td></tr>
+                                                                )}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
+                                    )}
 
                                 </div>
                             </div>
