@@ -123,6 +123,76 @@
     }
 }
 
+/* ===== Desktop table containment (above 991px) ===== */
+@media (min-width: 992px) {
+    #enquirytable {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    /* Column widths - Name, Phone, Source, Class, Enq Date, Last FU, Next FU, Status, Action */
+    #enquirytable th:nth-child(1),
+    #enquirytable td:nth-child(1) {
+        width: 14%;  /* Name */
+    }
+    #enquirytable th:nth-child(2),
+    #enquirytable td:nth-child(2) {
+        width: 10%;  /* Phone */
+    }
+    #enquirytable th:nth-child(3),
+    #enquirytable td:nth-child(3) {
+        width: 10%;  /* Source */
+    }
+    #enquirytable th:nth-child(4),
+    #enquirytable td:nth-child(4) {
+        width: 8%;   /* Class */
+    }
+    #enquirytable th:nth-child(5),
+    #enquirytable td:nth-child(5) {
+        width: 11%;  /* Enquiry Date */
+    }
+    #enquirytable th:nth-child(6),
+    #enquirytable td:nth-child(6) {
+        width: 13%;  /* Last Follow Up Date */
+    }
+    #enquirytable th:nth-child(7),
+    #enquirytable td:nth-child(7) {
+        width: 13%;  /* Next Follow Up Date */
+    }
+    #enquirytable th:nth-child(8),
+    #enquirytable td:nth-child(8) {
+        width: 8%;   /* Status */
+    }
+    #enquirytable th:last-child,
+    #enquirytable td:last-child {
+        width: 13%;  /* Action */
+    }
+
+    #enquirytable td,
+    #enquirytable th {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: break-word;
+        white-space: normal;
+        max-width: 0; /* Required for text-overflow with table-layout:fixed */
+    }
+
+    /* Keep action buttons on one line */
+    #enquirytable td:last-child {
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: unset;
+        max-width: none;
+    }
+
+    /* Keep date columns on one line */
+    #enquirytable td:nth-child(5),
+    #enquirytable td:nth-child(6),
+    #enquirytable td:nth-child(7) {
+        white-space: nowrap;
+    }
+}
+
 /* Modal styling */
 .modal-media-content {
     border-radius: 4px;

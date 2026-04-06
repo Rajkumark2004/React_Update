@@ -720,9 +720,9 @@ const EnquiryView = () => {
 
                                             {/* Pagination Footer */}
                                             <div className="pt15 pb15">
-                                                <Pagination 
-                                                    totalItems={totalItems} 
-                                                    itemsPerPage={recordsPerPage} 
+                                                <Pagination
+                                                    totalItems={totalItems}
+                                                    itemsPerPage={recordsPerPage}
                                                     currentPage={currentPage}
                                                     onPageChange={(page) => setCurrentPage(page)}
                                                 />
