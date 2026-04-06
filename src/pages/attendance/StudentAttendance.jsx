@@ -404,8 +404,10 @@ const StudentAttendance = () => {
                                     {studentList.length > 0 && (
                                         <>
                                             {isAttendanceMarked && (
-                                                <div className="alert alert-success alert-dismissible">
-                                                    Attendance is already marked, you can update it.
+                                                <div style={{ padding: "10px 10px 0px 10px" }}>
+                                                    <div className="alert alert-success alert-dismissible">
+                                                        Attendance Already Submitted You Can Edit Record
+                                                    </div>
                                                 </div>
                                             )}
                                             <div className="box-header with-border">

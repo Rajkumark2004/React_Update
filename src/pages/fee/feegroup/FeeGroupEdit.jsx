@@ -223,28 +223,26 @@ const FeeGroupEdit = () => {
                                     <div className="download_label">Fees Group List</div>
                                     <div className="row mb-2" style={isMobile ? { marginBottom: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' } : { marginBottom: '10px' }}>
                                         <div className={isMobile ? "" : "col-sm-6"}>
-                                            <div className={isMobile ? "dataTables_filter text-center" : "dataTables_filter pull-left"}>
-                                                <label style={isMobile ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : {}}>
-                                                    Search:<input
-                                                        type="search"
-                                                        className="form-control input-sm"
-                                                        placeholder=""
-                                                        style={isMobile ? { 
-                                                            display: 'inline-block', 
-                                                            width: '180px', 
-                                                            marginLeft: '0.5em',
-                                                            border: 'none',
-                                                            borderBottom: '1px solid #ccc',
-                                                            borderRadius: 0,
-                                                            boxShadow: 'none',
-                                                            backgroundColor: 'transparent',
-                                                            outline: 'none',
-                                                            textAlign: 'center'
-                                                        } : { display: 'inline-block', width: 'auto', marginLeft: '0.5em' }}
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                </label>
+                                            <div id="example1_filter" className={isMobile ? "dataTables_filter" : "dataTables_filter pull-left"}>
+                                                <input
+                                                    type="search"
+                                                    className="form-control input-sm"
+                                                    placeholder="Search..."
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                    style={{ 
+                                                        display: 'inline-block', 
+                                                        width: '180px', 
+                                                        border: 'none', 
+                                                        borderBottom: '1px solid #ccc', 
+                                                        borderRadius: '0', 
+                                                        boxShadow: 'none',
+                                                        backgroundColor: 'transparent',
+                                                        paddingLeft: '0',
+                                                        outline: 'none',
+                                                        textAlign: isMobile ? 'center' : 'left'
+                                                    }}
+                                                />
                                             </div>
                                         </div>
                                         <div className={isMobile ? "" : "col-sm-6"}>

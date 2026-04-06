@@ -1301,12 +1301,12 @@ const FinanceReport = () => {
                     background: #fff; 
                     border-radius: 4px; 
                     box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-                    padding: 15px;
+                    padding: 5px 15px 15px 15px;
                     overflow: hidden;
                     flex: 1;
                 }
-                .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-                .page-header h3 { margin: 0; font-size: 19px; font-weight: 400; color: #333; }
+                .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                .page-header h3 { margin: 0; font-size: 19px; font-weight: 400; color: #333;  margin-bottom: 10px; }
                 
                 .reportlists { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: transparent; border: none; margin-bottom: 15px; }
                 .reportlists li { background: #fff; list-style: none; border: none; margin: 0; }
@@ -1327,7 +1327,7 @@ const FinanceReport = () => {
                 }
                 .reportlists li a.active { background-color: #e2f0ff !important; color: #000; font-weight: 500; }
 
-                .select-criteria-header { font-size: 17px; font-weight: 500; padding: 10px 0; border-bottom: 1px solid #eee; margin-bottom: 10px; color: #333; border-top: 1px solid #eee; margin-top: 15px; }
+                .select-criteria-header { font-size: 15px; font-weight: 500; padding: 8px 0; border-bottom: 1px solid #eee; margin-bottom: 10px; color: #333; border-top: 1px solid #eee; margin-top: 10px; }
                 .filters-area { margin-bottom: 20px; }
                 
                 .form-control {
@@ -1389,10 +1389,10 @@ const FinanceReport = () => {
                 .pagination-list li.active { background: #9429b8; color: #fff; border-color: #9429b8; }
                 .pagination-list li:hover:not(.active) { background: #f4f4f4; }
 
-                .btn-purple { background-color: #9429b8; border-color: #9429b8; color: #fff !important; padding: 10px 24px; border-radius: 20px; font-size: 13px; border: none !important; outline: none !important; box-shadow: none !important; cursor: pointer; transition: 0.3s; }
+                .btn-purple { background-color: #9429b8; border-color: #9429b8; color: #fff !important; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: none !important; outline: none !important; box-shadow: none !important; cursor: pointer; transition: 0.3s; }
                 .btn-purple:hover { background-color: #7b2199; }
                 
-                .btn-back { background-color: #9429b8; border-color: #9429b8; color: #fff !important; padding: 10px 24px; border-radius: 20px; font-size: 13px; border: none; cursor: pointer; transition: 0.3s; }
+                .btn-back { background-color: #9429b8; border-color: #9429b8; color: #fff !important; padding: 4px 10px; border-radius: 20px; font-size: 12px; border: none; cursor: pointer; transition: 0.3s; }
                 .btn-back:hover { background-color: #7b2199; }
 
                 .label { padding: 3px 8px; border-radius: 3px; font-size: 11px; color: #fff; font-weight: 500; }
@@ -1435,7 +1435,7 @@ const FinanceReport = () => {
             `}</style>
 
             <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                <section className="content" style={{ overflow: 'visible' }}>
+                <section className="content" style={{ overflow: 'visible', padding: '10px' }}>
                     <div className="main-report-box" style={{ overflow: 'visible' }}>
                         <div className="page-header no-print">
                             <h3>Finance</h3>

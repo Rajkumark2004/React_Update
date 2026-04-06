@@ -573,6 +573,7 @@ const StudentView = () => {
       <style>{`
         .timeline:before {
           background-color: #0073b7 !important;
+          left: 42px !important;
         }
       `}</style>
       <Header />
@@ -1524,7 +1525,7 @@ const StudentView = () => {
                                       borderRadius: "50%",
                                       textAlign: "center",
                                       position: "absolute",
-                                      left: "16px",
+                                      left: "29px",
                                       top: "5px",
                                       color: "#fff",
                                       backgroundColor: "#0073b7",
@@ -1638,7 +1639,7 @@ const StudentView = () => {
                                 borderRadius: "50%",
                                 color: "#fff",
                                 backgroundColor: "#0073b7",
-                                left: "16px",
+                                left: "29px",
                                 position: "absolute",
                                 zIndex: 2,
                               }}

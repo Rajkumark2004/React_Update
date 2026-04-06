@@ -310,14 +310,14 @@ const RoomType = () => {
                                                 )}
                                             </tbody>
                                         </table>
-                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                            <Pagination 
-                                                totalItems={totalItems} 
-                                                itemsPerPage={recordsPerPage} 
-                                                currentPage={currentPage}
-                                                onPageChange={(page) => setCurrentPage(page)}
-                                            />
-                                        </div>
+                                    </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination 
+                                            totalItems={totalItems} 
+                                            itemsPerPage={recordsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div>
                             </div>

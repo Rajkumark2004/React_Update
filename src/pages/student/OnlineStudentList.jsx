@@ -422,7 +422,9 @@ const OnlineStudentList = () => {
                                                     display: isMobile ? 'flex' : 'block',
                                                     flexDirection: isMobile ? 'column' : 'row',
                                                     alignItems: isMobile ? 'center' : 'stretch',
-                                                    gap: isMobile ? '15px' : '0'
+                                                    gap: isMobile ? '15px' : '0',
+                                                    position: 'relative',
+                                                    zIndex: 10
                                                 }}
                                             >
                                                 <div
