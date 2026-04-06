@@ -612,16 +612,16 @@ const CBSEExamList = () => {
                     white-space: normal !important;
                     vertical-align: top !important;
                     background-color: transparent !important;
-                    padding: 8px 5px !important;
+                    padding: 8px 2px !important;
                     font-weight: 600;
                     border-bottom: 2px solid #eee;
                 }
-                .table-responsive table.example th:nth-child(1) { width: 15% !important; } 
-                .table-responsive table.example th:nth-child(2) { width: 12% !important; } 
-                .table-responsive table.example th:nth-child(3) { width: 6% !important; } 
-                .table-responsive table.example th:nth-child(4) { width: 8% !important; } 
-                .table-responsive table.example th:nth-child(5) { width: 8% !important; } 
-                .table-responsive table.example th:nth-child(6) { width: 8% !important; } 
+                .table-responsive table.example th:nth-child(1) { width: 10% !important; } 
+                .table-responsive table.example th:nth-child(2) { width: 8% !important; } 
+                .table-responsive table.example th:nth-child(3) { width: 5% !important; } 
+                .table-responsive table.example th:nth-child(4) { width: 7% !important; } 
+                .table-responsive table.example th:nth-child(5) { width: 7% !important; } 
+                .table-responsive table.example th:nth-child(6) { width: 7% !important; } 
                 .table-responsive table.example th:nth-child(7) { width: 10% !important; } 
                 .table-responsive table.example th:nth-child(8) { width: 10% !important; } 
                 .table-responsive table.example th:nth-child(9) { width: 280px !important; } 
@@ -631,7 +631,7 @@ const CBSEExamList = () => {
                     word-break: break-all !important;
                     white-space: normal !important;
                     vertical-align: top !important;
-                    padding: 8px 5px !important;
+                    padding: 8px 2px !important;
                     border-bottom: 1px solid #eee;
                 }
                 .table-responsive table.example td.text-right, .table-responsive table.example th.text-right {
@@ -648,7 +648,7 @@ const CBSEExamList = () => {
                 }
                 @media (max-width: 1177px) {
                     .table-responsive table.example {
-                        min-width: 1300px !important;
+                        min-width: 1100px !important;
                     }
                     .table-responsive {
                         overflow-x: auto !important;
