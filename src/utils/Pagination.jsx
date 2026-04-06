@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Pagination = ({
     totalItems,
@@ -6,6 +6,17 @@ const Pagination = ({
     currentPage,
     onPageChange
 }) => {
+    // Track window width for responsive layout
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     // If recordsPerPage is -1 (All), calculate safely to prevent division by zero or infinity
     const safeItemsPerPage = itemsPerPage === -1 ? (totalItems || 1) : itemsPerPage;
     const totalPages = Math.ceil(totalItems / safeItemsPerPage);
@@ -14,9 +25,6 @@ const Pagination = ({
 
     // If there are no items, do not render pagination
     if (totalItems === 0) return null;
-
-    // Optional: detect if the device is mobile for responsiveness (mimicking StudentSearch.jsx logic)
-    const isMobile = window.innerWidth < 768;
 
     const handlePageClick = (e, page) => {
         e.preventDefault();
