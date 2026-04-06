@@ -90,10 +90,10 @@ const RolePermission = () => {
 
     if (isLoading && rolePermissions.length === 0) {
         return (
-            <div className="wrapper">
+            <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Header />
                 <Sidebar />
-                <div className="content-wrapper">
+                <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                     <section className="content">
                         <p>Loading permissions...</p>
                     </section>
@@ -105,10 +105,10 @@ const RolePermission = () => {
 
     if (error) {
         return (
-            <div className="wrapper">
+            <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Header />
                 <Sidebar />
-                <div className="content-wrapper">
+                <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                     <section className="content">
                         <p className="text-danger">Error: {error}</p>
                         <button onClick={fetchPermissions} className="btn btn-primary">Retry</button>
@@ -120,10 +120,10 @@ const RolePermission = () => {
     }
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">

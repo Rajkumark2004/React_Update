@@ -172,10 +172,10 @@ const RoleList = () => {
     const currentRecords = filteredList.slice(indexOfFirstRecord, indexOfLastRecord);
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ background: '#f4f4f4', minHeight: '658px', marginTop: '18px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         {/* Left Side: Add/Edit Role form */}

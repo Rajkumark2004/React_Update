@@ -76,7 +76,7 @@ const SettingsMenu = ({ children, hideSidebars = false }) => {
 
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header
                 appName={appName}
                 userData={userData}
@@ -92,7 +92,7 @@ const SettingsMenu = ({ children, hideSidebars = false }) => {
             />
 
             {/* Content Wrapper */}
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         {/* FIRST COLUMN: Settings Main Categories */}
