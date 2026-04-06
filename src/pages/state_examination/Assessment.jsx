@@ -67,14 +67,14 @@ const Assessment = () => {
             sanitizedValue = sanitizeDecimal(value);
         }
         newRows[index][field] = sanitizedValue;
-        
+
         // Clear specific error on change
         if (errors.rows && errors.rows[index] && errors.rows[index][field]) {
             const newRowErrors = [...errors.rows];
             newRowErrors[index] = { ...newRowErrors[index], [field]: '' };
             setErrors({ ...errors, rows: newRowErrors });
         }
-        
+
         setFormData({ ...formData, rows: newRows });
     };
 
@@ -104,7 +104,7 @@ const Assessment = () => {
             const currentLineErrors = {};
             if (!row.type_name.trim()) currentLineErrors.type_name = "This field is required";
             if (!row.code.trim()) currentLineErrors.code = "This field is required";
-            
+
             const maxMarksError = validatePositiveInteger(row.maximum_marks, 'Maximum marks');
             if (maxMarksError) {
                 currentLineErrors.maximum_marks = maxMarksError;
@@ -400,27 +400,74 @@ const Assessment = () => {
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Assessment List</h3>
-                                    <div className="box-tools pull-right">
+                                    <div className="box-tools pull-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <button
                                             type="button"
                                             className="btn btn-sm btn-primary"
                                             onClick={() => { resetForm(); setShowModal(true); }}
+                                            style={{ borderRadius: '20px', padding: '5px 12px' }}
                                         >
                                             <i className="fa fa-plus"></i> Add
                                         </button>
-                                        <div className="btn-group pull-right mml15">
-                                            <button onClick={() => window.history.back()} className="btn btn-primary btn-sm">
-                                                <i className="fa fa-arrow-left"></i> Back
-                                            </button>
-                                        </div>
+                                        <button
+                                            onClick={() => window.history.back()}
+                                            className="btn btn-primary btn-sm"
+                                            style={{ borderRadius: '20px', padding: '5px 12px' }}
+                                        >
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-messages">
+                                    <style>
+                                        {`
+                                            @media (max-width: 767px) {
+                                                .mobile-stack {
+                                                    display: flex !important;
+                                                    flex-direction: column !important;
+                                                    align-items: center !important;
+                                                    gap: 2px !important;
+                                                }
+                                                .mobile-stack .pull-left {
+                                                    margin-bottom: 5px !important;
+                                                }
+                                                .mobile-stack > div {
+                                                    width: 100% !important;
+                                                    text-align: center !important;
+                                                }
+                                                .mobile-stack .pull-right, .mobile-stack .pull-left {
+                                                    float: none !important;
+                                                    justify-content: center !important;
+                                                }
+                                                .mobile-stack .dt-buttons {
+                                                    justify-content: center !important;
+                                                }
+                                                .mailbox-messages {
+                                                    border: 1px solid #ddd !important;
+                                                    border-radius: 4px !important;
+                                                }
+                                                .mailbox-messages table.table {
+                                                    border: none !important;
+                                                }
+                                                .mailbox-messages table.table th, 
+                                                .mailbox-messages table.table td,
+                                                .mailbox-messages table.table table th,
+                                                .mailbox-messages table.table table td {
+                                                    border-left: none !important;
+                                                    border-right: none !important;
+                                                    border-bottom: 1px solid #eee !important;
+                                                }
+                                                .mailbox-messages table.table tr:last-child td,
+                                                .mailbox-messages table.table table tr:last-child td {
+                                                    border-bottom: none !important;
+                                                }
+                                            }
+                                        `}
+                                    </style>
                                     <div style={{ padding: '10px 0' }}>
-                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                        <div className="row mobile-stack" style={{ marginBottom: '5px' }}>
                                             <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                <div className="pull-left mb5" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                                                     <div className="dataTables_length">
                                                         <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                             Records:
@@ -480,78 +527,77 @@ const Assessment = () => {
                                             </div>
                                         </div>
                                     </div>
-                                        <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                                            <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
-                                                <thead>
-                                                    <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
-                                                        {!hiddenColumns.includes(0) && <th style={{ width: '15%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment</th>}
-                                                        {!hiddenColumns.includes(1) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment Description</th>}
-                                                        {!hiddenColumns.includes(2) && <th style={{ width: '70%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment Type</th>}
-                                                        <th style={{ width: '5%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {currentItems.map(assessment => (
-                                                        <tr key={assessment.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
-                                                            {!hiddenColumns.includes(0) && (
-                                                                <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
-                                                                    <strong>{assessment.name}</strong>
-                                                                </td>
-                                                            )}
-                                                            {!hiddenColumns.includes(1) && (
-                                                                <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
-                                                                    {assessment.description}
-                                                                </td>
-                                                            )}
-                                                            {!hiddenColumns.includes(2) && (
-                                                                <td style={{ padding: '8px 0', borderTop: 'none' }}>
-                                                                    <table style={{ width: '100%', minWidth: '800px', marginBottom: '0', tableLayout: 'fixed' }}>
-                                                                        <thead>
-                                                                            <tr>
-                                                                                <th style={{ width: '12%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 8px' }}>Name</th>
-                                                                                <th style={{ width: '15%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Code</th>
-                                                                                <th style={{ width: '20%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px', whiteSpace: 'nowrap' }}>Maximum Marks</th>
-                                                                                <th style={{ width: '24%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px', whiteSpace: 'nowrap' }}>Passing Percentage</th>
-                                                                                <th style={{ width: '30%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Description</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            {assessment.data.map((item, idx) => (
-                                                                                <tr key={idx} className="hover-nested-row" style={{ borderTop: '1px solid #f4f4f4' }}>
-                                                                                    <td style={{ padding: '6px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{item.name}</td>
-                                                                                    <td style={{ padding: '6px 40px', borderTop: 'none' }}>{item.code}</td>
-                                                                                    <td style={{ padding: '6px 40px', borderTop: 'none' }}>{item.maximum_marks}</td>
-                                                                                    <td style={{ padding: '6px 40px', borderTop: 'none' }}>{item.pass_percentage}</td>
-                                                                                    <td style={{ padding: '6px 40px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{item.description}</td>
-                                                                                </tr>
-                                                                            ))}
-                                                                        </tbody>
-                                                                    </table>
-                                                                </td>
-                                                            )}
-                                                            <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
-                                                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                                                    <div onClick={() => handleEdit(assessment)} className="action-button-boxed" title="Edit">
-                                                                        <i className="fa fa-pencil" style={{ color: '#555', fontSize: '12px' }}></i>
-                                                                    </div>
-                                                                    <div onClick={() => handleDelete(assessment.id)} className="action-button-boxed" title="Delete">
-                                                                        <i className="fa fa-remove" style={{ color: '#000', fontSize: '13px', fontWeight: 'bold' }}></i>
-                                                                    </div>
-                                                                </div>
+                                    <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                                        <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
+                                            <thead>
+                                                <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
+                                                    {!hiddenColumns.includes(0) && <th style={{ width: '15%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment</th>}
+                                                    {!hiddenColumns.includes(1) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment Description</th>}
+                                                    {!hiddenColumns.includes(2) && <th style={{ width: '60%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment Type</th>}
+                                                    <th style={{ width: '15%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {currentItems.map(assessment => (
+                                                    <tr key={assessment.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
+                                                        {!hiddenColumns.includes(0) && (
+                                                            <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                                                                <strong>{assessment.name}</strong>
                                                             </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                            <Pagination 
-                                                totalItems={totalItems} 
-                                                itemsPerPage={recordsPerPage} 
-                                                currentPage={currentPage}
-                                                onPageChange={(page) => setCurrentPage(page)}
-                                            />
-                                        </div>
+                                                        )}
+                                                        {!hiddenColumns.includes(1) && (
+                                                            <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                                                                {assessment.description}
+                                                            </td>
+                                                        )}
+                                                        {!hiddenColumns.includes(2) && (
+                                                            <td style={{ padding: '8px 0', borderTop: 'none' }}>
+                                                                <table style={{ width: '95%', marginBottom: '0', tableLayout: 'fixed' }}>
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th style={{ width: '15%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 8px' }}>Name</th>
+                                                                            <th style={{ width: '15%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Code</th>
+                                                                            <th style={{ width: '30%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px', whiteSpace: 'nowrap' }}>Maximum Marks</th>
+                                                                            <th style={{ width: '35%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px', whiteSpace: 'nowrap' }}>Passing Percentage</th>
+                                                                            <th style={{ width: '30%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Description</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {assessment.data.map((item, idx) => (
+                                                                            <tr key={idx} className="hover-nested-row" style={{ borderTop: '1px solid #f4f4f4' }}>
+                                                                                <td style={{ padding: '6px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{item.name}</td>
+                                                                                <td style={{ padding: '6px 40px', borderTop: 'none' }}>{item.code}</td>
+                                                                                <td style={{ padding: '6px 40px', borderTop: 'none' }}>{item.maximum_marks}</td>
+                                                                                <td style={{ padding: '6px 40px', borderTop: 'none' }}>{item.pass_percentage}</td>
+                                                                                <td style={{ padding: '6px 40px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{item.description}</td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            </td>
+                                                        )}
+                                                        <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', whiteSpace: 'nowrap' }}>
+                                                                <div onClick={() => handleEdit(assessment)} className="action-button-boxed" title="Edit">
+                                                                    <i className="fa fa-pencil" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div onClick={() => handleDelete(assessment.id)} className="action-button-boxed" title="Delete">
+                                                                    <i className="fa fa-remove" style={{ color: '#000', fontSize: '13px', fontWeight: 'bold' }}></i>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination
+                                            totalItems={totalItems}
+                                            itemsPerPage={recordsPerPage}
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div>
                             </div>

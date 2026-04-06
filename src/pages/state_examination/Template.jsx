@@ -668,43 +668,86 @@ const Template = () => {
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Template List</h3>
                                     <div className="box-tools pull-right">
-                                        <button type="button" className="btn btn-sm btn-primary" onClick={() => { resetForm(); setIsEditing(false); setShowAddModal(true); }} data-record_id="0" data-original-title="Add Assessment" title="" autoComplete="off">
-                                            <i className="fa fa-plus"></i> Add
-                                        </button>
-                                        <div className="btn-group pull-right mml15">
-                                            <button onClick={() => window.history.back()} className="btn btn-primary btn-sm"> <i className="fa fa-arrow-left"></i> Back</button>
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <button 
+                                                type="button" 
+                                                className="btn btn-sm btn-primary" 
+                                                onClick={() => { resetForm(); setIsEditing(false); setShowAddModal(true); }} 
+                                                style={{ borderRadius: '20px', padding: '5px 12px' }}
+                                            >
+                                                <i className="fa fa-plus"></i> Add
+                                            </button>
+                                            <button 
+                                                onClick={() => window.history.back()} 
+                                                className="btn btn-primary btn-sm"
+                                                style={{ borderRadius: '20px', padding: '5px 12px' }}
+                                            >
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="sss"></div>
-                                    <div className="download_label">Template List</div>
                                     <style>
                                         {`
+                                            .action-button-boxed {
+                                                display: flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                                width: 24px;
+                                                height: 24px;
+                                                background: #fff;
+                                                border: none;
+                                                cursor: pointer;
+                                                transition: all 0.2s;
+                                            }
+                                            .action-button-boxed:hover {
+                                                background: #f1f1f1;
+                                            }
+                                            .hover-main-entry:hover {
+                                                background-color: #fcfcfc !important;
+                                            }
                                             @media (max-width: 767px) {
+                                                .mailbox-messages {
+                                                    border: 1px solid #ddd;
+                                                    border-radius: 4px;
+                                                    margin-top: 10px;
+                                                }
                                                 .mobile-stack {
                                                     display: flex;
                                                     flex-direction: column;
-                                                    align-items: center;
-                                                    gap: 15px;
+                                                    align-items: center !important;
+                                                    gap: 15px !important;
+                                                    text-align: center !important;
+                                                    width: 100% !important;
+                                                    margin: 0 auto !important;
                                                 }
                                                 .mobile-stack > div {
                                                     width: 100% !important;
+                                                    display: flex !important;
+                                                    justify-content: center !important;
                                                     text-align: center !important;
+                                                    margin-bottom: 5px;
                                                 }
-                                                .mobile-stack .pull-right, .mobile-stack .pull-left {
+                                                .mobile-stack .pull-left,
+                                                .mobile-stack .pull-right {
                                                     float: none !important;
+                                                    display: flex !important;
+                                                    justify-content: center !important;
+                                                    align-items: center !important;
+                                                    margin: 0 auto !important;
+                                                    width: 100% !important;
                                                 }
-                                                .mobile-stack .dt-buttons {
-                                                    justify-content: center;
+                                                .DTED_Action_Buttons {
+                                                    justify-content: center !important;
                                                 }
                                             }
                                         `}
                                     </style>
                                     <div style={{ padding: '10px 0' }}>
-                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                        <div className="row mobile-stack" style={{ marginBottom: '5px' }}>
                                             <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                <div className="pull-left mb5" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                                                     <div className="dataTables_length">
                                                         <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                             Records:
@@ -747,7 +790,7 @@ const Template = () => {
                                                     <div className="btn-group">
                                                         <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
                                                         {showColumnsDropdown && (
-                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '170px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                                 <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
                                                                     <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Template
                                                                 </label>
@@ -764,41 +807,48 @@ const Template = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="table-responsive mailbox-messages overflow-visible-lg">
-                                        <table className="table table-striped table-bordered table-hover example">
+                                    <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                                        <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                             <thead>
-                                                <tr>
-                                                    {!hiddenColumns.includes(0) && <th>Template</th>}
-                                                    {!hiddenColumns.includes(1) && <th>Class (Sections)</th>}
-                                                    {!hiddenColumns.includes(2) && <th width="60%">Template Description</th>}
-                                                    <th className="text-right noExport">Action</th>
+                                                <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
+                                                    {!hiddenColumns.includes(0) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Template</th>}
+                                                    {!hiddenColumns.includes(1) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Class (Sections)</th>}
+                                                    {!hiddenColumns.includes(2) && <th style={{ width: '42%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Template Description</th>}
+                                                    <th style={{ width: '18%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map(template => (
-                                                    <tr key={template.id}>
-                                                        {!hiddenColumns.includes(0) && <td>{template.name}</td>}
-                                                        {!hiddenColumns.includes(1) && <td>{template.class_sections}</td>}
-                                                        {!hiddenColumns.includes(2) && <td>{template.description}</td>}
-                                                        <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                                                            <button type="button" className="btn btn-default btn-xs view_template" id="load" data-toggle="tooltip" data-recordid={template.id} data-temp_name={template.name} title="View" data-loading-text="<i class='fa fa-spinner fa-spin'></i>" onClick={() => handleView(template.id)}>
-                                                                <i className="fa fa-reorder"></i>
-                                                            </button>
-                                                            <button type="button" className="btn btn-default btn-xs linkexam" id="load" data-toggle="tooltip" data-recordid={template.id} data-is_weightage="0" data-marksheet_type="" title="Link Exam" data-loading-text="<i class='fa fa-spinner fa-spin'></i>" onClick={() => handleOpenLinkExam(template.id, template.marksheet_type)}>
-                                                                <i className="fa fa-newspaper-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(template.id)}>
-                                                                <i className="fa fa-pencil"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs" data-toggle="tooltip" title="Generate Rank" onClick={() => navigate(`/cbseexam/template/templatewiserank/${template.id}`)}>
-                                                                <i className="fa fa-list-alt"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-xs deletetemplate" data-id={template.id} data-toggle="tooltip" title="Delete" onClick={() => handleDelete(template.id)}>
-                                                                <i className="fa fa-remove"></i>
-                                                            </button>
+                                                    <tr key={template.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
+                                                        {!hiddenColumns.includes(0) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}><strong>{template.name}</strong></td>}
+                                                        {!hiddenColumns.includes(1) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{template.class_sections}</td>}
+                                                        {!hiddenColumns.includes(2) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{template.description}</td>}
+                                                        <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
+                                                            <div className="DTED_Action_Buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', whiteSpace: 'nowrap' }}>
+                                                                <div onClick={() => handleView(template.id)} className="action-button-boxed" title="View">
+                                                                    <i className="fa fa-reorder" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div onClick={() => handleOpenLinkExam(template.id, template.marksheet_type)} className="action-button-boxed" title="Link Exam">
+                                                                    <i className="fa fa-newspaper-o" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div onClick={() => handleEdit(template.id)} className="action-button-boxed" title="Edit">
+                                                                    <i className="fa fa-pencil" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div onClick={() => navigate(`/cbseexam/template/templatewiserank/${template.id}`)} className="action-button-boxed" title="Generate Rank">
+                                                                    <i className="fa fa-list-alt" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div onClick={() => handleDelete(template.id)} className="action-button-boxed" title="Delete">
+                                                                    <i className="fa fa-remove" style={{ color: '#000', fontSize: '13px', fontWeight: 'bold' }}></i>
+                                                                </div>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
+                                                {currentItems.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan="4" className="text-center" style={{ padding: '20px' }}>No data found</td>
+                                                    </tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>

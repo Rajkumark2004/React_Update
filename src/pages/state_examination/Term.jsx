@@ -188,48 +188,98 @@ const Term = () => {
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Term List</h3>
                                     <div className="box-tools pull-right">
-                                        <button
-                                            type="button"
-                                            className="btn btn-sm btn-primary"
-                                            onClick={() => { resetForm(); setShowModal(true); }}
-                                        >
-                                            <i className="fa fa-plus"></i> Add
-                                        </button>
-                                        <div className="btn-group pull-right mml15">
-                                            <button onClick={() => window.history.back()} className="btn btn-primary btn-sm">
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() => { resetForm(); setShowModal(true); }}
+                                                style={{ borderRadius: '20px', padding: '5px 12px' }}
+                                            >
+                                                <i className="fa fa-plus"></i> Add
+                                            </button>
+                                            <button 
+                                                onClick={() => window.history.back()} 
+                                                className="btn btn-primary btn-sm"
+                                                style={{ borderRadius: '20px', padding: '5px 12px' }}
+                                            >
                                                 <i className="fa fa-arrow-left"></i> Back
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-messages">
                                         <style>
                                             {`
+                                                .action-button-boxed {
+                                                    display: flex;
+                                                    align-items: center;
+                                                    justify-content: center;
+                                                    width: 24px;
+                                                    height: 24px;
+                                                    background: #fff;
+                                                    border: none;
+                                                    cursor: pointer;
+                                                    transition: all 0.2s;
+                                                }
+                                                .action-button-boxed:hover {
+                                                    background: #f1f1f1;
+                                                }
+                                                .hover-main-entry:hover {
+                                                    background-color: #fcfcfc !important;
+                                                }
                                                 @media (max-width: 767px) {
+                                                    .mailbox-messages {
+                                                        border: 1px solid #ddd;
+                                                        border-radius: 4px;
+                                                        margin-top: 10px;
+                                                    }
                                                     .mobile-stack {
                                                         display: flex;
                                                         flex-direction: column;
-                                                        align-items: center;
-                                                        gap: 15px;
+                                                        align-items: center !important;
+                                                        gap: 15px !important;
+                                                        text-align: center !important;
+                                                        width: 100% !important;
+                                                        margin: 0 auto !important;
                                                     }
                                                     .mobile-stack > div {
                                                         width: 100% !important;
+                                                        display: flex !important;
+                                                        justify-content: center !important;
                                                         text-align: center !important;
+                                                        margin-bottom: 5px;
                                                     }
-                                                    .mobile-stack .pull-right, .mobile-stack .pull-left {
+                                                    .mobile-stack .pull-left,
+                                                    .mobile-stack .pull-right {
                                                         float: none !important;
+                                                        display: flex !important;
+                                                        justify-content: center !important;
+                                                        align-items: center !important;
+                                                        margin: 0 auto !important;
+                                                        width: 100% !important;
                                                     }
-                                                    .mobile-stack .dt-buttons {
-                                                        justify-content: center;
+                                                    .mobile-table-header {
+                                                        display: none;
+                                                    }
+                                                    .mailbox-messages table.table th {
+                                                        background-color: #f9f9f9 !important;
+                                                        border-bottom: 1px solid #eee !important;
+                                                    }
+                                                    .mailbox-messages table.table td {
+                                                        border-left: none !important;
+                                                        border-right: none !important;
+                                                        border-bottom: 1px solid #eee !important;
+                                                    }
+                                                    .mailbox-messages table.table tr:last-child td {
+                                                        border-bottom: none !important;
                                                     }
                                                 }
                                             `}
                                         </style>
                                         <div style={{ padding: '10px 0' }}>
-                                            <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
+                                            <div className="row mobile-stack" style={{ marginBottom: '5px' }}>
                                                 <div className="col-md-6 col-sm-12">
-                                                    <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                    <div className="pull-left mb5" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                                                         <div className="dataTables_length">
                                                             <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                                 Records:
@@ -264,25 +314,13 @@ const Term = () => {
                                                 </div>
                                                 <div className="col-md-6 col-sm-12">
                                                     <div className="pull-right dt-buttons btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
-                                                            <i className="fa fa-files-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Term_List.xls'); }}>
-                                                            <i className="fa fa-file-excel-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Term_List.csv'); }}>
-                                                            <i className="fa fa-file-text-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Term_List.pdf', 'Term List'); }}>
-                                                            <i className="fa fa-file-pdf-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Term List'); }}>
-                                                            <i className="fa fa-print"></i>
-                                                        </button>
+                                                        <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                        <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Term_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                        <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Term_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                        <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Term_List.pdf', 'Term List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                        <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Term List'); }}><i className="fa fa-print"></i></button>
                                                         <div className="btn-group">
-                                                            <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                                <i className="fa fa-columns"></i>
-                                                            </button>
+                                                            <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
                                                             {showColumnsDropdown && (
                                                                 <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
                                                                     <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
@@ -301,43 +339,37 @@ const Term = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="table-responsive overflow-visible-lg">
-                                            <table className="table table-striped table-bordered table-hover term-list">
+                                        <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                                            <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                                 <thead>
-                                                    <tr>
-                                                        {!hiddenColumns.includes(0) && <th>Name</th>}
-                                                        {!hiddenColumns.includes(1) && <th>Code</th>}
-                                                        {!hiddenColumns.includes(2) && <th>Description</th>}
-                                                        <th className="text-right noExport">Action</th>
+                                                    <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
+                                                        {!hiddenColumns.includes(0) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Name</th>}
+                                                        {!hiddenColumns.includes(1) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Code</th>}
+                                                        {!hiddenColumns.includes(2) && <th style={{ width: '50%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Description</th>}
+                                                        <th style={{ width: '10%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {currentItems.map(term => (
-                                                        <tr key={term.id}>
-                                                            {!hiddenColumns.includes(0) && <td className="mailbox-name">{term.name}</td>}
-                                                            {!hiddenColumns.includes(1) && <td className="mailbox-name">{term.term_code}</td>}
-                                                            {!hiddenColumns.includes(2) && <td className="mailbox-name">{term.description}</td>}
-                                                            <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                                                                <button
-                                                                    className="btn btn-default btn-xs"
-                                                                    title="Edit"
-                                                                    onClick={() => handleEdit(term)}
-                                                                >
-                                                                    <i className="fa fa-pencil"></i>
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-default btn-xs"
-                                                                    title="Delete"
-                                                                    onClick={() => handleDelete(term.id)}
-                                                                >
-                                                                    <i className="fa fa-trash"></i>
-                                                                </button>
+                                                        <tr key={term.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
+                                                            {!hiddenColumns.includes(0) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}><strong>{term.name}</strong></td>}
+                                                            {!hiddenColumns.includes(1) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{term.term_code}</td>}
+                                                            {!hiddenColumns.includes(2) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{term.description}</td>}
+                                                            <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', whiteSpace: 'nowrap' }}>
+                                                                    <div onClick={() => handleEdit(term)} className="action-button-boxed" title="Edit">
+                                                                        <i className="fa fa-pencil" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                    </div>
+                                                                    <div onClick={() => handleDelete(term.id)} className="action-button-boxed" title="Delete">
+                                                                        <i className="fa fa-remove" style={{ color: '#000', fontSize: '13px', fontWeight: 'bold' }}></i>
+                                                                    </div>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     ))}
                                                     {currentItems.length === 0 && (
                                                         <tr>
-                                                            <td colSpan="4" className="text-center">No data found</td>
+                                                            <td colSpan="4" className="text-center" style={{ padding: '20px' }}>No data found</td>
                                                         </tr>
                                                     )}
                                                 </tbody>
@@ -355,9 +387,8 @@ const Term = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
-            </div>
+                    </section>
+                </div>
 
             {showModal && (
                 <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>

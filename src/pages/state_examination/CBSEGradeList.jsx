@@ -402,19 +402,22 @@ const CBSEGradeList = () => {
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Exam Grade List</h3>
-                                    <div className="box-tools pull-right">
+                                    <div className="box-tools pull-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                         <button
                                             type="button"
                                             className="btn btn-sm btn-primary"
                                             onClick={handleAddOpen}
+                                            style={{ borderRadius: '20px', padding: '5px 12px' }}
                                         >
                                             <i className="fa fa-plus"></i> Add
                                         </button>
-                                        <div className="btn-group pull-right mml15">
-                                            <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm">
-                                                <i className="fa fa-arrow-left"></i> Back
-                                            </button>
-                                        </div>
+                                        <button
+                                            onClick={() => navigate(-1)}
+                                            className="btn btn-primary btn-sm"
+                                            style={{ borderRadius: '20px', padding: '5px 12px' }}
+                                        >
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="box-body" style={{ fontSize: '13px' }}>
@@ -422,11 +425,15 @@ const CBSEGradeList = () => {
                                     <style>
                                         {`
                                             @media (max-width: 767px) {
+                                                .ml5 { margin-left: 0px !important; margin-top: 5px !important; }
                                                 .mobile-stack {
-                                                    display: flex;
-                                                    flex-direction: column;
-                                                    align-items: center;
-                                                    gap: 15px;
+                                                    display: flex !important;
+                                                    flex-direction: column !important;
+                                                    align-items: center !important;
+                                                    gap: 2px !important;
+                                                }
+                                                .mobile-stack .pull-left {
+                                                    margin-bottom: 5px !important;
                                                 }
                                                 .mobile-stack > div {
                                                     width: 100% !important;
@@ -434,9 +441,29 @@ const CBSEGradeList = () => {
                                                 }
                                                 .mobile-stack .pull-right, .mobile-stack .pull-left {
                                                     float: none !important;
+                                                    justify-content: center !important;
                                                 }
                                                 .mobile-stack .dt-buttons {
-                                                    justify-content: center;
+                                                    justify-content: center !important;
+                                                }
+                                                .mailbox-messages {
+                                                    border: 1px solid #ddd !important;
+                                                    border-radius: 4px !important;
+                                                }
+                                                .mailbox-messages table.table {
+                                                    border: none !important;
+                                                }
+                                                .mailbox-messages table.table th, 
+                                                .mailbox-messages table.table td,
+                                                .mailbox-messages table.table table th,
+                                                .mailbox-messages table.table table td {
+                                                    border-left: none !important;
+                                                    border-right: none !important;
+                                                    border-bottom: 1px solid #eee !important;
+                                                }
+                                                .mailbox-messages table.table tr:last-child td,
+                                                .mailbox-messages table.table table tr:last-child td {
+                                                    border-bottom: none !important;
                                                 }
                                             }
                                         `}
@@ -444,7 +471,7 @@ const CBSEGradeList = () => {
                                     <div style={{ padding: '10px 0' }}>
                                         <div className="row mobile-stack">
                                             <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left mb10" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                <div className="pull-left mb5" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                                                     <div className="dataTables_length">
                                                         <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                             Records:
@@ -552,7 +579,7 @@ const CBSEGradeList = () => {
                                                             </table>
                                                         </td>
                                                         <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
-                                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', whiteSpace: 'nowrap' }}>
                                                                 <div onClick={() => handleEditOpen(grade)} className="action-button-boxed" title="Edit">
                                                                     <i className="fa fa-pencil" style={{ color: '#555', fontSize: '12px' }}></i>
                                                                 </div>

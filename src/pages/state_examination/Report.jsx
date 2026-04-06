@@ -277,31 +277,52 @@ const Report = () => {
                     </div>
                     {results && results.students && (
                         <div className="box-body">
-                            <div className="btn-group pb10">
-                                <button className="btn btn-default btn-xs" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
-                                <button className="btn btn-default btn-xs" title="Download Excel"><i className="fa fa-file-excel-o"></i></button>
+                            <style>
+                                {`
+                                    @media (max-width: 767px) {
+                                        .report-toolbar-stack {
+                                            display: flex;
+                                            justify-content: flex-end !important;
+                                            width: 100%;
+                                            margin-bottom: 10px;
+                                        }
+                                        .report-table-responsive {
+                                            border: 1px solid #ddd;
+                                            border-radius: 4px;
+                                        }
+                                    }
+                                    .hover-report-row:hover {
+                                        background-color: #fcfcfc !important;
+                                    }
+                                `}
+                            </style>
+                            <div className="report-toolbar-stack" style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                                <div className="btn-group">
+                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
+                                    <button className="btn btn-default btn-sm" title="Download Excel"><i className="fa fa-file-excel-o"></i></button>
+                                </div>
                             </div>
-                            <div className="table-responsive">
-                                <table className="table table-bordered table-b vertical-middle">
+                            <div className="table-responsive report-table-responsive">
+                                <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px' }}>
                                     <thead>
-                                        <tr>
-                                            <th rowSpan="2" className="white-space-nowrap">Student</th>
-                                            <th rowSpan="2" className="white-space-nowrap">Admission No</th>
-                                            <th rowSpan="2" className="white-space-nowrap">Father Name</th>
+                                        <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
+                                            <th rowSpan="2" style={{ padding: '12px 8px', fontWeight: '600', color: '#000', whiteSpace: 'nowrap' }}>Student</th>
+                                            <th rowSpan="2" style={{ padding: '12px 8px', fontWeight: '600', color: '#000', whiteSpace: 'nowrap' }}>Admission No</th>
+                                            <th rowSpan="2" style={{ padding: '12px 8px', fontWeight: '600', color: '#000', whiteSpace: 'nowrap' }}>Father Name</th>
                                             {results.subjects.map(s => (
-                                                <th key={s.subject_id} colSpan={results.exam_assessments.length} className="text-center">
+                                                <th key={s.subject_id} colSpan={results.exam_assessments.length} className="text-center" style={{ padding: '12px 8px', fontWeight: '600', color: '#000' }}>
                                                     {s.subject_name} {s.subject_code ? `(${s.subject_code})` : ''}
                                                 </th>
                                             ))}
-                                            <th rowSpan="2" className="text-center">Total Marks</th>
-                                            <th rowSpan="2" className="text-center">Percentage (%)</th>
-                                            <th rowSpan="2" className="text-center">Grade</th>
-                                            <th rowSpan="2" className="text-center">Rank</th>
+                                            <th rowSpan="2" className="text-center" style={{ padding: '12px 8px', fontWeight: '600', color: '#000' }}>Total Marks</th>
+                                            <th rowSpan="2" className="text-center" style={{ padding: '12px 8px', fontWeight: '600', color: '#000' }}>Percentage (%)</th>
+                                            <th rowSpan="2" className="text-center" style={{ padding: '12px 8px', fontWeight: '600', color: '#000' }}>Grade</th>
+                                            <th rowSpan="2" className="text-center" style={{ padding: '12px 8px', fontWeight: '600', color: '#000' }}>Rank</th>
                                         </tr>
-                                        <tr>
+                                        <tr style={{ borderBottom: '1px solid #ddd' }}>
                                             {results.subjects.map(s =>
                                                 results.exam_assessments.map(a => (
-                                                    <th key={`${s.subject_id}_${a.id}`} className="text-center">
+                                                    <th key={`${s.subject_id}_${a.id}`} className="text-center" style={{ padding: '8px', fontSize: '11px', color: '#555' }}>
                                                         {a.name} ({a.code})<br />(Max - {a.maximum_marks})
                                                     </th>
                                                 ))
@@ -310,22 +331,22 @@ const Report = () => {
                                     </thead>
                                     <tbody>
                                         {results.students.map(st => (
-                                            <tr key={st.student_id}>
-                                                <td>{st.firstname} {st.middlename || ''} {st.lastname}</td>
-                                                <td>{st.admission_no}</td>
-                                                <td>{st.father_name}</td>
+                                            <tr key={st.student_id} className="hover-report-row" style={{ borderBottom: '1px solid #f4f4f4' }}>
+                                                <td style={{ padding: '12px 8px', verticalAlign: 'top' }}><strong>{st.firstname} {st.middlename || ''} {st.lastname}</strong></td>
+                                                <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>{st.admission_no}</td>
+                                                <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>{st.father_name}</td>
                                                 {results.subjects.map(s => results.exam_assessments.map(a => {
                                                     const markObj = st.subjects?.[s.subject_id]?.exam_assessments?.[a.id];
                                                     return (
-                                                        <td key={`${st.student_id}_${s.subject_id}_${a.id}`} className="text-center">
+                                                        <td key={`${st.student_id}_${s.subject_id}_${a.id}`} className="text-center" style={{ padding: '12px 8px', verticalAlign: 'top' }}>
                                                             {markObj ? (markObj.is_absent === '1' ? 'Absent' : markObj.marks) : '-'}
                                                         </td>
                                                     );
                                                 }))}
-                                                <td className="text-center">{st.total_marks || '0/0'}</td>
-                                                <td className="text-center">{st.percentage || '0.00'}</td>
-                                                <td className="text-center">{st.grade || '-'}</td>
-                                                <td className="text-center">{st.rank || '-'}</td>
+                                                <td className="text-center" style={{ padding: '12px 8px', verticalAlign: 'top' }}>{st.total_marks || '0/0'}</td>
+                                                <td className="text-center" style={{ padding: '12px 8px', verticalAlign: 'top' }}>{st.percentage || '0.00'}</td>
+                                                <td className="text-center" style={{ padding: '12px 8px', verticalAlign: 'top' }}>{st.grade || '-'}</td>
+                                                <td className="text-center" style={{ padding: '12px 8px', verticalAlign: 'top' }}>{st.rank || '-'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -385,6 +406,12 @@ const Report = () => {
                     </div>
                     {resultHtml && (
                         <div className="box-body">
+                            <div className="report-toolbar-stack" style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                                <div className="btn-group">
+                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
+                                    <button className="btn btn-default btn-sm" title="Download Excel"><i className="fa fa-file-excel-o"></i></button>
+                                </div>
+                            </div>
                             <div dangerouslySetInnerHTML={{ __html: resultHtml }} />
                         </div>
                     )}
@@ -419,28 +446,34 @@ const Report = () => {
 
         return (
             <div className="box-body">
-                <div className="table-responsive">
-                    <table className="table table-bordered table-b vertical-middle">
+                <div className="report-toolbar-stack" style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                    <div className="btn-group">
+                        <button className="btn btn-default btn-sm" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
+                        <button className="btn btn-default btn-sm" title="Download Excel"><i className="fa fa-file-excel-o"></i></button>
+                    </div>
+                </div>
+                <div className="table-responsive report-table-responsive">
+                    <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px' }}>
                         <thead>
-                            <tr>
-                                <th rowSpan="3">Student</th>
-                                <th rowSpan="3">Admission No</th>
+                            <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
+                                <th rowSpan="3" style={{ padding: '12px 8px', fontWeight: '600', color: '#000' }}>Student</th>
+                                <th rowSpan="3" style={{ padding: '12px 8px', fontWeight: '600', color: '#000' }}>Admission No</th>
                                 {subjectHeaders.map(sub => (
-                                    <th key={sub.id} colSpan={sub.exams.reduce((acc, ex) => acc + ex.assessments.length, 0)} className="text-center">
+                                    <th key={sub.id} colSpan={sub.exams.reduce((acc, ex) => acc + ex.assessments.length, 0)} className="text-center" style={{ padding: '12px 8px', fontWeight: '600', color: '#000' }}>
                                         {sub.name}
                                     </th>
                                 ))}
                             </tr>
-                            <tr>
+                            <tr style={{ borderBottom: '1px solid #ddd' }}>
                                 {subjectHeaders.map(sub => sub.exams.map((ex, idx) => (
-                                    <th key={`${sub.id}_${ex.exam_id}`} colSpan={ex.assessments.length} className="text-center">
+                                    <th key={`${sub.id}_${ex.exam_id}`} colSpan={ex.assessments.length} className="text-center" style={{ padding: '8px', fontSize: '11px', color: '#555' }}>
                                         {ex.exam_name} ({ex.term_name})
                                     </th>
                                 )))}
                             </tr>
-                            <tr>
+                            <tr style={{ borderBottom: '1px solid #ddd' }}>
                                 {subjectHeaders.map(sub => sub.exams.map(ex => ex.assessments.map(as => (
-                                    <th key={`${sub.id}_${ex.exam_id}_${as.assessment_type_id}`} className="text-center">
+                                    <th key={`${sub.id}_${ex.exam_id}_${as.assessment_type_id}`} className="text-center" style={{ padding: '8px', fontSize: '10px', color: '#777' }}>
                                         {as.assessment_type_name}<br />(Max: {as.maximum_marks})
                                     </th>
                                 ))))}
@@ -448,13 +481,13 @@ const Report = () => {
                         </thead>
                         <tbody>
                             {students.map(st => (
-                                <tr key={st.student_id}>
-                                    <td>{st.firstname} {st.lastname}</td>
-                                    <td>{st.admission_no}</td>
+                                <tr key={st.student_id} className="hover-report-row" style={{ borderBottom: '1px solid #f4f4f4' }}>
+                                    <td style={{ padding: '12px 8px', verticalAlign: 'top' }}><strong>{st.firstname} {st.lastname}</strong></td>
+                                    <td style={{ padding: '12px 8px', verticalAlign: 'top' }}>{st.admission_no}</td>
                                     {subjectHeaders.map(sub => sub.exams.map(ex => ex.assessments.map(as => {
                                         const markData = st.exams?.[ex.exam_id]?.subjects?.[sub.id]?.assessments?.[as.assessment_type_id];
                                         return (
-                                            <td key={`${st.student_id}_${sub.id}_${ex.exam_id}_${as.assessment_type_id}`} className="text-center">
+                                            <td key={`${st.student_id}_${sub.id}_${ex.exam_id}_${as.assessment_type_id}`} className="text-center" style={{ padding: '12px 8px', verticalAlign: 'top' }}>
                                                 {markData ? (markData.is_absent === '1' ? 'A' : (markData.marks || '-')) : '-'}
                                             </td>
                                         );

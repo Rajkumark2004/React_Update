@@ -806,97 +806,68 @@ const CBSEExamList = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="table-responsive mailbox-messages">
-                                        <table className="table table-striped table-bordered table-hover example">
+                                    <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                                        <table className="table no-margin" style={{ width: '100%', minWidth: '1200px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                             <thead>
-                                                <tr>
-                                                    {!hiddenColumns.includes(0) && <th style={{ paddingRight: '5px' }}>Exam Name</th>}
-                                                    {!hiddenColumns.includes(1) && <th style={{ paddingLeft: '5px' }}>Class (Sections)</th>}
-                                                    {!hiddenColumns.includes(2) && <th>Term</th>}
-                                                    {!hiddenColumns.includes(3) && <th>Subjects Included</th>}
-                                                    {!hiddenColumns.includes(4) && <th>Exam Published</th>}
-                                                    {!hiddenColumns.includes(5) && <th>Published Result</th>}
-                                                    {!hiddenColumns.includes(6) && <th width="30%">Description</th>}
-                                                    {!hiddenColumns.includes(7) && <th style={{ whiteSpace: 'nowrap' }}>Created At</th>}
-                                                    <th className="text-right noExport">Action</th>
+                                                <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
+                                                    {!hiddenColumns.includes(0) && <th style={{ width: '10%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Exam Name</th>}
+                                                    {!hiddenColumns.includes(1) && <th style={{ width: '10%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Class (Sections)</th>}
+                                                    {!hiddenColumns.includes(2) && <th style={{ width: '8%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Term</th>}
+                                                    {!hiddenColumns.includes(3) && <th style={{ width: '10%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Subjects Included</th>}
+                                                    {!hiddenColumns.includes(4) && <th style={{ width: '8%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Exam Published</th>}
+                                                    {!hiddenColumns.includes(5) && <th style={{ width: '8%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Published Result</th>}
+                                                    {!hiddenColumns.includes(6) && <th style={{ width: '10%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Description</th>}
+                                                    {!hiddenColumns.includes(7) && <th style={{ width: '8%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Created At</th>}
+                                                    <th style={{ width: '28%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map((exam) => (
-                                                    <tr key={exam.id}>
-                                                        {!hiddenColumns.includes(0) && <td>{exam.name}</td>}
-                                                        {!hiddenColumns.includes(1) && <td style={{ paddingLeft: '5px' }}>{exam.class_sections}</td>}
-                                                        {!hiddenColumns.includes(2) && <td>{exam.term_name}</td>}
-                                                        {!hiddenColumns.includes(3) && <td>{exam.subjectsincluded}</td>}
+                                                    <tr key={exam.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
+                                                        {!hiddenColumns.includes(0) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}><strong>{exam.name}</strong></td>}
+                                                        {!hiddenColumns.includes(1) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{exam.class_sections}</td>}
+                                                        {!hiddenColumns.includes(2) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{exam.term_name}</td>}
+                                                        {!hiddenColumns.includes(3) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{exam.subjectsincluded}</td>}
                                                         {!hiddenColumns.includes(4) && (
-                                                            <td>
+                                                            <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none' }}>
                                                                 {Number(exam.is_publish) === 1 ? (
-                                                                    <i className="fa fa-check-square-o"></i>
+                                                                    <i className="fa fa-check-square-o text-success"></i>
                                                                 ) : (
-                                                                    <i className="fa fa-exclamation-circle"></i>
+                                                                    <i className="fa fa-exclamation-circle text-danger"></i>
                                                                 )}
                                                             </td>
                                                         )}
                                                         {!hiddenColumns.includes(5) && (
-                                                            <td>
+                                                            <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none' }}>
                                                                 {Number(exam.is_active) === 1 ? (
-                                                                    <i className="fa fa-check-square-o"></i>
+                                                                    <i className="fa fa-check-square-o text-success"></i>
                                                                 ) : (
-                                                                    <i className="fa fa-exclamation-circle"></i>
+                                                                    <i className="fa fa-exclamation-circle text-danger"></i>
                                                                 )}
                                                             </td>
                                                         )}
-                                                        {!hiddenColumns.includes(6) && <td>{exam.description}</td>}
-                                                        {!hiddenColumns.includes(7) && <td>{exam.created_at ? exam.created_at.split(' ')[0].split('-').reverse().join('/') : ''}</td>}
-                                                        <td className="text-right white-space-nowrap">
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Assign/View Student"
-                                                                onClick={() => openActionModal(exam, "Assign/View Student", "assign")}
-                                                            ><i className="fa fa-tag"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Exam Subjects"
-                                                                onClick={() => openActionModal(exam, "Exam Subjects", "subjects")}
-                                                            ><i className="fa fa-book"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Exam Marks"
-                                                                onClick={() => openActionModal(exam, "Exam Marks", "marks")}
-                                                            ><i className="fa fa-newspaper-o"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Exam Attendance"
-                                                                onClick={() => openActionModal(exam, "Exam Attendance", "attendance")}
-                                                            ><i className="fa fa-calendar-check-o"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Teacher Remark"
-                                                                onClick={() => openActionModal(exam, "Teacher Remark", "remarks")}
-                                                            ><i className="fa fa-comment"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Edit"
-                                                                onClick={() => handleEdit(exam)}
-                                                            ><i className="fa fa-pencil"></i></button>
-                                                            <Link
-                                                                to={`/cbseexam/exam/examwiserank/${exam.id}`}
-                                                                className="btn btn-default btn-xs"
-                                                                title="Generate Rank"
-                                                            ><i className="fa fa-list-alt"></i></Link>
-                                                            <Link
-                                                                to={`/cbseexam/exam/examwiseadmitcard/${exam.id}`}
-                                                                className="btn btn-default btn-xs"
-                                                                title="Print Hall Ticket"
-                                                            ><i className="fa fa-ticket"></i></Link>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Delete"
-                                                                onClick={() => handleDelete(exam)}
-                                                            ><i className="fa fa-remove"></i></button>
+                                                        {!hiddenColumns.includes(6) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{exam.description}</td>}
+                                                        {!hiddenColumns.includes(7) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{exam.created_at ? exam.created_at.split(' ')[0].split('-').reverse().join('/') : ''}</td>}
+                                                        <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
+                                                            <div className="Action_Buttons_Forced" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', whiteSpace: 'nowrap' }}>
+                                                                <div onClick={() => openActionModal(exam, "Assign/View Student", "assign")} className="action-button-boxed" title="Assign/View Student"><i className="fa fa-tag" style={{ color: '#555', fontSize: '12px' }}></i></div>
+                                                                <div onClick={() => openActionModal(exam, "Exam Subjects", "subjects")} className="action-button-boxed" title="Exam Subjects"><i className="fa fa-book" style={{ color: '#555', fontSize: '12px' }}></i></div>
+                                                                <div onClick={() => openActionModal(exam, "Exam Marks", "marks")} className="action-button-boxed" title="Exam Marks"><i className="fa fa-newspaper-o" style={{ color: '#555', fontSize: '12px' }}></i></div>
+                                                                <div onClick={() => openActionModal(exam, "Exam Attendance", "attendance")} className="action-button-boxed" title="Exam Attendance"><i className="fa fa-calendar-check-o" style={{ color: '#555', fontSize: '12px' }}></i></div>
+                                                                <div onClick={() => openActionModal(exam, "Teacher Remark", "remarks")} className="action-button-boxed" title="Teacher Remark"><i className="fa fa-comment" style={{ color: '#555', fontSize: '12px' }}></i></div>
+                                                                <div onClick={() => handleEdit(exam)} className="action-button-boxed" title="Edit"><i className="fa fa-pencil" style={{ color: '#555', fontSize: '12px' }}></i></div>
+                                                                <Link to={`/cbseexam/exam/examwiserank/${exam.id}`} className="action-button-boxed" title="Generate Rank"><i className="fa fa-list-alt" style={{ color: '#555', fontSize: '12px' }}></i></Link>
+                                                                <Link to={`/cbseexam/exam/examwiseadmitcard/${exam.id}`} className="action-button-boxed" title="Print Hall Ticket"><i className="fa fa-ticket" style={{ color: '#555', fontSize: '12px' }}></i></Link>
+                                                                <div onClick={() => handleDelete(exam)} className="action-button-boxed" title="Delete"><i className="fa fa-remove" style={{ color: '#000', fontSize: '13px', fontWeight: 'bold' }}></i></div>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
+                                                {currentItems.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan="9" className="text-center" style={{ padding: '20px' }}>No data found</td>
+                                                    </tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
