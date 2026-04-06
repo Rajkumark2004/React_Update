@@ -570,6 +570,11 @@ const StudentView = () => {
 
   return (
     <div className="wrapper theme-white-skin">
+      <style>{`
+        .timeline:before {
+          background-color: #0073b7 !important;
+        }
+      `}</style>
       <Header />
       <Sidebar />
       <div className="content-wrapper" style={{ minHeight: "828px" }}>
@@ -790,7 +795,7 @@ const StudentView = () => {
 
             {/* Right Content - Tabs */}
             <div className="col-lg-9 col-md-9 col-sm-12">
-              <div className="nav-tabs-custom theme-shadow">
+              <div className="nav-tabs-custom theme-shadow" style={{ paddingBottom: '30px' }}>
                 <ul className="nav nav-tabs">
                   <li className={activeTab === "activity" ? "active" : ""}>
                     <a
@@ -1575,7 +1580,7 @@ const StudentView = () => {
                                             data-toggle="tooltip"
                                             title="Download Document"
                                           >
-                                            <i className="fa fa-download text-muted"></i>
+                                            <i className="fa fa-download" style={{ color: '#0073b7' }}></i>
                                           </a>
                                         )}
                                         <button
