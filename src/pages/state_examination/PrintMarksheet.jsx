@@ -283,8 +283,8 @@ const PrintMarksheet = () => {
 
                                 {studentList && (
                                     <div className="box-body">
-                                        <div className="box-header ptbnull" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-                                            <h3 className="box-title titlefix"><i className="fa fa-users"></i> Student List</h3>
+                                        <div className="box-header ptbnull" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                                            <h3 className="box-title titlefix" style={{ marginBottom: '8px' }}><i className="fa fa-users"></i> Student List</h3>
                                             <div className="dataTables_length">
                                                 <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                     Records:
@@ -332,7 +332,7 @@ const PrintMarksheet = () => {
                                                         ) : (
                                                             currentStudents.map(student => (
                                                                 <tr key={student.id}>
-                                                                    <td className="text-center">
+                                                                    <td>
                                                                         <input
                                                                             type="checkbox"
                                                                             checked={selectedStudents.includes(student.student_session_id)}
