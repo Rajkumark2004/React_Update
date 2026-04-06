@@ -69,11 +69,11 @@ const VideoTutorial = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header appName="School Management System" userData={userData} handleLogout={handleLogout} />
             <Sidebar sessionYear={sessionYear} currentUrl="/admin/video_tutorial" />
 
-            <div className="content-wrapper" style={{ marginTop: '18px', minHeight: '658px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-12">

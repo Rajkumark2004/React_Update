@@ -267,7 +267,7 @@ const VehicleList = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style>{`
                 @media (max-width: 767px) {
                     .mobile-stack {
@@ -309,7 +309,7 @@ const VehicleList = () => {
                 currentUrl="/admin/vehicle"
             />
 
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row" style={{ marginTop: '0px' }}>
                         <div className="col-md-12">

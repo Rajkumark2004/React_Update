@@ -254,10 +254,10 @@ const StaffCreate = () => {
 
     if (loading) {
         return (
-            <div className="wrapper">
+            <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Header />
                 <Sidebar sessionYear={sessionYear} />
-                <div className="content-wrapper">
+                <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                     <Loader />
                 </div>
                 <Footer />
@@ -266,10 +266,10 @@ const StaffCreate = () => {
     }
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar sessionYear={sessionYear} />
-            <div className="content-wrapper" style={{ marginTop: '0px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-sitemap"></i> Human Resource

@@ -302,11 +302,11 @@ const StaffIdCard = () => {
     };
 
     return (
-        <div className="wrapper" style={{ marginTop: '0px' }}>
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '600px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     <div className="row">
                         <div className="col-md-4">

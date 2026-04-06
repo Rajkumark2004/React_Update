@@ -165,7 +165,7 @@ const StaffAttendanceList = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style dangerouslySetInnerHTML={{
                 __html: `
                 .radio { padding-left: 20px; }
@@ -183,7 +183,7 @@ const StaffAttendanceList = () => {
             `}} />
             <Header />
             <Sidebar />
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1><i className="fa fa-sitemap"></i> Human Resource</h1>
                 </section>

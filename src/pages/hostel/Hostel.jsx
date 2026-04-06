@@ -194,7 +194,7 @@ const Hostel = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style>{`
                 @media (max-width: 767px) {
                     .mobile-stack {
@@ -218,7 +218,7 @@ const Hostel = () => {
             <Header />
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '658px', marginTop: '0px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-building-o"></i> Hostel

@@ -129,7 +129,7 @@ const ContentTypeIndex = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style>{`
                 .content-wrapper { min-height: 90vh; background-color: #f4f6f9; }
                 .box { position: relative; border-radius: 3px; background: #ffffff; border-top: 3px solid #d2d6de; margin-bottom: 20px; width: 100%; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
@@ -168,7 +168,7 @@ const ContentTypeIndex = () => {
             <Header appName="School Management System" userData={userData} pendingTasks={[]} handleLogout={handleLogout} />
             <Sidebar sidebarMenus={sidebarMenus} mobileNavItems={mobileNavItems} handleSearch={handleSearch} sessionYear={sessionYear} currentUrl="/admin/contenttype" />
 
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-credit-card"></i> Expenses <small>Student Fee</small>

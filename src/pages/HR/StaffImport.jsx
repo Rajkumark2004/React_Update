@@ -117,10 +117,10 @@ const StaffImport = () => {
 
     if (loading) {
         return (
-            <div className="wrapper">
+            <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Header />
                 <Sidebar sessionYear={sessionYear} />
-                <div className="content-wrapper">
+                <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                     <Loader />
                 </div>
                 <Footer />
@@ -188,10 +188,10 @@ const StaffImport = () => {
     // { key: 'instagram_url', label: 'Instagram URL' }
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar sessionYear={sessionYear} />
-            <div className="content-wrapper" style={{ minHeight: '946px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header">
                     <h1>
                         <i className="fa fa-book"></i> Staff

@@ -139,7 +139,7 @@ const StaffProfile = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header
                 appName={appName}
                 userData={userData}
@@ -152,7 +152,7 @@ const StaffProfile = () => {
                 sessionYear={sessionYear}
             />
 
-            <div className="content-wrapper" style={{ marginTop: '0px' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 {/* Header */}
                 <section className="content-header">
                     <h1><i className="fa fa-sitemap"></i> Human Resource</h1>
