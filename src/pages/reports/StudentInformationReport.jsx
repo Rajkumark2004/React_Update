@@ -9,6 +9,7 @@ import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 import Pagination from '../../utils/Pagination';
+import TableToolbar from '../../utils/TableToolbar';
 
 const StudentInformationReport = () => {
     const navigate = useNavigate();
@@ -546,11 +547,7 @@ const StudentInformationReport = () => {
         }
         return filteredData.map((row, index) => getVisibleHeaders().map(h => String(getRowValue(h, row, index) ?? '')));
     };
-    const handleCopy = () => copyToClipboard(getVisibleHeaders(), getExportRows());
-    const handleExcel = () => downloadExcel(getVisibleHeaders(), getExportRows(), `${activeReport}.xls`);
-    const handleCSV = () => downloadCSV(getVisibleHeaders(), getExportRows(), `${activeReport}.csv`);
-    const handlePDF = () => downloadPDF(getVisibleHeaders(), getExportRows(), `${activeReport}.pdf`, activeReport);
-    const handlePrint = () => printTable(getVisibleHeaders(), getExportRows(), activeReport);
+    const getExportData = () => ({ headers: getVisibleHeaders(), rows: getExportRows() });
     const toggleColumn = (h) => setVisibleColumns(prev => { const n = new Set(prev); n.has(h) ? n.delete(h) : n.add(h); return n; });
 
     // Modal Export Helpers
@@ -581,11 +578,7 @@ const StudentInformationReport = () => {
         return getSubVisibleHeaders().map(h => String(rowData[h] ?? ''));
     });
 
-    const handleSubCopy = () => copyToClipboard(getSubVisibleHeaders(), getSubExportRows());
-    const handleSubExcel = () => downloadExcel(getSubVisibleHeaders(), getSubExportRows(), `${subView?.title}.xls`);
-    const handleSubCSV = () => downloadCSV(getSubVisibleHeaders(), getSubExportRows(), `${subView?.title}.csv`);
-    const handleSubPDF = () => downloadPDF(getSubVisibleHeaders(), getSubExportRows(), `${subView?.title}.pdf`, subView?.title);
-    const handleSubPrint = () => printTable(getSubVisibleHeaders(), getSubExportRows(), subView?.title);
+    const getSubExportData = () => ({ headers: getSubVisibleHeaders(), rows: getSubExportRows() });
     const toggleSubColumn = (h) => setSubVisibleColumns(prev => { const n = new Set(prev); n.has(h) ? n.delete(h) : n.add(h); return n; });
 
     const handleViewStudentList = async (class_section_id, className, sectionName) => {
@@ -999,27 +992,6 @@ const StudentInformationReport = () => {
                 .form-group label { font-size: 12px; font-weight: 600; color: #444; margin-bottom: 5px; display: block; }
                 .req { color: red; margin-left: 2px; }
 
-                .dt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%; }
-                .dt-buttons { display: flex; border-bottom: 1px solid #d2d6de; gap: 0; }
-                .dt-button { 
-                    padding: 3px 6px; 
-                    border: none; 
-                    background: transparent; 
-                    font-size: 15px; 
-                    color: #555; 
-                    cursor: pointer;
-                }
-                .dt-button:hover { background: #f9f9f9; }
-                .dt-search input { 
-                    border: none; 
-                    border-bottom: 1px solid #d2d6de; 
-                    padding: 4px 0; 
-                    font-size: 13px; 
-                    width: 160px; 
-                    background: transparent; 
-                    outline: none;
-                }
-
                 .table-responsive { overflow-x: auto; margin-bottom: 10px; width: 100%; scrollbar-width: thin; }
                 .table-custom { width: 100%; border-collapse: collapse; }
                 .table-custom th { 
@@ -1175,115 +1147,24 @@ const StudentInformationReport = () => {
 
                                             <div className="select-criteria-header" style={{ marginTop: '20px' }}> {activeReport}</div>
 
-                                            <div
-                                                className="row mb-2"
-                                                style={{
-                                                    marginBottom: '10px',
-                                                    display: isMobile ? 'flex' : 'block',
-                                                    flexDirection: isMobile ? 'column' : 'row',
-                                                    alignItems: isMobile ? 'center' : 'stretch',
-                                                    gap: isMobile ? '15px' : '0'
-                                                }}
-                                            >
-                                                <div
-                                                    className={isMobile ? "" : "col-sm-6"}
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: isMobile ? '15px' : '20px',
-                                                        justifyContent: isMobile ? 'center' : 'flex-start',
-                                                        flexWrap: 'wrap'
-                                                    }}
-                                                >
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={itemsPerPage}
-                                                                onChange={(e) => {
-                                                                    setItemsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <div className="dataTables_filter">
-                                                        <input
-                                                            type="search"
-                                                            className="form-control input-sm"
-                                                            placeholder="Search..."
-                                                            style={{
-                                                                marginLeft: isMobile ? '0' : '10px',
-                                                                display: 'inline-block',
-                                                                width: '180px',
-                                                                border: 'none',
-                                                                borderBottom: '1px solid #ccc',
-                                                                borderRadius: '0',
-                                                                boxShadow: 'none',
-                                                                backgroundColor: 'transparent',
-                                                                paddingLeft: '0',
-                                                                outline: 'none',
-                                                                textAlign: isMobile ? 'center' : 'left'
-                                                            }}
-                                                            value={searchTerm}
-                                                            onChange={(e) => {
-                                                                setSearchTerm(e.target.value);
-                                                                setCurrentPage(1);
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                                    {filteredData.length > 0 && (
-                                                        <div className="dt-buttons btn-group" style={{ float: 'right' }}>
-                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={handleCopy} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                                <i className="fa fa-files-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={handleExcel}>
-                                                                <i className="fa fa-file-excel-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={handleCSV}>
-                                                                <i className="fa fa-file-text-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={handlePDF}>
-                                                                <i className="fa fa-file-pdf-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="Print" onClick={handlePrint}>
-                                                                <i className="fa fa-print"></i>
-                                                            </button>
-                                                            <div className="btn-group">
-                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                                                    <i className="fa fa-columns"></i>
-                                                                </button>
-                                                                {showColumnsDropdown && (
-                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                        {currentConfig.headers.map(h => (
-                                                                            <label key={h} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                                <input type="checkbox" checked={visibleColumns.has(h)} onChange={() => toggleColumn(h)} style={{ marginRight: '6px' }} />
-                                                                                {h}
-                                                                            </label>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
+                                            <TableToolbar
+                                                searchTerm={searchTerm}
+                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                recordsPerPage={itemsPerPage}
+                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                                                columns={currentConfig.headers.map(h => ({ key: h, label: h }))}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={toggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName={activeReport.toLowerCase().replace(/\s+/g, '_')}
+                                                exportTitle={activeReport}
+                                            />
 
                                             <div className="table-responsive">
                                                 <table className="table-custom">
                                                     <thead>
                                                         <tr>
-                                                            {currentConfig.headers.map((header, idx) => (
+                                                            {currentConfig.headers.filter(h => visibleColumns.has(h)).map((header, idx) => (
                                                                 <th key={idx}>{header} <i className="fa fa-sort"></i></th>
                                                             ))}
                                                         </tr>
@@ -1375,86 +1256,17 @@ const StudentInformationReport = () => {
                                                     <button className="close-btn" onClick={() => setSubView(null)}>&times;</button>
                                                 </div>
                                                 <div className="modal-body">
-                                                    <div
-                                                        className="row mb-2"
-                                                        style={{
-                                                            marginBottom: '10px',
-                                                            display: isMobile ? 'flex' : 'block',
-                                                            flexDirection: isMobile ? 'column' : 'row',
-                                                            alignItems: isMobile ? 'center' : 'stretch',
-                                                            gap: isMobile ? '15px' : '0'
-                                                        }}
-                                                    >
-                                                        <div
-                                                            className={isMobile ? "" : "col-sm-6"}
-                                                            style={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: isMobile ? '15px' : '20px',
-                                                                justifyContent: isMobile ? 'center' : 'flex-start',
-                                                                flexWrap: 'wrap'
-                                                            }}
-                                                        >
-                                                            <div className="dataTables_filter">
-                                                                <input
-                                                                    type="search"
-                                                                    className="form-control input-sm"
-                                                                    placeholder="Search..."
-                                                                    style={{
-                                                                        marginLeft: isMobile ? '0' : '10px',
-                                                                        display: 'inline-block',
-                                                                        width: '180px',
-                                                                        border: 'none',
-                                                                        borderBottom: '1px solid #ccc',
-                                                                        borderRadius: '0',
-                                                                        boxShadow: 'none',
-                                                                        backgroundColor: 'transparent',
-                                                                        paddingLeft: '0',
-                                                                        outline: 'none',
-                                                                        textAlign: isMobile ? 'center' : 'left'
-                                                                    }}
-                                                                    value={subSearchTerm}
-                                                                    onChange={(e) => setSubSearchTerm(e.target.value)}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                                            {filteredModalData.length > 0 && (
-                                                                <div className="dt-buttons btn-group" style={{ float: 'right' }}>
-                                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={handleSubCopy} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                                        <i className="fa fa-files-o"></i>
-                                                                    </button>
-                                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={handleSubExcel}>
-                                                                        <i className="fa fa-file-excel-o"></i>
-                                                                    </button>
-                                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={handleSubCSV}>
-                                                                        <i className="fa fa-file-text-o"></i>
-                                                                    </button>
-                                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={handleSubPDF}>
-                                                                        <i className="fa fa-file-pdf-o"></i>
-                                                                    </button>
-                                                                    <button className="btn btn-default btn-sm" title="Print" onClick={handleSubPrint}>
-                                                                        <i className="fa fa-print"></i>
-                                                                    </button>
-                                                                    <div className="btn-group">
-                                                                        <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowSubColumnsDropdown(!showSubColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                                                            <i className="fa fa-columns"></i>
-                                                                        </button>
-                                                                        {showSubColumnsDropdown && (
-                                                                            <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                                {studentListConfig.headers.map(h => (
-                                                                                    <label key={h} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                                        <input type="checkbox" checked={subVisibleColumns.has(h)} onChange={() => toggleSubColumn(h)} style={{ marginRight: '6px' }} />
-                                                                                        {h}
-                                                                                    </label>
-                                                                                ))}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                                    <TableToolbar
+                                                        searchTerm={subSearchTerm}
+                                                        onSearchChange={setSubSearchTerm}
+                                                        showRecordsPerPage={false}
+                                                        columns={studentListConfig.headers.map(h => ({ key: h, label: h }))}
+                                                        visibleColumns={subVisibleColumns}
+                                                        onToggleColumn={toggleSubColumn}
+                                                        getExportData={getSubExportData}
+                                                        exportFileName={subView?.title?.toLowerCase()?.replace(/\s+/g, '_') || 'student_list'}
+                                                        exportTitle={subView?.title || 'Student List'}
+                                                    />
                                                     <div className="table-responsive">
                                                         <table className="table-custom">
                                                             <thead>

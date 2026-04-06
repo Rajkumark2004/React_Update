@@ -5,9 +5,19 @@ import Loader from "../../components/Loader";
 import "../../utils/include_files.js";
 import api from "../../services/api";
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import Pagination from "../../utils/Pagination";
 
 const SessionSettings = () => {
     const navigate = useNavigate();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
     const [sessions, setSessions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -17,6 +27,8 @@ const SessionSettings = () => {
     const [editSession, setEditSession] = useState(null);
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(50);
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
@@ -34,6 +46,10 @@ const SessionSettings = () => {
     const filteredSessions = sessions.filter(s =>
         s.session.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const indexOfLastRecord = currentPage * (recordsPerPage === -1 ? filteredSessions.length : recordsPerPage);
+    const indexOfFirstRecord = indexOfLastRecord - (recordsPerPage === -1 ? filteredSessions.length : recordsPerPage);
+    const currentRecords = filteredSessions.slice(indexOfFirstRecord, indexOfLastRecord);
 
     const getExportData = () => {
         const headers = [];
@@ -198,6 +214,13 @@ const SessionSettings = () => {
                 <Loader />
             ) : (
                 <div className="row">
+                    <style>{`
+                        @media (max-width: 767px) {
+                            .col-md-4, .col-md-8 { width: 100% !important; float: none !important; }
+                            .box-header h3.box-title { font-size: 16px !important; }
+                            .table th, .table td { font-size: 12px; padding: 6px 8px !important; }
+                        }
+                    `}</style>
                     {/* Add/Edit Session Column */}
                     <div className="col-md-4">
                         <div className="box box-primary">
@@ -270,48 +293,100 @@ const SessionSettings = () => {
                                     </button>
                                 </div>
 
-                                {/* ROW 2 */}
+                                {/* ROW 2 - Standardized toolbar */}
                                 <div
+                                    className="row mb-2 no-print"
                                     style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
+                                        marginBottom: '10px',
+                                        display: isMobile ? 'flex' : 'block',
+                                        flexDirection: isMobile ? 'column' : 'row',
+                                        alignItems: isMobile ? 'center' : 'stretch',
+                                        gap: isMobile ? '15px' : '0'
                                     }}
                                 >
-                                    {/* Search */}
-                                    <input
-                                        type="text"
-                                        className="form-control input-sm"
-                                        placeholder="Search..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    <div
+                                        className={isMobile ? '' : 'col-sm-6'}
                                         style={{
-                                            width: '280px',
-                                            border: 'none',
-                                            borderBottom: '1px solid #ccc',
-                                            borderRadius: 0,
-                                            boxShadow: 'none'
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: isMobile ? '15px' : '20px',
+                                            justifyContent: isMobile ? 'center' : 'flex-start',
+                                            flexWrap: 'wrap'
                                         }}
-                                    />
-
-                                    {/* Icons */}
-                                    <div className="dt-buttons btn-group">
-                                        <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                        <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Session_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                        <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Session_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                        <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Session_List.pdf', 'Session List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                        <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Session List'); }}><i className="fa fa-print"></i></button>
-                                        <div className="btn-group">
-                                            <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                <i className="fa fa-columns"></i>
+                                    >
+                                        <div className="dataTables_length">
+                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                Records:
+                                                <select
+                                                    value={recordsPerPage}
+                                                    onChange={(e) => {
+                                                        setRecordsPerPage(Number(e.target.value));
+                                                        setCurrentPage(1);
+                                                    }}
+                                                    className="form-control input-sm"
+                                                    style={{ width: '80px', margin: '0 10px' }}
+                                                >
+                                                    <option value="10">10</option>
+                                                    <option value="25">25</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                    <option value="-1">All</option>
+                                                </select>
+                                            </label>
+                                        </div>
+                                        <div className="dataTables_filter">
+                                            <input
+                                                type="search"
+                                                className="form-control input-sm"
+                                                placeholder="Search..."
+                                                style={{
+                                                    display: 'inline-block',
+                                                    width: '180px',
+                                                    border: 'none',
+                                                    borderBottom: '1px solid #ccc',
+                                                    borderRadius: '0',
+                                                    boxShadow: 'none',
+                                                    backgroundColor: 'transparent',
+                                                    paddingLeft: '0',
+                                                    outline: 'none',
+                                                    textAlign: isMobile ? 'center' : 'left'
+                                                }}
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
+                                        <div className="dt-buttons btn-group" style={{ float: 'right' }}>
+                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                <i className="fa fa-files-o"></i>
                                             </button>
-                                            {showColumnsDropdown && (
-                                                <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                    {columns.map(col => (
-                                                        <li key={col.index}><label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}><input type="checkbox" checked={!hiddenColumns.includes(col.index)} onChange={() => toggleColumnVisibility(col.index)} style={{ marginRight: '10px' }} /> {col.label}</label></li>
-                                                    ))}
-                                                </ul>
-                                            )}
+                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Session_List.xls'); }}>
+                                                <i className="fa fa-file-excel-o"></i>
+                                            </button>
+                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Session_List.csv'); }}>
+                                                <i className="fa fa-file-text-o"></i>
+                                            </button>
+                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Session_List.pdf', 'Session List'); }}>
+                                                <i className="fa fa-file-pdf-o"></i>
+                                            </button>
+                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Session List'); }}>
+                                                <i className="fa fa-print"></i>
+                                            </button>
+                                            <div className="btn-group">
+                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
+                                                    <i className="fa fa-columns"></i>
+                                                </button>
+                                                {showColumnsDropdown && (
+                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                        {columns.map(col => (
+                                                            <label key={col.index} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
+                                                                <input type="checkbox" checked={!hiddenColumns.includes(col.index)} onChange={() => toggleColumnVisibility(col.index)} style={{ marginRight: '6px' }} /> {col.label}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -328,7 +403,7 @@ const SessionSettings = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {filteredSessions.map((session) => (
+                                                {currentRecords.map((session) => (
                                                     <tr key={session.id}>
                                                         {!hiddenColumns.includes(0) && <td className="mailbox-name">
                                                             <a href="#" onClick={(e) => { e.preventDefault(); setViewSession(session); }} title="View">
@@ -358,6 +433,16 @@ const SessionSettings = () => {
                                     </div>
                                 </div>
                             </div>
+                            {filteredSessions.length > 0 && (
+                                <div style={{ paddingLeft: '5px', paddingRight: '5px' }}>
+                                    <Pagination
+                                        totalItems={filteredSessions.length}
+                                        itemsPerPage={recordsPerPage}
+                                        currentPage={currentPage}
+                                        onPageChange={setCurrentPage}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

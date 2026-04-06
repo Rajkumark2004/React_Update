@@ -241,7 +241,7 @@ const PaymentMethods = () => {
                                 <div className="col-md-7">
                                     <div style={{ maxWidth: '100%' }}>
                                         {renderFormFields(activeTab)}
-                                        <div style={{ textAlign: 'center', marginTop: '30px' }}>
+                                        <div style={{ textAlign: 'center', marginTop: '30px', paddingBottom: '5px' }}>
                                             <button onClick={() => handleSave(activeTab)} style={{ background: '#9153c3', color: '#fff', border: 'none', borderRadius: '20px', padding: '8px 30px', fontSize: '14px', cursor: 'pointer' }}>
                                                 Save
                                             </button>

@@ -6,7 +6,8 @@ import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import { useTableSort } from '../../hooks/useTableSort';
 
 const StudentHostelReport = () => {
@@ -251,59 +252,17 @@ const StudentHostelReport = () => {
                                         </h3>
                                     </div>
                                     <div className="box-body table-responsive">
-                                        <div className="mailbox-controls">
-                                            <div className="pull-left">
-                                                <div className="btn-group">
-                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}>
-                                                        <i className="fa fa-files-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_hostel_report.csv'); }}>
-                                                        <i className="fa fa-file-text-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_hostel_report.xls'); }}>
-                                                        <i className="fa fa-file-excel-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_hostel_report.pdf', 'Student Hostel Report'); }}>
-                                                        <i className="fa fa-file-pdf-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student Hostel Report'); }}>
-                                                        <i className="fa fa-print"></i>
-                                                    </button>
-                                                    <div className="btn-group">
-                                                        <button type="button" className="btn btn-default btn-sm" data-toggle="dropdown" aria-expanded="false" title="Columns">
-                                                            <i className="fa fa-columns"></i> <span className="caret"></span>
-                                                        </button>
-                                                        <ul className="dropdown-menu" style={{ padding: '10px', minWidth: '150px' }}>
-                                                            {columns.map(col => (
-                                                                <li key={col.key} style={{ padding: '0px' }}>
-                                                                    <label style={{ display: 'block', margin: '0', fontWeight: 'normal', cursor: 'pointer' }}>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={visibleColumns.has(col.key)}
-                                                                            onChange={() => toggleColumn(col.key)}
-                                                                            style={{ marginRight: '8px' }}
-                                                                        />
-                                                                        {col.label}
-                                                                    </label>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="pull-right">
-                                                <div className="has-feedback">
-                                                    <input
-                                                        type="text"
-                                                        className="form-control input-sm"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                    <span className="glyphicon glyphicon-search form-control-feedback"></span>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <TableToolbar
+                                            searchTerm={searchTerm}
+                                            onSearchChange={setSearchTerm}
+                                            showRecordsPerPage={false}
+                                            columns={columns}
+                                            visibleColumns={visibleColumns}
+                                            onToggleColumn={toggleColumn}
+                                            getExportData={getExportData}
+                                            exportFileName="student_hostel_report"
+                                            exportTitle="Student Hostel Report"
+                                        />
                                         <table
                                             className="table table-striped table-bordered table-hover hostel-list"
                                             data-export-title="Student Hostel Report"

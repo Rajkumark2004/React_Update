@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 import { api } from '../../services/api';
 import '../../utils/include_files';
 import { validateRoomNo, validateNoOfBeds, validateCost, validateDescription, sanitizeNameWithNumbers, sanitizeNumbers, sanitizeDecimal } from '../../utils/validation';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const HostelRoomEdit = () => {
@@ -54,9 +55,22 @@ const HostelRoomEdit = () => {
         { key: 'cost_per_bed', label: 'Cost Per Bed' }
     ];
 
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (key) => {
+        const newVisible = new Set(visibleColumns);
+        if (newVisible.has(key)) {
+            newVisible.delete(key);
+        } else {
+            newVisible.add(key);
+        }
+        setVisibleColumns(newVisible);
+    };
+
     const getExportData = () => {
-        const headers = columns.map(c => c.label);
-        const rows = filteredHostelRoomList.map(r => [r.room_no, r.hostel_name, r.room_type, r.no_of_bed, r.cost_per_bed]);
+        const activeCols = columns.filter(c => visibleColumns.has(c.key));
+        const headers = activeCols.map(c => c.label);
+        const rows = filteredHostelRoomList.map(r => activeCols.map(c => r[c.key]));
         return { headers, rows };
     };
 
@@ -194,28 +208,19 @@ const HostelRoomEdit = () => {
         }
     };
 
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <style>{`
-                @media (max-width: 767px) {
-                    .mobile-stack {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 15px;
-                    }
-                    .mobile-stack > div {
-                        width: 100% !important;
-                        text-align: center !important;
-                    }
-                    .mobile-stack .pull-right, .mobile-stack .pull-left {
-                        float: none !important;
-                    }
-                    .mobile-stack .dt-buttons {
-                        justify-content: center;
-                    }
-                }
-            `}</style>
+
             <Header />
             <Sidebar />
 
@@ -229,7 +234,7 @@ const HostelRoomEdit = () => {
                 <section className="content">
                     <div className="row">
                         {/* Edit Form */}
-                        <div className="col-md-4">
+                        <div className={`col-md-4 ${isMobile ? 'col-xs-12' : ''}`} style={{ marginBottom: isMobile ? '20px' : '0' }}>
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Edit Hostel Room</h3>
@@ -338,95 +343,61 @@ const HostelRoomEdit = () => {
                         </div>
 
                         {/* Room List */}
-                        <div className="col-md-8">
+                        <div className={`col-md-8 ${isMobile ? 'col-xs-12' : ''}`}>
                             <div className="box box-primary" id="hroom">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Hostel Room List</h3>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-controls">
-                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        aria-controls="DataTables_Table_0"
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'hostel_room_list.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'hostel_room_list.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'hostel_room_list.pdf', 'Hostel Room List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Hostel Room List'); }}><i className="fa fa-print"></i></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="mailbox-messages table-responsive overflow-visible">
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                        recordsPerPage={recordsPerPage}
+                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                        columns={columns}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={toggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="hostel_room_list"
+                                        exportTitle="Hostel Room List"
+                                    />
+                                    <div className="mailbox-messages table-responsive">
                                         <div className="download_label">Hostel Room List</div>
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Room Number / Name</th>
-                                                    <th>Hostel</th>
-                                                    <th>Room Type</th>
-                                                    <th>Number of Bed</th>
-                                                    <th className="text-right">Cost Per Bed</th>
+                                                    {visibleColumns.has('room_no') && <th>Room Number / Name</th>}
+                                                    {visibleColumns.has('hostel_name') && <th>Hostel</th>}
+                                                    {visibleColumns.has('room_type') && <th>Room Type</th>}
+                                                    {visibleColumns.has('no_of_bed') && <th>Number of Bed</th>}
+                                                    {visibleColumns.has('cost_per_bed') && <th className="text-right">Cost Per Bed</th>}
                                                     <th className="text-right noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.length === 0 ? (
                                                     <tr>
-                                                        <td colSpan="6" className="text-center">No Record Found</td>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center">No Record Found</td>
                                                     </tr>
                                                 ) : (
                                                     currentItems.map(room => (
                                                         <tr key={room.id}>
-                                                            <td className="mailbox-name">
-                                                                <a
-                                                                    href="#"
-                                                                    data-toggle="tooltip"
-                                                                    title={room.description || 'No description'}
-                                                                    onClick={(e) => e.preventDefault()}
-                                                                >
-                                                                    {room.room_no}
-                                                                </a>
-                                                            </td>
-                                                            <td className="mailbox-name">{room.hostel_name}</td>
-                                                            <td className="mailbox-name">{room.room_type}</td>
-                                                            <td className="mailbox-name">{room.no_of_bed}</td>
-                                                            <td className="mailbox-name text-right">{room.cost_per_bed}</td>
+                                                            {visibleColumns.has('room_no') && (
+                                                                <td className="mailbox-name">
+                                                                    <a
+                                                                        href="#"
+                                                                        data-toggle="tooltip"
+                                                                        title={room.description || 'No description'}
+                                                                        onClick={(e) => e.preventDefault()}
+                                                                    >
+                                                                        {room.room_no}
+                                                                    </a>
+                                                                </td>
+                                                            )}
+                                                            {visibleColumns.has('hostel_name') && <td className="mailbox-name">{room.hostel_name}</td>}
+                                                            {visibleColumns.has('room_type') && <td className="mailbox-name">{room.room_type}</td>}
+                                                            {visibleColumns.has('no_of_bed') && <td className="mailbox-name">{room.no_of_bed}</td>}
+                                                            {visibleColumns.has('cost_per_bed') && <td className="mailbox-name text-right">{room.cost_per_bed}</td>}
                                                             <td className="mailbox-date pull-right no-print">
                                                                 <Link
                                                                     to={`/admin/hostelroom/edit/${room.id}`}

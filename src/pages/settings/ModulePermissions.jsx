@@ -15,6 +15,16 @@ const ModulePermissions = () => {
     const [activeTab, setActiveTab] = useState("system");
     const [loading, setLoading] = useState(true);
 
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     const [permissionList, setPermissionList] = useState([]);
     const [studentPermissionList, setStudentPermissionList] = useState([]);
     const [parentPermissionList, setParentPermissionList] = useState([]);
@@ -143,28 +153,36 @@ const ModulePermissions = () => {
 
         return (
             <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '15px' : '0' }}>
                     <input
-                        type="text"
+                        type="search"
+                        className="form-control input-sm"
                         placeholder="Search..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{
+                            marginLeft: isMobile ? '0' : '10px',
+                            display: 'inline-block',
+                            width: '180px',
                             border: 'none',
-                            borderBottom: '1px solid #eee',
-                            width: '200px',
-                            fontSize: '13px',
-                            outline: 'none'
+                            borderBottom: '1px solid #ccc',
+                            borderRadius: '0',
+                            boxShadow: 'none',
+                            backgroundColor: 'transparent',
+                            paddingLeft: '0',
+                            outline: 'none',
+                            textAlign: isMobile ? 'center' : 'left',
+                            fontSize: '13px'
                         }}
                     />
-                    <div className="dt-buttons btn-group">
-                        <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                    <div className="dt-buttons btn-group" style={{ display: isMobile ? 'flex' : 'block', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
+                        <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }} title="Copy" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
                         <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadExcel(headers, rows, `${filename}.xls`); }}><i className="fa fa-file-excel-o"></i></button>
                         <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadCSV(headers, rows, `${filename}.csv`); }}><i className="fa fa-file-text-o"></i></button>
                         <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadPDF(headers, rows, `${filename}.pdf`, filename); }}><i className="fa fa-file-pdf-o"></i></button>
                         <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => handlePrint(filtered, type, statusKey, filename)}><i className="fa fa-print"></i></button>
                         <div className="btn-group">
-                            <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                            <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }} title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
                                 <i className="fa fa-columns"></i>
                             </button>
                             {showColumnsDropdown && (
@@ -220,6 +238,15 @@ const ModulePermissions = () => {
     return (
         <SettingsMenu hideSidebars={true}>
             <div style={{ width: "100%", marginTop: "0px" }}>
+                <style>{`
+                    @media (max-width: 767px) {
+                        .nav-tabs-custom > .nav-tabs { display: flex; flex-direction: column; }
+                        .nav-tabs-custom > .nav-tabs > li { float: none; display: block; }
+                        .nav-tabs-custom > .nav-tabs > li.header { text-align: center; margin-bottom: 10px; }
+                        .box-header.with-border { flex-direction: column; gap: 10px; }
+                        .box-header.with-border h4 { margin-top: 10px !important; margin-bottom: 10px !important; }
+                    }
+                `}</style>
                 <div className="nav-tabs-custom theme-shadow">
                     <div className="row">
                         <div className="col-md-12">

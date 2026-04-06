@@ -4,8 +4,8 @@ import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
 import Pagination from '../../utils/Pagination';
+import TableToolbar from '../../utils/TableToolbar';
 
 const FinanceReport = () => {
     const navigate = useNavigate();
@@ -22,13 +22,14 @@ const FinanceReport = () => {
     const [activeReport, setActiveReport] = useState(location.state?.activeReport || 'Daily Collection Report');
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearched, setIsSearched] = useState(false);
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const [visibleColumns, setVisibleColumns] = useState(new Set());
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const toggleColumn = (h) => {
+        setVisibleColumns(prev => { 
+            const n = new Set(prev); 
+            n.has(h) ? n.delete(h) : n.add(h); 
+            return n; 
+        });
     };
 
     const [dailyCollectionData, setDailyCollectionData] = useState([]);
@@ -283,7 +284,14 @@ const FinanceReport = () => {
         }
     };
 
-    const currentConfig = reportConfigs[activeReport] || { filters: ['class', 'section'], headers: ["S.No", "Description", "Amount"] };
+    const currentConfig = useMemo(() => {
+        return reportConfigs[activeReport] || { filters: ['class', 'section'], headers: ["S.No", "Description", "Amount"] };
+    }, [activeReport, balanceFeesHeaders, studentDaySheetHeaders]);
+
+    // Sync visible columns when report/headers change
+    useEffect(() => {
+        setVisibleColumns(new Set(currentConfig.headers || []));
+    }, [activeReport, currentConfig.headers]);
 
     const rawMockData = useMemo(() => [
         { sno: 1, fees_group: 'NURSERY (July)', fees_code: 'JLTF', due_date: '', status: 'Unpaid', amount: 15000.00, amount_extra: '', payment_id: '', mode: '', date: '', discount: 0.00, fine: 0.00, paid: 0.00, balance: 15000.00, pending: '15000.00', student_name: 'NANDHU', admission_no: '1005', class: 'Nursery', section: 'A', father_name: 'Said Hussainpeer Khadri' },
@@ -392,8 +400,7 @@ const FinanceReport = () => {
         setActiveReport(report);
         setSearchTerm('');
         setIsSearched(false);
-        setHiddenColumns([]);
-        setShowColumnsDropdown(false);
+        setVisibleColumns(new Set(reportConfigs[report]?.headers || ["S.No", "Description", "Amount"]));
 
         // Clear all filter selections per user request
         setClassId('');
@@ -573,28 +580,14 @@ const FinanceReport = () => {
         return row[header] || '-';
     };
 
-    const getExportData = () => {
-        const allHeaders = currentConfig.headers || [];
-        const headers = allHeaders.filter((_, idx) => !hiddenColumns.includes(idx));
-        const rows = filteredData.map((row, index) =>
-            allHeaders
-                .map((h, hIdx) => ({ value: getRowValue(h, row, index), index: hIdx }))
-                .filter(item => !hiddenColumns.includes(item.index))
-                .map(item => String(item.value ?? ''))
-        );
-        return { headers, rows };
-    };
-    const handleExport = (action) => {
-        const { headers, rows } = getExportData();
-        if (action === 'copy') copyToClipboard(headers, rows);
-        if (action === 'excel') downloadExcel(headers, rows, `${activeReport}.xls`);
-        if (action === 'csv') downloadCSV(headers, rows, `${activeReport}.csv`);
-        if (action === 'pdf') downloadPDF(headers, rows, `${activeReport}.pdf`, activeReport);
-        if (action === 'print') printTable(headers, rows, activeReport);
-    };
+    const getVisibleHeaders = () => (currentConfig.headers || []).filter(h => visibleColumns.has(h));
+    const getExportRows = () => filteredData.map((row, index) => 
+        (currentConfig.headers || []).filter(h => visibleColumns.has(h)).map(h => String(getRowValue(h, row, index) ?? ''))
+    );
+    const getExportData = () => ({ headers: getVisibleHeaders(), rows: getExportRows() });
 
-    const handleModalExport = (action) => {
-        if (!detailData || detailData.length === 0) return;
+    const getModalExportData = () => {
+        if (!detailData || detailData.length === 0) return { headers: [], rows: [] };
 
         const headers = ['Date', 'Admission No', 'Name', 'Father Name', 'Class', 'Payment Mode', 'Payment ID', 'Collected By', 'Fine', 'Amount', 'Total'];
 
@@ -642,7 +635,6 @@ const FinanceReport = () => {
                 detailDate = `${d}/${m}/${y}`;
             }
 
-            // Explicitly map columns based on headers: ['Date', 'Admission No', 'Name', 'Father Name', 'Class', 'Payment Mode', 'Payment ID', 'Collected By', 'Fine', 'Amount', 'Total']
             return [
                 detailDate,
                 student.admission_no,
@@ -668,13 +660,7 @@ const FinanceReport = () => {
 
         rows.push(['', '', '', '', '', '', '', 'Grand Total', '', '', grandTotal.toFixed(2)]);
 
-        const filename = `Collection_List_${selectedDateDetails?.date_col?.replace(/\//g, '_') || 'Details'}`;
-
-        if (action === 'copy') copyToClipboard(headers, rows);
-        if (action === 'excel') downloadExcel(headers, rows, `${filename}.xls`);
-        if (action === 'csv') downloadCSV(headers, rows, `${filename}.csv`);
-        if (action === 'pdf') downloadPDF(headers, rows, `${filename}.pdf`, `Collection List - ${selectedDateDetails?.date_col}`);
-        if (action === 'print') printTable(headers, rows, `Collection List - ${selectedDateDetails?.date_col}`);
+        return { headers, rows };
     };
 
     const handleSearch = async (e) => {
@@ -1255,7 +1241,7 @@ const FinanceReport = () => {
                 <td className="text-center" key="2">{row.amount || row.balance}</td>
             );
         }
-        return cells.filter((_, idx) => !hiddenColumns.includes(idx));
+        return cells.filter((_, idx) => visibleColumns.has(currentConfig.headers[idx]));
     };
 
     return (
@@ -1295,69 +1281,15 @@ const FinanceReport = () => {
                         <div style={{ marginBottom: '10px' }}>
                             <div><strong>Collection Date: </strong> {selectedDateDetails?.date_col}</div>
                         </div>
-                        <div
-                            className="row mb-2"
-                            style={{
-                                marginBottom: '10px',
-                                display: isMobile ? 'flex' : 'block',
-                                flexDirection: isMobile ? 'column' : 'row',
-                                alignItems: isMobile ? 'center' : 'stretch',
-                                gap: isMobile ? '15px' : '0'
-                            }}
-                        >
-                            <div
-                                className={isMobile ? '' : 'col-sm-6'}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: isMobile ? '15px' : '20px',
-                                    justifyContent: isMobile ? 'center' : 'flex-start',
-                                    flexWrap: 'wrap'
-                                }}
-                            >
-                                <div className="dataTables_filter">
-                                    <input
-                                        type="search"
-                                        className="form-control input-sm"
-                                        placeholder="Search..."
-                                        style={{
-                                            marginLeft: isMobile ? '0' : '10px',
-                                            display: 'inline-block',
-                                            width: '180px',
-                                            border: 'none',
-                                            borderBottom: '1px solid #ccc',
-                                            borderRadius: '0',
-                                            boxShadow: 'none',
-                                            backgroundColor: 'transparent',
-                                            paddingLeft: '0',
-                                            outline: 'none',
-                                            textAlign: isMobile ? 'center' : 'left'
-                                        }}
-                                        value={modalSearchTerm}
-                                        onChange={(e) => setModalSearchTerm(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
-                                <div className="dt-buttons btn-group" style={{ float: 'right' }}>
-                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleModalExport('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                        <i className="fa fa-files-o"></i>
-                                    </button>
-                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleModalExport('excel')}>
-                                        <i className="fa fa-file-excel-o"></i>
-                                    </button>
-                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleModalExport('csv')}>
-                                        <i className="fa fa-file-text-o"></i>
-                                    </button>
-                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleModalExport('pdf')}>
-                                        <i className="fa fa-file-pdf-o"></i>
-                                    </button>
-                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => handleModalExport('print')} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                        <i className="fa fa-print"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <TableToolbar
+                            searchTerm={modalSearchTerm}
+                            onSearchChange={setModalSearchTerm}
+                            showRecordsPerPage={false}
+                            showColumnToggle={false}
+                            getExportData={getModalExportData}
+                            exportFileName={`Collection_List_${selectedDateDetails?.date_col?.replace(/\//g, '_') || 'Details'}`}
+                            exportTitle={`Collection List - ${selectedDateDetails?.date_col}`}
+                        />
 
                         {renderDetailTable()}
                     </div>
@@ -1421,21 +1353,9 @@ const FinanceReport = () => {
                 .profile-column { display: grid; grid-template-rows: repeat(4, auto); gap: 8px; }
                 .profile-item b { margin-right: 5px; }
 
-                .dt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; width: 100%; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-                .dt-buttons { display: flex; gap: 2px; }
-                .dt-button { padding: 2px 6px; border: none; background: transparent; font-size: 14px; color: #333; cursor: pointer; }
-                .dt-button:hover { background: #f9f9f9; color: #000; }
 
-                .dt-search { position: relative; }
-                .dt-search input { 
-                    border: none; 
-                    border-bottom: 1px solid #d2d6de; 
-                    padding: 4px 6px; 
-                    font-size: 13px; 
-                    width: 180px; 
-                    outline: none;
-                    background: transparent;
-                }
+
+
 
                 .table-responsive { overflow-x: auto; margin-bottom: 10px; scrollbar-width: thin; }
                 .table-custom { width: 100%; border-collapse: collapse; }
@@ -1664,10 +1584,7 @@ const FinanceReport = () => {
 
                         {isSearched && (
                             <div className="animate-in fade-in duration-300">
-                                <div className="select-criteria-header" style={{ marginTop: '20px' }}>
-                                    {activeReport}
-                                    <div style={{ flex: 1 }}></div>
-                                </div>
+                                <div className="select-criteria-header" style={{ marginTop: '20px' }}> {activeReport}</div>
 
                                 {currentConfig.showPrintPurple && !currentConfig.hideLeftPrint && (
                                     <button className="btn-print-purple no-print" onClick={() => window.print()}>
@@ -1715,122 +1632,20 @@ const FinanceReport = () => {
                                 )}
 
                                 {!currentConfig.hideHeaderIcons && !currentConfig.hideTable && (
-                                    <div
-                                        className="row mb-2 no-print"
-                                        style={{
-                                            marginBottom: '10px',
-                                            display: isMobile ? 'flex' : 'block',
-                                            flexDirection: isMobile ? 'column' : 'row',
-                                            alignItems: isMobile ? 'center' : 'stretch',
-                                            gap: isMobile ? '15px' : '0'
-                                        }}
-                                    >
-                                        <div
-                                            className={isMobile ? '' : 'col-sm-6'}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: isMobile ? '15px' : '20px',
-                                                justifyContent: isMobile ? 'center' : 'flex-start',
-                                                flexWrap: 'wrap'
-                                            }}
-                                        >
-                                            <div className="dataTables_length">
-                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                    Records:
-                                                    <select
-                                                        value={itemsPerPage}
-                                                        onChange={(e) => {
-                                                            setItemsPerPage(Number(e.target.value));
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        className="form-control input-sm"
-                                                        style={{ width: '80px', margin: '0 10px' }}
-                                                    >
-                                                        <option value="10">10</option>
-                                                        <option value="25">25</option>
-                                                        <option value="50">50</option>
-                                                        <option value="100">100</option>
-                                                        <option value="-1">All</option>
-                                                    </select>
-                                                </label>
-                                            </div>
-                                            {!currentConfig.hideSearch && (
-                                                <div className="dataTables_filter">
-                                                    <input
-                                                        type="search"
-                                                        className="form-control input-sm"
-                                                        placeholder="Search..."
-                                                        style={{
-                                                            marginLeft: isMobile ? '0' : '10px',
-                                                            display: 'inline-block',
-                                                            width: '180px',
-                                                            border: 'none',
-                                                            borderBottom: '1px solid #ccc',
-                                                            borderRadius: '0',
-                                                            boxShadow: 'none',
-                                                            backgroundColor: 'transparent',
-                                                            paddingLeft: '0',
-                                                            outline: 'none',
-                                                            textAlign: isMobile ? 'center' : 'left'
-                                                        }}
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
-                                            {filteredData.length > 0 && (
-                                                <div className="dt-buttons btn-group" style={{ float: isMobile ? 'none' : 'right' }}>
-                                                    {!currentConfig.showExcelPrintOnly && (
-                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleExport('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                            <i className="fa fa-files-o"></i>
-                                                        </button>
-                                                    )}
-                                                    {!currentConfig.hideExportButtons && (
-                                                        <>
-                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleExport('excel')} style={currentConfig.showExcelPrintOnly ? { borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' } : {}}>
-                                                                <i className="fa fa-file-excel-o"></i>
-                                                            </button>
-                                                            {!currentConfig.showExcelPrintOnly && (
-                                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleExport('csv')}>
-                                                                    <i className="fa fa-file-text-o"></i>
-                                                                </button>
-                                                            )}
-                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => handleExport('pdf')}>
-                                                                <i className="fa fa-file-pdf-o"></i>
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                    {(activeReport === 'Daily Collection Report' || (!currentConfig.hidePrint && activeReport !== 'Daily Collection Report')) && (
-                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => handleExport('print')}>
-                                                            <i className="fa fa-print"></i>
-                                                        </button>
-                                                    )}
-                                                    {!currentConfig.showExcelPrintOnly && (
-                                                        <div className="btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                                                <i className="fa fa-columns"></i>
-                                                            </button>
-                                                            {showColumnsDropdown && (
-                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                    {currentConfig.headers.map((header, idx) => (
-                                                                        <label key={idx} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                            <input type="checkbox" checked={!hiddenColumns.includes(idx)} onChange={() => toggleColumnVisibility(idx)} style={{ marginRight: '6px' }} /> {header}
-                                                                        </label>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={!currentConfig.hideSearch ? (val) => { setSearchTerm(val); setCurrentPage(1); } : null}
+                                        recordsPerPage={itemsPerPage}
+                                        onRecordsPerPageChange={!currentConfig.hideSearch ? (val) => { setItemsPerPage(val); setCurrentPage(1); } : null}
+                                        columns={currentConfig.headers.map(h => ({ key: h, label: h }))}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={toggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName={activeReport.toLowerCase().replace(/\s+/g, '_')}
+                                        exportTitle={activeReport}
+                                        showRecordsPerPage={true}
+                                        showColumnToggle={!currentConfig.showExcelPrintOnly}
+                                    />
                                 )}
 
                                 {!currentConfig.hideTable && (
@@ -1853,7 +1668,7 @@ const FinanceReport = () => {
                                                             <thead>
                                                                 <tr>
                                                                     {currentConfig.headers.map((header, idx) => (
-                                                                        !hiddenColumns.includes(idx) && <th key={idx} className="text-center">{header}</th>
+                                                                        visibleColumns.has(header) && <th key={idx} className="text-center">{header}</th>
                                                                     ))}
                                                                 </tr>
                                                             </thead>
@@ -1862,7 +1677,7 @@ const FinanceReport = () => {
                                                                     <tr key={index}>{renderRow(row, index)}</tr>
                                                                 ))}
                                                                 <tr className="total-row">
-                                                                    <td colSpan={currentConfig.headers.length - hiddenColumns.length} className="text-right" style={{ fontWeight: '600' }}>
+                                                                    <td colSpan={visibleColumns.size} className="text-right" style={{ fontWeight: '600' }}>
                                                                         Total {displayMode}: ₹{modeTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                                     </td>
                                                                 </tr>
@@ -1878,7 +1693,7 @@ const FinanceReport = () => {
                                                 <thead>
                                                     <tr>
                                                         {currentConfig.headers.map((header, idx) => (
-                                                            !hiddenColumns.includes(idx) && <th key={idx} className="text-center">{header}</th>
+                                                            visibleColumns.has(header) && <th key={idx} className="text-center">{header}</th>
                                                         ))}
                                                     </tr>
                                                 </thead>
@@ -1888,8 +1703,8 @@ const FinanceReport = () => {
                                                     ))}
                                                     {(activeReport === 'Balance Fees Statement' || activeReport === 'Fees Statement') && (
                                                         <tr className="total-row">
-                                                            <td colSpan={currentConfig.headers.length - hiddenColumns.length - (activeReport === 'Fees Statement' ? 8 : 4)} className="text-center" style={{ fontWeight: '600' }}>Grand Total</td>
-                                                            {!hiddenColumns.includes(4) && (
+                                                            <td colSpan={visibleColumns.size - (activeReport === 'Fees Statement' ? 8 : 4)} className="text-center" style={{ fontWeight: '600' }}>Grand Total</td>
+                                                            {visibleColumns.has(currentConfig.headers[4]) && (
                                                                 <td className="text-center">
                                                                     {activeReport === 'Balance Fees Statement' ? (
                                                                         <>₹{(totals.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}<span style={{ color: 'red' }}> + 0.00</span></>
@@ -1897,25 +1712,25 @@ const FinanceReport = () => {
                                                                 </td>
                                                             )}
                                                             {activeReport === 'Balance Fees Statement' ? (
-                                                                !hiddenColumns.includes(8) && <td className="text-center">₹{(totals.discount || 0).toFixed(2)}</td>
+                                                                visibleColumns.has(currentConfig.headers[8]) && <td className="text-center">₹{(totals.discount || 0).toFixed(2)}</td>
                                                             ) : (
                                                                 <>
-                                                                    {!hiddenColumns.includes(5) && <td></td>}
-                                                                    {!hiddenColumns.includes(6) && <td></td>}
-                                                                    {!hiddenColumns.includes(7) && <td></td>}
-                                                                    {!hiddenColumns.includes(8) && <td className="text-center">₹{(totals.discount || 0).toFixed(2)}</td>}
+                                                                    {visibleColumns.has(currentConfig.headers[5]) && <td></td>}
+                                                                    {visibleColumns.has(currentConfig.headers[6]) && <td></td>}
+                                                                    {visibleColumns.has(currentConfig.headers[7]) && <td></td>}
+                                                                    {visibleColumns.has(currentConfig.headers[8]) && <td className="text-center">₹{(totals.discount || 0).toFixed(2)}</td>}
                                                                 </>
                                                             )}
-                                                            {!hiddenColumns.includes(9) && <td className="text-center">₹{(totals.fine || 0).toFixed(2)}</td>}
-                                                            {!hiddenColumns.includes(10) && <td className="text-center">₹{(totals.paid || 0).toFixed(2)}</td>}
-                                                            {!hiddenColumns.includes(11) && <td className="text-center">₹{(totals.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>}
+                                                            {visibleColumns.has(currentConfig.headers[9]) && <td className="text-center">₹{(totals.fine || 0).toFixed(2)}</td>}
+                                                            {visibleColumns.has(currentConfig.headers[10]) && <td className="text-center">₹{(totals.paid || 0).toFixed(2)}</td>}
+                                                            {visibleColumns.has(currentConfig.headers[11]) && <td className="text-center">₹{(totals.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>}
                                                         </tr>
                                                     )}
                                                     {activeReport === 'Daily Collection Report' && (
                                                         <tr className="total-row">
-                                                            <td colSpan={Math.max(1, currentConfig.headers.length - hiddenColumns.length - 2)} className="text-center" style={{ fontWeight: '600' }}>Total Amount</td>
-                                                            {!hiddenColumns.includes(2) && <td className="text-center">₹{(totals.total || 0).toFixed(2)}</td>}
-                                                            {!hiddenColumns.includes(3) && <td></td>}
+                                                            <td colSpan={Math.max(1, visibleColumns.size - 2)} className="text-center" style={{ fontWeight: '600' }}>Total Amount</td>
+                                                            {visibleColumns.has(currentConfig.headers[2]) && <td className="text-center">₹{(totals.total || 0).toFixed(2)}</td>}
+                                                            {visibleColumns.has(currentConfig.headers[3]) && <td></td>}
                                                         </tr>
                                                     )}
                                                     {activeReport === 'Fees Statement' && (

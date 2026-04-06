@@ -5,7 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import '../../styles/reports.css';
 import { api } from '../../services/api';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const UserLog = () => {
@@ -23,13 +23,16 @@ const UserLog = () => {
     const [activeTab, setActiveTab] = useState('all_users');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const [visibleColumns, setVisibleColumns] = useState(new Set(['User', 'Role', 'Class', 'IP Address', 'Login Date Time', 'User Agent']));
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(key)) newSet.delete(key);
+            else newSet.add(key);
+            return newSet;
+        });
     };
 
     // Pagination state
@@ -129,51 +132,30 @@ const UserLog = () => {
     };
 
     // Export helpers for UserLog
-    const getTabHeaders = (tab) => {
+    const getTabColumns = (tab) => {
         const hasClass = tab === 'all_users' || tab === 'student';
-        const cols = [];
-        if (!hiddenColumns.includes(0)) cols.push('User');
-        if (!hiddenColumns.includes(1)) cols.push('Role');
-        if (hasClass && !hiddenColumns.includes(2)) cols.push('Class');
-        if (!hiddenColumns.includes(3)) cols.push('IP Address');
-        if (!hiddenColumns.includes(4)) cols.push('Login Date Time');
-        if (!hiddenColumns.includes(5)) cols.push('User Agent');
+        const cols = ['User', 'Role'];
+        if (hasClass) cols.push('Class');
+        cols.push('IP Address', 'Login Date Time', 'User Agent');
         return cols;
     };
-    const getTabRows = (tab) => {
+
+    const getExportData = (tab) => {
+        const cols = getTabColumns(tab);
+        const headers = cols.filter(col => visibleColumns.has(col));
         const data = getFilteredData(tab);
-        const hasClass = tab === 'all_users' || tab === 'student';
-        return data.map(item => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(item.user);
-            if (!hiddenColumns.includes(1)) row.push(item.role || '');
-            if (hasClass && !hiddenColumns.includes(2)) row.push(item.class || '');
-            if (!hiddenColumns.includes(3)) row.push(item.ipaddress || item.ip_address || '');
-            if (!hiddenColumns.includes(4)) row.push(item.login_datetime || '');
-            if (!hiddenColumns.includes(5)) row.push(item.user_agent || '');
-            return row.map(String);
+        const rows = data.map(item => {
+            const rowData = {
+                'User': item.user,
+                'Role': item.role ? item.role.charAt(0).toUpperCase() + item.role.slice(1) : '',
+                'Class': item.class,
+                'IP Address': item.ipaddress || item.ip_address,
+                'Login Date Time': item.login_datetime,
+                'User Agent': item.user_agent
+            };
+            return headers.map(key => String(rowData[key] ?? ''));
         });
-    };
-
-    // Table action handlers
-    const handleCopy = (tab) => {
-        copyToClipboard(getTabHeaders(tab), getTabRows(tab));
-    };
-
-    const handlePrint = (tab) => {
-        printTable(getTabHeaders(tab), getTabRows(tab), tab.replace(/_/g, ' ') + ' User Log');
-    };
-
-    const handleExcel = (tab) => {
-        downloadExcel(getTabHeaders(tab), getTabRows(tab), `${tab}_log.xls`);
-    };
-
-    const handleCSV = (tab) => {
-        downloadCSV(getTabHeaders(tab), getTabRows(tab), `${tab}_log.csv`);
-    };
-
-    const handlePDF = (tab) => {
-        downloadPDF(getTabHeaders(tab), getTabRows(tab), `${tab}_log.pdf`, tab.replace(/_/g, ' ') + ' User Log');
+        return { headers, rows };
     };
 
     // Check if tab has Class column
@@ -206,100 +188,29 @@ const UserLog = () => {
                 )}
 
                 {/* Table toolbar */}
-                <div
-                    className="row mb-2 no-print"
-                    style={{
-                        marginBottom: '10px',
-                        display: isMobile ? 'flex' : 'block',
-                        flexDirection: isMobile ? 'column' : 'row',
-                        alignItems: isMobile ? 'center' : 'stretch',
-                        gap: isMobile ? '15px' : '0'
-                    }}
-                >
-                    <div
-                        className={isMobile ? '' : 'col-sm-6'}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: isMobile ? '15px' : '20px',
-                            justifyContent: isMobile ? 'center' : 'flex-start',
-                            flexWrap: 'wrap'
-                        }}
-                    >
-                        <div className="dataTables_length">
-                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                Records:
-                                <select
-                                    value={recordsPerPage}
-                                    onChange={(e) => {
-                                        setRecordsPerPage(Number(e.target.value));
-                                        setCurrentPage(1);
-                                    }}
-                                    className="form-control input-sm"
-                                    style={{ width: '80px', margin: '0 10px' }}
-                                >
-                                    <option value="10">10</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                    <option value="-1">All</option>
-                                </select>
-                            </label>
-                        </div>
-                        <div className="dataTables_filter">
-                            <input
-                                type="search"
-                                className="form-control input-sm"
-                                placeholder="Search..."
-                                style={{
-                                    marginLeft: isMobile ? '0' : '10px',
-                                    display: 'inline-block',
-                                    width: '180px',
-                                    border: 'none',
-                                    borderBottom: '1px solid #ccc',
-                                    borderRadius: '0',
-                                    boxShadow: 'none',
-                                    backgroundColor: 'transparent',
-                                    paddingLeft: '0',
-                                    outline: 'none',
-                                    textAlign: isMobile ? 'center' : 'left'
-                                }}
-                                value={tableSearch[tab]}
-                                onChange={(e) => handleSearchChange(tab, e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
-                        <div className="dt-buttons btn-group" style={{ float: 'right' }}>
-                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => handleCopy(tab)} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                <i className="fa fa-files-o"></i>
-                            </button>
-                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => handleExcel(tab)}>
-                                <i className="fa fa-file-excel-o"></i>
-                            </button>
-                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => handleCSV(tab)}>
-                                <i className="fa fa-file-text-o"></i>
-                            </button>
-                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => handlePDF(tab)}>
-                                <i className="fa fa-file-pdf-o"></i>
-                            </button>
-                            <button className="btn btn-default btn-sm" title="Print" onClick={() => handlePrint(tab)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                <i className="fa fa-print"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <TableToolbar
+                    searchTerm={tableSearch[tab] || ''}
+                    onSearchChange={(val) => handleSearchChange(tab, val)}
+                    recordsPerPage={recordsPerPage}
+                    onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                    columns={getTabColumns(tab).map(c => ({ key: c, label: c }))}
+                    visibleColumns={visibleColumns}
+                    onToggleColumn={toggleColumn}
+                    getExportData={() => getExportData(tab)}
+                    exportFileName={`${tab}_log`}
+                    exportTitle={tab.replace(/_/g, ' ') + ' User Log'}
+                />
 
 
                 <table className="table table-striped table-bordered table-hover userlog-table" data-export-title="User Log">
                     <thead>
                         <tr>
-                            {!hiddenColumns.includes(0) && <th>Users</th>}
-                            {!hiddenColumns.includes(1) && <th style={{ width: '150px' }}>Role</th>}
-                            {(hasClassColumn(tab) && !hiddenColumns.includes(2)) && <th>Class</th>}
-                            {!hiddenColumns.includes(3) && <th>IP Address</th>}
-                            {!hiddenColumns.includes(4) && <th style={{ width: '200px' }}>Login Date Time</th>}
-                            {!hiddenColumns.includes(5) && <th>User Agent</th>}
+                            {visibleColumns.has('User') && <th>Users</th>}
+                            {visibleColumns.has('Role') && <th style={{ width: '150px' }}>Role</th>}
+                            {(hasClassColumn(tab) && visibleColumns.has('Class')) && <th>Class</th>}
+                            {visibleColumns.has('IP Address') && <th>IP Address</th>}
+                            {visibleColumns.has('Login Date Time') && <th style={{ width: '200px' }}>Login Date Time</th>}
+                            {visibleColumns.has('User Agent') && <th>User Agent</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -319,12 +230,12 @@ const UserLog = () => {
                         ) : (
                             currentRecords.map((item, index) => (
                                 <tr key={item.id || index}>
-                                    {!hiddenColumns.includes(0) && <td>{item.user}</td>}
-                                    {!hiddenColumns.includes(1) && <td>{item.role ? item.role.charAt(0).toUpperCase() + item.role.slice(1) : ''}</td>}
-                                    {(hasClassColumn(tab) && !hiddenColumns.includes(2)) && <td>{item.class}</td>}
-                                    {!hiddenColumns.includes(3) && <td>{item.ipaddress || item.ip_address}</td>}
-                                    {!hiddenColumns.includes(4) && <td>{item.login_datetime}</td>}
-                                    {!hiddenColumns.includes(5) && <td>{item.user_agent}</td>}
+                                    {visibleColumns.has('User') && <td>{item.user}</td>}
+                                    {visibleColumns.has('Role') && <td>{item.role ? item.role.charAt(0).toUpperCase() + item.role.slice(1) : ''}</td>}
+                                    {(hasClassColumn(tab) && visibleColumns.has('Class')) && <td>{item.class}</td>}
+                                    {visibleColumns.has('IP Address') && <td>{item.ipaddress || item.ip_address}</td>}
+                                    {visibleColumns.has('Login Date Time') && <td>{item.login_datetime}</td>}
+                                    {visibleColumns.has('User Agent') && <td>{item.user_agent}</td>}
                                 </tr>
                             ))
                         )}

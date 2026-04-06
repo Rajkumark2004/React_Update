@@ -18,6 +18,16 @@ const RoleList = () => {
     const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const recordsPerPage = 10; // Roles list is usually short, 10 is fine
@@ -179,7 +189,7 @@ const RoleList = () => {
                 <section className="content">
                     <div className="row">
                         {/* Left Side: Add/Edit Role form */}
-                        <div className="col-md-4">
+                        <div className="col-md-4" style={{ marginBottom: isMobile ? '20px' : '0' }}>
                             <div className="box box-primary" style={{ border: 'none', boxShadow: '0 1px 1px rgba(0,0,0,0.1)', background: '#fff' }}>
                                 <div className="box-header with-border" style={{ borderBottom: '1px solid #f4f4f4', padding: '15px' }}>
                                     <h3 className="box-title" style={{ fontSize: '18px', color: '#333' }}>{isEditMode ? 'Edit Role' : 'Role'}</h3>
@@ -230,7 +240,7 @@ const RoleList = () => {
                         <div className="col-md-8">
                             <div className="box box-primary" style={{ border: 'none', boxShadow: '0 1px 1px rgba(0,0,0,0.1)', background: '#fff' }}>
                                 <div className="box-body" style={{ padding: '15px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                    <div className="role-list-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                                         <h3 className="box-title" style={{ fontSize: '18px', color: '#333', margin: 0 }}>Role List</h3>
                                         <button
                                             onClick={() => navigate(-1)}
@@ -248,28 +258,36 @@ const RoleList = () => {
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px', alignItems: 'center' }}>
+                                    <div className="role-list-toolbar" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px', alignItems: 'center' }}>
                                         <input
-                                            type="text"
+                                            type="search"
+                                            className="form-control input-sm"
                                             placeholder="Search..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             style={{
+                                                marginLeft: isMobile ? '0' : '10px',
+                                                display: 'inline-block',
+                                                width: '180px',
                                                 border: 'none',
-                                                borderBottom: '1px solid #eee',
-                                                width: '200px',
-                                                fontSize: '13px',
-                                                outline: 'none'
+                                                borderBottom: '1px solid #ccc',
+                                                borderRadius: '0',
+                                                boxShadow: 'none',
+                                                backgroundColor: 'transparent',
+                                                paddingLeft: '0',
+                                                outline: 'none',
+                                                textAlign: isMobile ? 'center' : 'left',
+                                                fontSize: '13px'
                                             }}
                                         />
                                         <div className="dt-buttons btn-group">
-                                            <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                            <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}><i className="fa fa-files-o"></i></button>
                                             <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Role_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
                                             <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Role_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
                                             <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Role_List.pdf', 'Role List'); }}><i className="fa fa-file-pdf-o"></i></button>
                                             <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Role List'); }}><i className="fa fa-print"></i></button>
                                             <div className="btn-group">
-                                                <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
                                                     <i className="fa fa-columns"></i>
                                                 </button>
                                                 {showColumnsDropdown && (
@@ -325,9 +343,9 @@ const RoleList = () => {
                                             </tbody>
                                         </table>
                                         <div className="pt15 pb15">
-                                            <Pagination 
-                                                totalItems={filteredList.length} 
-                                                itemsPerPage={recordsPerPage} 
+                                            <Pagination
+                                                totalItems={filteredList.length}
+                                                itemsPerPage={recordsPerPage}
                                                 currentPage={currentPage}
                                                 onPageChange={(page) => setCurrentPage(page)}
                                             />

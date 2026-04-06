@@ -7,6 +7,16 @@ import { useNavigate } from 'react-router-dom';
 
 const EmailSettings = () => {
     const navigate = useNavigate();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     const [loading, setLoading] = useState(false);
     const [emailType, setEmailType] = useState('send_email');
     const [formData, setFormData] = useState({
@@ -108,6 +118,8 @@ const EmailSettings = () => {
         setShowTestModal(false);
     };
 
+    const fieldStyle = isMobile ? { paddingLeft: '15px', paddingRight: '15px' } : {};
+
     return (
         <SettingsMenu>
             <div className="row">
@@ -126,8 +138,8 @@ const EmailSettings = () => {
                         <form className="form-horizontal" onSubmit={handleSave}>
                             <div className="box-body">
                                 <div className="form-group">
-                                    <label className="col-sm-3 control-label">Email Engine</label>
-                                    <div className="col-sm-6">
+                                    <label className="col-sm-3 control-label" style={fieldStyle}>Email Engine</label>
+                                    <div className="col-sm-6" style={fieldStyle}>
                                         <select className="form-control" value={emailType} onChange={(e) => setEmailType(e.target.value)}>
                                             <option value="send_email">Send Email</option>
                                             <option value="smtp">SMTP</option>
@@ -139,32 +151,32 @@ const EmailSettings = () => {
                                 {emailType === 'smtp' && (
                                     <>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">SMTP Username</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>SMTP Username</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <input type="text" className="form-control" value={formData.smtp_username} onChange={(e) => handleInputChange('smtp_username', e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">SMTP Password</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>SMTP Password</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <input type="password" className="form-control" value={formData.smtp_password} onChange={(e) => handleInputChange('smtp_password', e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">SMTP Server</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>SMTP Server</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <input type="text" className="form-control" value={formData.smtp_server} onChange={(e) => handleInputChange('smtp_server', e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">SMTP Port</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>SMTP Port</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <input type="text" className="form-control" value={formData.smtp_port} onChange={(e) => handleInputChange('smtp_port', e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">SMTP Security</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>SMTP Security</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <select className="form-control" value={formData.smtp_security} onChange={(e) => handleInputChange('smtp_security', e.target.value)}>
                                                     <option value="tls">TLS</option>
                                                     <option value="ssl">SSL</option>
@@ -173,8 +185,8 @@ const EmailSettings = () => {
                                             </div>
                                         </div>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">SMTP Auth</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>SMTP Auth</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <select className="form-control" value={formData.smtp_auth} onChange={(e) => handleInputChange('smtp_auth', e.target.value)}>
                                                     <option value="true">ON</option>
                                                     <option value="false">OFF</option>
@@ -187,26 +199,26 @@ const EmailSettings = () => {
                                 {emailType === 'aws_ses' && (
                                     <>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">Email</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>Email</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <input type="text" className="form-control" value={formData.aws_email} onChange={(e) => handleInputChange('aws_email', e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">Access Key ID</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>Access Key ID</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <input type="text" className="form-control" value={formData.access_key} onChange={(e) => handleInputChange('access_key', e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">Secret Access Key</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>Secret Access Key</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <input type="password" className="form-control" value={formData.secret_access_key} onChange={(e) => handleInputChange('secret_access_key', e.target.value)} />
                                             </div>
                                         </div>
                                         <div className="form-group">
-                                            <label className="col-sm-3 control-label">Region</label>
-                                            <div className="col-sm-6">
+                                            <label className="col-sm-3 control-label" style={fieldStyle}>Region</label>
+                                            <div className="col-sm-6" style={fieldStyle}>
                                                 <input type="text" className="form-control" value={formData.region} onChange={(e) => handleInputChange('region', e.target.value)} />
                                             </div>
                                         </div>

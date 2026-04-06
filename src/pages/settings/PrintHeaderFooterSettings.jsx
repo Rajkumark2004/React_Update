@@ -3,9 +3,20 @@ import SettingsMenu from "../../components/SettingsMenu";
 import "../../utils/include_files.js";
 import api from "../../services/api";
 import { useNavigate } from 'react-router-dom';
+import DropzoneUploader from "../../utils/DropzoneUploader";
 
 const PrintHeaderFooterSettings = () => {
     const navigate = useNavigate();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const isMobile = windowWidth < 768;
+
     const [activeTab, setActiveTab] = useState('fees_receipt');
     const [formData, setFormData] = useState({
         fees_receipt: { header_image: null, footer_content: '', current_image: '/header_fee_receipt.png' },
@@ -16,7 +27,6 @@ const PrintHeaderFooterSettings = () => {
 
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
-    const fileInputRef = useRef(null);
     const [refreshKey, setRefreshKey] = useState(Date.now());
 
     useEffect(() => {
@@ -47,6 +57,7 @@ const PrintHeaderFooterSettings = () => {
                     }
                 });
                 setFormData(newFormData);
+                setRefreshKey(Date.now()); // Re-render and re-init Dropify with fetched URLs
             }
         } catch (error) {
             console.error('Error fetching print settings:', error);
@@ -55,49 +66,22 @@ const PrintHeaderFooterSettings = () => {
         }
     };
 
-    // Initialize Dropify when tab changes
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            try {
-                const $ = window.jQuery;
-                if ($ && $.fn && typeof $.fn.dropify === 'function') {
-                    const drEvent = $('.dropify').dropify();
-                    
-                    drEvent.on('dropify.afterClear', () => {
-                        setFormData(prev => ({
-                            ...prev,
-                            [activeTab]: { ...prev[activeTab], header_image: null }
-                        }));
-                    });
-                }
-            } catch (error) {
-                console.error('Dropify initialization error:', error);
-            }
-        }, 100);
-
-        return () => clearTimeout(timer);
-    }, [activeTab, refreshKey]);
-
     const handleTabClick = (tab) => {
         setActiveTab(tab);
     };
 
-    const handleFileProcess = (tab, file) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            setFormData(prev => ({
-                ...prev,
-                [tab]: { ...prev[tab], header_image: file, current_image: e.target.result }
-            }));
-        };
-        reader.readAsDataURL(file);
+    const handleFileDrop = (tab, file, objectUrl) => {
+        setFormData(prev => ({
+            ...prev,
+            [tab]: { ...prev[tab], header_image: file, current_image: objectUrl }
+        }));
     };
 
-    const handleFileChange = (tab, e) => {
-        const file = e.target.files[0];
-        if (file) {
-            handleFileProcess(tab, file);
-        }
+    const handleFileClear = (tab) => {
+        setFormData(prev => ({
+            ...prev,
+            [tab]: { ...prev[tab], header_image: null, current_image: null }
+        }));
     };
 
     const handleTextChange = (tab, value) => {
@@ -160,7 +144,9 @@ const PrintHeaderFooterSettings = () => {
         }
     };
 
-// (Drag and drop helpers removed in favor of Dropify)
+    // (Drag and drop helpers removed in favor of Dropify)
+
+    const fieldStyle = isMobile ? { paddingLeft: '15px', paddingRight: '15px' } : {};
 
     const renderTabContent = (tabKey, title) => (
         <div className={`tab-pane ${activeTab === tabKey ? 'active' : ''}`}>
@@ -173,27 +159,27 @@ const PrintHeaderFooterSettings = () => {
                 <div className="row">
                     <div className="col-md-12">
                         <div className="form-group">
-                            <label>Header Image (2230px X 300px)<small className="req"> *</small></label>
-                            <input
-                                key={`${tabKey}-${refreshKey}`}
-                                id={`fileInput-${tabKey}`}
-                                type="file"
-                                className="dropify"
-                                data-height="150"
-                                data-default-file={formData[tabKey].current_image}
-                                onChange={(e) => handleFileChange(tabKey, e)}
-                                ref={fileInputRef}
-                                accept="image/*"
-                            />
+                            <label style={fieldStyle}>Header Image (2230px X 300px)<small className="req"> *</small></label>
+                            <div key={`${tabKey}-${refreshKey}`} style={fieldStyle}>
+                                <DropzoneUploader
+                                    defaultImage={formData[tabKey].current_image}
+                                    onDrop={(file, objectUrl) => handleFileDrop(tabKey, file, objectUrl)}
+                                    onClear={() => handleFileClear(tabKey)}
+                                    height={150}
+                                    accept={{ 'image/*': [] }}
+                                />
+                            </div>
                         </div>
                         <div className="form-group">
-                            <label>Footer Content</label>
-                            <textarea
-                                className="form-control"
-                                style={{ height: '250px' }}
-                                value={formData[tabKey].footer_content}
-                                onChange={(e) => handleTextChange(tabKey, e.target.value)}
-                            />
+                            <label style={fieldStyle}>Footer Content</label>
+                            <div style={fieldStyle}>
+                                <textarea
+                                    className="form-control"
+                                    style={{ height: '250px' }}
+                                    value={formData[tabKey].footer_content}
+                                    onChange={(e) => handleTextChange(tabKey, e.target.value)}
+                                />
+                            </div>
                             <span className="text-danger"></span>
                         </div>
                     </div>
@@ -212,6 +198,18 @@ const PrintHeaderFooterSettings = () => {
     return (
         <SettingsMenu>
             <div style={{ width: '100%', marginTop: '0px' }}>
+                <style>{`
+                    @media (max-width: 767px) {
+                        .nav-tabs-custom > .nav-tabs { 
+                            display: flex; 
+                            flex-direction: column; 
+                            margin-right: 0 !important; 
+                        }
+                        .nav-tabs-custom > .nav-tabs > li { float: none; display: block; }
+                        .nav-tabs-custom > .nav-tabs > li.header { text-align: center; margin-bottom: 10px; }
+                        .pull-right.back-btn-mobile { margin-top: 10px !important; margin-bottom: 10px; float: none !important; display: inline-block; margin-left: 15px; }
+                    }
+                `}</style>
                 <div className="row">
                     <div className="col-md-12">
                         <div className="nav-tabs-custom box box-primary theme-shadow">
@@ -233,13 +231,13 @@ const PrintHeaderFooterSettings = () => {
                                 </li>
                             </ul>
                             <button
-                                className="btn btn-primary btn-sm pull-right"
-                                style={{ borderRadius: '20px', padding: '6px 14px', marginTop: '-37px', marginRight: '15px', position: 'relative', zIndex: 0 }}
+                                className={`btn btn-primary btn-sm pull-right ${isMobile ? 'back-btn-mobile' : ''}`}
+                                style={{ borderRadius: '20px', padding: '6px 14px', marginTop: '-37px', marginRight: '10px', position: 'relative', zIndex: 0 }}
                                 onClick={() => navigate('/settings')}
                             >
                                 <i className="fa fa-arrow-left"></i> Back
                             </button>
-                            <div className="tab-content">
+                            <div className="tab-content" style={{ marginTop: isMobile ? '20px' : '0' }}>
                                 {activeTab === 'fees_receipt' && renderTabContent('fees_receipt', 'Fees Receipt')}
                                 {activeTab === 'payslip' && renderTabContent('payslip', 'Payslip')}
                                 {activeTab === 'online_admission' && renderTabContent('online_admission', 'Online Admission Receipt')}

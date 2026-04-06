@@ -5,7 +5,7 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import '../../styles/reports.css';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const AttendanceReport = () => {
@@ -36,8 +36,7 @@ const AttendanceReport = () => {
     const [studentId, setStudentId] = useState('');
     const [searchType, setSearchType] = useState('today');
     const [searchTerm, setSearchTerm] = useState('');
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const [visibleColumns, setVisibleColumns] = useState(new Set());
     const dropdownRef = React.useRef(null);
 
     // Table states
@@ -45,10 +44,13 @@ const AttendanceReport = () => {
     const [searched, setSearched] = useState(false);
     const [reportData, setReportData] = useState(null);
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(key)) newSet.delete(key);
+            else newSet.add(key);
+            return newSet;
+        });
     };
 
     useEffect(() => {
@@ -696,63 +698,176 @@ const AttendanceReport = () => {
         setAttendanceType('');
         setStudentId('');
         setSearchType('today');
+        setVisibleColumns(new Set());
     };
 
-    // ── Export helpers ──────────────────────────────────────────────
-    // class_attendance
-    const exportClassAttendance = (action) => {
-        if (!reportData?.students) return;
-        const hdrs = ['Student Name', 'Adm No', '%', 'P', 'L', 'A', 'H', 'F'];
-        const rows = reportData.students.map(s => [s.name, s.admission_no, s.percentage, s.counts.P, s.counts.L, s.counts.A, s.counts.H, s.counts.F].map(String));
-        if (action === 'copy') copyToClipboard(hdrs, rows);
-        if (action === 'excel') downloadExcel(hdrs, rows, 'Class_Attendance.xls');
-        if (action === 'csv') downloadCSV(hdrs, rows, 'Class_Attendance.csv');
-        if (action === 'pdf') downloadPDF(hdrs, rows, 'Class_Attendance.pdf', 'Student Attendance Report');
-        if (action === 'print') printTable(hdrs, rows, 'Student Attendance Report');
+    // ── Columns and Export Helpers ──────────────────────────────────────────────
+    const getColumnsForReport = () => {
+        const d = (activeReport === 'class_attendance' || activeReport === 'staff_report') && reportData ? getDaysArray(reportData.month, reportData.year) : [];
+        const dayCols = d.map(date => {
+            const dayNum = date.getDate();
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0);
+            return { key: `day_${dayNum}`, label: `${dayNum} ${dayName}` };
+        });
+
+        switch (activeReport) {
+            case 'class_attendance':
+                return [
+                    { key: 'student_name', label: 'Student Name' },
+                    { key: 'percentage', label: '(%)' },
+                    { key: 'P', label: 'P' },
+                    { key: 'L', label: 'L' },
+                    { key: 'A', label: 'A' },
+                    { key: 'F', label: 'F' },
+                    { key: 'H', label: 'H' },
+                    ...dayCols
+                ];
+            case 'type_report':
+                return [
+                    { key: 'admission_no', label: 'Admission No' },
+                    { key: 'student_name', label: 'Student Name' },
+                    { key: 'class_section', label: 'Class (Section)' },
+                    { key: 'father_name', label: 'Father Name' },
+                    { key: 'dob', label: 'Date Of Birth' },
+                    { key: 'adm_date', label: 'Adm Date' },
+                    { key: 'gender', label: 'Gender' },
+                    { key: 'mobile', label: 'Mobile' },
+                    { key: 'count', label: 'Count' }
+                ];
+            case 'daily_report':
+                return [
+                    { key: 'class_section', label: 'Class (Section)' },
+                    { key: 'total_present', label: 'Total Present' },
+                    { key: 'total_absent', label: 'Total Absent' },
+                    { key: 'present_percent', label: 'Present %' },
+                    { key: 'absent_percent', label: 'Absent %' }
+                ];
+            case 'staff_report':
+                return [
+                    { key: 'staff_name', label: 'Staff Name' },
+                    { key: 'percentage', label: '(%)' },
+                    { key: 'P', label: 'P' },
+                    { key: 'L', label: 'L' },
+                    { key: 'A', label: 'A' },
+                    { key: 'H', label: 'H' },
+                    { key: 'F', label: 'F' },
+                    ...dayCols
+                ];
+            case 'late_report':
+                return [
+                    { key: 's_no', label: 'S.No' },
+                    { key: 'name', label: 'Name' },
+                    { key: 'admission_no', label: 'Admission No' },
+                    { key: 'class_section', label: 'Class (Section)' },
+                    { key: 'date', label: 'Date' },
+                    { key: 'time', label: 'Time' },
+                    { key: 'roll_no', label: 'Roll No' }
+                ];
+            default: return [];
+        }
     };
-    // type_report
-    const exportTypeReport = (action) => {
-        if (!Array.isArray(reportData)) return;
-        const hdrs = ['Admission No', 'Student Name', 'Class (Section)', 'Father Name', 'Date Of Birth', 'Adm Date', 'Gender', 'Mobile', 'Count'];
-        const rows = reportData.map(s => [s.admission_no, s.name, `${s.class} (${s.section})`, s.father_name, s.dob, s.admission_date, s.gender, s.mobile, s.count].map(v => String(v ?? '')));
-        if (action === 'copy') copyToClipboard(hdrs, rows);
-        if (action === 'excel') downloadExcel(hdrs, rows, 'Type_Report.xls');
-        if (action === 'csv') downloadCSV(hdrs, rows, 'Type_Report.csv');
-        if (action === 'pdf') downloadPDF(hdrs, rows, 'Type_Report.pdf', 'Student Attendance Type Report');
-        if (action === 'print') printTable(hdrs, rows, 'Student Attendance Type Report');
+
+    // Initialize visibleColumns when reportData changes
+    useEffect(() => {
+        if (searched && reportData && visibleColumns.size === 0) {
+            const cols = getColumnsForReport();
+            setVisibleColumns(new Set(cols.map(c => c.key)));
+        }
+    }, [searched, reportData]);
+
+    const getExportData = () => {
+        const columns = getColumnsForReport();
+        const activeCols = columns.filter(c => visibleColumns.has(c.key));
+        const headers = activeCols.map(c => c.label);
+        const data = getFilteredData();
+        const d = (activeReport === 'class_attendance' || activeReport === 'staff_report') && reportData ? getDaysArray(reportData.month, reportData.year) : [];
+
+        const rows = data.map((item, index) => {
+            const rowData = {};
+            switch (activeReport) {
+                case 'class_attendance':
+                    rowData.student_name = `${item.name} (Adm: ${item.admission_no})`;
+                    rowData.percentage = item.percentage;
+                    rowData.P = item.counts.P;
+                    rowData.L = item.counts.L;
+                    rowData.A = item.counts.A;
+                    rowData.F = item.counts.F;
+                    rowData.H = item.counts.H;
+                    d.forEach(day => {
+                        const dayNum = day.getDate();
+                        const val = item.daily[dayNum] || '-';
+                        rowData[`day_${dayNum}`] = val.replace(/<[^>]*>/g, '');
+                    });
+                    break;
+                case 'type_report':
+                    rowData.admission_no = item.admission_no;
+                    rowData.student_name = item.name;
+                    rowData.class_section = `${item.class} (${item.section})`;
+                    rowData.father_name = item.father_name;
+                    rowData.dob = item.dob;
+                    rowData.adm_date = item.admission_date;
+                    rowData.gender = item.gender;
+                    rowData.mobile = item.mobile;
+                    rowData.count = item.count;
+                    break;
+                case 'daily_report':
+                    rowData.class_section = item.class_section || item.class_name || '-';
+                    rowData.total_present = item.total_present;
+                    rowData.total_absent = item.total_absent;
+                    rowData.present_percent = item.present_percent;
+                    rowData.absent_percent = item.absent_persent || item.absent_percent;
+                    break;
+                case 'staff_report':
+                    rowData.staff_name = `${item.name} (ID: ${item.employee_id})`;
+                    rowData.percentage = item.percentage;
+                    rowData.P = item.counts.P;
+                    rowData.L = item.counts.L;
+                    rowData.A = item.counts.A;
+                    rowData.H = item.counts.H;
+                    rowData.F = item.counts.F;
+                    d.forEach(day => {
+                        const dayNum = day.getDate();
+                        rowData[`day_${dayNum}`] = item.daily[dayNum] || '-';
+                    });
+                    break;
+                case 'late_report':
+                    rowData.s_no = indexOfFirstItem + index + 1;
+                    rowData.name = `${item.firstname} ${item.lastname}`;
+                    rowData.admission_no = item.admission_no;
+                    rowData.class_section = `${item.class} (${item.section})`;
+                    rowData.date = item.date;
+                    rowData.time = item.time;
+                    rowData.roll_no = item.roll_no;
+                    break;
+            }
+            return activeCols.map(c => String(rowData[c.key] ?? ''));
+        });
+
+        // Add total row for daily_report
+        if (activeReport === 'daily_report' && reportData.totals) {
+            const totalRow = activeCols.map(c => {
+                if (c.key === 'class_section') return 'Total';
+                if (c.key === 'total_present') return String(reportData.totals.present);
+                if (c.key === 'total_absent') return String(reportData.totals.absent);
+                if (c.key === 'present_percent') return String(reportData.totals.present_percent);
+                if (c.key === 'absent_percent') return String(reportData.totals.absent_percent);
+                return '';
+            });
+            rows.push(totalRow);
+        }
+
+        return { headers, rows };
     };
-    // daily_report
-    const exportDailyReport = (action) => {
-        if (!reportData?.list) return;
-        const hdrs = ['Class (Section)', 'Total Present', 'Total Absent', 'Present %', 'Absent %'];
-        const rows = reportData.list.map(r => [r.class_section || r.class_name || '-', r.total_present, r.total_absent, r.present_percent, r.absent_persent || r.absent_percent].map(v => String(v ?? '')));
-        if (action === 'copy') copyToClipboard(hdrs, rows);
-        if (action === 'excel') downloadExcel(hdrs, rows, 'Daily_Attendance.xls');
-        if (action === 'csv') downloadCSV(hdrs, rows, 'Daily_Attendance.csv');
-        if (action === 'pdf') downloadPDF(hdrs, rows, 'Daily_Attendance.pdf', 'Daily Attendance Report');
-        if (action === 'print') printTable(hdrs, rows, 'Daily Attendance Report');
-    };
-    // staff_report
-    const exportStaffReport = (action) => {
-        if (!reportData?.staff) return;
-        const hdrs = ['Staff Name', 'Employee ID', '%', 'P', 'L', 'A', 'H', 'F'];
-        const rows = reportData.staff.map(s => [s.name, s.employee_id, s.percentage, s.counts.P, s.counts.L, s.counts.A, s.counts.H, s.counts.F].map(String));
-        if (action === 'copy') copyToClipboard(hdrs, rows);
-        if (action === 'excel') downloadExcel(hdrs, rows, 'Staff_Attendance.xls');
-        if (action === 'csv') downloadCSV(hdrs, rows, 'Staff_Attendance.csv');
-        if (action === 'pdf') downloadPDF(hdrs, rows, 'Staff_Attendance.pdf', 'Staff Attendance Report');
-        if (action === 'print') printTable(hdrs, rows, 'Staff Attendance Report');
-    };
-    // late_report
-    const exportLateReport = (action) => {
-        if (!Array.isArray(reportData)) return;
-        const hdrs = ['S.No', 'Name', 'Admission No', 'Class (Section)', 'Date', 'Time', 'Roll No'];
-        const rows = reportData.map((r, i) => [i + 1, `${r.firstname} ${r.lastname}`, r.admission_no, `${r.class} (${r.section})`, r.date, r.time, r.roll_no].map(v => String(v ?? '')));
-        if (action === 'copy') copyToClipboard(hdrs, rows);
-        if (action === 'excel') downloadExcel(hdrs, rows, 'Late_Entries.xls');
-        if (action === 'csv') downloadCSV(hdrs, rows, 'Late_Entries.csv');
-        if (action === 'pdf') downloadPDF(hdrs, rows, 'Late_Entries.pdf', 'Late Entries Report');
-        if (action === 'print') printTable(hdrs, rows, 'Late Entries Report');
+
+    const getExportTitle = () => {
+        switch (activeReport) {
+            case 'class_attendance': return 'Student Attendance Report';
+            case 'type_report': return 'Student Attendance Type Report';
+            case 'daily_report': return 'Daily Attendance Report';
+            case 'staff_report': return 'Staff Attendance Report';
+            case 'late_report': return 'Late Entries Report';
+            default: return 'Attendance Report';
+        }
     };
 
     const getDaysArray = (monthName, yearVal) => {
@@ -766,108 +881,7 @@ const AttendanceReport = () => {
         return result;
     };
 
-    const renderExportToolbar = (exportHandler, headers) => (
-        <div
-            className="row mb-2 no-print"
-            style={{
-                marginBottom: '10px',
-                display: isMobile ? 'flex' : 'block',
-                flexDirection: isMobile ? 'column' : 'row',
-                alignItems: isMobile ? 'center' : 'stretch',
-                gap: isMobile ? '15px' : '0'
-            }}
-        >
-            <div
-                className={isMobile ? '' : 'col-sm-6'}
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: isMobile ? '15px' : '20px',
-                    justifyContent: isMobile ? 'center' : 'flex-start',
-                    flexWrap: 'wrap'
-                }}
-            >
-                <div className="dataTables_length">
-                    <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                        Records:
-                        <select
-                            value={itemsPerPage}
-                            onChange={(e) => {
-                                setItemsPerPage(Number(e.target.value));
-                                setCurrentPage(1);
-                            }}
-                            className="form-control input-sm"
-                            style={{ width: '80px', margin: '0 10px' }}
-                        >
-                            <option value="10">10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                            <option value="-1">All</option>
-                        </select>
-                    </label>
-                </div>
-                <div className="dataTables_filter">
-                    <input
-                        type="search"
-                        className="form-control input-sm"
-                        placeholder="Search..."
-                        style={{
-                            marginLeft: isMobile ? '0' : '10px',
-                            display: 'inline-block',
-                            width: '180px',
-                            border: 'none',
-                            borderBottom: '1px solid #ccc',
-                            borderRadius: '0',
-                            boxShadow: 'none',
-                            backgroundColor: 'transparent',
-                            paddingLeft: '0',
-                            outline: 'none',
-                            textAlign: isMobile ? 'center' : 'left'
-                        }}
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setCurrentPage(1);
-                        }}
-                    />
-                </div>
-            </div>
-            <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
-                <div className="dt-buttons btn-group" style={{ float: 'right' }}>
-                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => exportHandler('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                        <i className="fa fa-files-o"></i>
-                    </button>
-                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => exportHandler('excel')}>
-                        <i className="fa fa-file-excel-o"></i>
-                    </button>
-                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => exportHandler('csv')}>
-                        <i className="fa fa-file-text-o"></i>
-                    </button>
-                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => exportHandler('pdf')}>
-                        <i className="fa fa-file-pdf-o"></i>
-                    </button>
-                    <button className="btn btn-default btn-sm" title="Print" onClick={() => exportHandler('print')}>
-                        <i className="fa fa-print"></i>
-                    </button>
-                    <div className="btn-group" ref={dropdownRef}>
-                        <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                            <i className="fa fa-columns"></i>
-                        </button>
-                        {showColumnsDropdown && (
-                            <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                {headers.map((h, i) => (
-                                    <label key={i} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                        <input type="checkbox" checked={!hiddenColumns.includes(i)} onChange={() => toggleColumnVisibility(i)} style={{ marginRight: '6px' }} /> {h}
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+
 
     const days = (activeReport === 'class_attendance' || activeReport === 'staff_report') && reportData ? getDaysArray(reportData.month, reportData.year) : [];
 
@@ -972,28 +986,7 @@ const AttendanceReport = () => {
                 }
                 .form-control:focus { border-bottom: 1px solid #3c8dbc !important; outline: none !important; }
                 
-                /* DT Button styles */
-                .dt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%; }
-                .dt-buttons { display: flex; border-bottom: 1px solid #d2d6de; gap: 0; }
-                .dt-button { 
-                    padding: 3px 6px; 
-                    border: none; 
-                    background: transparent; 
-                    font-size: 15px; 
-                    color: #555; 
-                    cursor: pointer;
-                }
-                .dt-button:hover { background: #f9f9f9; }
-                .dt-search input { 
-                    border: none; 
-                    border-bottom: 1px solid #d2d6de; 
-                    padding: 4px 0; 
-                    font-size: 13px; 
-                    width: 160px; 
-                    background: transparent; 
-                    outline: none;
-                }
-                .dt-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 8px; }
+                 .dt-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 8px; }
                 .dt-pagination { display: flex; list-style: none; padding: 0; margin: 0; }
                 .dt-pagination li { border: 1px solid #eee; padding: 2px 8px; cursor: pointer; background: #fff; margin-left: -1px; font-size: 10px; }
                 .dt-pagination li.active { border-color: #eee; color: #333; font-weight: bold; }
@@ -1224,16 +1217,53 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'class_attendance' && (
                                         <div className="table-responsive" style={{ marginTop: '10px' }}>
-                                            {renderExportToolbar(exportClassAttendance, ['Student Name', '(%)', 'P', 'L', 'A', 'F', 'H'])}
+                                            <TableToolbar
+                                                searchTerm={searchTerm}
+                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                recordsPerPage={itemsPerPage}
+                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                                                columns={getColumnsForReport()}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={toggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="Class_Attendance"
+                                                exportTitle={getExportTitle()}
+                                            />
 
                                             <table className="table table-striped table-bordered table-hover attendance-table">
                                                 <thead>
-                                                    <tr><th rowSpan="2" style={{ textAlign: 'left' }}>Student Name</th><th rowSpan="2">(%)</th><th colSpan="5">Total</th>{days.map(d => <th key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>)}</tr>
-                                                    <tr>{attTypes.concat([{ key: 'H', type: 'Holiday' }]).map(t => <th key={t.key}>{t.key}</th>)}</tr>
+                                                    <tr>
+                                                        {visibleColumns.has('student_name') && <th rowSpan="2" style={{ textAlign: 'left' }}>Student Name</th>}
+                                                        {visibleColumns.has('percentage') && <th rowSpan="2">(%)</th>}
+                                                        {(visibleColumns.has('P') || visibleColumns.has('L') || visibleColumns.has('A') || visibleColumns.has('F') || visibleColumns.has('H')) && (
+                                                            <th colSpan={['P', 'L', 'A', 'F', 'H'].filter(k => visibleColumns.has(k)).length}>Total</th>
+                                                        )}
+                                                        {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
+                                                            <th key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>
+                                                        ))}
+                                                    </tr>
+                                                    <tr>
+                                                        {visibleColumns.has('P') && <th>P</th>}
+                                                        {visibleColumns.has('L') && <th>L</th>}
+                                                        {visibleColumns.has('A') && <th>A</th>}
+                                                        {visibleColumns.has('F') && <th>F</th>}
+                                                        {visibleColumns.has('H') && <th>H</th>}
+                                                    </tr>
                                                 </thead>
                                                 <tbody>
                                                     {currentData.map(s => (
-                                                        <tr key={s.id}><td style={{ textAlign: 'left' }}>{s.name} (Adm: {s.admission_no})</td><td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td><td>{s.counts.P}</td><td>{s.counts.L}</td><td>{s.counts.A}</td><td>{s.counts.F}</td><td>{s.counts.H}</td>{days.map(d => <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""} dangerouslySetInnerHTML={{ __html: s.daily[d.getDate()] || '-' }}></td>)}</tr>
+                                                        <tr key={s.id}>
+                                                            {visibleColumns.has('student_name') && <td style={{ textAlign: 'left' }}>{s.name} (Adm: {s.admission_no})</td>}
+                                                            {visibleColumns.has('percentage') && <td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td>}
+                                                            {visibleColumns.has('P') && <td>{s.counts.P}</td>}
+                                                            {visibleColumns.has('L') && <td>{s.counts.L}</td>}
+                                                            {visibleColumns.has('A') && <td>{s.counts.A}</td>}
+                                                            {visibleColumns.has('F') && <td>{s.counts.F}</td>}
+                                                            {visibleColumns.has('H') && <td>{s.counts.H}</td>}
+                                                            {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
+                                                                <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""} dangerouslySetInnerHTML={{ __html: s.daily[d.getDate()] || '-' }}></td>
+                                                            ))}
+                                                        </tr>
                                                     ))}
                                                 </tbody>
                                             </table>
@@ -1251,11 +1281,44 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'type_report' && (
                                         <div className="table-responsive">
-                                            {renderExportToolbar(exportTypeReport, ['Admission No', 'Student Name', 'Class (Section)', 'Father Name', 'Date Of Birth', 'Adm Date', 'Gender', 'Mobile', 'Count'])}
+                                            <TableToolbar
+                                                searchTerm={searchTerm}
+                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                recordsPerPage={itemsPerPage}
+                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                                                columns={getColumnsForReport()}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={toggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="Type_Report"
+                                                exportTitle={getExportTitle()}
+                                            />
                                             <table className="table table-hover attendance-table minimal-table">
-                                                <thead><tr><th>Admission No</th><th>Student Name</th><th>Class (Section)</th><th>Father Name</th><th>Date Of Birth</th><th>Adm Date</th><th>Gender</th><th>Mobile</th><th>Count</th></tr></thead>
+                                                <thead>
+                                                    <tr>
+                                                        {visibleColumns.has('admission_no') && <th>Admission No</th>}
+                                                        {visibleColumns.has('student_name') && <th>Student Name</th>}
+                                                        {visibleColumns.has('class_section') && <th>Class (Section)</th>}
+                                                        {visibleColumns.has('father_name') && <th>Father Name</th>}
+                                                        {visibleColumns.has('dob') && <th>Date Of Birth</th>}
+                                                        {visibleColumns.has('adm_date') && <th>Adm Date</th>}
+                                                        {visibleColumns.has('gender') && <th>Gender</th>}
+                                                        {visibleColumns.has('mobile') && <th>Mobile</th>}
+                                                        {visibleColumns.has('count') && <th>Count</th>}
+                                                    </tr>
+                                                </thead>
                                                 <tbody>{currentData.map(s => (
-                                                    <tr key={s.id}><td>{s.admission_no}</td><td>{s.name}</td><td>{s.class} ({s.section})</td><td>{s.father_name}</td><td>{s.dob}</td><td>{s.admission_date}</td><td>{s.gender}</td><td>{s.mobile}</td><td>{s.count}</td></tr>
+                                                    <tr key={s.id}>
+                                                        {visibleColumns.has('admission_no') && <td>{s.admission_no}</td>}
+                                                        {visibleColumns.has('student_name') && <td>{s.name}</td>}
+                                                        {visibleColumns.has('class_section') && <td>{s.class} ({s.section})</td>}
+                                                        {visibleColumns.has('father_name') && <td>{s.father_name}</td>}
+                                                        {visibleColumns.has('dob') && <td>{s.dob}</td>}
+                                                        {visibleColumns.has('adm_date') && <td>{s.admission_date}</td>}
+                                                        {visibleColumns.has('gender') && <td>{s.gender}</td>}
+                                                        {visibleColumns.has('mobile') && <td>{s.mobile}</td>}
+                                                        {visibleColumns.has('count') && <td>{s.count}</td>}
+                                                    </tr>
                                                 ))}</tbody>
                                             </table>
                                             <div className="pt15 pb15 no-print">
@@ -1271,17 +1334,36 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'daily_report' && (
                                         <div className="table-responsive">
-                                            {renderExportToolbar(exportDailyReport, ['Class (Section)', 'Total Present', 'Total Absent', 'Present %', 'Absent %'])}
+                                            <TableToolbar
+                                                searchTerm={searchTerm}
+                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                recordsPerPage={itemsPerPage}
+                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                                                columns={getColumnsForReport()}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={toggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="Daily_Attendance"
+                                                exportTitle={getExportTitle()}
+                                            />
                                             <table className="table table-hover attendance-table minimal-table">
-                                                <thead><tr><th>Class (Section)</th><th>Total Present</th><th>Total Absent</th><th>Present %</th><th>Absent %</th></tr></thead>
+                                                <thead>
+                                                    <tr>
+                                                        {visibleColumns.has('class_section') && <th>Class (Section)</th>}
+                                                        {visibleColumns.has('total_present') && <th>Total Present</th>}
+                                                        {visibleColumns.has('total_absent') && <th>Total Absent</th>}
+                                                        {visibleColumns.has('present_percent') && <th>Present %</th>}
+                                                        {visibleColumns.has('absent_percent') && <th>Absent %</th>}
+                                                    </tr>
+                                                </thead>
                                                 <tbody>
                                                     {currentData.map((r, i) => (
                                                         <tr key={r.id || indexOfFirstItem + i}>
-                                                            <td>{r.class_section || r.class_name || '-'}</td>
-                                                            <td>{r.total_present}</td>
-                                                            <td>{r.total_absent}</td>
-                                                            <td>{r.present_percent}</td>
-                                                            <td>{r.absent_persent || r.absent_percent}</td>
+                                                            {visibleColumns.has('class_section') && <td>{r.class_section || r.class_name || '-'}</td>}
+                                                            {visibleColumns.has('total_present') && <td>{r.total_present}</td>}
+                                                            {visibleColumns.has('total_absent') && <td>{r.total_absent}</td>}
+                                                            {visibleColumns.has('present_percent') && <td>{r.present_percent}</td>}
+                                                            {visibleColumns.has('absent_percent') && <td>{r.absent_persent || r.absent_percent}</td>}
                                                         </tr>
                                                     ))
                                                     }
@@ -1309,15 +1391,52 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'staff_report' && (
                                         <div className="table-responsive">
-                                            {renderExportToolbar(exportStaffReport, ['Staff Name', '(%)', 'P', 'L', 'A', 'H', 'F'])}
+                                            <TableToolbar
+                                                searchTerm={searchTerm}
+                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                recordsPerPage={itemsPerPage}
+                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                                                columns={getColumnsForReport()}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={toggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="Staff_Attendance"
+                                                exportTitle={getExportTitle()}
+                                            />
                                             <table className="table table-striped table-bordered table-hover attendance-table">
                                                 <thead>
-                                                    <tr><th rowSpan="2" style={{ textAlign: 'left' }}>Staff Name</th><th rowSpan="2">(%)</th><th colSpan="5">Total</th>{days.map(d => <th key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>)}</tr>
-                                                    <tr>{attTypes.concat([{ key: 'H', type: 'Holiday' }]).map(t => <th key={t.key}>{t.key}</th>)}</tr>
+                                                    <tr>
+                                                        {visibleColumns.has('staff_name') && <th rowSpan="2" style={{ textAlign: 'left' }}>Staff Name</th>}
+                                                        {visibleColumns.has('percentage') && <th rowSpan="2">(%)</th>}
+                                                        {(visibleColumns.has('P') || visibleColumns.has('L') || visibleColumns.has('A') || visibleColumns.has('H') || visibleColumns.has('F')) && (
+                                                            <th colSpan={['P', 'L', 'A', 'H', 'F'].filter(k => visibleColumns.has(k)).length}>Total</th>
+                                                        )}
+                                                        {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
+                                                            <th key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>
+                                                        ))}
+                                                    </tr>
+                                                    <tr>
+                                                        {visibleColumns.has('P') && <th>P</th>}
+                                                        {visibleColumns.has('L') && <th>L</th>}
+                                                        {visibleColumns.has('A') && <th>A</th>}
+                                                        {visibleColumns.has('H') && <th>H</th>}
+                                                        {visibleColumns.has('F') && <th>F</th>}
+                                                    </tr>
                                                 </thead>
                                                 <tbody>
                                                     {currentData.map(s => (
-                                                        <tr key={s.id}><td style={{ textAlign: 'left' }}>{s.name} (ID: {s.employee_id})</td><td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td><td>{s.counts.P}</td><td>{s.counts.L}</td><td>{s.counts.A}</td><td>{s.counts.H}</td><td>{s.counts.F}</td>{days.map(d => <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{s.daily[d.getDate()] || '-'}</td>)}</tr>
+                                                        <tr key={s.id}>
+                                                            {visibleColumns.has('staff_name') && <td style={{ textAlign: 'left' }}>{s.name} (ID: {s.employee_id})</td>}
+                                                            {visibleColumns.has('percentage') && <td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td>}
+                                                            {visibleColumns.has('P') && <td>{s.counts.P}</td>}
+                                                            {visibleColumns.has('L') && <td>{s.counts.L}</td>}
+                                                            {visibleColumns.has('A') && <td>{s.counts.A}</td>}
+                                                            {visibleColumns.has('H') && <td>{s.counts.H}</td>}
+                                                            {visibleColumns.has('F') && <td>{s.counts.F}</td>}
+                                                            {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
+                                                                <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{s.daily[d.getDate()] || '-'}</td>
+                                                            ))}
+                                                        </tr>
                                                     ))
                                                     }
                                                 </tbody>
@@ -1335,18 +1454,39 @@ const AttendanceReport = () => {
 
                                     {activeReport === 'late_report' && (
                                         <div className="table-responsive">
-                                            {renderExportToolbar(exportLateReport, ['S.No', 'Name', 'Admission No', 'Class (Section)', 'Date', 'Time', 'Roll No'])}
+                                            <TableToolbar
+                                                searchTerm={searchTerm}
+                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                recordsPerPage={itemsPerPage}
+                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                                                columns={getColumnsForReport()}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={toggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="Late_Entries"
+                                                exportTitle={getExportTitle()}
+                                            />
                                             <table className="table table-hover attendance-table minimal-table">
-                                                <thead><tr><th>S.No</th><th>Name</th><th>Admission No</th><th>Class (Section)</th><th>Date</th><th>Time</th><th>Roll No</th></tr></thead>
+                                                <thead>
+                                                    <tr>
+                                                        {visibleColumns.has('s_no') && <th>S.No</th>}
+                                                        {visibleColumns.has('name') && <th>Name</th>}
+                                                        {visibleColumns.has('admission_no') && <th>Admission No</th>}
+                                                        {visibleColumns.has('class_section') && <th>Class (Section)</th>}
+                                                        {visibleColumns.has('date') && <th>Date</th>}
+                                                        {visibleColumns.has('time') && <th>Time</th>}
+                                                        {visibleColumns.has('roll_no') && <th>Roll No</th>}
+                                                    </tr>
+                                                </thead>
                                                 <tbody>{currentData.map((r, i) => (
                                                     <tr key={r.id || indexOfFirstItem + i}>
-                                                        <td>{indexOfFirstItem + i + 1}</td>
-                                                        <td>{r.firstname} {r.lastname}</td>
-                                                        <td>{r.admission_no}</td>
-                                                        <td>{r.class} ({r.section})</td>
-                                                        <td>{r.date}</td>
-                                                        <td>{r.time}</td>
-                                                        <td>{r.roll_no}</td>
+                                                        {visibleColumns.has('s_no') && <td>{indexOfFirstItem + i + 1}</td>}
+                                                        {visibleColumns.has('name') && <td>{r.firstname} {r.lastname}</td>}
+                                                        {visibleColumns.has('admission_no') && <td>{r.admission_no}</td>}
+                                                        {visibleColumns.has('class_section') && <td>{r.class} ({r.section})</td>}
+                                                        {visibleColumns.has('date') && <td>{r.date}</td>}
+                                                        {visibleColumns.has('time') && <td>{r.time}</td>}
+                                                        {visibleColumns.has('roll_no') && <td>{r.roll_no}</td>}
                                                     </tr>
                                                 ))}</tbody>
                                             </table>
