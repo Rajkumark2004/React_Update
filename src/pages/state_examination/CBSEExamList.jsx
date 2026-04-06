@@ -646,7 +646,24 @@ const CBSEExamList = () => {
                     padding: 15px 0;
                     font-size: 13px;
                 }
+                .scroll-area { width: 100%; }
+                /* Hide scrollbar but keep scroll functionality */
+                .scroll-area::-webkit-scrollbar, 
+                .mailbox-messages::-webkit-scrollbar,
+                .modal.fade.in::-webkit-scrollbar {
+                    display: none;
+                }
+                .scroll-area, 
+                .mailbox-messages,
+                .modal.fade.in {
+                    -ms-overflow-style: none;  /* IE and Edge */
+                    scrollbar-width: none;  /* Firefox */
+                }
                 @media (max-width: 1177px) {
+                    .scroll-area {
+                        max-height: 70vh;
+                        overflow-y: auto;
+                    }
                     .table-responsive table.example {
                         min-width: 1100px !important;
                     }
@@ -917,8 +934,8 @@ const CBSEExamList = () => {
 
             {/* Add Exam Modal */}
             {showAddModal && (
-                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
-                    <div className="modal-dialog modal-lg">
+                <div className="modal fade in" style={{ display: 'block', overflow: 'auto', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
+                    <div className="modal-dialog modal-lg modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <button type="button" className="close" onClick={() => { setShowAddModal(false); setActiveExam(null); }}>&times;</button>
@@ -1023,7 +1040,7 @@ const CBSEExamList = () => {
                                                     <label>Section</label><small className="req"> *</small>
                                                     <div className="checkbox-dropdown-container">
                                                         <div
-                                                            className="custom-select"
+                                                            className="custom-select-trigger"
                                                             onClick={() => setIsSectionOpen(!isSectionOpen)}
                                                             style={{
                                                                 border: '1px solid #ccc',
@@ -1142,7 +1159,7 @@ const CBSEExamList = () => {
 
             {/* Action Modals */}
             {modalConfig.show && modalConfig.type !== 'assign' && modalConfig.type !== 'subjects' && modalConfig.type !== 'remarks' && modalConfig.type !== 'attendance' && (
-                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px', overflow: 'auto', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
+                <div className="modal fade in" style={{ display: 'block', overflow: 'auto', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
                     <div className="modal-dialog modal-xl">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -1351,7 +1368,7 @@ const CBSEExamList = () => {
             )}
 
             {modalConfig.show && modalConfig.type === 'remarks' && activeExam && (
-                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
+                <div className="modal fade in" style={{ display: 'block' }}>
                     <div className="modal-dialog modal-xl">
                         <div className="modal-content">
                             <div className="modal-header">
@@ -1367,7 +1384,7 @@ const CBSEExamList = () => {
             )}
 
             {modalConfig.show && modalConfig.type === 'attendance' && activeExam && (
-                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
+                <div className="modal fade in" style={{ display: 'block' }}>
                     <div className="modal-dialog modal-xl">
                         <div className="modal-content">
                             <div className="modal-header">
