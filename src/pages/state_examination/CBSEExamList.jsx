@@ -602,7 +602,7 @@ const CBSEExamList = () => {
                 .noExport { }
                 .input-group-sm .form-control { height: 30px; }
                 .table-responsive {
-                    overflow: hidden !important;
+                    overflow-x: auto !important;
                 }
                 .table-responsive table.example {
                     table-layout: fixed !important;
