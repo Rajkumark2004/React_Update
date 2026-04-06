@@ -267,8 +267,8 @@ const Report = () => {
                                 </div>
                             </div>
                             <div className="col-sm-12">
-                                <div className="form-group">
-                                    <button type="submit" className="btn btn-primary pull-right btn-sm" disabled={searchLoading}>
+                                <div className="form-group" style={{ textAlign: 'right', marginTop: '10px' }}>
+                                    <button type="submit" className="btn btn-primary btn-sm" style={{ borderRadius: '20px', padding: '6px 20px' }} disabled={searchLoading}>
                                         {searchLoading ? <i className="fa fa-spinner fa-spin"></i> : <i className="fa fa-search"></i>} Search
                                     </button>
                                 </div>
@@ -277,25 +277,6 @@ const Report = () => {
                     </div>
                     {results && results.students && (
                         <div className="box-body">
-                            <style>
-                                {`
-                                    @media (max-width: 767px) {
-                                        .report-toolbar-stack {
-                                            display: flex;
-                                            justify-content: flex-end !important;
-                                            width: 100%;
-                                            margin-bottom: 10px;
-                                        }
-                                        .report-table-responsive {
-                                            border: 1px solid #ddd;
-                                            border-radius: 4px;
-                                        }
-                                    }
-                                    .hover-report-row:hover {
-                                        background-color: #fcfcfc !important;
-                                    }
-                                `}
-                            </style>
                             <div className="report-toolbar-stack" style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
                                 <div className="btn-group">
                                     <button className="btn btn-default btn-sm" title="Print" onClick={() => window.print()}><i className="fa fa-print"></i></button>
@@ -396,8 +377,8 @@ const Report = () => {
                                 </div>
                             </div>
                             <div className="col-sm-12">
-                                <div className="form-group">
-                                    <button type="submit" className="btn btn-primary pull-right btn-sm" disabled={searchLoading}>
+                                <div className="form-group" style={{ textAlign: 'right', marginTop: '10px' }}>
+                                    <button type="submit" className="btn btn-primary btn-sm" style={{ borderRadius: '20px', padding: '6px 20px' }} disabled={searchLoading}>
                                         {searchLoading ? <i className="fa fa-spinner fa-spin"></i> : <i className="fa fa-search"></i>} Search
                                     </button>
                                 </div>
@@ -529,8 +510,8 @@ const Report = () => {
                                 </div>
                             </div>
                             <div className="col-sm-12">
-                                <div className="form-group">
-                                    <button type="submit" className="btn btn-primary pull-right btn-sm" disabled={searchLoading}>
+                                <div className="form-group" style={{ textAlign: 'right', marginTop: '10px' }}>
+                                    <button type="submit" className="btn btn-primary btn-sm" style={{ borderRadius: '20px', padding: '6px 20px' }} disabled={searchLoading}>
                                         {searchLoading ? <i className="fa fa-spinner fa-spin"></i> : <i className="fa fa-search"></i>} Search
                                     </button>
                                 </div>
@@ -545,6 +526,25 @@ const Report = () => {
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <style>
+                {`
+                    @media (max-width: 767px) {
+                        .report-toolbar-stack {
+                            display: flex;
+                            justify-content: flex-end !important;
+                            width: 100%;
+                            margin-bottom: 10px;
+                        }
+                        .report-table-responsive {
+                            border: 1px solid #ddd;
+                            border-radius: 4px;
+                        }
+                    }
+                    .hover-report-row:hover {
+                        background-color: #fcfcfc !important;
+                    }
+                `}
+            </style>
             <Header />
             <Sidebar />
 
