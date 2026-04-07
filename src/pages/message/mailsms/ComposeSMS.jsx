@@ -330,6 +330,80 @@ const ComposeSMS = () => {
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <style>
+                {`
+                @media (max-width: 399px) {
+                    .nav-tabs-reorder {
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        justify-content: flex-end !important;
+                    }
+                    .nav-tabs-reorder li.header {
+                        order: 10 !important;
+                        width: 100% !important;
+                        float: none !important;
+                        margin-top: 5px !important;
+                        padding: 10px 15px !important;
+                    }
+                    .nav-tabs-reorder li:nth-child(2) { 
+                        order: 4 !important; 
+                        padding-right: 10px !important;
+                    } 
+                    .nav-tabs-reorder li:nth-child(3) { order: 3 !important; } 
+                    .nav-tabs-reorder li:nth-child(4) { order: 2 !important; } 
+                    .nav-tabs-reorder li:nth-child(5) { order: 1 !important; } 
+                    
+                    .nav-tabs-reorder li.pull-right {
+                        float: none !important;
+                        margin-left: 0 !important;
+                        margin-right: 0 !important;
+                    }
+                    .nav-tabs-reorder li a {
+                        padding: 10px 8px !important;
+                        font-size: 13px !important;
+                    }
+                }
+                
+                @media (max-width: 600px) {
+                    .mobile-footer-v2 {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 8px !important;
+                        width: 100% !important;
+                        padding: 10px 0 !important;
+                    }
+                    .mobile-radio-group {
+                        display: flex !important;
+                        gap: 20px !important;
+                        margin-bottom: 0 !important;
+                    }
+                    .mobile-date-label {
+                        font-weight: 500 !important;
+                        margin-bottom: 2px !important;
+                        display: block !important;
+                        font-size: 13px !important;
+                    }
+                    .mobile-date-input-container {
+                        width: 100% !important;
+                        margin-bottom: 5px !important;
+                    }
+                    .btn-premium-purple {
+                        background-color: #9754ca!important;
+                        color: white !important;
+                        border-radius: 25px !important;
+                        padding: 6px 20px !important;
+                        border: none !important;
+                        margin-top: 7px !important;
+                        font-weight: 500 !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        gap: 10px !important;
+                        box-shadow: 0 4px 6px rgba(155, 89, 182, 0.2) !important;
+                    }
+                }
+                `}
+            </style>
             <Header />
             <Sidebar />
             <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
@@ -337,7 +411,7 @@ const ComposeSMS = () => {
                     <div className="row">
                         <div className="col-md-12">
                             <div className="nav-tabs-custom">
-                                <ul className="nav nav-tabs">
+                                <ul className="nav nav-tabs nav-tabs-reorder">
                                     <li className="pull-left header">Send SMS</li>
                                     <li className="pull-right">
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs" style={{ marginTop: '5px' }}>
@@ -494,15 +568,31 @@ const ComposeSMS = () => {
                                             </div>
                                         </div>
                                         <div className="box-footer">
-                                            <div className="pull-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            {/* Responsive Footer Container */}
+                                            <div className="pull-right mobile-footer-v2" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                                 {activeTab !== 'birthday' && (
-                                                    <>
-                                                        <label className="radio-inline" style={{ marginRight: '10px' }}><input type="radio" name="sendType" value="send_now" checked={formData.sendType === 'send_now'} onChange={handleInputChange} /> Send Now</label>
-                                                        <label className="radio-inline" style={{ marginRight: '10px' }}><input type="radio" name="sendType" value="schedule" checked={formData.sendType === 'schedule'} onChange={handleInputChange} /> Schedule</label>
-                                                        {formData.sendType === 'schedule' && <input type="datetime-local" className="form-control" style={{ display: 'inline-block', width: 'auto' }} name="scheduleDateTime" value={formData.scheduleDateTime} onChange={handleInputChange} />}
-                                                    </>
+                                                    <div className="mobile-radio-group">
+                                                        <label className="radio-inline" style={{ marginRight: '10px' }}>
+                                                            <input type="radio" name="sendType" value="send_now" checked={formData.sendType === 'send_now'} onChange={handleInputChange} /> Send Now
+                                                        </label>
+                                                        <label className="radio-inline" style={{ marginRight: '10px' }}>
+                                                            <input type="radio" name="sendType" value="schedule" checked={formData.sendType === 'schedule'} onChange={handleInputChange} /> Schedule
+                                                        </label>
+                                                    </div>
                                                 )}
-                                                <button type="submit" className="btn btn-primary" disabled={loading}><i className="fa fa-envelope-o"></i> {loading ? 'Sending...' : 'Submit'}</button>
+
+                                                {formData.sendType === 'schedule' && activeTab !== 'birthday' && (
+                                                    <div className="mobile-date-input-container">
+                                                        <label className="mobile-date-label hidden-lg hidden-md">Schedule Date Time <span className="text-danger">*</span></label>
+                                                        <div className="input-group" style={{ width: '100%' }}>
+                                                            <input type="datetime-local" className="form-control" style={{ display: 'inline-block', width: 'auto' }} name="scheduleDateTime" value={formData.scheduleDateTime} onChange={handleInputChange} />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <button type="submit" className="btn btn-primary btn-premium-purple" disabled={loading}>
+                                                    <i className="fa fa-envelope-o"></i> {loading ? 'Sending...' : 'Submit'}
+                                                </button>
                                             </div>
                                         </div>
                                     </form>

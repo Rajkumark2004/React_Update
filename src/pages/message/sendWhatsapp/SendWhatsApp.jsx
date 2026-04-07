@@ -376,6 +376,77 @@ const SendWhatsApp = () => {
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <style>
+                {`
+                @media (max-width: 600px) {
+                    .nav-tabs-reorder {
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        justify-content: flex-end !important;
+                        padding-right: 0px !important;
+                    }
+                    .nav-tabs-reorder li:nth-child(2) {
+                        order: 10 !important;
+                        width: 100% !important;
+                        float: none !important;
+                        padding: 10px 15px !important;
+                        border-top: none !important;
+                    }
+                    .nav-tabs-reorder li:nth-child(1) { order: 4 !important; } 
+                    .nav-tabs-reorder li:nth-child(3) { order: 3 !important; } 
+                    .nav-tabs-reorder li:nth-child(4) { order: 2 !important; } 
+                    .nav-tabs-reorder li:nth-child(5) { order: 1 !important; } 
+                    
+                    .nav-tabs-reorder li {
+                        float: none !important;
+                        margin: 0 !important;
+                    }
+                    .nav-tabs-reorder li a {
+                        padding: 10px 8px !important;
+                        font-size: 13px !important;
+                    }
+                }
+
+                @media (max-width: 600px) {
+                    .mobile-footer-v2 {
+                        display: flex !important;
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 8px !important;
+                        width: 100% !important;
+                        padding: 10px 0 !important;
+                    }
+                    .mobile-radio-group {
+                        display: flex !important;
+                        gap: 20px !important;
+                        margin-bottom: 0 !important;
+                    }
+                    .mobile-date-label {
+                        font-weight: 500 !important;
+                        margin-bottom: 2px !important;
+                        display: block !important;
+                        font-size: 13px !important;
+                    }
+                    .mobile-date-input-container {
+                        width: 100% !important;
+                        margin-bottom: 5px !important;
+                    }
+                    .btn-premium-purple {
+                        background-color: #9754ca!important;
+                        color: white !important;
+                        border-radius: 25px !important;
+                        padding: 6px 20px !important;
+                        border: none !important;
+                        margin-top: 7px !important;
+                        font-weight: 500 !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        gap: 10px !important;
+                        box-shadow: 0 4px 6px rgba(155, 89, 182, 0.2) !important;
+                    }
+                }
+                `}
+            </style>
             <Header />
             <Sidebar />
             <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
@@ -384,7 +455,7 @@ const SendWhatsApp = () => {
                         <div className="col-md-12">
                             {/* Custom Tabs */}
                             <div className="nav-tabs-custom theme-shadow">
-                                <ul className="nav nav-tabs pull-right">
+                                <ul className="nav nav-tabs pull-right nav-tabs-reorder">
                                     <li className="pull-right header">
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
                                             <i className="fa fa-arrow-left"></i> Back
@@ -484,44 +555,44 @@ const SendWhatsApp = () => {
                                             </div>
 
                                             <div className="box-footer">
-                                                <div className="row">
-                                                    <div className="col-md-12">
-                                                        <div className="pull-right">
-                                                            <label className="radio-inline">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="group_send_type"
-                                                                    value="send_now"
-                                                                    checked={groupForm.send_type === 'send_now'}
-                                                                    onChange={(e) => setGroupForm(prev => ({ ...prev, send_type: e.target.value }))}
-                                                                /> Send Now
-                                                            </label>
-                                                            <label className="radio-inline">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="group_send_type"
-                                                                    value="schedule"
-                                                                    checked={groupForm.send_type === 'schedule'}
-                                                                    onChange={(e) => setGroupForm(prev => ({ ...prev, send_type: e.target.value }))}
-                                                                /> Schedule
-                                                            </label>
-                                                            {groupForm.send_type === 'schedule' && (
-                                                                <div className="d-inline-block" style={{ marginLeft: '10px' }}>
-                                                                    <label>Schedule Date Time<small className="req"> *</small></label>
-                                                                    <input
-                                                                        type="datetime-local"
-                                                                        className="form-control"
-                                                                        value={groupForm.schedule_date_time}
-                                                                        onChange={(e) => setGroupForm(prev => ({ ...prev, schedule_date_time: e.target.value }))}
-                                                                        style={{ display: 'inline-block', width: 'auto' }}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <button type="submit" className="btn btn-primary" style={{ marginLeft: '10px' }} disabled={loading}>
-                                                                {loading ? <><i className="fa fa-spinner fa-spin"></i> Sending</> : <><i className="fa fa-envelope-o"></i> Submit</>}
-                                                            </button>
-                                                        </div>
+                                                <div className="pull-right mobile-footer-v2" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                    <div className="mobile-radio-group">
+                                                        <label className="radio-inline">
+                                                            <input
+                                                                type="radio"
+                                                                name="group_send_type"
+                                                                value="send_now"
+                                                                checked={groupForm.send_type === 'send_now'}
+                                                                onChange={(e) => setGroupForm(prev => ({ ...prev, send_type: e.target.value }))}
+                                                            /> Send Now
+                                                        </label>
+                                                        <label className="radio-inline">
+                                                            <input
+                                                                type="radio"
+                                                                name="group_send_type"
+                                                                value="schedule"
+                                                                checked={groupForm.send_type === 'schedule'}
+                                                                onChange={(e) => setGroupForm(prev => ({ ...prev, send_type: e.target.value }))}
+                                                            /> Schedule
+                                                        </label>
                                                     </div>
+                                                    {groupForm.send_type === 'schedule' && (
+                                                        <div className="mobile-date-input-container">
+                                                            <label className="mobile-date-label hidden-lg hidden-md">Schedule Date Time <span className="text-danger">*</span></label>
+                                                            <div className="input-group" style={{ width: '100%' }}>
+                                                                <input
+                                                                    type="datetime-local"
+                                                                    className="form-control"
+                                                                    value={groupForm.schedule_date_time}
+                                                                    onChange={(e) => setGroupForm(prev => ({ ...prev, schedule_date_time: e.target.value }))}
+                                                                    style={{ display: 'inline-block', width: 'auto' }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <button type="submit" className="btn btn-primary btn-premium-purple" disabled={loading}>
+                                                        {loading ? <><i className="fa fa-spinner fa-spin"></i> Sending</> : <><i className="fa fa-envelope-o"></i> Submit</>}
+                                                    </button>
                                                 </div>
                                             </div>
                                         </form>
@@ -644,44 +715,44 @@ const SendWhatsApp = () => {
                                             </div>
 
                                             <div className="box-footer">
-                                                <div className="row">
-                                                    <div className="col-md-12">
-                                                        <div className="pull-right">
-                                                            <label className="radio-inline">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="individual_send_type"
-                                                                    value="send_now"
-                                                                    checked={individualForm.send_type === 'send_now'}
-                                                                    onChange={(e) => setIndividualForm(prev => ({ ...prev, send_type: e.target.value }))}
-                                                                /> Send Now
-                                                            </label>
-                                                            <label className="radio-inline">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="individual_send_type"
-                                                                    value="schedule"
-                                                                    checked={individualForm.send_type === 'schedule'}
-                                                                    onChange={(e) => setIndividualForm(prev => ({ ...prev, send_type: e.target.value }))}
-                                                                /> Schedule
-                                                            </label>
-                                                            {individualForm.send_type === 'schedule' && (
-                                                                <div className="d-inline-block" style={{ marginLeft: '10px' }}>
-                                                                    <label>Schedule Date Time<small className="req"> *</small></label>
-                                                                    <input
-                                                                        type="datetime-local"
-                                                                        className="form-control"
-                                                                        value={individualForm.schedule_date_time}
-                                                                        onChange={(e) => setIndividualForm(prev => ({ ...prev, schedule_date_time: e.target.value }))}
-                                                                        style={{ display: 'inline-block', width: 'auto' }}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <button type="submit" className="btn btn-primary" style={{ marginLeft: '10px' }} disabled={loading}>
-                                                                {loading ? <><i className="fa fa-spinner fa-spin"></i> Sending</> : <><i className="fa fa-envelope-o"></i> Submit</>}
-                                                            </button>
-                                                        </div>
+                                                <div className="pull-right mobile-footer-v2" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                    <div className="mobile-radio-group">
+                                                        <label className="radio-inline">
+                                                            <input
+                                                                type="radio"
+                                                                name="individual_send_type"
+                                                                value="send_now"
+                                                                checked={individualForm.send_type === 'send_now'}
+                                                                onChange={(e) => setIndividualForm(prev => ({ ...prev, send_type: e.target.value }))}
+                                                            /> Send Now
+                                                        </label>
+                                                        <label className="radio-inline">
+                                                            <input
+                                                                type="radio"
+                                                                name="individual_send_type"
+                                                                value="schedule"
+                                                                checked={individualForm.send_type === 'schedule'}
+                                                                onChange={(e) => setIndividualForm(prev => ({ ...prev, send_type: e.target.value }))}
+                                                            /> Schedule
+                                                        </label>
                                                     </div>
+                                                    {individualForm.send_type === 'schedule' && (
+                                                        <div className="mobile-date-input-container">
+                                                            <label className="mobile-date-label hidden-lg hidden-md">Schedule Date Time <span className="text-danger">*</span></label>
+                                                            <div className="input-group" style={{ width: '100%' }}>
+                                                                <input
+                                                                    type="datetime-local"
+                                                                    className="form-control"
+                                                                    value={individualForm.schedule_date_time}
+                                                                    onChange={(e) => setIndividualForm(prev => ({ ...prev, schedule_date_time: e.target.value }))}
+                                                                    style={{ display: 'inline-block', width: 'auto' }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <button type="submit" className="btn btn-primary btn-premium-purple" disabled={loading}>
+                                                        {loading ? <><i className="fa fa-spinner fa-spin"></i> Sending</> : <><i className="fa fa-envelope-o"></i> Submit</>}
+                                                    </button>
                                                 </div>
                                             </div>
                                         </form>
@@ -773,44 +844,44 @@ const SendWhatsApp = () => {
                                             </div>
 
                                             <div className="box-footer">
-                                                <div className="row">
-                                                    <div className="col-md-12">
-                                                        <div className="pull-right">
-                                                            <label className="radio-inline">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="class_send_type"
-                                                                    value="send_now"
-                                                                    checked={classForm.send_type === 'send_now'}
-                                                                    onChange={(e) => setClassForm(prev => ({ ...prev, send_type: e.target.value }))}
-                                                                /> Send Now
-                                                            </label>
-                                                            <label className="radio-inline">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="class_send_type"
-                                                                    value="schedule"
-                                                                    checked={classForm.send_type === 'schedule'}
-                                                                    onChange={(e) => setClassForm(prev => ({ ...prev, send_type: e.target.value }))}
-                                                                /> Schedule
-                                                            </label>
-                                                            {classForm.send_type === 'schedule' && (
-                                                                <div className="d-inline-block" style={{ marginLeft: '10px' }}>
-                                                                    <label>Schedule Date Time<small className="req"> *</small></label>
-                                                                    <input
-                                                                        type="datetime-local"
-                                                                        className="form-control"
-                                                                        value={classForm.schedule_date_time}
-                                                                        onChange={(e) => setClassForm(prev => ({ ...prev, schedule_date_time: e.target.value }))}
-                                                                        style={{ display: 'inline-block', width: 'auto' }}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                            <button type="submit" className="btn btn-primary" style={{ marginLeft: '10px' }} disabled={loading}>
-                                                                {loading ? <><i className="fa fa-spinner fa-spin"></i> Sending</> : <><i className="fa fa-envelope-o"></i> Submit</>}
-                                                            </button>
-                                                        </div>
+                                                <div className="pull-right mobile-footer-v2" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                    <div className="mobile-radio-group">
+                                                        <label className="radio-inline">
+                                                            <input
+                                                                type="radio"
+                                                                name="class_send_type"
+                                                                value="send_now"
+                                                                checked={classForm.send_type === 'send_now'}
+                                                                onChange={(e) => setClassForm(prev => ({ ...prev, send_type: e.target.value }))}
+                                                            /> Send Now
+                                                        </label>
+                                                        <label className="radio-inline">
+                                                            <input
+                                                                type="radio"
+                                                                name="class_send_type"
+                                                                value="schedule"
+                                                                checked={classForm.send_type === 'schedule'}
+                                                                onChange={(e) => setClassForm(prev => ({ ...prev, send_type: e.target.value }))}
+                                                            /> Schedule
+                                                        </label>
                                                     </div>
+                                                    {classForm.send_type === 'schedule' && (
+                                                        <div className="mobile-date-input-container">
+                                                            <label className="mobile-date-label hidden-lg hidden-md">Schedule Date Time <span className="text-danger">*</span></label>
+                                                            <div className="input-group" style={{ width: '100%' }}>
+                                                                <input
+                                                                    type="datetime-local"
+                                                                    className="form-control"
+                                                                    value={classForm.schedule_date_time}
+                                                                    onChange={(e) => setClassForm(prev => ({ ...prev, schedule_date_time: e.target.value }))}
+                                                                    style={{ display: 'inline-block', width: 'auto' }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <button type="submit" className="btn btn-primary btn-premium-purple" disabled={loading}>
+                                                        {loading ? <><i className="fa fa-spinner fa-spin"></i> Sending</> : <><i className="fa fa-envelope-o"></i> Submit</>}
+                                                    </button>
                                                 </div>
                                             </div>
                                         </form>

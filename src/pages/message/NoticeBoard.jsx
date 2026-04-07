@@ -202,9 +202,6 @@ const NoticeBoard = () => {
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm" style={{ marginLeft: '5px' }}>
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs mright5 hide-desktop">
-                                            <i className="fa fa-arrow-left"></i> Back
-                                        </button>
                                     </div>
                                 </div>
                                 <div className="box-body pt0">
