@@ -589,6 +589,25 @@ const CBSEExamList = () => {
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <style>{`
+                .action-button-boxed {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 28px;
+                    height: 28px;
+                    background: transparent;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .action-button-boxed:hover {
+                    background: #f1f1f1;
+                    color: #7e3abd;
+                }
+                .hover-main-entry:hover {
+                    background-color: #fcfcfc !important;
+                }
                 .dt-header { 
                     display: flex; 
                     justify-content: space-between; 
@@ -599,7 +618,6 @@ const CBSEExamList = () => {
                 }
                 .dt-buttons { display: flex; gap: 0px; }
                 .mb10 { margin-bottom: 10px; }
-                .noExport { }
                 .input-group-sm .form-control { height: 30px; }
                 .table-responsive {
                     overflow-x: auto !important;
@@ -607,37 +625,38 @@ const CBSEExamList = () => {
                 .table-responsive table.example {
                     table-layout: fixed !important;
                     width: 100% !important;
+                    min-width: 1100px;
                 }
                 .table-responsive table.example th {
                     white-space: normal !important;
                     vertical-align: top !important;
                     background-color: transparent !important;
-                    padding: 8px 5px !important;
+                    padding: 12px 8px !important;
                     font-weight: 600;
-                    border-bottom: 2px solid #eee;
+                    border-bottom: 1px solid #ddd;
+                    color: #000;
                 }
-                .table-responsive table.example th:nth-child(1) { width: 15% !important; } 
+                .table-responsive table.example th:nth-child(1) { width: 14% !important; } 
                 .table-responsive table.example th:nth-child(2) { width: 12% !important; } 
-                .table-responsive table.example th:nth-child(3) { width: 6% !important; } 
+                .table-responsive table.example th:nth-child(3) { width: 8% !important; } 
                 .table-responsive table.example th:nth-child(4) { width: 8% !important; } 
                 .table-responsive table.example th:nth-child(5) { width: 8% !important; } 
                 .table-responsive table.example th:nth-child(6) { width: 8% !important; } 
-                .table-responsive table.example th:nth-child(7) { width: 10% !important; } 
-                .table-responsive table.example th:nth-child(8) { width: 10% !important; } 
-                .table-responsive table.example th:nth-child(9) { width: 280px !important; } 
+                .table-responsive table.example th:nth-child(7) { width: 14% !important; } 
+                .table-responsive table.example th:nth-child(8) { width: 9% !important; } 
+                .table-responsive table.example th.noExport { width: 320px !important; } 
 
                 .table-responsive table.example td {
                     word-wrap: break-word !important;
                     word-break: break-all !important;
                     white-space: normal !important;
                     vertical-align: top !important;
-                    padding: 8px 5px !important;
+                    padding: 12px 8px !important;
                     border-bottom: 1px solid #eee;
                 }
-                .table-responsive table.example td.text-right, .table-responsive table.example th.text-right {
+                .table-responsive table.example td.noExport {
+                    width: 320px !important;
                     white-space: nowrap !important;
-                    width: 280px !important;
-                    text-align: right !important;
                 }
                 .dt-footer {
                     display: flex;
@@ -647,57 +666,35 @@ const CBSEExamList = () => {
                     font-size: 13px;
                 }
                 .scroll-area { width: 100%; }
-                /* Hide scrollbar but keep scroll functionality */
-                .scroll-area::-webkit-scrollbar, 
-                .mailbox-messages::-webkit-scrollbar,
-                .modal.fade.in::-webkit-scrollbar {
-                    display: none;
+                .scroll-area::-webkit-scrollbar { display: none; }
+                .scroll-area { -ms-overflow-style: none; scrollbar-width: none; }
+
+                @media (max-width: 767px) {
+                    .modal-body-responsive {
+                        padding: 20px 0px 20px 20px !important;
+                    }
+                    .modal-header-responsive {
+                        padding: 20px 0px 20px 20px !important;
+                        border-bottom: none !important;
+                    }
+                    .modal-footer-responsive {
+                        padding: 0px 0px 20px 20px !important;
+                    }
+                    .modal-dialog {
+                        width: 95% !important;
+                        margin: 10px auto !important;
+                    }
                 }
-                .scroll-area, 
-                .mailbox-messages,
-                .modal.fade.in {
-                    -ms-overflow-style: none;  /* IE and Edge */
-                    scrollbar-width: none;  /* Firefox */
-                }
+
                 @media (max-width: 1177px) {
-                    .scroll-area {
-                        max-height: 70vh;
-                        overflow-y: auto;
-                    }
-                    .table-responsive table.example {
-                        min-width: 1300px !important;
-                    }
-                    .table-responsive {
-                        overflow-x: auto !important;
-                        display: block !important;
-                    }
                     .dt-header {
                         flex-direction: column;
                         align-items: center;
                         gap: 15px;
                         margin-bottom: 20px;
                     }
-                    .dt-header > div {
-                        justify-content: center;
-                        width: 100%;
-                    }
                     .dt-header .dt-buttons {
                         justify-content: center;
-                    }
-                    .table-responsive table.example td.text-right, 
-                    .table-responsive table.example th.text-right {
-                        display: grid !important;
-                        grid-template-columns: repeat(5, auto);
-                        gap: 2px;
-                        justify-content: end !important;
-                        width: auto !important;
-                        min-width: 0 !important;
-                        white-space: normal !important;
-                        padding: 5px !important;
-                    }
-                    .table-responsive table.example td.text-right button,
-                    .table-responsive table.example td.text-right a {
-                        margin: 0 !important;
                     }
                 }
             `}</style>
@@ -823,94 +820,78 @@ const CBSEExamList = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="table-responsive mailbox-messages">
-                                        <table className="table table-striped table-bordered table-hover example">
+                                    <div className="table-responsive mailbox-messages" style={{ border: 'none' }}>
+                                        <table className="table table-hover example" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
-                                                <tr>
-                                                    {!hiddenColumns.includes(0) && <th style={{ paddingRight: '5px' }}>Exam Name</th>}
-                                                    {!hiddenColumns.includes(1) && <th style={{ paddingLeft: '5px' }}>Class (Sections)</th>}
-                                                    {!hiddenColumns.includes(2) && <th>Term</th>}
-                                                    {!hiddenColumns.includes(3) && <th>Subjects Included</th>}
-                                                    {!hiddenColumns.includes(4) && <th>Exam Published</th>}
-                                                    {!hiddenColumns.includes(5) && <th>Published Result</th>}
-                                                    {!hiddenColumns.includes(6) && <th width="30%">Description</th>}
-                                                    {!hiddenColumns.includes(7) && <th style={{ whiteSpace: 'nowrap' }}>Created At</th>}
-                                                    <th className="text-right noExport">Action</th>
+                                                <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
+                                                    {!hiddenColumns.includes(0) && <th style={{ borderTop: 'none' }}>Exam Name</th>}
+                                                    {!hiddenColumns.includes(1) && <th style={{ borderTop: 'none' }}>Class (Sections)</th>}
+                                                    {!hiddenColumns.includes(2) && <th style={{ borderTop: 'none' }}>Term</th>}
+                                                    {!hiddenColumns.includes(3) && <th style={{ borderTop: 'none' }}>Subjects Included</th>}
+                                                    {!hiddenColumns.includes(4) && <th style={{ borderTop: 'none' }}>Exam Published</th>}
+                                                    {!hiddenColumns.includes(5) && <th style={{ borderTop: 'none' }}>Published Result</th>}
+                                                    {!hiddenColumns.includes(6) && <th style={{ borderTop: 'none' }}>Description</th>}
+                                                    {!hiddenColumns.includes(7) && <th style={{ borderTop: 'none', whiteSpace: 'nowrap' }}>Created At</th>}
+                                                    <th className="text-right noExport" style={{ borderTop: 'none' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map((exam) => (
-                                                    <tr key={exam.id}>
-                                                        {!hiddenColumns.includes(0) && <td>{exam.name}</td>}
-                                                        {!hiddenColumns.includes(1) && <td style={{ paddingLeft: '5px' }}>{exam.class_sections}</td>}
-                                                        {!hiddenColumns.includes(2) && <td>{exam.term_name}</td>}
-                                                        {!hiddenColumns.includes(3) && <td>{exam.subjectsincluded}</td>}
+                                                    <tr key={exam.id} className="hover-main-entry">
+                                                        {!hiddenColumns.includes(0) && <td style={{ borderTop: 'none' }}><strong>{exam.name}</strong></td>}
+                                                        {!hiddenColumns.includes(1) && <td style={{ borderTop: 'none' }}>{exam.class_sections}</td>}
+                                                        {!hiddenColumns.includes(2) && <td style={{ borderTop: 'none' }}>{exam.term_name}</td>}
+                                                        {!hiddenColumns.includes(3) && <td style={{ borderTop: 'none' }}>{exam.subjectsincluded}</td>}
                                                         {!hiddenColumns.includes(4) && (
-                                                            <td>
+                                                            <td style={{ borderTop: 'none' }}>
                                                                 {Number(exam.is_publish) === 1 ? (
-                                                                    <i className="fa fa-check-square-o"></i>
+                                                                    <i className="fa fa-check-square-o text-success"></i>
                                                                 ) : (
-                                                                    <i className="fa fa-exclamation-circle"></i>
+                                                                    <i className="fa fa-exclamation-circle text-warning"></i>
                                                                 )}
                                                             </td>
                                                         )}
                                                         {!hiddenColumns.includes(5) && (
-                                                            <td>
+                                                            <td style={{ borderTop: 'none' }}>
                                                                 {Number(exam.is_active) === 1 ? (
-                                                                    <i className="fa fa-check-square-o"></i>
+                                                                    <i className="fa fa-check-square-o text-success"></i>
                                                                 ) : (
-                                                                    <i className="fa fa-exclamation-circle"></i>
+                                                                    <i className="fa fa-exclamation-circle text-warning"></i>
                                                                 )}
                                                             </td>
                                                         )}
-                                                        {!hiddenColumns.includes(6) && <td>{exam.description}</td>}
-                                                        {!hiddenColumns.includes(7) && <td>{exam.created_at ? exam.created_at.split(' ')[0].split('-').reverse().join('/') : ''}</td>}
-                                                        <td className="text-right white-space-nowrap">
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Assign/View Student"
-                                                                onClick={() => openActionModal(exam, "Assign/View Student", "assign")}
-                                                            ><i className="fa fa-tag"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Exam Subjects"
-                                                                onClick={() => openActionModal(exam, "Exam Subjects", "subjects")}
-                                                            ><i className="fa fa-book"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Exam Marks"
-                                                                onClick={() => openActionModal(exam, "Exam Marks", "marks")}
-                                                            ><i className="fa fa-newspaper-o"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Exam Attendance"
-                                                                onClick={() => openActionModal(exam, "Exam Attendance", "attendance")}
-                                                            ><i className="fa fa-calendar-check-o"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Teacher Remark"
-                                                                onClick={() => openActionModal(exam, "Teacher Remark", "remarks")}
-                                                            ><i className="fa fa-comment"></i></button>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Edit"
-                                                                onClick={() => handleEdit(exam)}
-                                                            ><i className="fa fa-pencil"></i></button>
-                                                            <Link
-                                                                to={`/cbseexam/exam/examwiserank/${exam.id}`}
-                                                                className="btn btn-default btn-xs"
-                                                                title="Generate Rank"
-                                                            ><i className="fa fa-list-alt"></i></Link>
-                                                            <Link
-                                                                to={`/cbseexam/exam/examwiseadmitcard/${exam.id}`}
-                                                                className="btn btn-default btn-xs"
-                                                                title="Print Hall Ticket"
-                                                            ><i className="fa fa-ticket"></i></Link>
-                                                            <button
-                                                                className="btn btn-default btn-xs"
-                                                                title="Delete"
-                                                                onClick={() => handleDelete(exam)}
-                                                            ><i className="fa fa-remove"></i></button>
+                                                        {!hiddenColumns.includes(6) && <td style={{ borderTop: 'none' }}>{exam.description}</td>}
+                                                        {!hiddenColumns.includes(7) && <td style={{ borderTop: 'none' }}>{exam.created_at ? exam.created_at.split(' ')[0].split('-').reverse().join('/') : ''}</td>}
+                                                        <td className="text-right noExport" style={{ borderTop: 'none' }}>
+                                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '5px', whiteSpace: 'nowrap' }}>
+                                                                <div className="action-button-boxed" title="Assign/View Student" onClick={() => openActionModal(exam, "Assign/View Student", "assign")}>
+                                                                    <i className="fa fa-tag" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div className="action-button-boxed" title="Exam Subjects" onClick={() => openActionModal(exam, "Exam Subjects", "subjects")}>
+                                                                    <i className="fa fa-book" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div className="action-button-boxed" title="Exam Marks" onClick={() => openActionModal(exam, "Exam Marks", "marks")}>
+                                                                    <i className="fa fa-newspaper-o" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div className="action-button-boxed" title="Exam Attendance" onClick={() => openActionModal(exam, "Exam Attendance", "attendance")}>
+                                                                    <i className="fa fa-calendar-check-o" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div className="action-button-boxed" title="Teacher Remark" onClick={() => openActionModal(exam, "Teacher Remark", "remarks")}>
+                                                                    <i className="fa fa-comment" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <div className="action-button-boxed" title="Edit" onClick={() => handleEdit(exam)}>
+                                                                    <i className="fa fa-pencil" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </div>
+                                                                <Link to={`/cbseexam/exam/examwiserank/${exam.id}`} className="action-button-boxed" title="Generate Rank">
+                                                                    <i className="fa fa-list-alt" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </Link>
+                                                                <Link to={`/cbseexam/exam/examwiseadmitcard/${exam.id}`} className="action-button-boxed" title="Print Hall Ticket">
+                                                                    <i className="fa fa-ticket" style={{ color: '#555', fontSize: '12px' }}></i>
+                                                                </Link>
+                                                                <div className="action-button-boxed" title="Delete" onClick={() => handleDelete(exam)}>
+                                                                    <i className="fa fa-remove" style={{ color: '#000', fontSize: '13px', fontWeight: 'bold' }}></i>
+                                                                </div>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -934,12 +915,12 @@ const CBSEExamList = () => {
 
             {/* Add Exam Modal */}
             {showAddModal && (
-                <div className="modal fade in" style={{ display: 'block', overflow: 'auto', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
+                <div className="modal fade in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
                     <div className="modal-dialog modal-lg modal-dialog-centered">
                         <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" onClick={() => { setShowAddModal(false); setActiveExam(null); }}>&times;</button>
-                                <h4 className="modal-title">{activeExam ? "Edit Exam" : "Add Exam"}</h4>
+                            <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
+                                <button type="button" className="close" onClick={() => { setShowAddModal(false); setActiveExam(null); }} style={{ color: 'white', opacity: 1, marginRight: '20px' }}>&times;</button>
+                                <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{activeExam ? "Edit Exam" : "Add Exam"}</h4>
                             </div>
                             <div className="scroll-area">
                                 <form id="add_exam_form" onSubmit={handleSaveExam}>
@@ -1146,8 +1127,8 @@ const CBSEExamList = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="modal-footer">
-                                        <button type="submit" className="btn btn-primary pull-right">{activeExam ? "Update" : "Save"}</button>
+                                     <div className="modal-footer modal-footer-responsive" style={{ borderTop: 'none', paddingBottom: '20px' }}>
+                                        <button type="submit" className="btn pull-right" style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '8px 25px', fontSize: '14px', fontWeight: 'bold', border: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.15)' }}>{activeExam ? "Update" : "Save"}</button>
                                     </div>
                                 </form>
                             </div>
