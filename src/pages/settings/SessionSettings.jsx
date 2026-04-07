@@ -4,20 +4,12 @@ import SettingsMenu from "../../components/SettingsMenu";
 import Loader from "../../components/Loader";
 import "../../utils/include_files.js";
 import api from "../../services/api";
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from "../../utils/Pagination";
 
 const SessionSettings = () => {
     const navigate = useNavigate();
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const isMobile = windowWidth < 768;
     const [sessions, setSessions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -29,42 +21,37 @@ const SessionSettings = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(50);
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
     const columns = [
-        { index: 0, label: 'Session' },
-        { index: 1, label: 'Status' }
+        { key: 'session', label: 'Session' },
+        { key: 'status', label: 'Status' }
     ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key); else next.add(key);
+            return next;
+        });
     };
 
     const filteredSessions = sessions.filter(s =>
         s.session.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const indexOfLastRecord = currentPage * (recordsPerPage === -1 ? filteredSessions.length : recordsPerPage);
-    const indexOfFirstRecord = indexOfLastRecord - (recordsPerPage === -1 ? filteredSessions.length : recordsPerPage);
+    const safeRecordsPerPage = recordsPerPage === -1 ? filteredSessions.length || 1 : recordsPerPage;
+    const indexOfLastRecord = currentPage * safeRecordsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - safeRecordsPerPage;
     const currentRecords = filteredSessions.slice(indexOfFirstRecord, indexOfLastRecord);
 
-    const getExportData = () => {
-        const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Session");
-        if (!hiddenColumns.includes(1)) headers.push("Status");
-
-        const rows = filteredSessions.map(session => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(session.session);
-            if (!hiddenColumns.includes(1)) row.push(session.status === 'active' ? 'Active' : 'Inactive');
-            return row;
-        });
-
-        return { headers, rows };
+    const formatCell = (row, key) => {
+        if (key === 'session') return row.session;
+        if (key === 'status') return row.status === 'active' ? 'Active' : 'Inactive';
+        return '';
     };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredSessions, formatCell);
 
     const fetchSessions = async () => {
         try {
@@ -293,103 +280,18 @@ const SessionSettings = () => {
                                     </button>
                                 </div>
 
-                                {/* ROW 2 - Standardized toolbar */}
-                                <div
-                                    className="row mb-2 no-print"
-                                    style={{
-                                        marginBottom: '10px',
-                                        display: isMobile ? 'flex' : 'block',
-                                        flexDirection: isMobile ? 'column' : 'row',
-                                        alignItems: isMobile ? 'center' : 'stretch',
-                                        gap: isMobile ? '15px' : '0'
-                                    }}
-                                >
-                                    <div
-                                        className={isMobile ? '' : 'col-sm-6'}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: isMobile ? '15px' : '20px',
-                                            justifyContent: isMobile ? 'center' : 'flex-start',
-                                            flexWrap: 'wrap'
-                                        }}
-                                    >
-                                        <div className="dataTables_length">
-                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                Records:
-                                                <select
-                                                    value={recordsPerPage}
-                                                    onChange={(e) => {
-                                                        setRecordsPerPage(Number(e.target.value));
-                                                        setCurrentPage(1);
-                                                    }}
-                                                    className="form-control input-sm"
-                                                    style={{ width: '80px', margin: '0 10px' }}
-                                                >
-                                                    <option value="10">10</option>
-                                                    <option value="25">25</option>
-                                                    <option value="50">50</option>
-                                                    <option value="100">100</option>
-                                                    <option value="-1">All</option>
-                                                </select>
-                                            </label>
-                                        </div>
-                                        <div className="dataTables_filter">
-                                            <input
-                                                type="search"
-                                                className="form-control input-sm"
-                                                placeholder="Search..."
-                                                style={{
-                                                    display: 'inline-block',
-                                                    width: '180px',
-                                                    border: 'none',
-                                                    borderBottom: '1px solid #ccc',
-                                                    borderRadius: '0',
-                                                    boxShadow: 'none',
-                                                    backgroundColor: 'transparent',
-                                                    paddingLeft: '0',
-                                                    outline: 'none',
-                                                    textAlign: isMobile ? 'center' : 'left'
-                                                }}
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className={isMobile ? 'text-center' : 'col-sm-6 text-right'}>
-                                        <div className="dt-buttons btn-group" style={{ float: 'right' }}>
-                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                <i className="fa fa-files-o"></i>
-                                            </button>
-                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Session_List.xls'); }}>
-                                                <i className="fa fa-file-excel-o"></i>
-                                            </button>
-                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Session_List.csv'); }}>
-                                                <i className="fa fa-file-text-o"></i>
-                                            </button>
-                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Session_List.pdf', 'Session List'); }}>
-                                                <i className="fa fa-file-pdf-o"></i>
-                                            </button>
-                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Session List'); }}>
-                                                <i className="fa fa-print"></i>
-                                            </button>
-                                            <div className="btn-group">
-                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                                    <i className="fa fa-columns"></i>
-                                                </button>
-                                                {showColumnsDropdown && (
-                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                        {columns.map(col => (
-                                                            <label key={col.index} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                <input type="checkbox" checked={!hiddenColumns.includes(col.index)} onChange={() => toggleColumnVisibility(col.index)} style={{ marginRight: '6px' }} /> {col.label}
-                                                            </label>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <TableToolbar
+                                    searchTerm={searchTerm}
+                                    onSearchChange={setSearchTerm}
+                                    recordsPerPage={recordsPerPage}
+                                    onRecordsPerPageChange={setRecordsPerPage}
+                                    columns={columns}
+                                    visibleColumns={visibleColumns}
+                                    onToggleColumn={handleToggleColumn}
+                                    getExportData={getExportData}
+                                    exportFileName="Session_List"
+                                    exportTitle="Session List"
+                                />
                             </div>
                             <div className="box-body">
                                 <div className="mailbox-messages">
@@ -397,20 +299,20 @@ const SessionSettings = () => {
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    {!hiddenColumns.includes(0) && <th>Session</th>}
-                                                    {!hiddenColumns.includes(1) && <th>Status</th>}
+                                                    {visibleColumns.has('session') && <th>Session</th>}
+                                                    {visibleColumns.has('status') && <th>Status</th>}
                                                     <th className="text-right">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentRecords.map((session) => (
                                                     <tr key={session.id}>
-                                                        {!hiddenColumns.includes(0) && <td className="mailbox-name">
+                                                        {visibleColumns.has('session') && <td className="mailbox-name">
                                                             <a href="#" onClick={(e) => { e.preventDefault(); setViewSession(session); }} title="View">
                                                                 {session.session}
                                                             </a>
                                                         </td>}
-                                                        {!hiddenColumns.includes(1) && <td className="mailbox-name">
+                                                        {visibleColumns.has('status') && <td className="mailbox-name">
                                                             {session.status === 'active' && <span className="label bg-green font-weight-normal">Active</span>}
                                                         </td>}
                                                         <td className="mailbox-date text-right">

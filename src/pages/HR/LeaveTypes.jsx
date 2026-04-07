@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
+import TableToolbar from '../../utils/TableToolbar';
+import Pagination from '../../utils/Pagination';
+
+const COLUMNS = [
+    { key: 'type', label: 'Name' },
+    { key: 'action', label: 'Action' }
+];
 
 const LeaveTypes = () => {
     const [leaveTypes, setLeaveTypes] = useState([]);
@@ -15,6 +22,12 @@ const LeaveTypes = () => {
     });
 
     const [isEditing, setIsEditing] = useState(false);
+
+    // TableToolbar state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [visibleColumns, setVisibleColumns] = useState(new Set(COLUMNS.map(c => c.key)));
 
     const fetchLeaveTypes = async () => {
         setLoading(true);
@@ -126,6 +139,39 @@ const LeaveTypes = () => {
         }
     };
 
+    // Filtered + paginated data
+    const filteredData = useMemo(() => {
+        if (!searchTerm.trim()) return leaveTypes;
+        const term = searchTerm.toLowerCase();
+        return leaveTypes.filter(lt => lt.type.toLowerCase().includes(term));
+    }, [leaveTypes, searchTerm]);
+
+    const paginatedData = useMemo(() => {
+        if (recordsPerPage === -1) return filteredData;
+        const start = (currentPage - 1) * recordsPerPage;
+        return filteredData.slice(start, start + recordsPerPage);
+    }, [filteredData, currentPage, recordsPerPage]);
+
+    const totalPages = recordsPerPage === -1 ? 1 : Math.ceil(filteredData.length / recordsPerPage);
+
+    useEffect(() => { setCurrentPage(1); }, [searchTerm, recordsPerPage]);
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key); else next.add(key);
+            return next;
+        });
+    };
+
+    const getExportData = () => {
+        const exportCols = COLUMNS.filter(c => c.key !== 'action' && visibleColumns.has(c.key));
+        return {
+            headers: exportCols.map(c => c.label),
+            rows: filteredData.map(lt => exportCols.map(c => lt[c.key] || ''))
+        };
+    };
+
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
@@ -176,12 +222,24 @@ const LeaveTypes = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={setSearchTerm}
+                                        recordsPerPage={recordsPerPage}
+                                        onRecordsPerPageChange={setRecordsPerPage}
+                                        columns={COLUMNS}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={handleToggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="leave_type_list"
+                                        exportTitle="Leave Type List"
+                                    />
                                     <div className="table-responsive no-padding">
                                         <table className="table table-striped table-bordered table-hover">
                                             <thead>
                                                 <tr>
-                                                    <th>Name</th>
-                                                    <th className="text-right">Action</th>
+                                                    {visibleColumns.has('type') && <th>Name</th>}
+                                                    {visibleColumns.has('action') && <th className="text-right">Action</th>}
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -189,37 +247,45 @@ const LeaveTypes = () => {
                                                     <tr>
                                                         <td colSpan="2" className="text-center">Loading...</td>
                                                     </tr>
-                                                ) : leaveTypes.length === 0 ? (
+                                                ) : paginatedData.length === 0 ? (
                                                     <tr>
                                                         <td colSpan="2" className="text-center">No Result Found</td>
                                                     </tr>
                                                 ) : (
-                                                    leaveTypes.map(lt => (
+                                                    paginatedData.map(lt => (
                                                         <tr key={lt.id}>
-                                                            <td>{lt.type}</td>
-                                                            <td className="text-right white-space-nowrap">
-                                                                <button
-                                                                    onClick={() => handleEdit(lt)}
-                                                                    className="btn btn-default btn-xs"
-                                                                    title="Edit"
-                                                                >
-                                                                    <i className="fa fa-pencil"></i>
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDelete(lt.id)}
-                                                                    className="btn btn-default btn-xs"
-                                                                    title="Delete"
-                                                                    style={{ marginLeft: '3px' }}
-                                                                >
-                                                                    <i className="fa fa-remove"></i>
-                                                                </button>
-                                                            </td>
+                                                            {visibleColumns.has('type') && <td>{lt.type}</td>}
+                                                            {visibleColumns.has('action') && (
+                                                                <td className="text-right white-space-nowrap">
+                                                                    <button
+                                                                        onClick={() => handleEdit(lt)}
+                                                                        className="btn btn-default btn-xs"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <i className="fa fa-pencil"></i>
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDelete(lt.id)}
+                                                                        className="btn btn-default btn-xs"
+                                                                        title="Delete"
+                                                                        style={{ marginLeft: '3px' }}
+                                                                    >
+                                                                        <i className="fa fa-remove"></i>
+                                                                    </button>
+                                                                </td>
+                                                            )}
                                                         </tr>
                                                     ))
                                                 )}
                                             </tbody>
                                         </table>
                                     </div>
+                                    <Pagination
+                                        totalItems={filteredData.length}
+                                        itemsPerPage={recordsPerPage}
+                                        currentPage={currentPage}
+                                        onPageChange={setCurrentPage}
+                                    />
                                 </div>
                             </div>
                         </div>

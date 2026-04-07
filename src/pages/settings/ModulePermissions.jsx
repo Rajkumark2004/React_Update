@@ -6,7 +6,8 @@ import "../../index.css";
 import '../../utils/include_files';
 import toast from 'react-hot-toast';
 import { usePermissions } from '../../context/PermissionContext';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const ModulePermissions = () => {
@@ -29,40 +30,35 @@ const ModulePermissions = () => {
     const [studentPermissionList, setStudentPermissionList] = useState([]);
     const [parentPermissionList, setParentPermissionList] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 50;
+    const [recordsPerPage, setRecordsPerPage] = useState(50);
 
     useEffect(() => {
         setCurrentPage(1);
     }, [activeTab, searchTerm]);
 
     const columns = [
-        { index: 0, label: 'Name' },
-        { index: 1, label: 'Action' }
+        { key: 'name', label: 'Name' },
+        { key: 'action', label: 'Action' }
     ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key); else next.add(key);
+            return next;
+        });
     };
 
     const getExportData = (filtered, type, statusKey) => {
-        const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Name");
-        if (!hiddenColumns.includes(1)) headers.push("Action");
-
-        const rows = filtered.map(item => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(item.name);
-            if (!hiddenColumns.includes(1)) row.push(item[statusKey] == 1 ? 'Active' : 'Inactive');
-            return row;
-        });
-
-        return { headers, rows };
+        const formatCell = (row, key) => {
+            if (key === 'name') return row.name;
+            if (key === 'action') return row[statusKey] == 1 ? 'Active' : 'Inactive';
+            return '';
+        };
+        return buildExportData(columns, visibleColumns, filtered, formatCell);
     };
 
     useEffect(() => {
@@ -135,10 +131,6 @@ const ModulePermissions = () => {
         }
     };
 
-    const handlePrint = (filtered, type, statusKey, title) => {
-        const { headers, rows } = getExportData(filtered, type, statusKey);
-        printTable(headers, rows, title);
-    };
 
     const filterList = (list) => {
         if (!searchTerm) return list;
@@ -147,68 +139,39 @@ const ModulePermissions = () => {
 
     const renderTable = (list, type, statusKey, filename) => {
         const filtered = filterList(list);
-        const indexOfLastItem = currentPage * itemsPerPage;
-        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        const safeRecordsPerPage = recordsPerPage === -1 ? filtered.length || 1 : recordsPerPage;
+        const indexOfLastItem = currentPage * safeRecordsPerPage;
+        const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
         const currentData = filtered.slice(indexOfFirstItem, indexOfLastItem);
 
         return (
             <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '15px' : '0' }}>
-                    <input
-                        type="search"
-                        className="form-control input-sm"
-                        placeholder="Search..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            marginLeft: isMobile ? '0' : '10px',
-                            display: 'inline-block',
-                            width: '180px',
-                            border: 'none',
-                            borderBottom: '1px solid #ccc',
-                            borderRadius: '0',
-                            boxShadow: 'none',
-                            backgroundColor: 'transparent',
-                            paddingLeft: '0',
-                            outline: 'none',
-                            textAlign: isMobile ? 'center' : 'left',
-                            fontSize: '13px'
-                        }}
-                    />
-                    <div className="dt-buttons btn-group" style={{ display: isMobile ? 'flex' : 'block', width: isMobile ? '100%' : 'auto', justifyContent: 'center' }}>
-                        <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }} title="Copy" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                        <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadExcel(headers, rows, `${filename}.xls`); }}><i className="fa fa-file-excel-o"></i></button>
-                        <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadCSV(headers, rows, `${filename}.csv`); }}><i className="fa fa-file-text-o"></i></button>
-                        <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(filtered, type, statusKey); downloadPDF(headers, rows, `${filename}.pdf`, filename); }}><i className="fa fa-file-pdf-o"></i></button>
-                        <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => handlePrint(filtered, type, statusKey, filename)}><i className="fa fa-print"></i></button>
-                        <div className="btn-group">
-                            <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }} title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                <i className="fa fa-columns"></i>
-                            </button>
-                            {showColumnsDropdown && (
-                                <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                    {columns.map(col => (
-                                        <li key={col.index}><label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}><input type="checkbox" checked={!hiddenColumns.includes(col.index)} onChange={() => toggleColumnVisibility(col.index)} style={{ marginRight: '10px' }} /> {col.label}</label></li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <TableToolbar
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    recordsPerPage={recordsPerPage}
+                    onRecordsPerPageChange={setRecordsPerPage}
+                    columns={columns}
+                    visibleColumns={visibleColumns}
+                    onToggleColumn={handleToggleColumn}
+                    getExportData={() => getExportData(filtered, type, statusKey)}
+                    exportFileName={filename}
+                    exportTitle={filename}
+                />
 
                 <div className="table-responsive">
                     <table className="table table-striped table-bordered table-hover">
                         <thead>
                             <tr>
-                                {!hiddenColumns.includes(0) && <th>Name</th>}
-                                {!hiddenColumns.includes(1) && <th style={{ width: "120px", textAlign: "center" }}>Action</th>}
+                                {visibleColumns.has('name') && <th>Name</th>}
+                                {visibleColumns.has('action') && <th style={{ width: "120px", textAlign: "center" }}>Action</th>}
                             </tr>
                         </thead>
                         <tbody>
                             {currentData.map((item) => (
                                 <tr key={item.id}>
-                                    {!hiddenColumns.includes(0) && <td>{item.name}</td>}
-                                    {!hiddenColumns.includes(1) && <td style={{ textAlign: "center" }}>
+                                    {visibleColumns.has('name') && <td>{item.name}</td>}
+                                    {visibleColumns.has('action') && <td style={{ textAlign: "center" }}>
                                         <label className="custom-switch">
                                             <input
                                                 type="checkbox"
@@ -226,7 +189,7 @@ const ModulePermissions = () => {
                 <div className="pt15 pb15">
                     <Pagination
                         totalItems={filtered.length}
-                        itemsPerPage={itemsPerPage}
+                        itemsPerPage={recordsPerPage}
                         currentPage={currentPage}
                         onPageChange={(page) => setCurrentPage(page)}
                     />

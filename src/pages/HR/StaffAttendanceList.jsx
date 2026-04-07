@@ -177,7 +177,11 @@ const StaffAttendanceList = () => {
                 .radio-info input[type="radio"]:checked + label::before { border-color: #5bc0de; }
                 .radio-info input[type="radio"]:checked + label::after { background-color: #5bc0de; }
                 .radio.radio-inline { margin-top: 0; display: inline-block; margin-right: 15px; }
-                @media (max-width:767px){ .radio.radio-inline { display: block; margin-bottom: 10px; } }
+                @media (max-width:767px){
+                    .attendance-radios { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+                    .attendance-radios .radio.radio-inline { display: inline-flex; align-items: center; margin-bottom: 0; margin-right: 0; }
+                    .note-cell input.form-control { min-width: 160px; }
+                }
                 .button-checkbox button { min-width: 140px; }
                 .req { color: red; margin-left: 2px; }
             `}} />

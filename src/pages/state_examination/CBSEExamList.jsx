@@ -82,6 +82,9 @@ const CBSEExamList = () => {
 
     const handleEnterMarks = async (subject) => {
         setSubModalConfig({ show: true, subject });
+        setCsvFile(null);
+        const fileInput = document.getElementById('csv_file');
+        if (fileInput) fileInput.value = '';
         setEntryLoading(true);
         try {
             const payload = {
@@ -263,6 +266,9 @@ const CBSEExamList = () => {
                 });
                 setEntryMarks(newMarks);
                 setEntryNotes(newNotes);
+                setCsvFile(null);
+                const fileInput = document.getElementById('csv_file');
+                if (fileInput) fileInput.value = '';
                 alert("CSV file uploaded successfully.");
             } else {
                 let errorMsg = "Failed to import marks";
@@ -299,6 +305,7 @@ const CBSEExamList = () => {
         setModalConfig({ show: false, title: '', type: '' });
         setSubModalConfig({ show: false, subject: null });
         setActiveExam(null);
+        setCsvFile(null);
     };
 
     const handleDelete = async (exam) => {
@@ -1198,7 +1205,12 @@ const CBSEExamList = () => {
                                 )}
                                 {modalConfig.type === 'marks' && subModalConfig.show && (
                                     <div>
-                                        <button className="btn btn-default btn-sm mb10" onClick={() => setSubModalConfig({ show: false, subject: null })}><i className="fa fa-arrow-left"></i> Back to Subjects</button>
+                                        <button className="btn btn-default btn-sm mb10" onClick={() => {
+                                            setSubModalConfig({ show: false, subject: null });
+                                            setCsvFile(null);
+                                            const fileInput = document.getElementById('csv_file');
+                                            if (fileInput) fileInput.value = '';
+                                        }}><i className="fa fa-arrow-left"></i> Back to Subjects</button>
                                         <h4>Enter {subModalConfig.subject.subject_name} Marks</h4>
 
                                         {/* CSV Import Section */}

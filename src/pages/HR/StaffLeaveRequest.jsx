@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
+import TableToolbar from '../../utils/TableToolbar';
+import Pagination from '../../utils/Pagination';
 import '../../utils/include_files';
+
+const COLUMNS = [
+    { key: 'staff', label: 'Staff' },
+    { key: 'leave_type', label: 'Leave Type' },
+    { key: 'leave_date', label: 'Leave Date' },
+    { key: 'days', label: 'Days' },
+    { key: 'apply_date', label: 'Apply Date' },
+    { key: 'status', label: 'Status' },
+    { key: 'action', label: 'Action' }
+];
 
 const StaffLeaveRequest = () => {
     const navigate = useNavigate();
@@ -20,6 +32,19 @@ const StaffLeaveRequest = () => {
     const [selectedLeave, setSelectedLeave] = useState(null);
     const [isEdit, setIsEdit] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // TableToolbar state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [visibleColumns, setVisibleColumns] = useState(new Set(COLUMNS.map(c => c.key)));
 
     // Detail Modal Status/Remark
     const [detailStatus, setDetailStatus] = useState({
@@ -218,6 +243,50 @@ const StaffLeaveRequest = () => {
         }
     };
 
+    // Filtered + paginated data
+    const filteredData = useMemo(() => {
+        if (!searchTerm.trim()) return leaveRequests;
+        const term = searchTerm.toLowerCase();
+        return leaveRequests.filter(v =>
+            `${v.name} ${v.surname}`.toLowerCase().includes(term) ||
+            (v.type || '').toLowerCase().includes(term) ||
+            (v.status || '').toLowerCase().includes(term) ||
+            (v.employee_id || '').toLowerCase().includes(term)
+        );
+    }, [leaveRequests, searchTerm]);
+
+    const paginatedData = useMemo(() => {
+        if (recordsPerPage === -1) return filteredData;
+        const start = (currentPage - 1) * recordsPerPage;
+        return filteredData.slice(start, start + recordsPerPage);
+    }, [filteredData, currentPage, recordsPerPage]);
+
+    useEffect(() => { setCurrentPage(1); }, [searchTerm, recordsPerPage]);
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key); else next.add(key);
+            return next;
+        });
+    };
+
+    const getExportData = () => {
+        const exportCols = COLUMNS.filter(c => c.key !== 'action' && visibleColumns.has(c.key));
+        const colMap = {
+            staff: v => `${v.name} ${v.surname} (${v.employee_id})`,
+            leave_type: v => v.type || '',
+            leave_date: v => `${v.leave_from} - ${v.leave_to}`,
+            days: v => v.leave_days || '',
+            apply_date: v => v.date || '',
+            status: v => v.status || ''
+        };
+        return {
+            headers: exportCols.map(c => c.label),
+            rows: filteredData.map(v => exportCols.map(c => (colMap[c.key] ? colMap[c.key](v) : '')))
+        };
+    };
+
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
@@ -238,81 +307,106 @@ const StaffLeaveRequest = () => {
                                         <button onClick={handleAddLeave} className="btn btn-sm btn-primary">
                                             <i className="fa fa-plus"></i> Add Leave Request
                                         </button>
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm" style={{ marginLeft: '5px' }}>
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="box-body">
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={setSearchTerm}
+                                        recordsPerPage={recordsPerPage}
+                                        onRecordsPerPageChange={setRecordsPerPage}
+                                        columns={COLUMNS}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={handleToggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="staff_leave_request_list"
+                                        exportTitle="Staff Leave Request List"
+                                    />
                                     <div className="table-responsive no-padding">
                                         <table className="table table-striped table-bordered table-hover">
                                             <thead>
                                                 <tr>
-                                                    <th>Staff</th>
-                                                    <th>Leave Type</th>
-                                                    <th>Leave Date</th>
-                                                    <th>Days</th>
-                                                    <th>Apply Date</th>
-                                                    <th>Status</th>
-                                                    <th className="text-right">Action</th>
+                                                    {visibleColumns.has('staff') && <th>Staff</th>}
+                                                    {visibleColumns.has('leave_type') && <th>Leave Type</th>}
+                                                    {visibleColumns.has('leave_date') && <th>Leave Date</th>}
+                                                    {visibleColumns.has('days') && <th>Days</th>}
+                                                    {visibleColumns.has('apply_date') && <th>Apply Date</th>}
+                                                    {visibleColumns.has('status') && <th>Status</th>}
+                                                    {visibleColumns.has('action') && <th className="text-right">Action</th>}
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {leaveRequests.map(leave => (
+                                                {paginatedData.map(leave => (
                                                     <tr key={leave.id}>
-                                                        <td>{leave.name} {leave.surname} ({leave.employee_id})</td>
-                                                        <td>{leave.type}</td>
-                                                        <td>{leave.leave_from} - {leave.leave_to}</td>
-                                                        <td>{leave.leave_days}</td>
-                                                        <td>{leave.date}</td>
-                                                        <td>
-                                                            <span className={`label ${leave.status === 'approved' ? 'label-success' :
-                                                                leave.status === 'pending' ? 'label-warning' : 'label-danger'
-                                                                }`}>
-                                                                {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
-                                                            </span>
-                                                        </td>
-                                                        <td className="text-right white-space-nowrap">
-                                                            <button
-                                                                onClick={() => handleViewDetails(leave)}
-                                                                className="btn btn-default btn-xs"
-                                                                title="View"
-                                                            >
-                                                                <i className="fa fa-reorder"></i>
-                                                            </button>
-                                                            {leave.status === 'pending' && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={() => handleEditLeave(leave)}
-                                                                        className="btn btn-default btn-xs"
-                                                                        title="Edit"
-                                                                        style={{ marginLeft: '3px' }}
-                                                                    >
-                                                                        <i className="fa fa-pencil"></i>
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleDelete(leave.id)}
-                                                                        className="btn btn-default btn-xs"
-                                                                        title="Delete"
-                                                                        style={{ marginLeft: '3px' }}
-                                                                    >
-                                                                        <i className="fa fa-remove"></i>
-                                                                    </button>
-                                                                </>
-                                                            )}
-                                                            {leave.document_file && (
-                                                                <a
-                                                                    href={`https://newlayout.wisibles.com/admin/leaverequest/downloadleaverequestdoc/${leave.staff_id}/${leave.id}`}
+                                                        {visibleColumns.has('staff') && <td>{leave.name} {leave.surname} ({leave.employee_id})</td>}
+                                                        {visibleColumns.has('leave_type') && <td>{leave.type}</td>}
+                                                        {visibleColumns.has('leave_date') && <td>{leave.leave_from} - {leave.leave_to}</td>}
+                                                        {visibleColumns.has('days') && <td>{leave.leave_days}</td>}
+                                                        {visibleColumns.has('apply_date') && <td>{leave.date}</td>}
+                                                        {visibleColumns.has('status') && (
+                                                            <td>
+                                                                <span className={`label ${leave.status === 'approved' ? 'label-success' :
+                                                                    leave.status === 'pending' ? 'label-warning' : 'label-danger'
+                                                                    }`}>
+                                                                    {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
+                                                                </span>
+                                                            </td>
+                                                        )}
+                                                        {visibleColumns.has('action') && (
+                                                            <td className="text-right white-space-nowrap">
+                                                                <button
+                                                                    onClick={() => handleViewDetails(leave)}
                                                                     className="btn btn-default btn-xs"
-                                                                    title="Download"
-                                                                    style={{ marginLeft: '3px' }}
+                                                                    title="View"
                                                                 >
-                                                                    <i className="fa fa-download"></i>
-                                                                </a>
-                                                            )}
-                                                        </td>
+                                                                    <i className="fa fa-reorder"></i>
+                                                                </button>
+                                                                {leave.status === 'pending' && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => handleEditLeave(leave)}
+                                                                            className="btn btn-default btn-xs"
+                                                                            title="Edit"
+                                                                            style={{ marginLeft: '3px' }}
+                                                                        >
+                                                                            <i className="fa fa-pencil"></i>
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDelete(leave.id)}
+                                                                            className="btn btn-default btn-xs"
+                                                                            title="Delete"
+                                                                            style={{ marginLeft: '3px' }}
+                                                                        >
+                                                                            <i className="fa fa-remove"></i>
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                                {leave.document_file && (
+                                                                    <a
+                                                                        href={`https://newlayout.wisibles.com/admin/leaverequest/downloadleaverequestdoc/${leave.staff_id}/${leave.id}`}
+                                                                        className="btn btn-default btn-xs"
+                                                                        title="Download"
+                                                                        style={{ marginLeft: '3px' }}
+                                                                    >
+                                                                        <i className="fa fa-download"></i>
+                                                                    </a>
+                                                                )}
+                                                            </td>
+                                                        )}
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
+                                    <Pagination
+                                        totalItems={filteredData.length}
+                                        itemsPerPage={recordsPerPage}
+                                        currentPage={currentPage}
+                                        onPageChange={setCurrentPage}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -322,15 +416,15 @@ const StaffLeaveRequest = () => {
 
             {/* Add/Edit Modal */}
             {showAddModal && (
-                <div className="modal fade in" style={{ display: 'block' }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
+                <div className="modal fade in" style={{ display: 'block', overflowY: 'auto' }}>
+                    <div className="modal-dialog modal-lg" style={{ margin: isMobile ? '10px auto' : '30px auto', maxHeight: isMobile ? 'calc(100vh - 20px)' : 'none', display: isMobile ? 'flex' : 'block', flexDirection: 'column' }}>
+                        <div className="modal-content" style={isMobile ? { maxHeight: 'calc(100vh - 20px)', display: 'flex', flexDirection: 'column' } : {}}>
                             <div className="modal-header">
                                 <button type="button" className="close" onClick={() => setShowAddModal(false)}>&times;</button>
                                 <h4 className="modal-title">{isEdit ? 'Edit Details' : 'Add Details'}</h4>
                             </div>
-                            <form onSubmit={handleSaveLeave}>
-                                <div className="modal-body">
+                            <form onSubmit={handleSaveLeave} style={isMobile ? { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' } : {}}>
+                                <div className="modal-body hide-scrollbar" style={{ overflowY: 'auto', overflowX: 'hidden', flex: isMobile ? 1 : 'none' }}>
                                     <div className="row">
                                         <div className="form-group col-md-6">
                                             <label>Role</label><small className="req"> *</small>
@@ -489,7 +583,7 @@ const StaffLeaveRequest = () => {
                                 <button type="button" className="close" onClick={() => setShowDetailModal(false)}>&times;</button>
                                 <h4 className="modal-title">Details</h4>
                             </div>
-                            <div className="modal-body">
+                            <div className="modal-body hide-scrollbar" style={{ maxHeight: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden' }}>
                                 <form onSubmit={handleUpdateStatus}>
                                     <div className="table-responsive">
                                         <table className="table table-striped table-bordered">

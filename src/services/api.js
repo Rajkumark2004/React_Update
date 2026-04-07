@@ -4499,16 +4499,10 @@ export const api = {
         return data;
     },
 
-    editTimeline: async (payload) => {
+    editTimeline: async (formData) => {
         const url = `${API_BASE}/admin/timeline/editstudenttimeline`;
-        console.log('API Request: Edit Timeline', payload);
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-        });
+        console.log('API Request: Edit Timeline');
+        const response = await fetch(url, createFetchOptions('POST', formData));
         let data;
         const responseText = await response.text();
         try {
@@ -5189,15 +5183,14 @@ export const api = {
             throw error;
         }
     },
-    getStaffList: async () => {
-        console.log('API Request: Get Staff List');
+    getStaffList: async (payload = null) => {
+        console.log('API Request: Get Staff List', payload);
         try {
-            const response = await fetch(`${API_BASE}/admin/staff`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const options = payload 
+                ? createFetchOptions('POST', payload) 
+                : createFetchOptions('POST', {}); // backend seems to expect POST now entirely
+
+            const response = await fetch(`${API_BASE}/admin/staff`, options);
 
             const data = await response.json();
             console.log('Staff List Response:', data);
@@ -7675,6 +7668,20 @@ export const api = {
             return data;
         } catch (error) {
             console.error('Staff Leave Index API Error:', error);
+            throw error;
+        }
+    },
+    countLeave: async (id) => {
+        console.log('API Request: Count Leave', id);
+        try {
+            const response = await fetch(`${API_BASE}/admin/leaverequest/countLeave/${id}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            console.log('Count Leave Response:', data);
+            return data;
+        } catch (error) {
+            console.error('Count Leave API Error:', error);
             throw error;
         }
     },

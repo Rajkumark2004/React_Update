@@ -11,72 +11,69 @@ const StaffSearch = () => {
     const [viewMode, setViewMode] = useState('card'); // 'card' or 'list'
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRole, setSelectedRole] = useState('');
-    const [appliedSearchTerm, setAppliedSearchTerm] = useState('');
-    const [appliedSelectedRole, setAppliedSelectedRole] = useState('');
     const [staffList, setStaffList] = useState([]);
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const handleSearch = (e) => {
-        if (e) e.preventDefault();
-        setAppliedSearchTerm(searchTerm);
-        setAppliedSelectedRole(selectedRole);
+    const fetchStaffList = async (payload = {}) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await api.getStaffList(payload);
+
+            if (response.status && response.data) {
+                // Map API response to component format
+                const mappedStaff = (response.data.resultlist || []).map(staff => ({
+                    id: staff.id,
+                    employee_id: staff.employee_id,
+                    name: staff.name,
+                    surname: staff.surname || '',
+                    role: staff.user_type || '',
+                    role_id: staff.role_id,
+                    department: staff.department || '',
+                    designation: staff.designation || '',
+                    mobile: staff.contact_no || '',
+                    email: staff.email || '',
+                    image: staff.image ? `https://newlayout.wisibles.com/uploads/staff_images/${staff.image}` : 'https://newlayout.wisibles.com/uploads/staff_images/default_male.jpg',
+                    gender: staff.gender || '',
+                    location: staff.location || '',
+                    is_active: staff.is_active
+                }));
+
+                setStaffList(mappedStaff);
+                if (response.data.staff_role && response.data.staff_role.length > 0) {
+                    setRoles(response.data.staff_role);
+                }
+            } else {
+                setStaffList([]);
+            }
+        } catch (err) {
+            console.error('Error fetching staff list:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    const handleRoleSearch = (e) => {
+        if (e) e.preventDefault();
+        fetchStaffList({ role: selectedRole, search: "search_filter" });
+    };
 
-    // Fetch staff list from API
+    const handleKeywordSearch = (e) => {
+        if (e) e.preventDefault();
+        fetchStaffList({ search_text: searchTerm, search: "search_full" });
+    };
+
+    // Fetch staff list from API on mount
     useEffect(() => {
-        const fetchStaffList = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const response = await api.getStaffList();
-
-                if (response.status && response.data) {
-                    // Map API response to component format
-                    const mappedStaff = response.data.resultlist.map(staff => ({
-                        id: staff.id,
-                        employee_id: staff.employee_id,
-                        name: staff.name,
-                        surname: staff.surname || '',
-                        role: staff.user_type || '',
-                        role_id: staff.role_id,
-                        department: staff.department || '',
-                        designation: staff.designation || '',
-                        mobile: staff.contact_no || '',
-                        email: staff.email || '',
-                        image: staff.image ? `https://newlayout.wisibles.com/uploads/staff_images/${staff.image}` : 'https://newlayout.wisibles.com/uploads/staff_images/default_male.jpg',
-                        gender: staff.gender || '',
-                        location: staff.location || '',
-                        is_active: staff.is_active
-                    }));
-
-                    setStaffList(mappedStaff);
-                    setRoles(response.data.staff_role || []);
-                }
-            } catch (err) {
-                console.error('Error fetching staff list:', err);
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchStaffList();
+        fetchStaffList({});
     }, []);
 
-    // Filter Logic
-    const filteredStaff = staffList.filter(staff => {
-        const matchesRole = appliedSelectedRole ? staff.role_id === appliedSelectedRole : true;
-        const matchesSearch = appliedSearchTerm ? (
-            staff.name.toLowerCase().includes(appliedSearchTerm.toLowerCase()) ||
-            staff.surname.toLowerCase().includes(appliedSearchTerm.toLowerCase()) ||
-            staff.employee_id.toLowerCase().includes(appliedSearchTerm.toLowerCase()) ||
-            staff.email.toLowerCase().includes(appliedSearchTerm.toLowerCase())
-        ) : true;
-        return matchesRole && matchesSearch;
-    });
+    // Filter Logic is now handled by the backend
+    const filteredStaff = staffList;
+
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -129,7 +126,7 @@ const StaffSearch = () => {
                                 <div className="box-body">
                                     <div className="row">
                                         <div className="col-md-6">
-                                            <form onSubmit={handleSearch}>
+                                            <form onSubmit={handleRoleSearch}>
                                                 <div className="row">
                                                     <div className="col-sm-8">
                                                         <div className="form-group">
@@ -157,7 +154,7 @@ const StaffSearch = () => {
                                             </form>
                                         </div>
                                         <div className="col-md-6">
-                                            <form onSubmit={handleSearch}>
+                                            <form onSubmit={handleKeywordSearch}>
                                                 <div className="row">
                                                     <div className="col-sm-12">
                                                         <div className="form-group">

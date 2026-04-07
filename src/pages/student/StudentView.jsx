@@ -55,6 +55,7 @@ const StudentView = () => {
     description: "",
     visible_check: true,
     file: null,
+    document: "",
   });
 
   // Document Modal State
@@ -291,6 +292,7 @@ const StudentView = () => {
       description: "",
       visible_check: true,
       file: null,
+      document: "",
     });
     setTimelineModalOpen(true);
   };
@@ -307,6 +309,7 @@ const StudentView = () => {
           description: data.description || "",
           visible_check: data.status === 'yes',
           file: null, // Do not prefill file
+          document: data.document || "",
         });
         setTimelineModalOpen(true);
       } else {
@@ -323,22 +326,26 @@ const StudentView = () => {
 
     try {
       if (timelineFormData.id) {
-        // Edit Mode: Send JSON
-        const payload = {
-          id: timelineFormData.id,
-          student_id: student.id,
-          timeline_title: timelineFormData.title || "",
-          timeline_desc: timelineFormData.description || "",
-          timeline_date: moment(timelineFormData.date, ["DD/MM/YYYY", "YYYY-MM-DD", "D/M/YYYY"]).format("DD/MM/YYYY"),
-          timeline_doc: "", // Aligned with user's JSON example
-        };
-        // PHP checkbox: only include visible_check when checked (present = yes, absent = no)
+        // Edit Mode: Send FormData
+        const formData = new FormData();
+        formData.append("id", timelineFormData.id);
+        formData.append("student_id", student.id);
+        formData.append("timeline_title", timelineFormData.title || "");
+        formData.append("timeline_desc", timelineFormData.description || "");
+        formData.append("timeline_date", moment(timelineFormData.date, ["DD/MM/YYYY", "YYYY-MM-DD", "D/M/YYYY"]).format("DD/MM/YYYY"));
+
         if (timelineFormData.visible_check) {
-          payload.visible_check = "yes";
+          formData.append("visible_check", "yes");
         }
 
-        console.log("Timeline Edit Submit (JSON):", payload);
-        await api.editTimeline(payload);
+        if (timelineFormData.file) {
+          formData.append("timeline_doc", timelineFormData.file);
+        } else {
+          formData.append("timeline_doc", "");
+        }
+
+        console.log("Timeline Edit Submit (FormData):");
+        await api.editTimeline(formData);
         toast.success("Timeline updated successfully");
       } else {
         // Add Mode: Send FormData
@@ -2004,6 +2011,7 @@ const StudentView = () => {
                       type="file"
                       className="dropify"
                       data-height="100"
+                      data-default-file={timelineFormData.document ? `https://newlayout.wisibles.com/uploads/student_timeline/${timelineFormData.document}` : ""}
                       onChange={(e) =>
                         setTimelineFormData({
                           ...timelineFormData,

@@ -32,14 +32,14 @@ const Pagination = ({
             onPageChange(page);
             // Capture target before entering setTimeout because React pools events
             const target = e.currentTarget;
-            
+
             // Defer scrolling to next event loop tick so React finishes rendering the new list.
             setTimeout(() => {
-                const element = target.closest('.box') || 
-                                target.closest('.nav-tabs-custom') || 
-                                document.querySelector('.content-header') || 
-                                document.documentElement;
-                
+                const element = target.closest('.box') ||
+                    target.closest('.nav-tabs-custom') ||
+                    document.querySelector('.content-header') ||
+                    document.documentElement;
+
                 if (element && element !== document.documentElement) {
                     const rect = element.getBoundingClientRect();
                     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -56,7 +56,7 @@ const Pagination = ({
         <div className="row" style={{ display: isMobile ? 'flex' : 'block', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? '10px' : '0' }}>
             <div className={isMobile ? "text-center" : "col-sm-5"}>
                 <div className="dataTables_info">
-                    Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} Records
+                    Showing {totalItems === 0 ? 0 : indexOfFirstItem + 1} to {Math.min(indexOfLastItem, totalItems)} of {totalItems} bug
                 </div>
             </div>
             <div className={isMobile ? "text-center" : "col-sm-7"}>
@@ -81,7 +81,7 @@ const Pagination = ({
                                     pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
                                 }
                             }
-                            
+
                             return pages.map((p, i) => {
                                 if (p === '...') {
                                     return (
