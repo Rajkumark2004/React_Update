@@ -769,11 +769,12 @@ const CBSEGradeList = () => {
                                                                 {formData.ranges.length > 1 && (
                                                                     <button
                                                                         type="button"
-                                                                        className="btn btn-danger btn-xs"
+                                                                        className="btn"
                                                                         onClick={() => removeRange(index)}
                                                                         title="Remove"
+                                                                        style={{ background: 'none', border: 'none', color: '#ff0000', padding: '0', boxShadow: 'none' }}
                                                                     >
-                                                                        <i className="fa fa-remove"></i>
+                                                                        <i className="fa fa-remove" style={{ fontSize: '20px' }}></i>
                                                                     </button>
                                                                 )}
                                                             </div>

@@ -742,16 +742,17 @@ const Assessment = () => {
                                                             <textarea className="form-control input-sm" rows="1" value={row.type_description} onChange={(e) => handleRowChange(index, 'type_description', e.target.value)} style={{ resize: 'none', minHeight: '30px' }}></textarea>
                                                         </div>
                                                         <div className="col-md-1 col-fit-mobile removal-button-responsive" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
-                                                            {formData.rows.length > 1 && (
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-danger btn-xs"
-                                                                    onClick={() => removeRow(index)}
-                                                                    title="Remove"
-                                                                >
-                                                                    <i className="fa fa-remove"></i>
-                                                                </button>
-                                                            )}
+                                                                {formData.rows.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn"
+                                                                        onClick={() => removeRow(index)}
+                                                                        title="Remove"
+                                                                        style={{ background: 'none', border: 'none', color: '#ff0000', padding: '0', boxShadow: 'none' }}
+                                                                    >
+                                                                        <i className="fa fa-remove" style={{ fontSize: '20px' }}></i>
+                                                                    </button>
+                                                                )}
                                                         </div>
                                                     </div>
                                                 ))}
