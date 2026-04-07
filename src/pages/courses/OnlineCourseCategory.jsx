@@ -117,8 +117,8 @@ const OnlineCourseCategory = () => {
                 .box-header.ptbnull { padding-top: 0; padding-bottom: 0; }
                 .box-title.titlefix { margin-top: 5px; }
                 .pull-right { float: right!important; }
-                .btn-primary { background-color:#9754ca; border-color: #9754ca; color: #fff; margin-top: 3px;}
-                .btn-sm { padding: 5px 10px; font-size: 12px; line-height: 1.5; border-radius: 20px; }
+                .btn-primary { background-color:#9754ca; border-color: #9754ca; color: #fff; margin-top: 3px;border-radius: 20px !important; }
+                .btn-sm { padding: 5px 10px; font-size: 12px; line-height: 1.5; border-radius: 20px !important; }
                 .table-striped>tbody>tr:nth-of-type(odd) { background-color: #f9f9f9; }
                 .table-bordered { border: 1px solid #f4f4f4; }
                 .noExport { display: block; } /* Basic utility */
@@ -136,14 +136,6 @@ const OnlineCourseCategory = () => {
                     justify-content: center;
                     align-items: flex-start;
                     padding-top: 50px;
-                }
-                .modal-dialog {
-                    width: 600px;
-                    margin: 30px auto;
-                    background: #fff;
-                    border-radius: 6px;
-                    box-shadow: 0 5px 15px rgba(0,0,0,.5);
-                    position: relative;
                 }
                 .modal-header {
                     padding: 15px;
@@ -177,8 +169,11 @@ const OnlineCourseCategory = () => {
                     background: #f9f9f9;
                     display: inline-flex;
                     align-items: center;
-                    overflow: hidden;
+                    overflow: visible;
                 }
+                .dt-buttons.btn-group > .btn:first-child { border-top-left-radius: 20px !important; border-bottom-left-radius: 20px !important; }
+                .dt-buttons.btn-group > .btn:last-child,
+                .dt-buttons.btn-group > .btn-group:last-child > .btn { border-top-right-radius: 20px !important; border-bottom-right-radius: 20px !important; }
                 .dt-buttons.btn-group .btn {
                     border: none !important;
                     background: transparent !important;
@@ -359,19 +354,20 @@ const OnlineCourseCategory = () => {
 
             {/* Modal for Add Category */}
             {showModal && (
-                <div className="modal-overlay" role="dialog" onClick={() => setShowModal(false)}>
-                    <div className="modal-dialog modal-md" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
-                                <h4 className="modal-title">Category</h4>
-                            </div>
+                <>
+                    <div className="modal fade in" style={{ display: 'block' }}>
+                        <div className="modal-dialog modal-md" role="document">
+                            <div className="modal-content modal-media-content">
+                                <div className="modal-header modal-media-header">
+                                    <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
+                                    <h4 className="modal-title box-title">Category</h4>
+                                </div>
                             <form onSubmit={handleAddCategory}>
                                 <div className="modal-body">
                                     <div className="row">
                                         <div className="col-sm-12">
                                             <div className="form-group">
-                                                <label htmlFor="category_name">Category Name</label><small className="req"> *</small>
+                                                <label htmlFor="category_name">Category Name</label><small className="req"> *</small> 
                                                 <input
                                                     type="text"
                                                     className="form-control"
@@ -386,7 +382,6 @@ const OnlineCourseCategory = () => {
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="button" className="btn btn-default" onClick={() => setShowModal(false)}>Cancel</button>
                                     <button type="submit" className="btn btn-primary" disabled={loading}>
                                         {loading ? <><i className='fa fa-spinner fa-spin'></i> Saving</> : 'Save'}
                                     </button>
@@ -395,7 +390,9 @@ const OnlineCourseCategory = () => {
                         </div>
                     </div>
                 </div>
-            )}
+                <div className="modal-backdrop fade in"></div>
+            </>
+        )}
         </div>
     );
 };
