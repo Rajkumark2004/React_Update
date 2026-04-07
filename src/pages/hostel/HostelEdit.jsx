@@ -65,9 +65,8 @@ const HostelEdit = () => {
     };
 
     const getExportData = () => {
-        const activeCols = columns.filter(c => visibleColumns.has(c.key));
-        const headers = activeCols.map(c => c.label);
-        const rows = filteredHostelList.map(h => activeCols.map(c => h[c.key]));
+        const headers = columns.map(c => c.label);
+        const rows = filteredHostelList.map(h => [h.hostel_name, h.type, h.address, h.intake]);
         return { headers, rows };
     };
 
@@ -398,14 +397,14 @@ const HostelEdit = () => {
                                                 )}
                                             </tbody>
                                         </table>
-                                    </div>
-                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                        <Pagination 
-                                            totalItems={totalItems} 
-                                            itemsPerPage={recordsPerPage} 
-                                            currentPage={currentPage}
-                                            onPageChange={(page) => setCurrentPage(page)}
-                                        />
+                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                            <Pagination
+                                                totalItems={totalItems}
+                                                itemsPerPage={recordsPerPage}
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -57,9 +57,8 @@ const RoomTypeEdit = () => {
     };
 
     const getExportData = () => {
-        const activeCols = columns.filter(c => visibleColumns.has(c.key));
-        const headers = activeCols.map(c => c.label);
-        const rows = filteredRoomTypeList.map(rt => activeCols.map(c => rt[c.key]));
+        const headers = columns.map(c => c.label);
+        const rows = filteredRoomTypeList.map(rt => [rt.room_type]);
         return { headers, rows };
     };
 
@@ -261,65 +260,65 @@ const RoomTypeEdit = () => {
                                     />
                                     <div className="mailbox-messages table-responsive">
                                         <div className="download_label">Room Type List</div>
-                                            <table className="table table-striped table-bordered table-hover example">
-                                                <thead>
+                                        <table className="table table-striped table-bordered table-hover example">
+                                            <thead>
+                                                <tr>
+                                                    {visibleColumns.has('room_type') && <th>Room Type</th>}
+                                                    <th className="text-right noExport">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {currentItems.length === 0 ? (
                                                     <tr>
-                                                        {visibleColumns.has('room_type') && <th>Room Type</th>}
-                                                        <th className="text-right noExport">Action</th>
+                                                        <td colSpan={visibleColumns.size + 1} className="text-center">No Record Found</td>
                                                     </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {currentItems.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={visibleColumns.size + 1} className="text-center">No Record Found</td>
-                                                        </tr>
-                                                    ) : (
-                                                        currentItems.map(roomtype => (
-                                                            <tr key={roomtype.id}>
-                                                                {visibleColumns.has('room_type') && (
-                                                                    <td className="mailbox-name">
-                                                                        <a
-                                                                            href="#"
-                                                                            data-toggle="tooltip"
-                                                                            title={roomtype.description || 'No description'}
-                                                                            onClick={(e) => e.preventDefault()}
-                                                                        >
-                                                                            {roomtype.room_type}
-                                                                        </a>
-                                                                    </td>
-                                                                )}
-                                                                <td className="mailbox-date pull-right no-print">
-                                                                    <Link
-                                                                        to={`/admin/roomtype/edit/${roomtype.id}`}
-                                                                        className="btn btn-default btn-xs"
+                                                ) : (
+                                                    currentItems.map(roomtype => (
+                                                        <tr key={roomtype.id}>
+                                                            {visibleColumns.has('room_type') && (
+                                                                <td className="mailbox-name">
+                                                                    <a
+                                                                        href="#"
                                                                         data-toggle="tooltip"
-                                                                        title="Edit"
+                                                                        title={roomtype.description || 'No description'}
+                                                                        onClick={(e) => e.preventDefault()}
                                                                     >
-                                                                        <i className="fa fa-pencil"></i>
-                                                                    </Link>
-                                                                    <button
-                                                                        onClick={() => handleDelete(roomtype.id)}
-                                                                        className="btn btn-default btn-xs"
-                                                                        data-toggle="tooltip"
-                                                                        title="Delete"
-                                                                        style={{ marginLeft: '5px' }}
-                                                                    >
-                                                                        <i className="fa fa-remove"></i>
-                                                                    </button>
+                                                                        {roomtype.room_type}
+                                                                    </a>
                                                                 </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                    </div>
-                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                        <Pagination 
-                                            totalItems={totalItems} 
-                                            itemsPerPage={recordsPerPage} 
-                                            currentPage={currentPage}
-                                            onPageChange={(page) => setCurrentPage(page)}
-                                        />
+                                                            )}
+                                                            <td className="mailbox-date pull-right no-print">
+                                                                <Link
+                                                                    to={`/admin/roomtype/edit/${roomtype.id}`}
+                                                                    className="btn btn-default btn-xs"
+                                                                    data-toggle="tooltip"
+                                                                    title="Edit"
+                                                                >
+                                                                    <i className="fa fa-pencil"></i>
+                                                                </Link>
+                                                                <button
+                                                                    onClick={() => handleDelete(roomtype.id)}
+                                                                    className="btn btn-default btn-xs"
+                                                                    data-toggle="tooltip"
+                                                                    title="Delete"
+                                                                    style={{ marginLeft: '5px' }}
+                                                                >
+                                                                    <i className="fa fa-remove"></i>
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                        <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                            <Pagination
+                                                totalItems={totalItems}
+                                                itemsPerPage={recordsPerPage}
+                                                currentPage={currentPage}
+                                                onPageChange={(page) => setCurrentPage(page)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

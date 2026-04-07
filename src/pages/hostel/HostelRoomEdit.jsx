@@ -68,9 +68,8 @@ const HostelRoomEdit = () => {
     };
 
     const getExportData = () => {
-        const activeCols = columns.filter(c => visibleColumns.has(c.key));
-        const headers = activeCols.map(c => c.label);
-        const rows = filteredHostelRoomList.map(r => activeCols.map(c => r[c.key]));
+        const headers = columns.map(c => c.label);
+        const rows = filteredHostelRoomList.map(r => [r.room_no, r.hostel_name, r.room_type, r.no_of_bed, r.cost_per_bed]);
         return { headers, rows };
     };
 
@@ -117,7 +116,7 @@ const HostelRoomEdit = () => {
         const { name, value } = e.target;
         let sanitizedValue = value;
         let errorMsg = '';
-        
+
         if (name === 'room_no') {
             if (value.length > 50) {
                 errorMsg = 'Maximum 50 characters allowed';
@@ -126,7 +125,7 @@ const HostelRoomEdit = () => {
         }
         if (name === 'no_of_bed') sanitizedValue = sanitizeNumbers(value);
         if (name === 'cost_per_bed') sanitizedValue = sanitizeDecimal(value);
-        
+
         setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
         setErrors(prev => ({ ...prev, [name]: errorMsg }));
     };
@@ -424,9 +423,9 @@ const HostelRoomEdit = () => {
                                         </table>
                                     </div>
                                     <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                        <Pagination 
-                                            totalItems={totalItems} 
-                                            itemsPerPage={recordsPerPage} 
+                                        <Pagination
+                                            totalItems={totalItems}
+                                            itemsPerPage={recordsPerPage}
                                             currentPage={currentPage}
                                             onPageChange={(page) => setCurrentPage(page)}
                                         />
