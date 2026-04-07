@@ -62,7 +62,7 @@ const OnlineCourseList = () => {
     const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
     const indexOfLastItem = currentPage * safeRecordsPerPage;
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
-    const currentItems = filteredVideos.slice(indexOfFirstItem, indexOfLastItem);    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const currentItems = filteredVideos.slice(indexOfFirstItem, indexOfLastItem); const [hiddenColumns, setHiddenColumns] = useState([]);
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
     const toggleColumnVisibility = (colIndex) => {
@@ -210,8 +210,8 @@ const OnlineCourseList = () => {
                 .box-header.ptbnull { padding-top: 0; padding-bottom: 0; }
                 .box-title.titlefix { margin-top: 5px; }
                 .pull-right { float: right!important; }
-                .btn-primary { background-color: #337ab7; border-color: #2e6da4; color: #fff; }
-                .btn-sm { padding: 5px 10px; font-size: 12px; line-height: 1.5; border-radius: 3px; }
+                .btn-primary { background-color: #9754ca; border-color: #9754ca; color: #fff; margin-top: 3px;}
+                .btn-sm { padding: 5px 10px; font-size: 12px; line-height: 1.5; border-radius: 20px; }
                 .table-striped>tbody>tr:nth-of-type(odd) { background-color: #f9f9f9; }
                 .table-bordered { border: 1px solid #f4f4f4; }
                 
@@ -279,29 +279,61 @@ const OnlineCourseList = () => {
                     height: 100%;
                     border: 0;
                 }
-                .dt-buttons .btn { border: none; background: transparent; box-shadow: none; border-bottom: 1px solid #ccc; border-radius: 0; }
-                .dt-buttons .btn:hover { background: #f0f0f0; }
-                .mailbox-messages input[type="search"] { border: none; border-bottom: 1px solid #ccc; box-shadow: none; border-radius: 0; outline: none; }
+                .dt-buttons.btn-group {
+                    border: 1px solid #ccc;
+                    border-radius: 20px;
+                    padding: 0;
+                    background: #f9f9f9;
+                    display: inline-flex;
+                    align-items: center;
+                    overflow: hidden;
+                }
+                .dt-buttons.btn-group .btn {
+                    border: none !important;
+                    background: transparent !important;
+                    box-shadow: none !important;
+                    padding: 4px 10px !important;
+                    border-right: 1px solid #ccc !important;
+                    border-radius: 0 !important;
+                    height: 25px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .dt-buttons.btn-group .btn:last-child {
+                    border-right: none !important;
+                }
+                .dt-buttons.btn-group .btn:hover {
+                    background: #f0f0f0 !important;
+                }
+                .mailbox-messages input[type="search"] { border: none; border-bottom: 1px solid #ccc; box-shadow: none; border-radius: 0; outline: none; margin-bottom: 12px;}
                 .mailbox-messages input[type="search"]:focus { border-bottom: 1px solid #3c8dbc; }
                 .req { color: red; }
                 @media (max-width: 767px) {
-                    .mobile-stack {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 15px;
+                    .course-list-toolbar {
+                        flex-direction: column !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        border-bottom: none !important;
+                        gap: 5px !important;
                     }
-                    .mobile-stack > div {
+                    .course-list-toolbar .al-search-col,
+                    .course-list-toolbar .al-btn-col {
+                        display: flex !important;
+                        justify-content: center !important;
                         width: 100% !important;
-                        text-align: center !important;
                     }
-                    .mobile-stack .pull-right, .mobile-stack .pull-left {
-                        float: none !important;
+                    .course-list-toolbar .al-btn-col {
+                        margin-bottom: 10px;
                     }
-                    .mobile-stack .dt-buttons {
-                        justify-content: center;
+                    .course-list-toolbar .al-search-col {
+                        margin-bottom: 5px;
+                    }
+                    .mailbox-messages input[type="search"] {
+                        margin-bottom: 0px;
                     }
                 }
+               
             `}</style>
 
             <Header />
@@ -312,7 +344,7 @@ const OnlineCourseList = () => {
                     <div className="row">
                         <div className="col-md-12">
                             <div className="nav-tabs-custom theme-shadow box box-primary" style={{ marginTop: '0px' }}>
-                                <div className="box-header ptbnull" style={{ padding: '10px' }}>
+                                <div className="box-header ptbnull" style={{ padding: '5px 5px 10px 10px' }}>
                                     <h3 className="box-title titlefix pt5">Video List</h3>
                                     <div className="box-tools pull-right">
                                         <button className="btn btn-primary btn-sm question-btn" onClick={() => { setCurrentVideo({ title: '', url: '' }); setShowAddModal(true); }}>
@@ -324,9 +356,9 @@ const OnlineCourseList = () => {
                                     <div className="tab-pane active" id="tab_1">
                                         <div className="box-body p0">
                                             <div className="mailbox-messages">
-                                                <div className="row mobile-stack" style={{ marginBottom: '10px', padding: '10px' }}>
-                                                    <div className="col-md-6 col-sm-12">
-                                                        <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+                                                <div className="course-list-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                                    <div className="al-search-col">
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
                                                             <div className="dataTables_length">
                                                                 <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
                                                                     Records:
@@ -360,22 +392,24 @@ const OnlineCourseList = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div className="col-md-6 col-sm-12">
-                                                        <div className="dt-buttons btn-group pull-right">
-                                                            <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                            <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Video_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                            <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Video_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                            <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Video_List.pdf', 'Video List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                            <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Video List'); }}><i className="fa fa-print"></i></button>
+                                                    <div className="al-btn-col">
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Video_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
+                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Video_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Video_List.pdf', 'Video List'); }}><i className="fa fa-file-pdf-o"></i></button>
+                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Video List'); }}><i className="fa fa-print"></i></button>
 
-                                                            <div className="btn-group">
-                                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                            <div className="btn-group" style={{ display: 'inline-flex' }}>
+                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderRight: 'none !important' }}>
                                                                     <i className="fa fa-columns"></i>
                                                                 </button>
                                                                 {showColumnsDropdown && (
-                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
+                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto', minWidth: '150px' }}>
                                                                         <li>
-                                                                            <label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Title</label>
+                                                                            <label style={{ display: 'block', padding: '5px 15px', margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                                <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Title
+                                                                            </label>
                                                                         </li>
                                                                     </ul>
                                                                 )}
@@ -421,9 +455,9 @@ const OnlineCourseList = () => {
                                                     </table>
                                                 </div>
                                                 <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                                    <Pagination 
-                                                        totalItems={totalItems} 
-                                                        itemsPerPage={recordsPerPage} 
+                                                    <Pagination
+                                                        totalItems={totalItems}
+                                                        itemsPerPage={recordsPerPage}
                                                         currentPage={currentPage}
                                                         onPageChange={(page) => setCurrentPage(page)}
                                                     />
