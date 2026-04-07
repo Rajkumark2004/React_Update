@@ -301,13 +301,13 @@ const StaffLeaveRequest = () => {
                     <div className="row">
                         <div className="col-md-12">
                             <div className="box box-primary">
-                                <div className="box-header ptbnull">
-                                    <h3 className="box-title titlefix pt5">Approve Leave Request</h3>
-                                    <div className="box-tools pull-right">
-                                        <button onClick={handleAddLeave} className="btn btn-sm btn-primary">
-                                            <i className="fa fa-plus"></i> Add Leave Request
+                                <div className="box-header ptbnull" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '10px 15px', flexWrap: 'nowrap' }}>
+                                    <h3 className="box-title titlefix pt5" style={{ margin: 0, float: 'none', whiteSpace: 'nowrap' }}>Approve Leave Request</h3>
+                                    <div className="box-tools-responsive" style={{ display: 'flex', gap: '5px', flexDirection: 'row', alignItems: 'center', marginLeft: 'auto' }}>
+                                        <button onClick={handleAddLeave} className="btn btn-sm btn-primary" style={{ backgroundColor: '#9754ca', color: 'white', borderRadius: '20px', padding: '6px 12px', border: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <i className="fa fa-plus"></i> Add
                                         </button>
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm" style={{ marginLeft: '5px' }}>
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm" style={{ backgroundColor: '#9754ca', color: 'white', borderRadius: '20px', padding: '6px 12px', border: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
                                     </div>
@@ -566,7 +566,7 @@ const StaffLeaveRequest = () => {
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="submit" className="btn btn-primary pull-right">Save</button>
+                                    <button type="submit" className="btn btn-primary pull-right" style={{ backgroundColor: '#9754ca', color: 'white', borderRadius: '20px', padding: '6px 18px', border: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>Save</button>
                                 </div>
                             </form>
                         </div>

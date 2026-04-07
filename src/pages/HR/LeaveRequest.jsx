@@ -28,6 +28,12 @@ const LeaveRequest = () => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [isEdit, setIsEdit] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // TableToolbar state
     const [searchTerm, setSearchTerm] = useState('');
@@ -417,15 +423,15 @@ const LeaveRequest = () => {
 
             {/* Add Leave Modal */}
             {showAddModal && (
-                <div className="modal fade in" style={{ display: 'block' }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" onClick={() => setShowAddModal(false)}>&times;</button>
-                                <h4 className="modal-title">Add Details</h4>
+                <div className="modal fade in" style={{ display: 'block', overflowY: 'auto' }}>
+                    <div className="modal-dialog modal-lg" style={isMobile ? { margin: '10px auto', width: 'calc(100% - 20px)' } : {}}>
+                        <div className="modal-content" style={isMobile ? { display: 'flex', flexDirection: 'column', height: 'calc(100vh - 20px)' } : {}}>
+                            <div className="modal-header" style={{ backgroundColor: '#7e3abd', color: 'white', padding: isMobile ? '4px 15px' : '5px 15px', borderTopLeftRadius: '5px', borderTopRightRadius: '5px', minHeight: 'auto' }}>
+                                <button type="button" className="close" onClick={() => setShowAddModal(false)} style={{ color: 'white', opacity: 1, marginTop: '0px', padding: '0 5px' }}>&times;</button>
+                                <h4 className="modal-title" style={{ color: 'white', fontWeight: '600', margin: 0, fontSize: '16px' }}>Add Details</h4>
                             </div>
-                            <form onSubmit={handleSaveLeave}>
-                                <div className="modal-body hide-scrollbar" style={{ maxHeight: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden' }}>
+                            <form onSubmit={handleSaveLeave} style={isMobile ? { display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' } : {}}>
+                                <div className="modal-body hide-scrollbar" style={{ maxHeight: isMobile ? 'none' : '350px', overflowY: 'auto', overflowX: 'hidden', flex: isMobile ? 1 : 'none' }}>
                                     <div className="row">
                                         <div className="form-group col-md-6">
                                             <label>Apply Date</label><small className="req"> *</small>
@@ -477,7 +483,7 @@ const LeaveRequest = () => {
                                             <label>Reason</label>
                                             <textarea
                                                 className="form-control"
-                                                rows="4"
+                                                rows="2"
                                                 style={{ resize: 'none' }}
                                                 value={formData.reason}
                                                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
@@ -488,14 +494,14 @@ const LeaveRequest = () => {
                                             <input
                                                 type="file"
                                                 className="dropify"
-                                                data-height="92"
+                                                data-height="60"
                                                 onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
                                             />
                                         </div>
                                     </div>
                                 </div>
                                 <div className="modal-footer">
-                                    <button type="submit" className="btn btn-primary pull-right">Save</button>
+                                    <button type="submit" className="btn btn-primary pull-right" style={{ backgroundColor: '#9754ca', color: 'white', borderRadius: '20px', padding: '6px 12px', border: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>Save</button>
                                 </div>
                             </form>
                         </div>
@@ -506,24 +512,25 @@ const LeaveRequest = () => {
             {/* Details and Update Status Modal */}
             {/* Details and Update Status Modal */}
             {showDetailModal && selectedRecord && (
-                <div className="modal fade in" style={{ display: 'block' }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content">
+                <div className="modal fade in" style={{ display: 'block', overflowY: 'auto' }}>
+                    <div className="modal-dialog modal-lg" style={isMobile ? { margin: '10px auto', width: 'calc(100% - 20px)' } : {}}>
+                        <div className="modal-content" style={isMobile ? { display: 'flex', flexDirection: 'column', height: 'calc(100vh - 20px)' } : {}}>
 
                             {/* Header */}
-                            <div className="modal-header">
+                            <div className="modal-header" style={{ backgroundColor: '#7e3abd', color: 'white', padding: isMobile ? '4px 15px' : '5px 15px', borderTopLeftRadius: '5px', borderTopRightRadius: '5px', minHeight: 'auto' }}>
                                 <button
                                     type="button"
                                     className="close"
                                     onClick={() => setShowDetailModal(false)}
+                                    style={{ color: 'white', opacity: 1, marginTop: '0px', padding: '0 5px' }}
                                 >
                                     &times;
                                 </button>
-                                <h4 className="modal-title">Details</h4>
+                                <h4 className="modal-title" style={{ color: 'white', fontWeight: '600', margin: 0, fontSize: '16px' }}>Details</h4>
                             </div>
 
                             {/* Body */}
-                            <div className="modal-body hide-scrollbar" style={{ maxHeight: 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden' }}>
+                            <div className="modal-body hide-scrollbar" style={{ maxHeight: isMobile ? 'none' : 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', flex: isMobile ? 1 : 'none' }}>
                                 <div className="row">
                                     <div className="col-md-12 table-responsive">
                                         <table className="table mb0 table-striped table-bordered">

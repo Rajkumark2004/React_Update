@@ -128,13 +128,14 @@ const StaffSearch = () => {
                                         <div className="col-md-6">
                                             <form onSubmit={handleRoleSearch}>
                                                 <div className="row">
-                                                    <div className="col-sm-8">
+                                                    <div className="col-sm-12">
                                                         <div className="form-group">
-                                                            <label>Role</label><small className="req"> *</small>
+                                                            <label style={{ fontWeight: '600' }}>Role</label><small className="req"> *</small>
                                                             <select
                                                                 className="form-control"
                                                                 value={selectedRole}
                                                                 onChange={(e) => setSelectedRole(e.target.value)}
+                                                                style={{ borderRadius: '4px' }}
                                                             >
                                                                 <option value="">Select</option>
                                                                 {roles.map(role => (
@@ -143,12 +144,10 @@ const StaffSearch = () => {
                                                             </select>
                                                         </div>
                                                     </div>
-                                                    <div className="col-sm-4">
-                                                        <div className="form-group">
-                                                            <button type="submit" className="btn btn-primary btn-sm pull-right checkbox-toggle" style={{ marginTop: '23px' }}>
-                                                                <i className="fa fa-search"></i> Search
-                                                            </button>
-                                                        </div>
+                                                    <div className="col-sm-12">
+                                                        <button type="submit" className="btn btn-primary btn-sm pull-right" style={{ backgroundColor: '#9754ca', color: 'white', borderRadius: '20px', padding: '6px 18px', border: 'none', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                            <i className="fa fa-search"></i> Search
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </form>
@@ -158,20 +157,21 @@ const StaffSearch = () => {
                                                 <div className="row">
                                                     <div className="col-sm-12">
                                                         <div className="form-group">
-                                                            <label>Search By Keyword</label>
-                                                            <div className="input-group">
-                                                                <input
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    placeholder="Search By Staff ID, Name, Role..."
-                                                                    value={searchTerm}
-                                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                                />
-                                                                <span className="input-group-btn">
-                                                                    <button className="btn btn-primary btn-sm" type="submit"><i className="fa fa-search"></i> Search</button>
-                                                                </span>
-                                                            </div>
+                                                            <label style={{ fontWeight: '600' }}>Search By Keyword</label>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control"
+                                                                placeholder="Search By Staff ID, Name, Role..."
+                                                                value={searchTerm}
+                                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                                style={{ borderRadius: '4px' }}
+                                                            />
                                                         </div>
+                                                    </div>
+                                                    <div className="col-sm-12">
+                                                        <button type="submit" className="btn btn-primary btn-sm pull-right" style={{ backgroundColor: '#9754ca', color: 'white', borderRadius: '20px', padding: '6px 18px', border: 'none', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                            <i className="fa fa-search"></i> Search
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </form>

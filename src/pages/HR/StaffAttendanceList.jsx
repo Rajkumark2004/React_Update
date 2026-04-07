@@ -177,6 +177,11 @@ const StaffAttendanceList = () => {
                 .radio-info input[type="radio"]:checked + label::before { border-color: #5bc0de; }
                 .radio-info input[type="radio"]:checked + label::after { background-color: #5bc0de; }
                 .radio.radio-inline { margin-top: 0; display: inline-block; margin-right: 15px; }
+                .table-responsive table th, .table-responsive table td { white-space: nowrap !important; }
+                .table-responsive table th:nth-child(3), .table-responsive table td:nth-child(3) { min-width: 180px !important; } /* Name */
+                .table-responsive table th:nth-child(4), .table-responsive table td:nth-child(4) { min-width: 120px !important; } /* Role */
+                .table-responsive table th:nth-child(5), .table-responsive table td:nth-child(5) { min-width: 400px !important; } /* Attendance */
+                .table-responsive table th:nth-child(6), .table-responsive table td:nth-child(6) { min-width: 200px !important; } /* Note */
                 @media (max-width:767px){
                     .attendance-radios { display: flex; flex-wrap: wrap; gap: 6px 14px; }
                     .attendance-radios .radio.radio-inline { display: inline-flex; align-items: center; margin-bottom: 0; margin-right: 0; }
@@ -284,12 +289,12 @@ const StaffAttendanceList = () => {
                                                     <table className="table table-hover table-striped">
                                                         <thead>
                                                             <tr>
-                                                                <th>#</th>
-                                                                <th>Staff ID</th>
-                                                                <th>Name</th>
-                                                                <th>Role</th>
-                                                                <th>Attendance</th>
-                                                                <th className="text-right">Note</th>
+                                                                <th style={{ width: '5%' }}>#</th>
+                                                                <th style={{ width: '10%' }}>Staff ID</th>
+                                                                <th style={{ width: '15%' }}>Name</th>
+                                                                <th style={{ width: '15%' }}>Role</th>
+                                                                <th style={{ width: '30%' }}>Attendance</th>
+                                                                <th style={{ width: '20%' }}>Note</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -322,7 +327,7 @@ const StaffAttendanceList = () => {
                                                                                 </div>
                                                                             ))}
                                                                         </td>
-                                                                        <td className="text-right">
+                                                                        <td>
                                                                             <input
                                                                                 type="text"
                                                                                 className="form-control input-sm"
