@@ -465,6 +465,36 @@ const CBSEGradeList = () => {
                                                 .mailbox-messages table.table table tr:last-child td {
                                                     border-bottom: none !important;
                                                 }
+                                                .modal-body-responsive {
+                                                    padding: 20px 0px 20px 20px !important;
+                                                }
+                                                .modal-header-responsive {
+                                                    padding: 20px 0px 20px 20px !important;
+                                                    border-bottom: none !important;
+                                                }
+                                                .modal-footer-responsive {
+                                                    padding: 0px 0px 20px 20px !important;
+                                                }
+                                                .add-more-responsive {
+                                                    text-align: right !important;
+                                                    width: 100% !important;
+                                                    display: block !important;
+                                                    padding-right: 0 !important;
+                                                }
+                                                .row-fit-mobile {
+                                                    margin: 0 !important;
+                                                }
+                                                .col-fit-mobile {
+                                                    padding: 0 !important;
+                                                }
+                                                .removal-button-responsive {
+                                                    justify-content: flex-end !important;
+                                                    padding-right: 0 !important;
+                                                }
+                                                .modal-dialog {
+                                                    width: 90% !important;
+                                                    margin: 10px auto !important;
+                                                }
                                             }
                                         `}
                                     </style>
@@ -611,18 +641,18 @@ const CBSEGradeList = () => {
             {/* Modal */}
             {showModal && (
                 <>
-                    <div className="modal fade in" role="dialog" style={{ display: 'block' }}>
+                    <div className="modal fade in" role="dialog" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
                         <div className="modal-dialog modal-dialog2 modal-xl">
                             <div className="modal-content">
-                                <div className="modal-header">
-                                    <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
-                                    <h4 className="modal-title">{editMode ? 'Edit Exam Grade' : 'Add Exam Grade'}</h4>
+                                <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
+                                    <button type="button" className="close" onClick={() => setShowModal(false)} style={{ color: 'white', opacity: 1, marginRight: '0px' }}>&times;</button>
+                                    <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{editMode ? 'Edit Exam Grade' : 'Add Exam Grade'}</h4>
                                 </div>
                                 <div className="scroll-area hide-scrollbar">
                                     <form role="form" onSubmit={handleSubmit}>
-                                        <div className="modal-body">
-                                            <div className="row">
-                                                <div className="col-md-12">
+                                        <div className="modal-body modal-body-responsive" style={{ padding: '30px 20px 40px 40px' }}>
+                                            <div className="row row-fit-mobile">
+                                                <div className="col-md-12 col-fit-mobile">
                                                     <div className="form-group">
                                                         <label>Grade Title</label><small className="req"> *</small>
                                                         <input
@@ -634,7 +664,7 @@ const CBSEGradeList = () => {
                                                         />
                                                     </div>
                                                 </div>
-                                                <div className="col-md-12">
+                                                <div className="col-md-12 col-fit-mobile">
                                                     <div className="form-group">
                                                         <label>Description</label>
                                                         <textarea
@@ -648,9 +678,9 @@ const CBSEGradeList = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="row" style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
-                                                <div className="col-md-6"></div>
-                                                <div className="col-md-6 text-right">
+                                            <div className="row row-fit-mobile" style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+                                                <div className="col-md-6 col-fit-mobile"></div>
+                                                <div className="col-md-6 text-right col-fit-mobile add-more-responsive">
                                                     <button
                                                         type="button"
                                                         className="btn btn-sm add_row"
@@ -662,19 +692,19 @@ const CBSEGradeList = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="hide-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '5px' }}>
-                                                <div className="row" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
-                                                    <div className="col-md-2" style={{ fontSize: '12px' }}>Grade<small className="req">*</small></div>
-                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Maximum Percentage <small className="req">*</small></div>
-                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Minimum Percentage <small className="req">*</small></div>
-                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Remark</div>
-                                                    <div className="col-md-1"></div>
+                                            <div className="hide-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden' }}>
+                                                <div className="row row-fit-mobile" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
+                                                    <div className="col-md-2 col-fit-mobile" style={{ fontSize: '12px' }}>Grade<small className="req">*</small></div>
+                                                    <div className="col-md-3 col-fit-mobile" style={{ fontSize: '12px' }}>Maximum Percentage <small className="req">*</small></div>
+                                                    <div className="col-md-3 col-fit-mobile" style={{ fontSize: '12px' }}>Minimum Percentage <small className="req">*</small></div>
+                                                    <div className="col-md-3 col-fit-mobile" style={{ fontSize: '12px' }}>Remark</div>
+                                                    <div className="col-md-1 col-fit-mobile"></div>
                                                 </div>
 
                                                 <div id="grade_result">
                                                     {formData.ranges.map((range, index) => (
-                                                        <div className="row mb10" key={range.id || index} style={{ marginBottom: '15px' }}>
-                                                            <div className="col-md-2">
+                                                        <div className="row mb10 row-fit-mobile" key={range.id || index} style={{ marginBottom: '15px' }}>
+                                                            <div className="col-md-2 col-fit-mobile">
                                                                 <input
                                                                     className="form-control input-sm"
                                                                     value={range.name}
@@ -682,7 +712,7 @@ const CBSEGradeList = () => {
                                                                     required
                                                                 />
                                                             </div>
-                                                            <div className="col-md-3">
+                                                            <div className="col-md-3 col-fit-mobile">
                                                                 <input
                                                                     type="number"
                                                                     className="form-control input-sm"
@@ -693,7 +723,7 @@ const CBSEGradeList = () => {
                                                                     max="100"
                                                                 />
                                                             </div>
-                                                            <div className="col-md-3">
+                                                            <div className="col-md-3 col-fit-mobile">
                                                                 <input
                                                                     type="number"
                                                                     className="form-control input-sm"
@@ -704,7 +734,7 @@ const CBSEGradeList = () => {
                                                                     max="100"
                                                                 />
                                                             </div>
-                                                            <div className="col-md-3">
+                                                            <div className="col-md-3 col-fit-mobile">
                                                                 <textarea
                                                                     className="form-control input-sm"
                                                                     rows="1"
@@ -713,7 +743,7 @@ const CBSEGradeList = () => {
                                                                     style={{ resize: 'none', minHeight: '30px' }}
                                                                 />
                                                             </div>
-                                                            <div className="col-md-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <div className="col-md-1 col-fit-mobile removal-button-responsive" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                                 <span
                                                                     className="text-danger cursor-pointer"
                                                                     onClick={() => removeRange(index)}
@@ -727,7 +757,7 @@ const CBSEGradeList = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="modal-footer" style={{ borderTop: 'none', paddingBottom: '20px' }}>
+                                        <div className="modal-footer modal-footer-responsive" style={{ borderTop: 'none', paddingBottom: '20px' }}>
                                             <button
                                                 type="submit"
                                                 className="btn pull-right"

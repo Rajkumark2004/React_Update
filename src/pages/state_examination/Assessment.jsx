@@ -461,6 +461,36 @@ const Assessment = () => {
                                                 .mailbox-messages table.table table tr:last-child td {
                                                     border-bottom: none !important;
                                                 }
+                                                .modal-body-responsive {
+                                                    padding: 20px 20px 20px 20px !important;
+                                                }
+                                                .modal-header-responsive {
+                                                    padding: 20px 20px 20px 20px !important;
+                                                    border-bottom: none !important;
+                                                }
+                                                .modal-footer-responsive {
+                                                    padding: 0px 20px 20px 20px !important;
+                                                }
+                                                .add-more-responsive {
+                                                    text-align: right !important;
+                                                    width: 100% !important;
+                                                    display: block !important;
+                                                    padding-right: 0 !important;
+                                                }
+                                                .row-fit-mobile {
+                                                    margin: 0 !important;
+                                                }
+                                                .col-fit-mobile {
+                                                    padding: 0 !important;
+                                                }
+                                                .removal-button-responsive {
+                                                    justify-content: flex-end !important;
+                                                    padding-right: 0 !important;
+                                                }
+                                                .modal-dialog {
+                                                    width: 95% !important;
+                                                    margin: 10px auto !important;
+                                                }
                                             }
                                         `}
                                     </style>
@@ -608,34 +638,34 @@ const Assessment = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
+                <div className="modal fade in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: '17px', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
                     <div className="modal-dialog modal-xl">
                         <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
-                                <h4 className="modal-title">{isEditing ? "Edit Assessment" : "Add Assessment"}</h4>
+                            <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
+                                <button type="button" className="close" onClick={() => setShowModal(false)} style={{ color: 'white', opacity: 1, marginRight: '20px' }}>&times;</button>
+                                <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{isEditing ? "Edit Assessment" : "Add Assessment"}</h4>
                             </div>
                             <form onSubmit={handleSubmit}>
-                                <div className="modal-body">
-                                    <div className="row">
-                                        <div className="col-md-12">
+                                <div className="modal-body modal-body-responsive" style={{ padding: '30px 20px 30px 40px' }}>
+                                    <div className="row row-fit-mobile">
+                                        <div className="col-md-12 col-fit-mobile">
                                             <div className={`form-group ${errors.name ? 'has-error' : ''}`}>
                                                 <label>Assessment</label><small className="req"> *</small>
                                                 <input type="text" name="name" className="form-control" value={formData.name} onChange={handleInputChange} />
                                                 {errors.name && <span className="text-danger">{errors.name}</span>}
                                             </div>
                                         </div>
-                                        <div className="col-md-12">
+                                        <div className="col-md-12 col-fit-mobile">
                                             <div className="form-group">
                                                 <label>Assessment Description</label>
                                                 <textarea name="description" className="form-control" rows="2" value={formData.description} onChange={handleInputChange} style={{ resize: 'none' }}></textarea>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="row" style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
-                                        <div className="col-md-6">
+                                    <div className="row row-fit-mobile" style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+                                        <div className="col-md-6 col-fit-mobile">
                                         </div>
-                                        <div className="col-md-6 text-right">
+                                        <div className="col-md-6 text-right col-fit-mobile add-more-responsive">
                                             <button
                                                 type="button"
                                                 className="btn btn-sm add_row"
@@ -647,45 +677,45 @@ const Assessment = () => {
                                         </div>
                                     </div>
 
-                                    <div className="hide-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden', paddingRight: '5px' }}>
-                                        <div className="row" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
-                                            <div className="col-md-2" style={{ fontSize: '12px' }}>Assessment Type <small className="req">*</small></div>
-                                            <div className="col-md-2" style={{ fontSize: '12px' }}>Code <small className="req">*</small></div>
-                                            <div className="col-md-2" style={{ fontSize: '12px' }}>Maximum Marks <small className="req">*</small></div>
-                                            <div className="col-md-2" style={{ fontSize: '12px' }}>Pass Percentage <small className="req">*</small></div>
-                                            <div className="col-md-3" style={{ fontSize: '12px' }}>Description</div>
-                                            <div className="col-md-1"></div>
+                                    <div className="hide-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden' }}>
+                                        <div className="row row-fit-mobile" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
+                                            <div className="col-md-2 col-fit-mobile" style={{ fontSize: '12px' }}>Assessment Type <small className="req">*</small></div>
+                                            <div className="col-md-2 col-fit-mobile" style={{ fontSize: '12px' }}>Code <small className="req">*</small></div>
+                                            <div className="col-md-2 col-fit-mobile" style={{ fontSize: '12px' }}>Maximum Marks <small className="req">*</small></div>
+                                            <div className="col-md-2 col-fit-mobile" style={{ fontSize: '12px' }}>Pass Percentage <small className="req">*</small></div>
+                                            <div className="col-md-3 col-fit-mobile" style={{ fontSize: '12px' }}>Description</div>
+                                            <div className="col-md-1 col-fit-mobile"></div>
                                         </div>
 
                                         {formData.rows.map((row, index) => (
-                                            <div className="row mb10" key={row.ui_id} style={{ marginBottom: '15px' }}>
-                                                <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].type_name ? 'has-error' : ''}`}>
+                                            <div className="row mb10 row-fit-mobile" key={row.ui_id} style={{ marginBottom: '15px' }}>
+                                                <div className={`col-md-2 col-fit-mobile ${errors.rows && errors.rows[index] && errors.rows[index].type_name ? 'has-error' : ''}`}>
                                                     <input type="text" className="form-control input-sm" value={row.type_name} onChange={(e) => handleRowChange(index, 'type_name', e.target.value)} />
                                                     {errors.rows && errors.rows[index] && errors.rows[index].type_name && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].type_name}</span>}
                                                 </div>
-                                                <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].code ? 'has-error' : ''}`}>
+                                                <div className={`col-md-2 col-fit-mobile ${errors.rows && errors.rows[index] && errors.rows[index].code ? 'has-error' : ''}`}>
                                                     <input type="text" className="form-control input-sm" value={row.code} onChange={(e) => handleRowChange(index, 'code', e.target.value)} />
                                                     {errors.rows && errors.rows[index] && errors.rows[index].code && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].code}</span>}
                                                 </div>
-                                                <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].maximum_marks ? 'has-error' : ''}`}>
+                                                <div className={`col-md-2 col-fit-mobile ${errors.rows && errors.rows[index] && errors.rows[index].maximum_marks ? 'has-error' : ''}`}>
                                                     <input type="text" className="form-control input-sm" value={row.maximum_marks} onChange={(e) => handleRowChange(index, 'maximum_marks', e.target.value)} />
                                                     {errors.rows && errors.rows[index] && errors.rows[index].maximum_marks && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].maximum_marks}</span>}
                                                 </div>
-                                                <div className={`col-md-2 ${errors.rows && errors.rows[index] && errors.rows[index].pass_percentage ? 'has-error' : ''}`}>
+                                                <div className={`col-md-2 col-fit-mobile ${errors.rows && errors.rows[index] && errors.rows[index].pass_percentage ? 'has-error' : ''}`}>
                                                     <input type="text" className="form-control input-sm" value={row.pass_percentage} onChange={(e) => handleRowChange(index, 'pass_percentage', e.target.value)} />
                                                     {errors.rows && errors.rows[index] && errors.rows[index].pass_percentage && <span className="text-danger" style={{ fontSize: '10px' }}>{errors.rows[index].pass_percentage}</span>}
                                                 </div>
-                                                <div className="col-md-3">
+                                                <div className="col-md-3 col-fit-mobile">
                                                     <textarea className="form-control input-sm" rows="1" value={row.type_description} onChange={(e) => handleRowChange(index, 'type_description', e.target.value)} style={{ resize: 'none', minHeight: '30px' }}></textarea>
                                                 </div>
-                                                <div className="col-md-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <div className="col-md-1 col-fit-mobile removal-button-responsive" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                                     <span className="text-danger cursor-pointer" onClick={() => removeRow(index)} style={{ fontSize: '18px', fontWeight: 'bold' }}>&times;</span>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="modal-footer" style={{ borderTop: 'none', paddingBottom: '20px' }}>
+                                <div className="modal-footer modal-footer-responsive" style={{ borderTop: 'none', paddingBottom: '20px' }}>
                                     <button
                                         type="submit"
                                         className="btn pull-right"

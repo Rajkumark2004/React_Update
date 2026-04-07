@@ -669,16 +669,16 @@ const Template = () => {
                                     <h3 className="box-title titlefix">Template List</h3>
                                     <div className="box-tools pull-right">
                                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <button 
-                                                type="button" 
-                                                className="btn btn-sm btn-primary" 
-                                                onClick={() => { resetForm(); setIsEditing(false); setShowAddModal(true); }} 
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() => { resetForm(); setIsEditing(false); setShowAddModal(true); }}
                                                 style={{ borderRadius: '20px', padding: '5px 12px' }}
                                             >
                                                 <i className="fa fa-plus"></i> Add
                                             </button>
-                                            <button 
-                                                onClick={() => window.history.back()} 
+                                            <button
+                                                onClick={() => window.history.back()}
                                                 className="btn btn-primary btn-sm"
                                                 style={{ borderRadius: '20px', padding: '5px 12px' }}
                                             >
@@ -1127,7 +1127,7 @@ const Template = () => {
                                     </div>
                                 </div>
                                 <div className="modal-footer clearboth">
-                                    <button type="submit" className="btn btn-primary pull-right" data-loading-text="Submitting" value="">Save</button>
+                                    <button type="submit" className="btn btn-primary pull-right" data-loading-text="Submitting" value="" style={{ borderRadius: '20px' }}>Save</button>
                                 </div>
                             </form>
                         </div>
