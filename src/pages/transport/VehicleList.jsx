@@ -73,6 +73,14 @@ const VehicleList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
 
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    const isMobile = windowWidth < 768;
+
     // Filter vehicles logic
     const filteredVehicles = vehicles.filter(vehicle =>
         Object.values(vehicle).some(value =>
@@ -325,36 +333,53 @@ const VehicleList = () => {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="box-body table-responsive">
+                                <div className="box-body">
                                     <div >
                                         <div className="download_label">Vehicle List</div>
-                                        <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
+                                        <div
+                                            className="row mb-2"
+                                            style={{
+                                                marginBottom: '10px',
+                                                display: isMobile ? 'flex' : 'block',
+                                                flexDirection: isMobile ? 'column' : 'row',
+                                                alignItems: isMobile ? 'center' : 'stretch',
+                                                gap: isMobile ? '15px' : '0'
+                                            }}
+                                        >
+                                            <div
+                                                className={isMobile ? "" : "col-sm-6"}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: isMobile ? '15px' : '20px',
+                                                    justifyContent: isMobile ? 'center' : 'flex-start',
+                                                    flexWrap: 'wrap'
+                                                }}
+                                            >
+                                                <div className="dataTables_length">
+                                                    <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                        Records:
+                                                        <select
+                                                            value={recordsPerPage}
+                                                            onChange={(e) => {
+                                                                setRecordsPerPage(Number(e.target.value));
+                                                                setCurrentPage(1);
+                                                            }}
+                                                            className="form-control input-sm"
+                                                            style={{ width: '80px', margin: '0 10px' }}
+                                                        >
+                                                            <option value="10">10</option>
+                                                            <option value="25">25</option>
+                                                            <option value="50">50</option>
+                                                            <option value="100">100</option>
+                                                            <option value="-1">All</option>
+                                                        </select>
+                                                    </label>
+                                                </div>
+                                                <div className="dataTables_filter">
                                                     <input
                                                         type="search"
                                                         placeholder="Search..."
-                                                        aria-controls="DataTables_Table_0"
                                                         value={searchTerm}
                                                         onChange={(e) => {
                                                             setSearchTerm(e.target.value);
@@ -364,16 +389,30 @@ const VehicleList = () => {
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Vehicle_List.pdf', 'Vehicle List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle List'); }}><i className="fa fa-print"></i></button>
-
+                                            <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
+                                                <div className="dt-buttons btn-group">
+                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                        <i className="fa fa-files-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_List.csv'); }}>
+                                                        <i className="fa fa-file-text-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_List.xls'); }}>
+                                                        <i className="fa fa-file-excel-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Vehicle_List.pdf', 'Vehicle List'); }}>
+                                                        <i className="fa fa-file-pdf-o"></i>
+                                                    </button>
+                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle List'); }}>
+                                                        <i className="fa fa-print"></i>
+                                                    </button>
                                                     <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                        <button
+                                                            className="btn btn-default btn-sm"
+                                                            title="Columns"
+                                                            onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
+                                                            style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
+                                                        >
                                                             <i className="fa fa-columns"></i>
                                                         </button>
                                                         {showColumnsDropdown && (
@@ -393,7 +432,8 @@ const VehicleList = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <table className="table table-hover table-striped table-bordered example">
+                                        <div className="table-responsive overflow-visible-lg">
+                                            <table className="table table-hover table-striped table-bordered example">
                                             <thead>
                                                 <tr>
                                                     {!hiddenColumns.includes(0) && <th>Vehicle Number</th>}
@@ -437,6 +477,7 @@ const VehicleList = () => {
                                                 )}
                                             </tbody>
                                         </table>
+                                        </div>
                                         <div className="pt15 pb15" style={{ padding: '15px 0' }}>
                                             <Pagination 
                                                 totalItems={totalItems} 

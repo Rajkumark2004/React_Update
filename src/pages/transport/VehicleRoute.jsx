@@ -31,6 +31,14 @@ const VehicleRoute = () => {
     const [submitting, setSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
 
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    const isMobile = windowWidth < 768;
+
 
     // Initialize data
     const fetchData = async () => {
@@ -290,6 +298,13 @@ const VehicleRoute = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">{isEditMode ? 'Edit Vehicle On Route' : 'Assign Vehicle On Route'}</h3>
+                                    {isMobile && (
+                                        <div className="btn-group pull-right">
+                                            <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <form id="form1" onSubmit={handleSave} acceptCharset="utf-8">
                                     <div className="box-body">
@@ -342,41 +357,61 @@ const VehicleRoute = () => {
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Vehicle Route List</h3>
-                                    <div className="btn-group pull-right">
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
-                                            <i className="fa fa-arrow-left"></i> Back
-                                        </button>
-                                    </div>
+                                    {!isMobile && (
+                                        <div className="btn-group pull-right">
+                                            <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                                <i className="fa fa-arrow-left"></i> Back
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="box-body">
                                     <div className="mailbox-messages">
                                         <div className="download_label">Vehicle Route List</div>
-                                        <div className="table-responsive overflow-visible">
+                                        <div>
                                             {/* DataTables Controls */}
                                             <div className="dataTables_wrapper no-footer">
-                                                <div className="row mobile-stack" style={{ marginBottom: '10px' }}>
-                                                    <div className="col-md-6 col-sm-12">
-                                                        <div className="pull-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                            <div className="dataTables_length">
-                                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                                    Records:
-                                                                    <select
-                                                                        value={recordsPerPage}
-                                                                        onChange={(e) => {
-                                                                            setRecordsPerPage(Number(e.target.value));
-                                                                            setCurrentPage(1);
-                                                                        }}
-                                                                        className="form-control input-sm"
-                                                                        style={{ width: '80px', margin: '0 10px' }}
-                                                                    >
-                                                                        <option value="10">10</option>
-                                                                        <option value="25">25</option>
-                                                                        <option value="50">50</option>
-                                                                        <option value="100">100</option>
-                                                                        <option value="-1">All</option>
-                                                                    </select>
-                                                                </label>
-                                                            </div>
+                                                <div
+                                                    className="row mb-2"
+                                                    style={{
+                                                        marginBottom: '10px',
+                                                        display: isMobile ? 'flex' : 'block',
+                                                        flexDirection: isMobile ? 'column' : 'row',
+                                                        alignItems: isMobile ? 'center' : 'stretch',
+                                                        gap: isMobile ? '15px' : '0'
+                                                    }}
+                                                >
+                                                    <div
+                                                        className={isMobile ? "" : "col-sm-6"}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: isMobile ? '15px' : '20px',
+                                                            justifyContent: isMobile ? 'center' : 'flex-start',
+                                                            flexWrap: 'wrap'
+                                                        }}
+                                                    >
+                                                        <div className="dataTables_length">
+                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
+                                                                Records:
+                                                                <select
+                                                                    value={recordsPerPage}
+                                                                    onChange={(e) => {
+                                                                        setRecordsPerPage(Number(e.target.value));
+                                                                        setCurrentPage(1);
+                                                                    }}
+                                                                    className="form-control input-sm"
+                                                                    style={{ width: '80px', margin: '0 10px' }}
+                                                                >
+                                                                    <option value="10">10</option>
+                                                                    <option value="25">25</option>
+                                                                    <option value="50">50</option>
+                                                                    <option value="100">100</option>
+                                                                    <option value="-1">All</option>
+                                                                </select>
+                                                            </label>
+                                                        </div>
+                                                        <div className="dataTables_filter">
                                                             <input
                                                                 type="search"
                                                                 placeholder="Search..."
@@ -389,82 +424,96 @@ const VehicleRoute = () => {
                                                             />
                                                         </div>
                                                     </div>
-                                                    <div className="col-md-6 col-sm-12">
-                                                        <div className="dt-buttons btn-group pull-right">
-                                                            <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                            <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_Route_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                            <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_Route_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                            <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Vehicle_Route_List.pdf', 'Vehicle Route List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                            <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle Route List'); }}><i className="fa fa-print"></i></button>
-
+                                                    <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
+                                                        <div className="dt-buttons btn-group">
+                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
+                                                                <i className="fa fa-files-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_Route_List.csv'); }}>
+                                                                <i className="fa fa-file-text-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_Route_List.xls'); }}>
+                                                                <i className="fa fa-file-excel-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Vehicle_Route_List.pdf', 'Vehicle Route List'); }}>
+                                                                <i className="fa fa-file-pdf-o"></i>
+                                                            </button>
+                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle Route List'); }}>
+                                                                <i className="fa fa-print"></i>
+                                                            </button>
                                                             <div className="btn-group">
-                                                                <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
+                                                                <button
+                                                                    className="btn btn-default btn-sm"
+                                                                    title="Columns"
+                                                                    onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
+                                                                    style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
+                                                                >
                                                                     <i className="fa fa-columns"></i>
                                                                 </button>
                                                                 {showColumnsDropdown && (
-                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                        <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Route</label></li>
-                                                                        <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Vehicle</label></li>
-                                                                    </ul>
+                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+                                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '6px' }} /> Route</label>
+                                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '6px' }} /> Vehicle</label>
+                                                                    </div>
                                                                 )}
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                <table className="table table-striped table-bordered table-hover example">
-                                                    <thead>
-                                                        <tr>
-                                                            {!hiddenColumns.includes(0) && <th>Route</th>}
-                                                            {!hiddenColumns.includes(1) && <th>Vehicle</th>}
-                                                            <th className="text-right noExport">Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {currentItems.map((item) => (
-                                                            <tr key={item.id}>
-                                                                {!hiddenColumns.includes(0) && <td className="mailbox-name">{item.route_title}</td>}
-                                                                {!hiddenColumns.includes(1) && <td>
-                                                                    {item.vehicles.map((v) => (
-                                                                        <div key={v.id}>
-                                                                            <b>{v.vehicle_no}</b>
-                                                                        </div>
-                                                                    ))}
-                                                                </td>}
-                                                                <td className="mailbox-date pull-right">
-                                                                    <Link
-                                                                        to={`/admin/vehroute/edit/${item.id}`}
-                                                                        className="btn btn-default btn-xs"
-                                                                        title="Edit"
-                                                                    >
-                                                                        <i className="fa fa-pencil"></i>
-                                                                    </Link>
-                                                                    <a
-                                                                        href="#"
-                                                                        className="btn btn-default btn-xs"
-                                                                        title="Delete"
-                                                                        onClick={(e) => {
-                                                                            e.preventDefault();
-                                                                            handleDelete(item.id);
-                                                                        }}
-                                                                    >
-                                                                        <i className="fa fa-remove"></i>
-                                                                    </a>
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                        {currentItems.length === 0 && (
+                                                <div className="table-responsive overflow-visible">
+                                                    <table className="table table-striped table-bordered table-hover example">
+                                                        <thead>
                                                             <tr>
-                                                                <td colSpan="3" className="text-center">No Result Found</td>
+                                                                {!hiddenColumns.includes(0) && <th className="text-left">Route</th>}
+                                                                {!hiddenColumns.includes(1) && <th className="text-left">Vehicle</th>}
+                                                                <th className="text-right noExport">Action</th>
                                                             </tr>
-                                                        )}
-                                                    </tbody>
-                                                </table>
-
+                                                        </thead>
+                                                        <tbody>
+                                                            {currentItems.map((item) => (
+                                                                <tr key={item.id}>
+                                                                    {!hiddenColumns.includes(0) && <td className="mailbox-name text-left">{item.route_title}</td>}
+                                                                    {!hiddenColumns.includes(1) && <td className="text-left">
+                                                                        {item.vehicles.map((v) => (
+                                                                            <div key={v.id}>
+                                                                                <b>{v.vehicle_no}</b>
+                                                                            </div>
+                                                                        ))}
+                                                                    </td>}
+                                                                    <td className="mailbox-date text-right no-print">
+                                                                        <Link
+                                                                            to={`/admin/vehroute/edit/${item.id}`}
+                                                                            className="btn btn-default btn-xs"
+                                                                            title="Edit"
+                                                                        >
+                                                                            <i className="fa fa-pencil"></i>
+                                                                        </Link>
+                                                                        <a
+                                                                            href="#"
+                                                                            className="btn btn-default btn-xs"
+                                                                            title="Delete"
+                                                                            onClick={(e) => {
+                                                                                e.preventDefault();
+                                                                                handleDelete(item.id);
+                                                                            }}
+                                                                        >
+                                                                            <i className="fa fa-remove"></i>
+                                                                        </a>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                            {currentItems.length === 0 && (
+                                                                <tr>
+                                                                    <td colSpan="3" className="text-center">No Result Found</td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                                 <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                                    <Pagination 
-                                                        totalItems={totalItems} 
-                                                        itemsPerPage={recordsPerPage} 
+                                                    <Pagination
+                                                        totalItems={totalItems}
+                                                        itemsPerPage={recordsPerPage}
                                                         currentPage={currentPage}
                                                         onPageChange={(page) => setCurrentPage(page)}
                                                     />
