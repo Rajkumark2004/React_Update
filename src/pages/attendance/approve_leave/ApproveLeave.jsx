@@ -81,6 +81,7 @@ const ApproveLeave = () => {
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
     const [filter, setFilter] = useState({ class_id: '', section_id: '', search_text: '' });
+    const [formErrors, setFormErrors] = useState({});
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -184,6 +185,17 @@ const ApproveLeave = () => {
 
     const handleSearch = async (e) => {
         e.preventDefault();
+        
+        let errors = {};
+        if (!filter.class_id) errors.class_id = 'The Class field is required.';
+        if (!filter.section_id) errors.section_id = 'The Section field is required.';
+
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors);
+            return;
+        }
+
+        setFormErrors({});
         setLoading(true);
         try {
             const fd = new FormData();
@@ -384,7 +396,10 @@ const ApproveLeave = () => {
                                                     <select
                                                         className="form-control"
                                                         value={filter.class_id}
-                                                        onChange={handleClassChange}
+                                                        onChange={(e) => {
+                                                            handleClassChange(e);
+                                                            if (formErrors.class_id) setFormErrors(prev => ({ ...prev, class_id: '' }));
+                                                        }}
                                                         autoFocus
                                                     >
                                                         <option value="">Select</option>
@@ -392,6 +407,7 @@ const ApproveLeave = () => {
                                                             <option key={cls.id} value={cls.id}>{cls.class}</option>
                                                         ))}
                                                     </select>
+                                                    {formErrors.class_id && <span className="text-danger">{formErrors.class_id}</span>}
                                                 </div>
                                             </div>
                                             <div className="col-md-3 col-lg-3 col-sm-6">
@@ -400,13 +416,17 @@ const ApproveLeave = () => {
                                                     <select
                                                         className="form-control"
                                                         value={filter.section_id}
-                                                        onChange={(e) => setFilter(prev => ({ ...prev, section_id: e.target.value }))}
+                                                        onChange={(e) => {
+                                                            setFilter(prev => ({ ...prev, section_id: e.target.value }));
+                                                            if (formErrors.section_id) setFormErrors(prev => ({ ...prev, section_id: '' }));
+                                                        }}
                                                     >
                                                         <option value="">Select</option>
                                                         {sectionList.map(sec => (
                                                             <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
                                                         ))}
                                                     </select>
+                                                    {formErrors.section_id && <span className="text-danger">{formErrors.section_id}</span>}
                                                 </div>
                                             </div>
                                             {/* <div className="col-md-3 col-lg-3 col-sm-6">

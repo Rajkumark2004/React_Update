@@ -467,14 +467,14 @@ const CBSEGradeList = () => {
                                                     border-bottom: none !important;
                                                 }
                                                 .modal-body-responsive {
-                                                    padding: 20px 20px 20px 20px !important;
+                                                    padding: 15px 10px !important;
                                                 }
                                                 .modal-header-responsive {
-                                                    padding: 20px 20px 20px 20px !important;
+                                                    padding: 15px 10px !important;
                                                     border-bottom: none !important;
                                                 }
                                                 .modal-footer-responsive {
-                                                    padding: 0px 20px 20px 20px !important;
+                                                    padding: 0px 10px 15px 10px !important;
                                                 }
                                                 .add-more-responsive {
                                                     text-align: right !important;
@@ -487,14 +487,23 @@ const CBSEGradeList = () => {
                                                 }
                                                 .col-fit-mobile {
                                                     padding: 0 !important;
+                                                    margin-bottom: 10px !important;
                                                 }
                                                 .removal-button-responsive {
                                                     justify-content: flex-end !important;
                                                     padding-right: 0 !important;
+                                                    margin-top: 5px !important;
                                                 }
                                                 .modal-dialog {
-                                                    width: 95% !important;
-                                                    margin: 10px auto !important;
+                                                    width: 100% !important;
+                                                    margin: 10px !important;
+                                                }
+                                                .grade-row-group {
+                                                    background: #f9f9f9;
+                                                    padding: 10px;
+                                                    border-radius: 4px;
+                                                    margin-bottom: 10px;
+                                                    border: 1px solid #ddd;
                                                 }
                                             }
                                             @media (min-width: 766px) {
@@ -656,112 +665,121 @@ const CBSEGradeList = () => {
                                 <button type="button" className="close" onClick={() => setShowModal(false)} style={{ color: 'white', opacity: 1, marginRight: '20px' }}>&times;</button>
                                 <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{editMode ? 'Edit Exam Grade' : 'Add Exam Grade'}</h4>
                             </div>
-                            <div className="scroll-area hide-scrollbar">
+                            <div className="">
                                 <form role="form" onSubmit={handleSubmit}>
-                                    <div className="modal-body modal-body-responsive" style={{ padding: '30px 20px 30px 40px' }}>
-                                        <div className="row row-fit-mobile">
-                                            <div className="col-md-12 col-fit-mobile">
-                                                <div className="form-group">
-                                                    <label>Grade Title</label><small className="req"> *</small>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        value={formData.name}
-                                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                        required
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-12 col-fit-mobile">
-                                                <div className="form-group">
-                                                    <label>Description</label>
-                                                    <textarea
-                                                        className="form-control"
-                                                        rows="2"
-                                                        value={formData.description}
-                                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                        style={{ resize: 'none' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="row row-fit-mobile" style={{ marginTop: '20px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
-                                            <div className="col-md-6 col-fit-mobile"></div>
-                                            <div className="col-md-6 text-right col-fit-mobile add-more-responsive">
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-sm add_row"
-                                                    onClick={addRange}
-                                                    style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '5px 15px', border: 'none' }}
-                                                >
-                                                    Add More
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="hide-scrollbar" style={{ maxHeight: '300px', overflowY: 'auto', overflowX: 'hidden' }}>
-                                            <div className="row row-fit-mobile" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
-                                                <div className="col-md-2 col-fit-mobile" style={{ fontSize: '12px' }}>Grade<small className="req">*</small></div>
-                                                <div className="col-md-3 col-fit-mobile" style={{ fontSize: '12px' }}>Maximum Percentage <small className="req">*</small></div>
-                                                <div className="col-md-3 col-fit-mobile" style={{ fontSize: '12px' }}>Minimum Percentage <small className="req">*</small></div>
-                                                <div className="col-md-3 col-fit-mobile" style={{ fontSize: '12px' }}>Remark</div>
-                                                <div className="col-md-1 col-fit-mobile"></div>
-                                            </div>
-
-                                            <div id="grade_result">
-                                                {formData.ranges.map((range, index) => (
-                                                    <div className="row mb10 row-fit-mobile" key={range.id || index} style={{ marginBottom: '15px' }}>
-                                                        <div className="col-md-2 col-fit-mobile">
-                                                            <input
-                                                                className="form-control input-sm"
-                                                                value={range.name}
-                                                                onChange={(e) => handleRangeChange(index, 'name', e.target.value)}
-                                                                required
-                                                            />
-                                                        </div>
-                                                        <div className="col-md-3 col-fit-mobile">
-                                                            <input
-                                                                type="number"
-                                                                className="form-control input-sm"
-                                                                value={range.maximum_percentage}
-                                                                onChange={(e) => handleRangeChange(index, 'maximum_percentage', e.target.value)}
-                                                                required
-                                                                min="0"
-                                                                max="100"
-                                                            />
-                                                        </div>
-                                                        <div className="col-md-3 col-fit-mobile">
-                                                            <input
-                                                                type="number"
-                                                                className="form-control input-sm"
-                                                                value={range.minimum_percentage}
-                                                                onChange={(e) => handleRangeChange(index, 'minimum_percentage', e.target.value)}
-                                                                required
-                                                                min="0"
-                                                                max="100"
-                                                            />
-                                                        </div>
-                                                        <div className="col-md-3 col-fit-mobile">
-                                                            <textarea
-                                                                className="form-control input-sm"
-                                                                rows="1"
-                                                                value={range.description}
-                                                                onChange={(e) => handleRangeChange(index, 'description', e.target.value)}
-                                                                style={{ resize: 'none', minHeight: '30px' }}
-                                                            />
-                                                        </div>
-                                                        <div className="col-md-1 col-fit-mobile removal-button-responsive" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <span
-                                                                className="text-danger cursor-pointer"
-                                                                onClick={() => removeRange(index)}
-                                                                style={{ fontSize: '18px', fontWeight: 'bold' }}
-                                                            >
-                                                                &times;
-                                                            </span>
-                                                        </div>
+                                    <div className="modal-body modal-body-responsive" style={{ padding: '20px' }}>
+                                        <div className="container-fluid" style={{ padding: 0 }}>
+                                            <div className="row row-fit-mobile">
+                                                <div className="col-md-12 col-fit-mobile">
+                                                    <div className="form-group">
+                                                        <label>Grade Title</label><small className="req"> *</small>
+                                                        <input
+                                                            type="text"
+                                                            className="form-control"
+                                                            value={formData.name}
+                                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                            required
+                                                        />
                                                     </div>
-                                                ))}
+                                                </div>
+                                                <div className="col-md-12 col-fit-mobile">
+                                                    <div className="form-group">
+                                                        <label>Description</label>
+                                                        <textarea
+                                                            className="form-control"
+                                                            rows="2"
+                                                            value={formData.description}
+                                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                            style={{ resize: 'none' }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="row row-fit-mobile" style={{ marginTop: '10px', marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+                                                <div className="col-md-6 col-fit-mobile"></div>
+                                                <div className="col-md-6 text-right col-fit-mobile add-more-responsive">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm add_row"
+                                                        onClick={addRange}
+                                                        style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '5px 15px', border: 'none' }}
+                                                    >
+                                                        Add More
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="hide-scrollbar" style={{ maxHeight: '400px', overflowY: 'auto', overflowX: 'hidden' }}>
+                                                <div className="row row-fit-mobile hidden-xs hidden-sm" style={{ fontWeight: 'bold', marginBottom: '5px', color: '#333' }}>
+                                                    <div className="col-md-2" style={{ fontSize: '12px' }}>Grade<small className="req">*</small></div>
+                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Maximum Percentage <small className="req">*</small></div>
+                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Minimum Percentage <small className="req">*</small></div>
+                                                    <div className="col-md-3" style={{ fontSize: '12px' }}>Remark</div>
+                                                    <div className="col-md-1"></div>
+                                                </div>
+
+                                                <div id="grade_result">
+                                                    {formData.ranges.map((range, index) => (
+                                                        <div className="row mb10 grade-row-group" key={range.id || index} style={{ marginBottom: '15px' }}>
+                                                            <div className="col-md-2 col-fit-mobile">
+                                                                <label className="visible-xs visible-sm" style={{ fontSize: '12px' }}>Grade<small className="req">*</small></label>
+                                                                <input
+                                                                    className="form-control input-sm"
+                                                                    value={range.name}
+                                                                    onChange={(e) => handleRangeChange(index, 'name', e.target.value)}
+                                                                    required
+                                                                />
+                                                            </div>
+                                                            <div className="col-md-3 col-fit-mobile">
+                                                                <label className="visible-xs visible-sm" style={{ fontSize: '12px' }}>Maximum Percentage <small className="req">*</small></label>
+                                                                <input
+                                                                    type="number"
+                                                                    className="form-control input-sm"
+                                                                    value={range.maximum_percentage}
+                                                                    onChange={(e) => handleRangeChange(index, 'maximum_percentage', e.target.value)}
+                                                                    required
+                                                                    min="0"
+                                                                    max="100"
+                                                                />
+                                                            </div>
+                                                            <div className="col-md-3 col-fit-mobile">
+                                                                <label className="visible-xs visible-sm" style={{ fontSize: '12px' }}>Minimum Percentage <small className="req">*</small></label>
+                                                                <input
+                                                                    type="number"
+                                                                    className="form-control input-sm"
+                                                                    value={range.minimum_percentage}
+                                                                    onChange={(e) => handleRangeChange(index, 'minimum_percentage', e.target.value)}
+                                                                    required
+                                                                    min="0"
+                                                                    max="100"
+                                                                />
+                                                            </div>
+                                                            <div className="col-md-3 col-fit-mobile">
+                                                                <label className="visible-xs visible-sm" style={{ fontSize: '12px' }}>Remark</label>
+                                                                <textarea
+                                                                    className="form-control input-sm"
+                                                                    rows="1"
+                                                                    value={range.description}
+                                                                    onChange={(e) => handleRangeChange(index, 'description', e.target.value)}
+                                                                    style={{ resize: 'none', minHeight: '30px' }}
+                                                                />
+                                                            </div>
+                                                            <div className="col-md-1 col-fit-mobile removal-button-responsive" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '4px' }}>
+                                                                {formData.ranges.length > 1 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="btn btn-danger btn-xs"
+                                                                        onClick={() => removeRange(index)}
+                                                                        title="Remove"
+                                                                    >
+                                                                        <i className="fa fa-remove"></i>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
