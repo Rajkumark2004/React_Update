@@ -421,6 +421,13 @@ const Assessment = () => {
                                 <div className="box-body">
                                     <style>
                                         {`
+                                            .hide-scrollbar::-webkit-scrollbar {
+                                                display: none;
+                                            }
+                                            .hide-scrollbar {
+                                                -ms-overflow-style: none;
+                                                scrollbar-width: none;
+                                            }
                                             @media (max-width: 767px) {
                                                 .mobile-stack {
                                                     display: flex !important;
@@ -491,6 +498,16 @@ const Assessment = () => {
                                                     width: 95% !important;
                                                     margin: 10px auto !important;
                                                 }
+                                                .DTED_Action_Buttons {
+                                                    justify-content: center !important;
+                                                }
+                                            }
+                                            .hide-scrollbar::-webkit-scrollbar {
+                                                display: none;
+                                            }
+                                            .hide-scrollbar {
+                                                -ms-overflow-style: none;
+                                                scrollbar-width: none;
                                             }
                                         `}
                                     </style>
@@ -638,8 +655,8 @@ const Assessment = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="modal fade in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: '17px', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
-                    <div className="modal-dialog modal-xl">
+                <div id="myModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
+                    <div className="modal-dialog modal-xl" style={{ margin: '30px auto' }}>
                         <div className="modal-content">
                             <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
                                 <button type="button" className="close" onClick={() => setShowModal(false)} style={{ color: 'white', opacity: 1, marginRight: '20px' }}>&times;</button>

@@ -615,6 +615,13 @@ const CBSEExamList = () => {
                 .hover-main-entry:hover {
                     background-color: #fcfcfc !important;
                 }
+                .hide-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .hide-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
                 .dt-header { 
                     display: flex; 
                     justify-content: space-between; 
@@ -650,7 +657,7 @@ const CBSEExamList = () => {
                 .table-responsive table.example th:nth-child(5) { width: 8% !important; } 
                 .table-responsive table.example th:nth-child(6) { width: 8% !important; } 
                 .table-responsive table.example th:nth-child(7) { width: 14% !important; } 
-                .table-responsive table.example th:nth-child(8) { width: 9% !important; } 
+                .table-responsive table.example th:nth-child(8) { width: 120px !important; white-space: nowrap !important; } 
                 .table-responsive table.example th.noExport { width: 320px !important; } 
 
                 .table-responsive table.example td {
@@ -660,6 +667,9 @@ const CBSEExamList = () => {
                     vertical-align: top !important;
                     padding: 12px 8px !important;
                     border-bottom: 1px solid #eee;
+                }
+                .table-responsive table.example td:nth-child(8) {
+                    white-space: nowrap !important;
                 }
                 .table-responsive table.example td.noExport {
                     width: 320px !important;
@@ -678,14 +688,14 @@ const CBSEExamList = () => {
 
                 @media (max-width: 767px) {
                     .modal-body-responsive {
-                        padding: 20px 0px 20px 20px !important;
+                        padding: 0px 20px 0px 20px !important;
                     }
                     .modal-header-responsive {
-                        padding: 20px 0px 20px 20px !important;
+                        padding: 15px 20px 15px 20px !important;
                         border-bottom: none !important;
                     }
                     .modal-footer-responsive {
-                        padding: 0px 0px 20px 20px !important;
+                        padding: 0px 20px 20px 20px !important;
                     }
                     .modal-dialog {
                         width: 95% !important;
@@ -922,16 +932,16 @@ const CBSEExamList = () => {
 
             {/* Add Exam Modal */}
             {showAddModal && (
-                <div className="modal fade in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
-                    <div className="modal-dialog modal-lg modal-dialog-centered">
+                <div className="modal fade in hide-scrollbar" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
+                    <div className="modal-dialog modal-lg modal-dialog-centered" style={{ margin: '30px auto' }}>
                         <div className="modal-content">
                             <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
                                 <button type="button" className="close" onClick={() => { setShowAddModal(false); setActiveExam(null); }} style={{ color: 'white', opacity: 1, marginRight: '20px' }}>&times;</button>
                                 <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{activeExam ? "Edit Exam" : "Add Exam"}</h4>
                             </div>
-                            <div className="scroll-area">
+                            <div className="scroll-area hide-scrollbar">
                                 <form id="add_exam_form" onSubmit={handleSaveExam}>
-                                    <div className="modal-body">
+                                    <div className="modal-body modal-body-responsive">
                                         <div className="row">
                                             <div className="col-md-12">
                                                 <div className="form-group">
@@ -1134,7 +1144,7 @@ const CBSEExamList = () => {
                                             </div>
                                         </div>
                                     </div>
-                                     <div className="modal-footer modal-footer-responsive" style={{ borderTop: 'none', paddingBottom: '20px' }}>
+                                    <div className="modal-footer modal-footer-responsive" style={{ borderTop: 'none', paddingBottom: '20px' }}>
                                         <button type="submit" className="btn pull-right" style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '8px 25px', fontSize: '14px', fontWeight: 'bold', border: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.15)' }}>{activeExam ? "Update" : "Save"}</button>
                                     </div>
                                 </form>

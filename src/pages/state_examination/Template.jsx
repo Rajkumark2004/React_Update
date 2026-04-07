@@ -707,7 +707,21 @@ const Template = () => {
                                             .hover-main-entry:hover {
                                                 background-color: #fcfcfc !important;
                                             }
+                                            .modal-header-responsive {
+                                                padding: 15px 20px 15px 20px !important;
+                                                border-bottom: none !important;
+                                            }
+                                            .modal-body-responsive {
+                                                padding: 20px 20px 20px 20px !important;
+                                            }
                                             @media (max-width: 767px) {
+                                                .modal-body-responsive {
+                                                    padding: 15px 20px 0px 20px !important;
+                                                }
+                                                .modal-dialog {
+                                                    width: 95% !important;
+                                                    margin: 10px auto !important;
+                                                }
                                                 .mailbox-messages {
                                                     border: 1px solid #ddd;
                                                     border-radius: 4px;
@@ -869,15 +883,15 @@ const Template = () => {
 
             {/* Add/Edit Modal */}
             {showAddModal && (
-                <div id="myModal" className="modal fade in" role="dialog" style={{ display: 'block', paddingRight: '17px', overflowY: 'auto' }}>
-                    <div className="modal-dialog modal-xl">
+                <div id="myModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
+                    <div className="modal-dialog modal-xl" style={{ margin: '30px auto' }}>
                         <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" onClick={() => setShowAddModal(false)}>&times;</button>
-                                <h4 className="modal-title" id="modal-title">{isEditing ? "Edit Template" : "Add"}</h4>
+                            <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
+                                <button type="button" className="close" onClick={() => setShowAddModal(false)} style={{ color: 'white', opacity: 1, marginRight: '0px' }}>&times;</button>
+                                <h4 className="modal-title" id="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{isEditing ? "Edit Template" : "Add Template"}</h4>
                             </div>
                             <form role="form" id="form1" onSubmit={handleSubmit} method="post" encType="multipart/form-data">
-                                <div className="modal-body">
+                                <div className="modal-body modal-body-responsive">
                                     {isEditing && <div id="templatedata"></div>}
                                     <div className={`form-group ${errors.name ? 'has-error' : ''}`}>
                                         <label>Template</label><small className="req"> *</small>
@@ -1139,15 +1153,15 @@ const Template = () => {
             {/* Link Exam Modal */}
             {
                 showLinkModal && (
-                    <div id="linkexamModal" className="modal fade in" role="dialog" style={{ display: 'block', paddingRight: '17px', overflowY: 'auto' }}>
-                        <div className="modal-dialog modal-xl">
+                    <div id="linkexamModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
+                        <div className="modal-dialog modal-xl" style={{ margin: '30px auto' }}>
                             <div className="modal-content">
-                                <div className="modal-header">
-                                    <button type="button" className="close" onClick={() => setShowLinkModal(false)}>&times;</button>
-                                    <h4 className="modal-title">Link Exam</h4>
+                                <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
+                                    <button type="button" className="close" onClick={() => setShowLinkModal(false)} style={{ color: 'white', opacity: 1 }}>&times;</button>
+                                    <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>Link Exam</h4>
                                 </div>
                                 <form role="form" id="formlink" onSubmit={handleLinkExamSubmit}>
-                                    <div className="modal-body">
+                                    <div className="modal-body modal-body-responsive">
                                         <div className="row">
                                             <div className="col-md-3">
                                                 <div className="form-group">
@@ -1283,14 +1297,14 @@ const Template = () => {
             {/* View Template Modal */}
             {
                 showViewModal && (
-                    <div id="viewTemplateModal" className="modal fade in" role="dialog" style={{ display: 'block', paddingRight: '17px', overflowY: 'auto' }}>
-                        <div className="modal-dialog modal-lg">
+                    <div id="viewTemplateModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
+                        <div className="modal-dialog modal-lg" style={{ margin: '30px auto' }}>
                             <div className="modal-content">
-                                <div className="modal-header">
-                                    <button type="button" className="close" onClick={() => setShowViewModal(false)}>&times;</button>
-                                    <h4 className="modal-title">{viewData ? viewData.name : 'Template'}</h4>
+                                <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
+                                    <button type="button" className="close" onClick={() => setShowViewModal(false)} style={{ color: 'white', opacity: 1 }}>&times;</button>
+                                    <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{viewData ? viewData.name : 'Template'}</h4>
                                 </div>
-                                <div className="modal-body minheight260">
+                                <div className="modal-body modal-body-responsive minheight260">
                                     {viewLoading ? (
                                         <div className="text-center p10">
                                             <i className="fa fa-spinner fa-spin fa-3x"></i>

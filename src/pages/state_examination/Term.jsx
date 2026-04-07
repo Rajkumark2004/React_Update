@@ -227,6 +227,13 @@ const Term = () => {
                                                 .hover-main-entry:hover {
                                                     background-color: #fcfcfc !important;
                                                 }
+                                                .hide-scrollbar::-webkit-scrollbar {
+                                                    display: none;
+                                                }
+                                                .hide-scrollbar {
+                                                    -ms-overflow-style: none;
+                                                    scrollbar-width: none;
+                                                }
                                                 @media (max-width: 767px) {
                                                     .mailbox-messages {
                                                         border: 1px solid #ddd;
@@ -284,7 +291,7 @@ const Term = () => {
                                                         padding: 0px 20px 20px 20px !important;
                                                     }
                                                     .modal-dialog {
-                                                        width: 90% !important;
+                                                        width: 95% !important;
                                                         margin: 10px auto !important;
                                                     }
                                                 }
@@ -405,8 +412,8 @@ const Term = () => {
             </div>
 
             {showModal && (
-                <div className="modal fade in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
-                    <div className="modal-dialog modal-dialog2 modal-md">
+                <div className="modal fade in hide-scrollbar" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
+                    <div className="modal-dialog modal-dialog2 modal-md" style={{ margin: '30px auto' }}>
                         <div className="modal-content">
                             <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
                                 <button type="button" className="close" onClick={() => setShowModal(false)} style={{ color: 'white', opacity: 1, marginRight: '20px' }}>&times;</button>
