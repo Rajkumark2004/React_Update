@@ -426,14 +426,46 @@ const LeaveRequest = () => {
                 <div className="modal fade in" style={{ display: 'block', overflowY: 'auto' }}>
                     <div className="modal-dialog modal-lg" style={isMobile ? { margin: '10px auto', width: 'calc(100% - 20px)' } : {}}>
                         <div className="modal-content" style={isMobile ? { display: 'flex', flexDirection: 'column', height: 'calc(100vh - 20px)' } : {}}>
-                            <div className="modal-header" style={{ backgroundColor: '#7e3abd', color: 'white', padding: isMobile ? '4px 15px' : '5px 15px', borderTopLeftRadius: '5px', borderTopRightRadius: '5px', minHeight: 'auto' }}>
-                                <button type="button" className="close" onClick={() => setShowAddModal(false)} style={{ color: 'white', opacity: 1, marginTop: '0px', padding: '0 5px' }}>&times;</button>
-                                <h4 className="modal-title" style={{ color: 'white', fontWeight: '600', margin: 0, fontSize: '16px' }}>Add Details</h4>
+                            <div className="modal-header" style={{
+                                backgroundColor: isMobile ? '#7e3abd' : 'transparent',
+                                color: isMobile ? 'white' : 'inherit',
+                                padding: isMobile ? '15px 20px' : '0px 20px',
+                                borderTopLeftRadius: '5px',
+                                borderTopRightRadius: '5px',
+                                minHeight: 'auto',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: isMobile ? 'start' : 'space-between',
+                                position: 'relative',
+                                borderBottom: isMobile ? 'none' : '1px solid #eee'
+                            }}>
+                                <h4 className="modal-title" style={{
+                                    color: isMobile ? 'white' : 'inherit',
+                                    fontWeight: '600',
+                                    margin: 0,
+                                    fontSize: isMobile ? '17px' : '18px'
+                                }}>Add Details</h4>
+                                <button
+                                    type="button"
+                                    className="close"
+                                    onClick={() => setShowAddModal(false)}
+                                    style={{
+                                        color: isMobile ? 'white' : '#000',
+                                        opacity: 1,
+                                        margin: 0,
+                                        padding: '25px 20px',
+                                        position: isMobile ? 'absolute' : 'relative',
+                                        top: isMobile ? '-15px' : '-10px',
+                                        right: isMobile ? '15px' : '2px'
+                                    }}
+                                >
+                                    &times;
+                                </button>
                             </div>
                             <form onSubmit={handleSaveLeave} style={isMobile ? { display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' } : {}}>
-                                <div className="modal-body hide-scrollbar" style={{ maxHeight: isMobile ? 'none' : '350px', overflowY: 'auto', overflowX: 'hidden', flex: isMobile ? 1 : 'none' }}>
+                                <div className="modal-body" style={{ overflowY: 'hidden', overflowX: 'hidden', flex: isMobile ? 1 : 'none', padding: '20px 25px 10px' }}>
                                     <div className="row">
-                                        <div className="form-group col-md-6">
+                                        <div className="form-group col-md-6" style={{ marginBottom: '8px' }}>
                                             <label>Apply Date</label><small className="req"> *</small>
                                             <input
                                                 type="date"
@@ -443,7 +475,7 @@ const LeaveRequest = () => {
                                                 required
                                             />
                                         </div>
-                                        <div className="form-group col-md-6">
+                                        <div className="form-group col-md-6" style={{ marginBottom: '8px' }}>
                                             <label>Available Leave</label><small className="req"> *</small>
                                             <select
                                                 className="form-control"
@@ -459,7 +491,7 @@ const LeaveRequest = () => {
                                                 ))}
                                             </select>
                                         </div>
-                                        <div className="form-group col-md-6">
+                                        <div className="form-group col-md-6" style={{ marginBottom: '8px' }}>
                                             <label>Leave From Date</label><small className="req"> *</small>
                                             <input
                                                 type="date"
@@ -469,7 +501,7 @@ const LeaveRequest = () => {
                                                 required
                                             />
                                         </div>
-                                        <div className="form-group col-md-6">
+                                        <div className="form-group col-md-6" style={{ marginBottom: '8px' }}>
                                             <label>Leave To Date</label><small className="req"> *</small>
                                             <input
                                                 type="date"
@@ -479,7 +511,7 @@ const LeaveRequest = () => {
                                                 required
                                             />
                                         </div>
-                                        <div className="form-group col-md-12">
+                                        <div className="form-group col-md-12" style={{ marginBottom: '8px' }}>
                                             <label>Reason</label>
                                             <textarea
                                                 className="form-control"
@@ -489,18 +521,18 @@ const LeaveRequest = () => {
                                                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                                             ></textarea>
                                         </div>
-                                        <div className="form-group col-md-12">
+                                        <div className="form-group col-md-12" style={{ marginBottom: '8px' }}>
                                             <label>Attach Document</label>
                                             <input
                                                 type="file"
                                                 className="dropify"
-                                                data-height="60"
+                                                data-height="50"
                                                 onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
                                             />
                                         </div>
                                     </div>
                                 </div>
-                                <div className="modal-footer">
+                                <div className="modal-footer" style={{ padding: '8px 25px' }}>
                                     <button type="submit" className="btn btn-primary pull-right" style={{ backgroundColor: '#9754ca', color: 'white', borderRadius: '20px', padding: '6px 12px', border: 'none', display: 'flex', alignItems: 'center', gap: '5px' }}>Save</button>
                                 </div>
                             </form>
@@ -517,72 +549,169 @@ const LeaveRequest = () => {
                         <div className="modal-content" style={isMobile ? { display: 'flex', flexDirection: 'column', height: 'calc(100vh - 20px)' } : {}}>
 
                             {/* Header */}
-                            <div className="modal-header" style={{ backgroundColor: '#7e3abd', color: 'white', padding: isMobile ? '4px 15px' : '5px 15px', borderTopLeftRadius: '5px', borderTopRightRadius: '5px', minHeight: 'auto' }}>
+                            <div className="modal-header" style={{
+                                backgroundColor: isMobile ? '#7e3abd' : 'transparent',
+                                color: isMobile ? 'white' : 'inherit',
+                                padding: isMobile ? '15px 20px' : '0px 20px',
+                                borderTopLeftRadius: '5px',
+                                borderTopRightRadius: '5px',
+                                minHeight: 'auto',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: isMobile ? 'start' : 'space-between',
+                                position: 'relative',
+                                borderBottom: isMobile ? 'none' : '1px solid #eee'
+                            }}>
+                                {isMobile && selectedRecord && selectedRecord.status === 'pending' && (
+                                    <button
+                                        onClick={() => handleDelete(selectedRecord.id, selectedRecord.staff_id)}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'white',
+                                            marginRight: '10px',
+                                            padding: 0,
+                                            fontSize: '18px'
+                                        }}
+                                        title="Delete"
+                                    >
+                                        <i className="fa fa-remove"></i>
+                                    </button>
+                                )}
+                                <h4 className="modal-title" style={{
+                                    color: isMobile ? 'white' : 'inherit',
+                                    fontWeight: '600',
+                                    margin: 0,
+                                    fontSize: isMobile ? '17px' : '18px'
+                                }}>Details</h4>
                                 <button
                                     type="button"
                                     className="close"
                                     onClick={() => setShowDetailModal(false)}
-                                    style={{ color: 'white', opacity: 1, marginTop: '0px', padding: '0 5px' }}
+                                    style={{
+                                        color: isMobile ? 'white' : '#000',
+                                        opacity: 1,
+                                        margin: 0,
+                                        padding: '25px 20px',
+                                        position: isMobile ? 'absolute' : 'relative',
+                                        top: isMobile ? '-15px' : '-10px',
+                                        right: isMobile ? '15px' : '2px'
+                                    }}
                                 >
                                     &times;
                                 </button>
-                                <h4 className="modal-title" style={{ color: 'white', fontWeight: '600', margin: 0, fontSize: '16px' }}>Details</h4>
                             </div>
 
                             {/* Body */}
-                            <div className="modal-body hide-scrollbar" style={{ maxHeight: isMobile ? 'none' : 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', flex: isMobile ? 1 : 'none' }}>
+                            <div className="modal-body hide-scrollbar" style={{ maxHeight: isMobile ? 'none' : 'calc(100vh - 150px)', overflowY: 'auto', overflowX: 'hidden', flex: isMobile ? 1 : 'none', paddingTop: '20px' }}>
                                 <div className="row">
-                                    <div className="col-md-12 table-responsive">
-                                        <table className="table mb0 table-striped table-bordered">
-                                            <tbody>
-                                                <tr>
-                                                    <th width="15%">Name</th>
-                                                    <td width="35%">
-                                                        {selectedRecord.name} {selectedRecord.surname}
-                                                    </td>
-                                                    <th width="15%">Staff ID</th>
-                                                    <td width="35%">
-                                                        {selectedRecord.employee_id}
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Submitted By</th>
-                                                    <td>{selectedRecord.applied_by}</td>
-                                                    <th>Leave Type</th>
-                                                    <td>{selectedRecord.type}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Leave</th>
-                                                    <td>
-                                                        {selectedRecord.leavefrom} - {selectedRecord.leaveto} ({selectedRecord.leave_days} Days)
-                                                    </td>
-                                                    <th>Apply Date</th>
-                                                    <td>{selectedRecord.date}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Reason</th>
-                                                    <td>{selectedRecord.employee_remark}</td>
-                                                    <th>Download</th>
-                                                    <td>
-                                                        {selectedRecord.document_file && (
-                                                            <a
-                                                                href={`https://newlayout.wisibles.com/admin/leaverequest/downloadleaverequestdoc/${selectedRecord.staff_id}/${selectedRecord.id}`}
-                                                                className="btn btn-default btn-xs"
-                                                                title="Download"
-                                                            >
-                                                                <i className="fa fa-download"></i>
-                                                            </a>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Note</th>
-                                                    <td colSpan="3">
-                                                        {selectedRecord.admin_remark}
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    <div className="col-md-12">
+                                        {isMobile ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '0 10px' }}>
+                                                <div style={{ borderBottom: '1px solid #f4f4f4', paddingBottom: '8px' }}>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Name</label>
+                                                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedRecord.name} {selectedRecord.surname}</div>
+                                                </div>
+                                                <div style={{ borderBottom: '1px solid #f4f4f4', paddingBottom: '8px' }}>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Staff ID</label>
+                                                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedRecord.employee_id}</div>
+                                                </div>
+                                                <div style={{ borderBottom: '1px solid #f4f4f4', paddingBottom: '8px' }}>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Submitted By</label>
+                                                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedRecord.applied_by}</div>
+                                                </div>
+                                                <div style={{ borderBottom: '1px solid #f4f4f4', paddingBottom: '8px' }}>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Leave Type</label>
+                                                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedRecord.type}</div>
+                                                </div>
+                                                <div style={{ borderBottom: '1px solid #f4f4f4', paddingBottom: '8px' }}>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Leave Date</label>
+                                                    <div style={{ fontSize: '14px', color: '#333' }}>
+                                                        {selectedRecord.leavefrom} - {selectedRecord.leaveto}
+                                                        <span className="label label-info" style={{ marginLeft: '5px' }}>{selectedRecord.leave_days} Days</span>
+                                                    </div>
+                                                </div>
+                                                <div style={{ borderBottom: '1px solid #f4f4f4', paddingBottom: '8px' }}>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Apply Date</label>
+                                                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedRecord.date}</div>
+                                                </div>
+                                                <div style={{ borderBottom: '1px solid #f4f4f4', paddingBottom: '8px' }}>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Reason</label>
+                                                    <div style={{ fontSize: '14px', color: '#333', fontStyle: 'italic' }}>{selectedRecord.employee_remark}</div>
+                                                </div>
+                                                <div style={{ borderBottom: '1px solid #f4f4f4', paddingBottom: '8px' }}>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Download</label>
+                                                    {selectedRecord.document_file ? (
+                                                        <a
+                                                            href={`https://newlayout.wisibles.com/admin/leaverequest/downloadleaverequestdoc/${selectedRecord.staff_id}/${selectedRecord.id}`}
+                                                            className="btn btn-default btn-xs"
+                                                            style={{ marginTop: '5px' }}
+                                                        >
+                                                            <i className="fa fa-download"></i> Download Attachment
+                                                        </a>
+                                                    ) : (
+                                                        <div style={{ fontSize: '14px', color: '#999' }}>No document found</div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Note</label>
+                                                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedRecord.admin_remark || 'N/A'}</div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="table-responsive">
+                                                <table className="table mb0 table-striped table-bordered">
+                                                    <tbody>
+                                                        <tr>
+                                                            <th width="15%">Name</th>
+                                                            <td width="35%">
+                                                                {selectedRecord.name} {selectedRecord.surname}
+                                                            </td>
+                                                            <th width="15%">Staff ID</th>
+                                                            <td width="35%">
+                                                                {selectedRecord.employee_id}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Submitted By</th>
+                                                            <td>{selectedRecord.applied_by}</td>
+                                                            <th>Leave Type</th>
+                                                            <td>{selectedRecord.type}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Leave</th>
+                                                            <td>
+                                                                {selectedRecord.leavefrom} - {selectedRecord.leaveto} ({selectedRecord.leave_days} Days)
+                                                            </td>
+                                                            <th>Apply Date</th>
+                                                            <td>{selectedRecord.date}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Reason</th>
+                                                            <td>{selectedRecord.employee_remark}</td>
+                                                            <th>Download</th>
+                                                            <td>
+                                                                {selectedRecord.document_file && (
+                                                                    <a
+                                                                        href={`https://newlayout.wisibles.com/admin/leaverequest/downloadleaverequestdoc/${selectedRecord.staff_id}/${selectedRecord.id}`}
+                                                                        className="btn btn-default btn-xs"
+                                                                        title="Download"
+                                                                    >
+                                                                        <i className="fa fa-download"></i>
+                                                                    </a>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <th>Note</th>
+                                                            <td colSpan="3">
+                                                                {selectedRecord.admin_remark}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
