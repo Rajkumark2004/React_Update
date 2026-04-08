@@ -43,11 +43,13 @@ const RoomType = () => {
 
     const { sortedData, requestSort, sortConfig, getSortIcon } = useTableSort(roomtypelist);
 
-    const filteredRoomTypeList = sortedData.filter(roomtype =>
-        Object.values(roomtype).some(value =>
-            String(value).toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    );
+    const filteredRoomTypeList = sortedData.filter(roomtype => {
+        const term = searchTerm.toLowerCase();
+        return (
+            (roomtype.room_type || '').toLowerCase().includes(term) ||
+            (roomtype.description || '').toLowerCase().includes(term)
+        );
+    });
 
     const totalItems = filteredRoomTypeList.length;
     const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;

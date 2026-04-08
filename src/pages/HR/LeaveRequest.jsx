@@ -654,7 +654,7 @@ const LeaveRequest = () => {
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <label style={{ fontWeight: '600', color: '#333', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Note</label>
+                                                    <label style={{ fontWeight: '600', color: '#333=', textTransform: 'uppercase', fontSize: '11px', display: 'block', marginBottom: '2px' }}>Note</label>
                                                     <div style={{ fontSize: '14px', color: '#333' }}>{selectedRecord.admin_remark || 'N/A'}</div>
                                                 </div>
                                             </div>
