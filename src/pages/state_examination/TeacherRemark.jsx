@@ -186,6 +186,7 @@ const TeacherRemark = ({ examId, handleClose, onSaveSuccess }) => {
                             className="allot-fees btn btn-primary pull-right"
                             id="load"
                             disabled={saving}
+                            style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px' }}
                         >
                             {saving ? (
                                 <>

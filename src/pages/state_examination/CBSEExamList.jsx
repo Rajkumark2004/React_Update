@@ -1249,7 +1249,7 @@ const CBSEExamList = () => {
                                                             className="btn btn-primary"
                                                             onClick={handleImportMarks}
                                                             disabled={importLoading}
-                                                            style={{ backgroundColor: '#9b59b6', borderColor: '#8e44ad' }}
+                                                            style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px' }}
                                                         >
                                                             {importLoading ? <i className="fa fa-spinner fa-spin"></i> : 'Submit'}
                                                         </button>
@@ -1263,7 +1263,7 @@ const CBSEExamList = () => {
                                                 <button
                                                     onClick={handleDownloadSample}
                                                     className="btn btn-primary btn-sm"
-                                                    style={{ backgroundColor: '#9b59b6', borderColor: '#8e44ad' }}
+                                                    style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px' }}
                                                 >
                                                     <i className="fa fa-download"></i> Download Sample Import File
                                                 </button>
@@ -1347,14 +1347,14 @@ const CBSEExamList = () => {
                                 {/* Attendance moved to separate ExamAttendance modal */}
                                 {/* Remarks moved to separate TeacherRemark modal */}
                             </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-default" onClick={closeActionModal}>Close</button>
+                            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                <button type="button" className="btn btn-default" onClick={closeActionModal} style={{ borderRadius: '25px', padding: '6px 20px', minWidth: '100px' }}>Close</button>
                                 {modalConfig.type === 'marks' && subModalConfig.show ? (
-                                    <button type="button" className="btn btn-primary" onClick={handleSaveExamMarks} disabled={entryLoading} style={{ backgroundColor: '#9b59b6', borderColor: '#8e44ad' }}>
+                                    <button type="button" className="btn btn-primary" onClick={handleSaveExamMarks} disabled={entryLoading} style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px', padding: '6px 20px', minWidth: '100px' }}>
                                         {entryLoading ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                                     </button>
                                 ) : (
-                                    <button type="button" className="btn btn-primary" onClick={closeActionModal}>Save Changes</button>
+                                    <button type="button" className="btn btn-primary" onClick={closeActionModal} style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px', padding: '6px 20px', minWidth: '100px' }}>Save Changes</button>
                                 )}
                             </div>
                         </div>

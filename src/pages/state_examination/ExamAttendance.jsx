@@ -310,6 +310,7 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
                     type="submit"
                     className="btn btn-primary pull-right"
                     disabled={saving}
+                    style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px' }}
                 >
                     {saving ? (
                         <>

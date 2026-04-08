@@ -198,9 +198,9 @@ const AssignExamStudent = ({ examId: propExamId, handleClose }) => {
                                 </tbody>
                             </table>
                         </div>
-                        <div className="modal-footer" style={{ borderTop: '1px solid #f4f4f4', padding: '15px 0 0 0', marginTop: '15px' }}>
-                            <button type="button" className="btn btn-default" onClick={() => handleClose ? handleClose() : navigate('/cbseexam/exam')}>Close</button>
-                            <button type="submit" className="btn btn-primary pull-right" id="load" disabled={saving}>
+                        <div className="modal-footer" style={{ borderTop: '1px solid #f4f4f4', padding: '15px 0 0 0', marginTop: '15px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            <button type="button" className="btn btn-default" onClick={() => handleClose ? handleClose() : navigate('/cbseexam/exam')} style={{ borderRadius: '25px', padding: '6px 10px', minWidth: '100px' }}>Close</button>
+                            <button type="submit" className="btn btn-primary" id="load" disabled={saving} style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px', padding: '6px 10px', minWidth: '100px' }}>
                                 {saving ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                             </button>
                         </div>
