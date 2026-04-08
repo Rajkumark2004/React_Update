@@ -8,6 +8,7 @@ import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
 import Pagination from '../../utils/Pagination';
+import TableToolbar from '../../utils/TableToolbar';
 
 const StudentIdCard = () => {
     const navigate = useNavigate();
@@ -73,14 +74,22 @@ const StudentIdCard = () => {
         old_sign_image: ''
     });
 
-    const [searchTerm, setSearchTerm] = useState('');
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const columns = [
+        { key: 'title', label: 'ID Card Title' },
+        { key: 'background_image', label: 'Background Image' },
+        { key: 'design_type', label: 'Design Type' }
+    ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const [searchTerm, setSearchTerm] = useState('');
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumnVisibility = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
 
     const filteredIdCards = idCardList.filter(item =>
@@ -88,27 +97,27 @@ const StudentIdCard = () => {
     );
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [recordsPerPage, setRecordsPerPage] = useState(10);
 
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, idCardList.length]);
 
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const indexOfLastItem = currentPage * recordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - recordsPerPage;
     const currentData = filteredIdCards.slice(indexOfFirstItem, indexOfLastItem);
 
     const getExportData = () => {
         const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("ID Card Title");
-        if (!hiddenColumns.includes(1)) headers.push("Background Image");
-        if (!hiddenColumns.includes(2)) headers.push("Design Type");
+        if (visibleColumns.has('title')) headers.push("ID Card Title");
+        if (visibleColumns.has('background_image')) headers.push("Background Image");
+        if (visibleColumns.has('design_type')) headers.push("Design Type");
 
         const rows = filteredIdCards.map(item => {
             const row = [];
-            if (!hiddenColumns.includes(0)) row.push(item.title);
-            if (!hiddenColumns.includes(1)) row.push(item.background_image ? "Yes" : "No");
-            if (!hiddenColumns.includes(2)) row.push(item.vertical ? 'Vertical' : 'Horizontal');
+            if (visibleColumns.has('title')) row.push(item.title);
+            if (visibleColumns.has('background_image')) row.push(item.background_image ? "Yes" : "No");
+            if (visibleColumns.has('design_type')) row.push(item.vertical ? 'Vertical' : 'Horizontal');
             return row;
         });
 
@@ -405,6 +414,11 @@ const StudentIdCard = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title" style={{ fontSize: '15px' }}>{isEditing ? 'Edit Student ID Card' : 'Add Student ID Card'}</h3>
+                                    <div className="box-tools pull-right hide-desktop">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <form onSubmit={handleSubmit}>
                                     <div className="box-body" style={{ fontSize: '13px' }}>
@@ -536,53 +550,37 @@ const StudentIdCard = () => {
                                 </div>
                                 <div className="box-body">
                                     <div className="mailbox-messages">
-                                        <div className="row pb10">
-                                            <div className="col-sm-6">
-                                                <div className="pull-left">
-                                                    <input type="search" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }} />
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-6">
-                                                <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Student_ID_Cards.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Student_ID_Cards.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Student_ID_Cards.pdf', 'Student ID Cards'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student ID Cards'); }}><i className="fa fa-print"></i></button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                            <i className="fa fa-columns"></i>
-                                                        </button>
-                                                        {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> ID Card Title</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Background Image</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Design Type</label></li>
-                                                            </ul>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <TableToolbar
+                                            searchTerm={searchTerm}
+                                            onSearchChange={setSearchTerm}
+                                            recordsPerPage={recordsPerPage}
+                                            onRecordsPerPageChange={setRecordsPerPage}
+                                            columns={columns}
+                                            visibleColumns={visibleColumns}
+                                            onToggleColumn={toggleColumnVisibility}
+                                            getExportData={getExportData}
+                                            exportFileName="Student_ID_Cards"
+                                            exportTitle="Student ID Cards"
+                                        />
 
-                                        <div className="table-responsive overflow-visible">
-                                            <table className="table table-striped table-bordered table-hover" style={{ fontSize: '13px' }}>
+                                        <div className="table-responsive">
+                                            <table className="table table-striped table-bordered table-hover" style={{ fontSize: '13px', width: '100%', minWidth: '600px' }}>
                                                 <thead>
                                                     <tr>
-                                                        {!hiddenColumns.includes(0) && <th>ID Card Title</th>}
-                                                        {!hiddenColumns.includes(1) && <th>Background Image</th>}
-                                                        {!hiddenColumns.includes(2) && <th className="text-center">Design Type</th>}
+                                                        {visibleColumns.has('title') && <th>ID Card Title</th>}
+                                                        {visibleColumns.has('background_image') && <th>Background Image</th>}
+                                                        {visibleColumns.has('design_type') && <th className="text-center">Design Type</th>}
                                                         <th className="text-right noExport">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {currentData.map(item => (
                                                         <tr key={item.id}>
-                                                            {!hiddenColumns.includes(0) && <td><a href="#" onClick={(e) => { e.preventDefault(); handleView(item.id); }}>{item.title}</a></td>}
-                                                            {!hiddenColumns.includes(1) && <td>
+                                                            {visibleColumns.has('title') && <td><a href="#" onClick={(e) => { e.preventDefault(); handleView(item.id); }}>{item.title}</a></td>}
+                                                            {visibleColumns.has('background_image') && <td>
                                                                 {item.background_image ? <img src={getImageUrl('background', item.background_image)} width="40" alt="bg" /> : <i className="fa fa-picture-o fa-2x"></i>}
                                                             </td>}
-                                                            {!hiddenColumns.includes(2) && <td className="text-center">{item.vertical ? 'Vertical' : 'Horizontal'}</td>}
+                                                            {visibleColumns.has('design_type') && <td className="text-center">{item.vertical ? 'Vertical' : 'Horizontal'}</td>}
                                                             <td className="text-right">
                                                                 <button className="btn btn-default btn-xs" onClick={() => handleView(item.id)} title="View"><i className="fa fa-reorder"></i></button>
                                                                 <button className="btn btn-default btn-xs" onClick={() => handleEdit(item.id)} title="Edit" style={{ marginLeft: '2px' }}><i className="fa fa-pencil"></i></button>
@@ -597,7 +595,7 @@ const StudentIdCard = () => {
                                         <div className="pt15 pb15 no-print">
                                             <Pagination 
                                                 totalItems={filteredIdCards.length} 
-                                                itemsPerPage={itemsPerPage} 
+                                                itemsPerPage={recordsPerPage} 
                                                 currentPage={currentPage}
                                                 onPageChange={(page) => setCurrentPage(page)}
                                             />

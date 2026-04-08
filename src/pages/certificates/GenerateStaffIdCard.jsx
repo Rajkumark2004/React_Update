@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import StaffIdCard from '../../components/StaffIdCard';
 import Pagination from '../../utils/Pagination';
+import TableToolbar from '../../utils/TableToolbar';
 
 const GenerateStaffIdCard = () => {
     const navigate = useNavigate();
@@ -44,7 +45,19 @@ const GenerateStaffIdCard = () => {
     const [generatingPdf, setGeneratingPdf] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [hiddenColumns, setHiddenColumns] = useState([]);
+    const columns = [
+        { key: 'employee_id', label: 'Staff ID', setting: 'enable_staff_id' },
+        { key: 'full_name', label: 'Staff Name', setting: 'enable_name' },
+        { key: 'designation', label: 'Designation', setting: 'enable_designation' },
+        { key: 'department', label: 'Department', setting: 'enable_staff_department' },
+        { key: 'father_name', label: 'Father Name', setting: 'enable_fathers_name' },
+        { key: 'mother_name', label: 'Mother Name', setting: 'enable_mothers_name' },
+        { key: 'date_of_joining', label: 'Date of Joining', setting: 'enable_date_of_joining' },
+        { key: 'local_address', label: 'Address', setting: 'enable_permanent_address' },
+        { key: 'contact_no', label: 'Phone', setting: 'enable_staff_phone' },
+        { key: 'dob', label: 'Date of Birth', setting: 'enable_staff_dob' },
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
     const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
     const allStaffColumns = [
@@ -60,23 +73,26 @@ const GenerateStaffIdCard = () => {
         { key: 'dob', label: 'Date of Birth', setting: 'enable_staff_dob' },
     ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const toggleColumnVisibility = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
 
     // Build dynamic columns based on idCardSettings visibility and manual hiddenColumns
-    const getVisibleColumns = () => {
-        return allStaffColumns.filter((col, index) => {
+    const getVisibleColumnsList = () => {
+        return columns.filter((col) => {
             const settingVisible = !idCardSettings || idCardSettings[col.setting] == 1;
-            const manualVisible = !hiddenColumns.includes(index);
+            const manualVisible = visibleColumns.has(col.key);
             return settingVisible && manualVisible;
         });
     };
 
     const getExportData = () => {
-        const cols = getVisibleColumns();
+        const cols = getVisibleColumnsList();
         const filtered = staffList.filter(s =>
             ((s.name || '') + ' ' + (s.surname || '')).toLowerCase().includes(searchTerm.toLowerCase()) ||
             (s.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -84,7 +100,8 @@ const GenerateStaffIdCard = () => {
         const headers = cols.map(c => c.label);
         const rows = filtered.map(staff => cols.map(c => {
             if (c.key === 'full_name') return `${staff.name} ${staff.surname || ''}`;
-            return String(staff[c.key] ?? '');
+            const key = c.key;
+            return String(staff[key] ?? '');
         }));
         return { headers, rows };
     };
@@ -112,14 +129,14 @@ const GenerateStaffIdCard = () => {
     );
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [recordsPerPage, setRecordsPerPage] = useState(50);
 
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, staffList?.length]);
 
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const indexOfLastItem = currentPage * recordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - recordsPerPage;
     const currentData = filteredStaff.slice(indexOfFirstItem, indexOfLastItem);
 
     const handleSearch = async (e) => {
@@ -329,10 +346,10 @@ const GenerateStaffIdCard = () => {
 
                                 {searched && (
                                     <div className="box-body">
-                                        <div style={{ borderTop: '1px solid #f4f4f4', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <h3 className="box-title" style={{ fontSize: '20px' }}><i className="fa fa-users"></i> Staff List</h3>
+                                        <div style={{ borderTop: '1px solid #f4f4f4', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                                            <h3 className="box-title" style={{ fontSize: '18px', margin: 0 }}>Staff List</h3>
                                             <button
-                                                className="btn btn-info btn-sm printSelected pull-right"
+                                                className="btn btn-info btn-sm printSelected"
                                                 onClick={handleGenerate}
                                                 title="Generate Certificate"
                                                 disabled={generatingPdf}
@@ -341,58 +358,33 @@ const GenerateStaffIdCard = () => {
                                             </button>
                                         </div>
 
-                                        <div className="row pb10">
-                                            <div className="col-sm-6">
-                                                <div className="pull-left">
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-6">
-                                                <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Staff_ID_Card_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Staff_ID_Card_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Staff_ID_Card_List.pdf', 'Staff ID Card List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Staff ID Card List'); }}><i className="fa fa-print"></i></button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                            <i className="fa fa-columns"></i>
-                                                        </button>
-                                                        {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                {allStaffColumns.map((col, index) => {
-                                                                    const settingVisible = !idCardSettings || idCardSettings[col.setting] == 1;
-                                                                    if (!settingVisible) return null;
-                                                                    return (
-                                                                        <li key={index}><label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}><input type="checkbox" checked={!hiddenColumns.includes(index)} onChange={() => toggleColumnVisibility(index)} style={{ marginRight: '10px' }} /> {col.label}</label></li>
-                                                                    );
-                                                                })}
-                                                            </ul>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <TableToolbar
+                                            searchTerm={searchTerm}
+                                            onSearchChange={setSearchTerm}
+                                            recordsPerPage={recordsPerPage}
+                                            onRecordsPerPageChange={setRecordsPerPage}
+                                            columns={columns}
+                                            visibleColumns={visibleColumns}
+                                            onToggleColumn={toggleColumnVisibility}
+                                            getExportData={getExportData}
+                                            exportFileName="Staff_ID_Card_List"
+                                            exportTitle="Staff ID Card List"
+                                            extraColumnCheck={(col) => !idCardSettings || idCardSettings[col.setting] == 1}
+                                        />
 
                                         <div className="table-responsive">
-                                            <table className="table table-striped table-bordered table-hover" style={{ fontSize: '13px' }}>
+                                            <table className="table table-striped table-bordered table-hover" style={{ fontSize: '13px', width: '100%', minWidth: '800px' }}>
                                                 <thead>
                                                     <tr>
-                                                        <th className="text-center"><input type="checkbox" onChange={handleSelectAll} checked={staffList.length > 0 && selectedStaff.length === staffList.length} /></th>
-                                                        {getVisibleColumns().map(col => <th key={col.key}>{col.label}</th>)}
+                                                        <th className="text-center" style={{ width: '30px' }}><input type="checkbox" onChange={handleSelectAll} checked={staffList.length > 0 && selectedStaff.length === staffList.length} /></th>
+                                                        {getVisibleColumnsList().map(col => <th key={col.key}>{col.label}</th>)}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {currentData.length > 0 ? currentData.map(staff => (
                                                         <tr key={staff.id}>
                                                             <td className="text-center"><input type="checkbox" checked={selectedStaff.includes(staff.id)} onChange={() => handleSelectStaff(staff.id)} /></td>
-                                                            {getVisibleColumns().map(col => {
+                                                            {getVisibleColumnsList().map(col => {
                                                                 if (col.key === 'full_name') {
                                                                     return (
                                                                         <td key={col.key}>
@@ -407,7 +399,7 @@ const GenerateStaffIdCard = () => {
                                                         </tr>
                                                     )) : (
                                                         <tr>
-                                                            <td colSpan={1 + getVisibleColumns().length} className="text-center text-danger">No Record Found</td>
+                                                            <td colSpan={1 + getVisibleColumnsList().length} className="text-center text-danger">No Record Found</td>
                                                         </tr>
                                                     )}
                                                 </tbody>
@@ -417,7 +409,7 @@ const GenerateStaffIdCard = () => {
                                         <div className="pt15 pb15 no-print">
                                             <Pagination
                                                 totalItems={filteredStaff.length}
-                                                itemsPerPage={itemsPerPage}
+                                                itemsPerPage={recordsPerPage}
                                                 currentPage={currentPage}
                                                 onPageChange={(page) => setCurrentPage(page)}
                                             />

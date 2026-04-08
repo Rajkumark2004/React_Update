@@ -11,6 +11,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import StudentIdCard from '../../components/StudentIdCard';
 import Pagination from '../../utils/Pagination';
+import TableToolbar from '../../utils/TableToolbar';
 
 const GenerateIdCard = () => {
     const navigate = useNavigate();
@@ -30,24 +31,26 @@ const GenerateIdCard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [generatedData, setGeneratedData] = useState(null);
     const [generatingPdf, setGeneratingPdf] = useState(false);
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
-
-    const studentColumns = [
-        { index: 0, label: 'Student Name' },
-        { index: 1, label: 'Class' },
-        { index: 2, label: 'Father Name' },
-        { index: 3, label: 'Date of Birth' },
-        { index: 4, label: 'Mother Name' },
-        { index: 5, label: 'Gender' },
-        { index: 6, label: 'Category' },
-        { index: 7, label: 'Mobile No' },
+    const columns = [
+        { key: 'student_name', label: 'Student Name' },
+        { key: 'class', label: 'Class' },
+        { key: 'father_name', label: 'Father Name' },
+        { key: 'dob', label: 'Date of Birth' },
+        { key: 'mother_name', label: 'Mother Name' },
+        { key: 'gender', label: 'Gender' },
+        { key: 'category', label: 'Category' },
+        { key: 'mobile_no', label: 'Mobile No' },
     ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumnVisibility = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
 
     useEffect(() => {
@@ -242,37 +245,58 @@ const GenerateIdCard = () => {
     };
 
     const filteredStudents = (Array.isArray(studentList) ? studentList : []).filter(s => {
-        const fullName = `${s?.firstname || ''} ${s?.lastname || ''}`.trim();
-        return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            s?.admission_no?.toLowerCase().includes(searchTerm.toLowerCase());
+        const fullName = `${s?.firstname || ''} ${s?.lastname || ''}`.trim().toLowerCase();
+        const searchLow = searchTerm.toLowerCase();
+        const admissionNo = (s?.admission_no || '').toLowerCase();
+        
+        return fullName.includes(searchLow) || admissionNo.includes(searchLow);
     });
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(50);
+    const [recordsPerPage, setRecordsPerPage] = useState(50);
 
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, studentList?.length]);
 
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const indexOfLastItem = currentPage * recordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - recordsPerPage;
     const currentData = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
 
     const getExportData = () => {
-        const allHeaders = ['Student Name', 'Class', 'Father Name', 'Date of Birth', 'Mother Name', 'Gender', 'Category', 'Mobile No'];
-        const allRowData = filteredStudents.map(s => [
-            `${s.firstname || ''} ${s.lastname || ''}`.trim(),
-            `${s.class || ''} (${s.section || ''})`,
-            s.father_name || '',
-            s.dob || '',
-            s.mother_name || '',
-            s.gender || '',
-            s.category || '',
-            s.mobileno || ''
-        ]);
-        const visibleIndices = allHeaders.map((_, i) => i).filter(i => !hiddenColumns.includes(i));
-        const headers = visibleIndices.map(i => allHeaders[i]);
-        const rows = allRowData.map(row => visibleIndices.map(i => row[i]));
+        const headers = [];
+        const rows = [];
+        
+        const allColumns = [
+            { key: 'student_name', label: 'Student Name' },
+            { key: 'class', label: 'Class' },
+            { key: 'father_name', label: 'Father Name' },
+            { key: 'dob', label: 'Date of Birth' },
+            { key: 'mother_name', label: 'Mother Name' },
+            { key: 'gender', label: 'Gender' },
+            { key: 'category', label: 'Category' },
+            { key: 'mobile_no', label: 'Mobile No' },
+        ];
+
+        allColumns.forEach(col => {
+            if (visibleColumns.has(col.key)) {
+                headers.push(col.label);
+            }
+        });
+
+        filteredStudents.forEach(s => {
+            const row = [];
+            if (visibleColumns.has('student_name')) row.push(`${s.firstname || ''} ${s.lastname || ''}`.trim());
+            if (visibleColumns.has('class')) row.push(`${s.class || ''} (${s.section || ''})`);
+            if (visibleColumns.has('father_name')) row.push(s.father_name || '');
+            if (visibleColumns.has('dob')) row.push(s.dob || '');
+            if (visibleColumns.has('mother_name')) row.push(s.mother_name || '');
+            if (visibleColumns.has('gender')) row.push(s.gender || '');
+            if (visibleColumns.has('category')) row.push(s.category || '');
+            if (visibleColumns.has('mobile_no')) row.push(s.mobileno || '');
+            rows.push(row);
+        });
+
         return { headers, rows };
     };
 
@@ -340,8 +364,8 @@ const GenerateIdCard = () => {
 
                                 {searched && (
                                     <div className="box-body">
-                                        <div style={{ borderTop: '1px solid #f4f4f4', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <h3 className="box-title" style={{ fontSize: '20px' }}>Student List</h3>
+                                        <div style={{ borderTop: '1px solid #f4f4f4', padding: '10px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                                            <h3 className="box-title" style={{ fontSize: '18px', margin: 0 }}>Student List</h3>
                                             <button
                                                 className="btn btn-info btn-sm"
                                                 onClick={handleGenerate}
@@ -351,54 +375,32 @@ const GenerateIdCard = () => {
                                             </button>
                                         </div>
 
-                                        <div className="row pb10">
-                                            <div className="col-sm-6">
-                                                <div className="pull-left">
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-6">
-                                                <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm dt-button buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Student_ID_Card_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Student_ID_Card_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Student_ID_Card_List.pdf', 'Student ID Card List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student ID Card List'); }}><i className="fa fa-print"></i></button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm dt-button buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                            <i className="fa fa-columns"></i>
-                                                        </button>
-                                                        {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                {studentColumns.map(col => (
-                                                                    <li key={col.index}><label style={{ fontWeight: 'normal', width: '100%', margin: 0, padding: '3px 20px', cursor: 'pointer' }}><input type="checkbox" checked={!hiddenColumns.includes(col.index)} onChange={() => toggleColumnVisibility(col.index)} style={{ marginRight: '10px' }} /> {col.label}</label></li>
-                                                                ))}
-                                                            </ul>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <TableToolbar
+                                            searchTerm={searchTerm}
+                                            onSearchChange={setSearchTerm}
+                                            recordsPerPage={recordsPerPage}
+                                            onRecordsPerPageChange={setRecordsPerPage}
+                                            columns={columns}
+                                            visibleColumns={visibleColumns}
+                                            onToggleColumn={toggleColumnVisibility}
+                                            getExportData={getExportData}
+                                            exportFileName="Student_ID_Card_List"
+                                            exportTitle="Student ID Card List"
+                                        />
 
                                         <div className="table-responsive">
-                                            <table className="table table-striped table-bordered table-hover" style={{ fontSize: '13px' }}>
+                                            <table className="table table-striped table-bordered table-hover" style={{ fontSize: '13px', width: '100%', minWidth: '800px' }}>
                                                 <thead>
                                                     <tr>
-                                                        <th><input type="checkbox" onChange={handleSelectAll} checked={studentList.length > 0 && selectedStudents.length === studentList.length} /></th>
-                                                        {!hiddenColumns.includes(0) && <th>Student Name</th>}
-                                                        {!hiddenColumns.includes(1) && <th>Class</th>}
-                                                        {!hiddenColumns.includes(2) && <th>Father Name</th>}
-                                                        {!hiddenColumns.includes(3) && <th>Date of Birth</th>}
-                                                        {!hiddenColumns.includes(4) && <th>Mother Name</th>}
-                                                        {!hiddenColumns.includes(5) && <th>Gender</th>}
-                                                        {!hiddenColumns.includes(6) && <th>Category</th>}
-                                                        {!hiddenColumns.includes(7) && <th>Mobile No</th>}
+                                                        <th style={{ width: '30px' }}><input type="checkbox" onChange={handleSelectAll} checked={studentList.length > 0 && selectedStudents.length === studentList.length} /></th>
+                                                        {visibleColumns.has('student_name') && <th>Student Name</th>}
+                                                        {visibleColumns.has('class') && <th>Class</th>}
+                                                        {visibleColumns.has('father_name') && <th>Father Name</th>}
+                                                        {visibleColumns.has('dob') && <th>Date of Birth</th>}
+                                                        {visibleColumns.has('mother_name') && <th>Mother Name</th>}
+                                                        {visibleColumns.has('gender') && <th>Gender</th>}
+                                                        {visibleColumns.has('category') && <th>Category</th>}
+                                                        {visibleColumns.has('mobile_no') && <th>Mobile No</th>}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -407,18 +409,18 @@ const GenerateIdCard = () => {
                                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                                                                 <input type="checkbox" className="checkbox center-block" checked={selectedStudents.includes(student.id)} onChange={() => handleSelectStudent(student.id)} />
                                                             </td>
-                                                            {!hiddenColumns.includes(0) && <td>{`${student.firstname || ''} ${student.lastname || ''}`.trim()}</td>}
-                                                            {!hiddenColumns.includes(1) && <td>{student.class} ({student.section})</td>}
-                                                            {!hiddenColumns.includes(2) && <td>{student.father_name}</td>}
-                                                            {!hiddenColumns.includes(3) && <td>{student.dob}</td>}
-                                                            {!hiddenColumns.includes(4) && <td>{student.mother_name}</td>}
-                                                            {!hiddenColumns.includes(5) && <td>{student.gender}</td>}
-                                                            {!hiddenColumns.includes(6) && <td>{student.category}</td>}
-                                                            {!hiddenColumns.includes(7) && <td>{student.mobileno}</td>}
+                                                            {visibleColumns.has('student_name') && <td>{`${student.firstname || ''} ${student.lastname || ''}`.trim()}</td>}
+                                                            {visibleColumns.has('class') && <td>{student.class} ({student.section})</td>}
+                                                            {visibleColumns.has('father_name') && <td>{student.father_name}</td>}
+                                                            {visibleColumns.has('dob') && <td>{student.dob}</td>}
+                                                            {visibleColumns.has('mother_name') && <td>{student.mother_name}</td>}
+                                                            {visibleColumns.has('gender') && <td>{student.gender}</td>}
+                                                            {visibleColumns.has('category') && <td>{student.category}</td>}
+                                                            {visibleColumns.has('mobile_no') && <td>{student.mobileno}</td>}
                                                         </tr>
                                                     )) : (
                                                         <tr>
-                                                            <td colSpan={1 + studentColumns.filter(c => !hiddenColumns.includes(c.index)).length} className="text-center text-danger">No Record Found</td>
+                                                            <td colSpan={1 + visibleColumns.size} className="text-center text-danger">No Record Found</td>
                                                         </tr>
                                                     )}
                                                 </tbody>
@@ -428,7 +430,7 @@ const GenerateIdCard = () => {
                                         <div className="pt15 pb15 no-print">
                                             <Pagination
                                                 totalItems={filteredStudents.length}
-                                                itemsPerPage={itemsPerPage}
+                                                itemsPerPage={recordsPerPage}
                                                 currentPage={currentPage}
                                                 onPageChange={(page) => setCurrentPage(page)}
                                             />
