@@ -153,10 +153,10 @@ const ImportStudent = () => {
     ];
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     {initialLoading ? (
                         <Loader />
@@ -198,9 +198,11 @@ const ImportStudent = () => {
                                             <thead>
                                                 <tr>
                                                     {fields.map((field, index) => (
-                                                        <th key={index}>
-                                                            {field.required && <span className="text-red">*</span>}
-                                                            <span>{field.label}</span>
+                                                        <th key={index} style={{ whiteSpace: 'nowrap' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <span>{field.label}</span>
+                                                                {field.required && <span className="text-red">*</span>}
+                                                            </div>
                                                         </th>
                                                     ))}
                                                 </tr>
@@ -251,7 +253,7 @@ const ImportStudent = () => {
                                                 </div>
                                                 <div className="col-md-6">
                                                     <div className="form-group">
-                                                        <label>Select CSV File</label><small className="req"> *</small>
+                                                        <label>Select CSV File</label><small className="req">*</small>
                                                         <input
                                                             className="dropify"
                                                             type="file"

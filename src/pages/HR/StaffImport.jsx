@@ -221,7 +221,10 @@ const StaffImport = () => {
                                             <tr>
                                                 {sampleFields.map(field => (
                                                     <th key={field.key} style={{ whiteSpace: 'nowrap' }}>
-                                                        {field.label} {field.required && <span className="text-red">*</span>}
+                                                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <span>{field.label}</span>
+                                                            {field.required && <span className="text-red">*</span>}
+                                                        </div>
                                                     </th>
                                                 ))}
                                             </tr>

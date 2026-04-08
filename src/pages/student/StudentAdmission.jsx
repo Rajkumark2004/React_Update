@@ -600,10 +600,10 @@ const StudentAdmission = () => {
     };
 
     return (
-        <div className="wrapper">
+        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
                     {initialLoading ? (
                         <Loader />
@@ -640,7 +640,7 @@ const StudentAdmission = () => {
                                             <div className="row">
                                                 <div className="col-md-3">
                                                     <div className="form-group">
-                                                        <label>Admission No <small className="req"> *</small></label>
+                                                        <label>Admission No <small className="req">*</small></label>
                                                         <input autoFocus="" name="admission_no" type="text" className={`form-control ${formErrors.admission_no ? 'border-danger' : ''}`} value={formData.admission_no} onChange={handleInputChange} />
                                                         {formErrors.admission_no && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.admission_no}</span>}
                                                     </div>
@@ -655,7 +655,7 @@ const StudentAdmission = () => {
                                                 )}
                                                 <div className="col-md-3">
                                                     <div className="form-group">
-                                                        <label>Class</label><small className="req"> *</small>
+                                                        <label>Class</label><small className="req">*</small>
                                                         <select
                                                             id="class_id"
                                                             name="class_id"
@@ -671,7 +671,7 @@ const StudentAdmission = () => {
                                                 </div>
                                                 <div className="col-md-3">
                                                     <div className="form-group">
-                                                        <label>Section</label><small className="req"> *</small>
+                                                        <label>Section</label><small className="req">*</small>
                                                         <select
                                                             id="section_id"
                                                             name="section_id"
@@ -690,7 +690,7 @@ const StudentAdmission = () => {
                                             <div className="row">
                                                 <div className="col-md-3">
                                                     <div className="form-group">
-                                                        <label>First Name <small className="req"> *</small></label>
+                                                        <label>First Name <small className="req">*</small></label>
                                                         <input name="firstname" type="text" className={`form-control ${formErrors.firstname ? 'border-danger' : ''}`} value={formData.firstname} onChange={handleInputChange} />
                                                         {formErrors.firstname && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.firstname}</span>}
                                                     </div>
@@ -707,7 +707,7 @@ const StudentAdmission = () => {
                                                 )}
                                                 <div className="col-md-3">
                                                     <div className="form-group">
-                                                        <label>Gender <small className="req"> *</small></label>
+                                                        <label>Gender <small className="req">*</small></label>
                                                         <select className={`form-control ${formErrors.gender ? 'border-danger' : ''}`} name="gender" value={formData.gender} onChange={handleInputChange}>
                                                             <option value="">Select</option>
                                                             <option value="Male">Male</option>
@@ -718,7 +718,7 @@ const StudentAdmission = () => {
                                                 </div>
                                                 <div className="col-md-3">
                                                     <div className="form-group">
-                                                        <label>Date Of Birth <small className="req"> *</small></label>
+                                                        <label>Date Of Birth <small className="req">*</small></label>
                                                         <input name="dob" type="date" className={`form-control ${formErrors.dob ? 'border-danger' : ''}`} value={formData.dob} onChange={handleInputChange} />
                                                         {formErrors.dob && <span className="field-error" style={{ color: '#f44336', fontSize: '11px' }}>{formErrors.dob}</span>}
                                                     </div>
