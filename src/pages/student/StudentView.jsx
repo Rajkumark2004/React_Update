@@ -1194,150 +1194,153 @@ const StudentView = () => {
                     className={`tab-pane ${activeTab === "fee" ? "active" : ""}`}
                     id="fee"
                   >
-                    <table className="table table-striped table-bordered table-hover example">
-                      <thead>
-                        <tr>
-                          <th>Fees Group</th>
-                          <th>Fees Code</th>
-                          <th>Due Date</th>
-                          <th>Status</th>
-                          <th style={{ textAlign: 'right' }}>Amount</th>
-                          <th>Payment Id</th>
-                          <th>Mode</th>
-                          <th>Date</th>
-                          <th style={{ textAlign: 'right' }}>Discount</th>
-                          <th style={{ textAlign: 'right' }}>Fine</th>
-                          <th style={{ textAlign: 'right' }}>Paid</th>
-                          <th style={{ textAlign: 'right' }}>Balance</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {fees.length === 0 ? (
+                    <div className="table-responsive">
+                      <table className="table table-striped table-bordered table-hover example">
+                        <thead>
                           <tr>
-                            <td
-                              colSpan="12"
-                              className="text-danger text-center"
-                            >
-                              No Fees Found
-                            </td>
+                            <th>Fees Group</th>
+                            <th>Fees Code</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th style={{ textAlign: 'right' }}>Amount</th>
+                            <th>Payment Id</th>
+                            <th>Mode</th>
+                            <th>Date</th>
+                            <th style={{ textAlign: 'right' }}>Discount</th>
+                            <th style={{ textAlign: 'right' }}>Fine</th>
+                            <th style={{ textAlign: 'right' }}>Paid</th>
+                            <th style={{ textAlign: 'right' }}>Balance</th>
                           </tr>
-                        ) : (
-                          fees.map((fee, index) => (
-                            <React.Fragment key={index}>
-                              <tr>
-                                <td>{fee.name}</td>
-                                <td>{fee.code}</td>
-                                <td>{formatDate(fee.due_date)}</td>
+                        </thead>
+                        <tbody>
+                          {fees.length === 0 ? (
+                            <tr>
+                              <td
+                                colSpan="12"
+                                className="text-danger text-center"
+                              >
+                                No Fees Found
+                              </td>
+                            </tr>
+                          ) : (
+                            fees.map((fee, index) => (
+                              <React.Fragment key={index}>
+                                <tr>
+                                  <td>{fee.name}</td>
+                                  <td>{fee.code}</td>
+                                  <td>{formatDate(fee.due_date)}</td>
+                                  <td>
+                                    <span
+                                      className={`label ${fee.status === "Paid" ? "label-success" : fee.status === "Partial" ? "label-warning" : "label-danger"}`}
+                                    >
+                                      {fee.status}
+                                    </span>
+                                  </td>
+                                  <td className="text-right">
+                                    {fee.amount || fee.fees}
+                                    {fee.penalty_fine > 0 && (
+                                      <span className="text-danger" style={{ marginLeft: '5px' }} title="Fine">+{fee.penalty_fine.toFixed(2)}</span>
+                                    )}
+                                  </td>
+                                  <td>{fee.payment_id || "-"}</td>
+                                  <td>{fee.payment_mode || "-"}</td>
+                                  <td>{formatDate(fee.payment_date)}</td>
+                                  <td className="text-right">{fee.discount || "0.00"}</td>
+                                  <td className="text-right" title="Fine">{fee.fine || "0.00"}</td>
+                                  <td className="text-right">{fee.paid || "0.00"}</td>
+                                  <td className="text-right">{fee.balance || "0.00"}</td>
+                                </tr>
+                                {fee.payment_details && fee.payment_details.map((payment, pIndex) => (
+                                  <tr key={`payment-${pIndex}`} style={{ backgroundColor: '#fff', color: '#666' }}>
+                                    <td colSpan="5"></td>
+                                    <td>
+                                      <i className="fa fa-level-up fa-rotate-90" style={{ color: '#ccc', marginRight: '5px' }}></i>
+                                      {fee.student_fees_deposite_id}/{payment.inv_no}
+                                    </td>
+                                    <td>{payment.payment_mode}</td>
+                                    <td>{formatDate(payment.date)}</td>
+                                    <td className="text-right">{parseFloat(payment.amount_discount || 0).toFixed(2)}</td>
+                                    <td className="text-right">{parseFloat(payment.amount_fine || 0).toFixed(2)}</td>
+                                    <td className="text-right">{parseFloat(payment.amount || 0).toFixed(2)}</td>
+                                    <td></td>
+                                  </tr>
+                                ))}
+                              </React.Fragment>
+                            ))
+                          )}
+                          {studentDiscountFee && studentDiscountFee.length > 0 &&
+                            studentDiscountFee.map((discount, dIndex) => (
+                              <tr key={`discount-${dIndex}`} style={{ backgroundColor: '#fcf8e3' }}>
+                                <td></td>
+                                <td>Discount</td>
+                                <td>{discount.code}</td>
+                                <td></td>
                                 <td>
-                                  <span
-                                    className={`label ${fee.status === "Paid" ? "label-success" : fee.status === "Partial" ? "label-warning" : "label-danger"}`}
-                                  >
-                                    {fee.status}
-                                  </span>
-                                </td>
-                                <td className="text-right">
-                                  {fee.amount || fee.fees}
-                                  {fee.penalty_fine > 0 && (
-                                    <span className="text-danger" style={{ marginLeft: '5px' }} title="Fine">+{fee.penalty_fine.toFixed(2)}</span>
+                                  {discount.status === 'applied' ? (
+                                    <span className="text-success small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} Applied</span>
+                                  ) : (
+                                    <span className="text-danger small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} {discount.status}</span>
                                   )}
                                 </td>
-                                <td>{fee.payment_id || "-"}</td>
-                                <td>{fee.payment_mode || "-"}</td>
-                                <td>{formatDate(fee.payment_date)}</td>
-                                <td className="text-right">{fee.discount || "0.00"}</td>
-                                <td className="text-right" title="Fine">{fee.fine || "0.00"}</td>
-                                <td className="text-right">{fee.paid || "0.00"}</td>
-                                <td className="text-right">{fee.balance || "0.00"}</td>
+                                <td colSpan="7"></td>
                               </tr>
-                              {fee.payment_details && fee.payment_details.map((payment, pIndex) => (
-                                <tr key={`payment-${pIndex}`} style={{ backgroundColor: '#fff', color: '#666' }}>
-                                  <td colSpan="5"></td>
-                                  <td>
-                                    <i className="fa fa-level-up fa-rotate-90" style={{ color: '#ccc', marginRight: '5px' }}></i>
-                                    {fee.student_fees_deposite_id}/{payment.inv_no}
-                                  </td>
-                                  <td>{payment.payment_mode}</td>
-                                  <td>{formatDate(payment.date)}</td>
-                                  <td className="text-right">{parseFloat(payment.amount_discount || 0).toFixed(2)}</td>
-                                  <td className="text-right">{parseFloat(payment.amount_fine || 0).toFixed(2)}</td>
-                                  <td className="text-right">{parseFloat(payment.amount || 0).toFixed(2)}</td>
-                                  <td></td>
-                                </tr>
-                              ))}
-                            </React.Fragment>
-                          ))
-                        )}
-                        {studentDiscountFee && studentDiscountFee.length > 0 &&
-                          studentDiscountFee.map((discount, dIndex) => (
-                            <tr key={`discount-${dIndex}`} style={{ backgroundColor: '#fcf8e3' }}>
-                              <td></td>
-                              <td>Discount</td>
-                              <td>{discount.code}</td>
-                              <td></td>
-                              <td>
-                                {discount.status === 'applied' ? (
-                                  <span className="text-success small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} Applied</span>
-                                ) : (
-                                  <span className="text-danger small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} {discount.status}</span>
+                            ))
+                          }
+                          {fees.length > 0 && (
+                            <tr style={{ fontWeight: 'bold', backgroundColor: '#f4f4f4' }}>
+                              <td colSpan="4" className="text-right">Grand Total</td>
+                              <td className="text-right">
+                                {currencySymbol}{feeTotals.totalAmount.toFixed(2)}
+                                {feeTotals.totalPenaltyFine > 0 && (
+                                  <span className="text-danger" style={{ marginLeft: '5px' }}>+{currencySymbol}{feeTotals.totalPenaltyFine.toFixed(2)}</span>
                                 )}
                               </td>
-                              <td colSpan="7"></td>
+                              <td colSpan="3"></td>
+                              <td className="text-right">{currencySymbol}{feeTotals.totalDiscount.toFixed(2)}</td>
+                              <td className="text-right">{currencySymbol}{feeTotals.totalFine.toFixed(2)}</td>
+                              <td className="text-right">{currencySymbol}{feeTotals.totalPaid.toFixed(2)}</td>
+                              <td className="text-right">{currencySymbol}{feeTotals.totalBalance.toFixed(2)}</td>
                             </tr>
-                          ))
-                        }
-                        {fees.length > 0 && (
-                          <tr style={{ fontWeight: 'bold', backgroundColor: '#f4f4f4' }}>
-                            <td colSpan="4" className="text-right">Grand Total</td>
-                            <td className="text-right">
-                              {currencySymbol}{feeTotals.totalAmount.toFixed(2)}
-                              {feeTotals.totalPenaltyFine > 0 && (
-                                <span className="text-danger" style={{ marginLeft: '5px' }}>+{currencySymbol}{feeTotals.totalPenaltyFine.toFixed(2)}</span>
-                              )}
-                            </td>
-                            <td colSpan="3"></td>
-                            <td className="text-right">{currencySymbol}{feeTotals.totalDiscount.toFixed(2)}</td>
-                            <td className="text-right">{currencySymbol}{feeTotals.totalFine.toFixed(2)}</td>
-                            <td className="text-right">{currencySymbol}{feeTotals.totalPaid.toFixed(2)}</td>
-                            <td className="text-right">{currencySymbol}{feeTotals.totalBalance.toFixed(2)}</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
-                  {/* CBSE Exam Tab */}
                   <div
                     className={`tab-pane ${activeTab === "cbseexam" ? "active" : ""}`}
                     id="cbseexam"
                   >
-                    <table className="table table-striped table-bordered">
-                      <thead>
-                        <tr>
-                          <th>Exam</th>
-                          <th>Marks</th>
-                          <th>Grade</th>
-                          <th>Rank</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {cbseExams.length === 0 ? (
+                    <div className="table-responsive">
+                      <table className="table table-striped table-bordered">
+                        <thead>
                           <tr>
-                            <td colSpan="4" className="text-danger text-center">
-                              No CBSE Exam Result Found
-                            </td>
+                            <th>Exam</th>
+                            <th>Marks</th>
+                            <th>Grade</th>
+                            <th>Rank</th>
                           </tr>
-                        ) : (
-                          cbseExams.map((exam, i) => (
-                            <tr key={i}>
-                              <td>{exam.name}</td>
-                              <td>{exam.total_marks}</td>
-                              <td>{exam.grade}</td>
-                              <td>{exam.rank}</td>
+                        </thead>
+                        <tbody>
+                          {cbseExams.length === 0 ? (
+                            <tr>
+                              <td colSpan="4" className="text-danger text-center">
+                                No CBSE Exam Result Found
+                              </td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                          ) : (
+                            cbseExams.map((exam, i) => (
+                              <tr key={i}>
+                                <td>{exam.name}</td>
+                                <td>{exam.total_marks}</td>
+                                <td>{exam.grade}</td>
+                                <td>{exam.rank}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
                   {/* Attendance Tab */}
@@ -1406,12 +1409,13 @@ const StudentView = () => {
                         type="button"
                         className="btn btn-xs btn-primary pull-right"
                         onClick={handleUploadDocument}
+                        style={{ marginBottom: '15px' }}
                       >
                         <i className="fa fa-upload"></i> Upload Documents
                       </button>
                       <div
                         className="table-responsive"
-                        style={{ clear: "both" }}
+                        style={{ clear: "both", marginTop: '10px' }}
                       >
                         <table className="table table-striped table-bordered table-hover">
                           <thead>
