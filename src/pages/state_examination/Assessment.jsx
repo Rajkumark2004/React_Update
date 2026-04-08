@@ -110,12 +110,10 @@ const Assessment = () => {
                 currentLineErrors.maximum_marks = maxMarksError;
             }
 
-            const passPercent = parseFloat(row.pass_percentage);
-            if (!String(row.pass_percentage).trim()) {
-                currentLineErrors.pass_percentage = "This field is required";
-            } else if (isNaN(passPercent) || passPercent < 0) {
-                currentLineErrors.pass_percentage = "Must be non-negative";
-            } else if (passPercent > 100) {
+            const passPercentError = validatePositiveInteger(row.pass_percentage, 'Pass percentage');
+            if (passPercentError) {
+                currentLineErrors.pass_percentage = passPercentError;
+            } else if (parseFloat(row.pass_percentage) > 100) {
                 currentLineErrors.pass_percentage = "Must not exceed 100";
             }
 
