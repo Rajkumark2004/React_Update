@@ -7,69 +7,12 @@ import Loader from '../../components/Loader';
 import '../../utils/include_files';
 import { api } from '../../services/api';
 // FileUpload removed in favor of Dropify as per user request
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 import toast from 'react-hot-toast';
 
-/**
- * Reusable Column Visibility Dropdown Component
- */
-const ColumnVisibility = ({ columns, visibleColumns, toggleColumn }) => {
-    const [showDropdown, setShowDropdown] = useState(false);
-    const dropdownRef = useRef(null);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setShowDropdown(false);
-            }
-        };
-        if (showDropdown) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showDropdown]);
-
-    return (
-        <div className="btn-group" ref={dropdownRef} style={{ position: 'relative' }}>
-            <button
-                className="btn btn-default btn-sm"
-                title="Columns"
-                onClick={() => setShowDropdown(!showDropdown)}
-            >
-                <i className="fa fa-columns"></i>
-            </button>
-            {showDropdown && (
-                <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    zIndex: 1000,
-                    background: '#fff',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    padding: '8px 10px',
-                    minWidth: '225px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    marginTop: '2px',
-                    textAlign: 'left'
-                }}>
-                    {columns.map(col => (
-                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', margin: 0, fontWeight: 'normal', color: '#333' }}>
-                            <input
-                                type="checkbox"
-                                checked={visibleColumns.has(col.key)}
-                                onChange={() => toggleColumn(col.key)}
-                                style={{ marginRight: '8px', verticalAlign: 'middle' }}
-                            />
-                            <span style={{ verticalAlign: 'middle', fontSize: '13px' }}>{col.label}</span>
-                        </label>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
 
 const StudentDiaryList = () => {
     const navigate = useNavigate();
@@ -83,49 +26,17 @@ const StudentDiaryList = () => {
     ];
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    const toggleColumn = (columnKey) => {
-        const newVisible = new Set(visibleColumns);
-        if (newVisible.has(columnKey)) {
-            if (newVisible.size > 1) {
-                newVisible.delete(columnKey);
-            } else {
-                toast.error('At least one column must be visible');
-            }
-        } else {
-            newVisible.add(columnKey);
-        }
-        setVisibleColumns(newVisible);
+    const handleToggleColumn = (columnKey) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(columnKey)) { next.delete(columnKey); } else { next.add(columnKey); }
+            return next;
+        });
     };
 
-    // Formatter for exports
-    const formatCell = (leave, key) => {
-        return leave[key] || '';
-    };
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const handleCopy = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
-        copyToClipboard(headers, rows);
-    };
-
-    const handleCSV = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
-        downloadCSV(headers, rows, 'Student_Diary_List.csv');
-    };
-
-    const handleExcel = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
-        downloadExcel(headers, rows, 'Student_Diary_List.xls');
-    };
-
-    const handlePDF = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
-        downloadPDF(headers, rows, 'Student_Diary_List.pdf', 'Student Diary List');
-    };
-
-    const handlePrint = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, diaryList, formatCell);
-        printTable(headers, rows, 'Student Diary List');
-    };
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredDiaryList, (row, key) => row[key] || '');
 
     // Search form state
     const [formData, setFormData] = useState({
@@ -152,9 +63,20 @@ const StudentDiaryList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
 
+    const filteredDiaryList = diaryList.filter(item => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return (
+            (item.class || '').toLowerCase().includes(term) ||
+            (item.section || '').toLowerCase().includes(term) ||
+            (item.date || '').toLowerCase().includes(term) ||
+            (item.assigned_by || '').toLowerCase().includes(term)
+        );
+    });
+
     const indexOfLastRecord = currentPage * recordsPerPage;
     const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-    const currentRecords = diaryList.slice(indexOfFirstRecord, indexOfLastRecord);
+    const currentRecords = filteredDiaryList.slice(indexOfFirstRecord, indexOfLastRecord);
 
     const [errors, setErrors] = useState({});
 
@@ -583,37 +505,6 @@ const StudentDiaryList = () => {
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <style>{`
-                @media (max-width: 767px) {
-                    .student-diary-toolbar {
-                        display: flex !important;
-                        flex-direction: column !important;
-                        align-items: center !important;
-                        gap: 15px !important;
-                        text-align: center !important;
-                    }
-                    .student-diary-toolbar .pull-left,
-                    .student-diary-toolbar .pull-right {
-                        float: none !important;
-                        width: 100% !important;
-                        display: flex !important;
-                        justify-content: center !important;
-                        margin: 0 !important;
-                    }
-                    .student-diary-toolbar input[type="search"] {
-                        text-align: center !important;
-                    }
-
-                    .student-diary-footer {
-                        text-align: center !important;
-                    }
-                    .student-diary-footer .pull-left {
-                        float: none !important;
-                        display: block !important;
-                        width: 100% !important;
-                    }
-                }
-            `}</style>
             <Header />
             <Sidebar />
             <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
@@ -712,31 +603,19 @@ const StudentDiaryList = () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div className="box-header ptbnull clearfix student-diary-toolbar" style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
-                                                <div className="pull-left">
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value.toLowerCase();
-                                                            const table = document.querySelector('.studentdairy-list');
-                                                            if (table) {
-                                                                table.querySelectorAll('tbody tr').forEach(row => {
-                                                                    row.style.display = row.textContent.toLowerCase().includes(val) ? '' : 'none';
-                                                                });
-                                                            }
-                                                        }}
-                                                    />
-                                                </div>
-                                                <div className="dt-buttons btn-group pull-right" style={{ verticalAlign: 'middle' }}>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy"><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print"><i className="fa fa-print"></i></button>
-                                                    <ColumnVisibility columns={columns} visibleColumns={visibleColumns} toggleColumn={toggleColumn} />
-                                                </div>
+                                            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                                <TableToolbar
+                                                    searchTerm={searchTerm}
+                                                    onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                    recordsPerPage={recordsPerPage}
+                                                    onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                    columns={columns}
+                                                    visibleColumns={visibleColumns}
+                                                    onToggleColumn={handleToggleColumn}
+                                                    getExportData={getExportData}
+                                                    exportFileName="Student_Diary_List"
+                                                    exportTitle="Student Diary List"
+                                                />
                                             </div>
                                             <div className="box-body table-responsive">
                                                 <div>
@@ -788,7 +667,7 @@ const StudentDiaryList = () => {
                                             </div>
                                             <div className="box-footer pt15 pb15">
                                                 <Pagination 
-                                                    totalItems={diaryList.length} 
+                                                    totalItems={filteredDiaryList.length} 
                                                     itemsPerPage={recordsPerPage} 
                                                     currentPage={currentPage}
                                                     onPageChange={(page) => setCurrentPage(page)}
@@ -984,7 +863,7 @@ const StudentDiaryList = () => {
                                                                 className="dropify"
                                                                 onChange={handleEditInputChange}
                                                                 data-height="95"
-                                                                data-default-file={editFormData.existing_file ? window.location.origin + `/external-files/${editFormData.existing_file.split('/').map(s => encodeURIComponent(s)).join('/')}` : ''}
+                                                                data-default-file={editFormData.existing_file ? `${api.baseHost}/uploads/homework/${editFormData.existing_file}` : ''}
                                                             />
                                                             {editFormData.existing_file && (
                                                                 <small className="help-block">
