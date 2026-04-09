@@ -1156,6 +1156,51 @@ export const api = {
 
         return data;
     },
+    changeStaffPassword: async (id, new_pass, confirm_pass) => {
+        console.log('API Request: Change Staff Password', id);
+        try {
+            const formData = new FormData();
+            formData.append('new_pass', new_pass);
+            formData.append('confirm_pass', confirm_pass);
+
+            const response = await fetch(`${API_BASE}/admin/staff/change_password/${id}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Change Staff Password Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to change staff password');
+            }
+            return data;
+        } catch (error) {
+            console.error('Change Staff Password API Error:', error);
+            throw error;
+        }
+    },
+    disableStaff: async (id, date) => {
+        console.log('API Request: Disable Staff', { id, date });
+        try {
+            const formData = new FormData();
+            formData.append('date', date);
+
+            const response = await fetch(`${API_BASE}/admin/staff/disablestaff/${id}`, {
+                method: 'POST',
+                body: formData,
+            });
+            const data = await response.json();
+            console.log('Disable Staff Response:', data);
+
+            if (!response.ok || !data.status) {
+                throw new Error(data.message || 'Failed to disable staff');
+            }
+            return data;
+        } catch (error) {
+            console.error('Disable Staff API Error:', error);
+            throw error;
+        }
+    },
     logout: async () => {
         console.log('API Request: Logout');
         try {

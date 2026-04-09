@@ -37,6 +37,22 @@ const FinanceReport = () => {
     const [detailData, setDetailData] = useState([]);
     const [selectedDateDetails, setSelectedDateDetails] = useState(null);
     const [modalSearchTerm, setModalSearchTerm] = useState('');
+    const [modalCurrentPage, setModalCurrentPage] = useState(1);
+    const [modalRecordsPerPage, setModalRecordsPerPage] = useState(10);
+    const modalColumns = [
+        { key: 'date', label: 'Date' },
+        { key: 'admission_no', label: 'Admission No' },
+        { key: 'name', label: 'Name' },
+        { key: 'father_name', label: 'Father Name' },
+        { key: 'class', label: 'Class' },
+        { key: 'mode', label: 'Payment Mode' },
+        { key: 'payment_id', label: 'Payment ID' },
+        { key: 'collected_by', label: 'Collected By' },
+        { key: 'fine', label: 'Fine' },
+        { key: 'amount', label: 'Amount' },
+        { key: 'total', label: 'Total' }
+    ];
+    const [modalVisibleColumns, setModalVisibleColumns] = useState(new Set(modalColumns.map(c => c.key)));
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
     const [feeTypeList, setFeeTypeList] = useState([]);
@@ -589,7 +605,8 @@ const FinanceReport = () => {
     const getModalExportData = () => {
         if (!detailData || detailData.length === 0) return { headers: [], rows: [] };
 
-        const headers = ['Date', 'Admission No', 'Name', 'Father Name', 'Class', 'Payment Mode', 'Payment ID', 'Collected By', 'Fine', 'Amount', 'Total'];
+        const visibleKeys = modalColumns.filter(c => modalVisibleColumns.has(c.key));
+        const headers = visibleKeys.map(c => c.label);
 
         const filtered = detailData.filter(student => {
             if (!modalSearchTerm) return true;
@@ -635,19 +652,20 @@ const FinanceReport = () => {
                 detailDate = `${d}/${m}/${y}`;
             }
 
-            return [
-                detailDate,
-                student.admission_no,
-                `${student.firstname} ${student.lastname}`.trim(),
-                student.father_name,
-                `${student.class} (${student.section})`,
-                amountDetail.payment_mode,
-                `${student.student_fees_deposite_id}/${amountDetail.inv_no}`,
-                amountDetail.collected_by,
-                fine.toFixed(2),
-                amount.toFixed(2),
-                total.toFixed(2)
-            ].map(v => String(v ?? ''));
+            const rowData = {
+                date: detailDate,
+                admission_no: student.admission_no,
+                name: `${student.firstname} ${student.lastname}`.trim(),
+                father_name: student.father_name,
+                class: `${student.class} (${student.section})`,
+                mode: amountDetail.payment_mode,
+                payment_id: `${student.student_fees_deposite_id}/${amountDetail.inv_no}`,
+                collected_by: amountDetail.collected_by,
+                fine: fine.toFixed(2),
+                amount: amount.toFixed(2),
+                total: total.toFixed(2)
+            };
+            return visibleKeys.map(c => String(rowData[c.key] ?? ''));
         });
 
         const grandTotal = filtered.reduce((acc, student) => {
@@ -658,7 +676,13 @@ const FinanceReport = () => {
             } catch (e) { return acc; }
         }, 0);
 
-        rows.push(['', '', '', '', '', '', '', 'Grand Total', '', '', grandTotal.toFixed(2)]);
+        const totalRow = visibleKeys.map(c => {
+            if (c.key === 'total') return grandTotal.toFixed(2);
+            if (c.key === 'amount') return ''; 
+            if (c.key === 'collected_by') return 'Grand Total';
+            return '';
+        });
+        rows.push(totalRow);
 
         return { headers, rows };
     };
@@ -961,74 +985,76 @@ const FinanceReport = () => {
     const renderDetailTable = () => {
         if (!detailData || detailData.length === 0) return <p>No data available</p>;
 
+        const filtered = detailData.filter(student => {
+            if (!modalSearchTerm) return true;
+            const term = modalSearchTerm.toLowerCase();
+            const fullName = `${student.firstname} ${student.lastname}`.toLowerCase();
+            const classSection = `${student.class} (${student.section})`.toLowerCase();
+
+            if (student.admission_no?.toLowerCase().includes(term) ||
+                fullName.includes(term) ||
+                student.father_name?.toLowerCase().includes(term) ||
+                classSection.includes(term)) {
+                return true;
+            }
+
+            try {
+                let amountDetail = typeof student.amount_detail === 'string' ? JSON.parse(student.amount_detail) : student.amount_detail;
+                amountDetail = Object.values(amountDetail)[0] || {};
+                return amountDetail.payment_mode?.toLowerCase().includes(term) ||
+                       amountDetail.hidden_trans_id?.toLowerCase().includes(term) ||
+                       amountDetail.inv_no?.toLowerCase().includes(term) ||
+                       amountDetail.collected_by?.toLowerCase().includes(term);
+            } catch (e) { }
+            return false;
+        });
+
         let grandTotal = 0;
+        filtered.forEach(student => {
+            try {
+                let amountDetail = typeof student.amount_detail === 'string' ? JSON.parse(student.amount_detail) : student.amount_detail;
+                amountDetail = Object.values(amountDetail)[0] || {};
+                grandTotal += parseFloat(amountDetail.amount || 0) + parseFloat(amountDetail.amount_fine || 0);
+            } catch(e) {}
+        });
+
+        const totalItems = filtered.length;
+        const safeRecordsPerPage = modalRecordsPerPage === -1 ? totalItems || 1 : modalRecordsPerPage;
+        const indexOfLastItem = modalCurrentPage * safeRecordsPerPage;
+        const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+        const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
 
         return (
-            <div className="table-responsive">
+            <>
+            <div className="table-responsive overflow-visible">
                 <table className="table table-striped table-bordered table-hover">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Admission No</th>
-                            <th>Name</th>
-                            <th>Father Name</th>
-                            <th>Class</th>
-                            <th>Payment Mode</th>
-                            <th>Payment ID</th>
-                            <th>Collected By</th>
-                            <th className="text-right">Fine</th>
-                            <th className="text-right">Amount</th>
-                            <th className="text-right">Total</th>
+                            {modalVisibleColumns.has('date') && <th>Date</th>}
+                            {modalVisibleColumns.has('admission_no') && <th>Admission No</th>}
+                            {modalVisibleColumns.has('name') && <th>Name</th>}
+                            {modalVisibleColumns.has('father_name') && <th>Father Name</th>}
+                            {modalVisibleColumns.has('class') && <th>Class</th>}
+                            {modalVisibleColumns.has('mode') && <th>Payment Mode</th>}
+                            {modalVisibleColumns.has('payment_id') && <th>Payment ID</th>}
+                            {modalVisibleColumns.has('collected_by') && <th>Collected By</th>}
+                            {modalVisibleColumns.has('fine') && <th className="text-right">Fine</th>}
+                            {modalVisibleColumns.has('amount') && <th className="text-right">Amount</th>}
+                            {modalVisibleColumns.has('total') && <th className="text-right">Total</th>}
                         </tr>
                     </thead>
                     <tbody>
-                        {detailData.filter(student => {
-                            if (!modalSearchTerm) return true;
-                            const term = modalSearchTerm.toLowerCase();
-                            const fullName = `${student.firstname} ${student.lastname}`.toLowerCase();
-                            const classSection = `${student.class} (${student.section})`.toLowerCase();
-
-                            // Check student fields
-                            if (student.admission_no?.toLowerCase().includes(term) ||
-                                fullName.includes(term) ||
-                                student.father_name?.toLowerCase().includes(term) ||
-                                classSection.includes(term)) {
-                                return true;
-                            }
-
-                            // Check amount_detail fields if possible
-                            // Note: amount_detail parsing happens inside map, so we might need to parse here or just filter mainly on student info
-                            // To be thorough, let's try to parse
-                            try {
-                                let amountDetail = typeof student.amount_detail === 'string' ? JSON.parse(student.amount_detail) : student.amount_detail;
-                                amountDetail = Object.values(amountDetail)[0] || {};
-
-                                if (amountDetail.payment_mode?.toLowerCase().includes(term) ||
-                                    amountDetail.hidden_trans_id?.toLowerCase().includes(term) || // payment id often here
-                                    amountDetail.inv_no?.toLowerCase().includes(term) ||
-                                    amountDetail.collected_by?.toLowerCase().includes(term)) {
-                                    return true;
-                                }
-                            } catch (e) {
-                                // ignore parse error during filter
-                            }
-
-                            return false;
-                        }).map((student, index) => {
+                        {currentItems.map((student, index) => {
                             let amountDetail = {};
                             try {
                                 amountDetail = typeof student.amount_detail === 'string' ? JSON.parse(student.amount_detail) : student.amount_detail;
                                 amountDetail = Object.values(amountDetail)[0] || {};
-                            } catch (e) {
-                                console.error("Error parsing amount_detail", e);
-                            }
+                            } catch (e) {}
 
                             const fine = parseFloat(amountDetail.amount_fine || 0);
                             const amount = parseFloat(amountDetail.amount || 0);
                             const total = amount + fine;
-                            grandTotal += total;
 
-                            // Format detail date from YYYY-MM-DD to DD/MM/YYYY if present
                             let detailDate = amountDetail.date || '';
                             if (detailDate && detailDate.includes('-')) {
                                 const [y, m, d] = detailDate.split('-');
@@ -1037,27 +1063,41 @@ const FinanceReport = () => {
 
                             return (
                                 <tr key={index}>
-                                    <td>{detailDate}</td>
-                                    <td>{student.admission_no}</td>
-                                    <td>{`${student.firstname} ${student.lastname}`.trim()}</td>
-                                    <td>{student.father_name}</td>
-                                    <td>{`${student.class} (${student.section})`}</td>
-                                    <td>{amountDetail.payment_mode}</td>
-                                    <td>{`${student.student_fees_deposite_id}/${amountDetail.inv_no}`}</td>
-                                    <td>{amountDetail.collected_by}</td>
-                                    <td className="text-right">₹{fine.toFixed(2)}</td>
-                                    <td className="text-right">₹{amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                    <td className="text-right">₹{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                    {modalVisibleColumns.has('date') && <td>{detailDate}</td>}
+                                    {modalVisibleColumns.has('admission_no') && <td>{student.admission_no}</td>}
+                                    {modalVisibleColumns.has('name') && <td>{`${student.firstname} ${student.lastname}`.trim()}</td>}
+                                    {modalVisibleColumns.has('father_name') && <td>{student.father_name}</td>}
+                                    {modalVisibleColumns.has('class') && <td>{`${student.class} (${student.section})`}</td>}
+                                    {modalVisibleColumns.has('mode') && <td>{amountDetail.payment_mode}</td>}
+                                    {modalVisibleColumns.has('payment_id') && <td>{`${student.student_fees_deposite_id}/${amountDetail.inv_no}`}</td>}
+                                    {modalVisibleColumns.has('collected_by') && <td>{amountDetail.collected_by}</td>}
+                                    {modalVisibleColumns.has('fine') && <td className="text-right">₹{fine.toFixed(2)}</td>}
+                                    {modalVisibleColumns.has('amount') && <td className="text-right">₹{amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>}
+                                    {modalVisibleColumns.has('total') && <td className="text-right">₹{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>}
                                 </tr>
                             );
                         })}
+                        {currentItems.length === 0 && (
+                            <tr>
+                                <td colSpan="11" className="text-center text-danger">No Record Found</td>
+                            </tr>
+                        )}
                         <tr>
-                            <td colSpan="9" className="text-right"><strong>Grand Total</strong></td>
+                            <td colSpan={Math.max(1, modalVisibleColumns.size - 2)} className="text-right"><strong>Grand Total</strong></td>
                             <td colSpan="2" className="text-right"><strong>₹{grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+            <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                <Pagination
+                    totalItems={totalItems}
+                    itemsPerPage={modalRecordsPerPage}
+                    currentPage={modalCurrentPage}
+                    onPageChange={(page) => setModalCurrentPage(page)}
+                />
+            </div>
+            </>
         );
     };
 
@@ -1283,9 +1323,19 @@ const FinanceReport = () => {
                         </div>
                         <TableToolbar
                             searchTerm={modalSearchTerm}
-                            onSearchChange={setModalSearchTerm}
-                            showRecordsPerPage={false}
-                            showColumnToggle={false}
+                            onSearchChange={(val) => { setModalSearchTerm(val); setModalCurrentPage(1); }}
+                            recordsPerPage={modalRecordsPerPage}
+                            onRecordsPerPageChange={(val) => { setModalRecordsPerPage(val); setModalCurrentPage(1); }}
+                            columns={modalColumns}
+                            visibleColumns={modalVisibleColumns}
+                            onToggleColumn={(key) => {
+                                setModalVisibleColumns(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(key)) next.delete(key);
+                                    else next.add(key);
+                                    return next;
+                                });
+                            }}
                             getExportData={getModalExportData}
                             exportFileName={`Collection_List_${selectedDateDetails?.date_col?.replace(/\//g, '_') || 'Details'}`}
                             exportTitle={`Collection List - ${selectedDateDetails?.date_col}`}

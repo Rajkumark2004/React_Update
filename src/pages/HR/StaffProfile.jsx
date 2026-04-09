@@ -22,6 +22,46 @@ const StaffProfile = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [newPass, setNewPass] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+
+    const handlePasswordSubmit = async (e) => {
+        e.preventDefault();
+        if (newPass !== confirmPass) {
+            alert("Passwords do not match!");
+            return;
+        }
+        try {
+            await api.changeStaffPassword(id, newPass, confirmPass);
+            alert("Password Changed Successfully");
+            setShowPasswordModal(false);
+            setNewPass('');
+            setConfirmPass('');
+        } catch (error) {
+            console.error('Password change error:', error);
+            alert("Failed to change password: " + error.message);
+        }
+    };
+
+    const [showDisableModal, setShowDisableModal] = useState(false);
+    const [disableDate, setDisableDate] = useState(new Date().toISOString().split('T')[0]);
+
+    const handleDisableSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const [year, month, day] = disableDate.split('-');
+            const formattedDate = `${day}/${month}/${year}`;
+            await api.disableStaff(id, formattedDate);
+            alert(`Staff disabled successfully.`);
+            setShowDisableModal(false);
+            // Optional: You could navigate away or refresh the profile data here
+        } catch (error) {
+            console.error('Disable staff error:', error);
+            alert("Failed to disable staff: " + error.message);
+        }
+    };
+
     // Layout Props
     const appName = 'School Management System';
     const sessionYear = currentSession?.session || '2024-25';
@@ -262,15 +302,13 @@ const StaffProfile = () => {
                                         <li className="pull-right">
                                             <a href="#" className="text-red" title="Disable" onClick={(e) => {
                                                 e.preventDefault();
-                                                if (window.confirm('Are you sure you want to disable this record?')) {
-                                                    console.log('Disable clicked');
-                                                }
+                                                setShowDisableModal(true);
                                             }}>
                                                 <i className="fa fa-thumbs-o-down"></i>
                                             </a>
                                         </li>
                                         <li className="pull-right">
-                                            <a href="#" className="text-green" title="Change Password" onClick={(e) => e.preventDefault()}>
+                                            <a href="#" className="text-green" title="Change Password" onClick={(e) => { e.preventDefault(); setShowPasswordModal(true); }}>
                                                 <i className="fa fa-key"></i>
                                             </a>
                                         </li>
@@ -504,6 +542,60 @@ const StaffProfile = () => {
             </div>
             <Footer />
             <div className="control-sidebar-bg"></div>
+
+            {/* Change Password Modal */}
+            {showPasswordModal && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <form onSubmit={handlePasswordSubmit}>
+                                <div className="modal-header">
+                                    <button type="button" className="close" onClick={() => setShowPasswordModal(false)}>&times;</button>
+                                    <h4 className="modal-title">Change Password</h4>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="form-group">
+                                        <label>New Password <small className="req"> *</small></label>
+                                        <input type="password" required className="form-control" value={newPass} onChange={(e) => setNewPass(e.target.value)} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Confirm Password <small className="req"> *</small></label>
+                                        <input type="password" required className="form-control" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} />
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="submit" className="btn btn-primary pull-right">Save</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Disable Staff Modal */}
+            {showDisableModal && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <form onSubmit={handleDisableSubmit}>
+                                <div className="modal-header">
+                                    <button type="button" className="close" onClick={() => setShowDisableModal(false)}>&times;</button>
+                                    <h4 className="modal-title">Disable Staff</h4>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="form-group">
+                                        <label>Date <small className="req"> *</small></label>
+                                        <input type="date" required className="form-control" value={disableDate} onChange={(e) => setDisableDate(e.target.value)} />
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="submit" className="btn btn-primary pull-right">Proceed</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
