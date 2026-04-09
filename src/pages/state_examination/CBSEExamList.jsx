@@ -10,7 +10,7 @@ import AssignExamStudent from './AssignExamStudent';
 import AssignExamSubjects from './AssignExamSubjects';
 import TeacherRemark from './TeacherRemark';
 import ExamAttendance from './ExamAttendance';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, downloadPDF } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const CBSEExamList = () => {
@@ -549,48 +549,50 @@ const CBSEExamList = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredExams.slice(indexOfFirstItem, indexOfLastItem);
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const tableColumns = [
+        { key: 'name', label: 'Exam Name' },
+        { key: 'class_sections', label: 'Class (Sections)' },
+        { key: 'term', label: 'Term' },
+        { key: 'subjects', label: 'Subjects Included' },
+        { key: 'is_publish', label: 'Exam Published' },
+        { key: 'is_active', label: 'Published Result' },
+        { key: 'description', label: 'Description' },
+        { key: 'created_at', label: 'Created At' }
+    ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const [visibleColumns, setVisibleColumns] = useState(
+        () => new Set(tableColumns.map(c => c.key))
+    );
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
 
-    const handleExport = (action) => {
-        const allHeaders = [
-            "Exam Name",
-            "Class (Sections)",
-            "Term",
-            "Subjects Included",
-            "Exam Published",
-            "Published Result",
-            "Description",
-            "Created At"
-        ];
+    const getExportData = () => {
+        const visibleCols = tableColumns.filter(c => visibleColumns.has(c.key));
+        const headers = visibleCols.map(c => c.label);
 
-        const headers = allHeaders.filter((_, i) => !hiddenColumns.includes(i));
+        const fieldMap = {
+            name: exam => exam.name,
+            class_sections: exam => exam.class_sections,
+            term: exam => exam.term_name,
+            subjects: exam => exam.subjectsincluded,
+            is_publish: exam => Number(exam.is_publish) === 1 ? 'Yes' : 'No',
+            is_active: exam => Number(exam.is_active) === 1 ? 'Yes' : 'No',
+            description: exam => exam.description,
+            created_at: exam => exam.created_at
+        };
 
-        const rows = filteredExams.map(exam => {
-            const rowData = [
-                exam.name,
-                exam.class_sections,
-                exam.term_name,
-                exam.subjectsincluded,
-                Number(exam.is_publish) === 1 ? "Yes" : "No",
-                Number(exam.is_active) === 1 ? "Yes" : "No",
-                exam.description,
-                exam.created_at
-            ].map(v => String(v ?? ''));
-            return rowData.filter((_, i) => !hiddenColumns.includes(i));
-        });
+        const rows = filteredExams.map(exam =>
+            visibleCols.map(c => String(fieldMap[c.key]?.(exam) ?? ''))
+        );
 
-        if (action === 'copy') copyToClipboard(headers, rows);
-        if (action === 'excel') downloadExcel(headers, rows, 'Exam_List.xls');
-        if (action === 'csv') downloadCSV(headers, rows, 'Exam_List.csv');
-        if (action === 'pdf') downloadPDF(headers, rows, 'Exam_List.pdf', 'Exam List');
-        if (action === 'print') printTable(headers, rows, 'Exam List');
+        return { headers, rows };
     };
 
     return (
@@ -763,103 +765,43 @@ const CBSEExamList = () => {
                                 <div className="box-body" style={{ fontSize: '13px' }}>
                                     <div className="row">
                                         <div className="col-md-12">
-                                            <div className="dt-header">
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0px', flexWrap: 'wrap' }}>
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                                <div className="dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => handleExport('copy')}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
-                                                        {showColumnsDropdown && (
-                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '170px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Exam Name
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Class (Sections)
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Term
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(3)} onChange={() => toggleColumnVisibility(3)} style={{ marginRight: '8px' }} /> Subjects Included
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(4)} onChange={() => toggleColumnVisibility(4)} style={{ marginRight: '8px' }} /> Exam Published
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(5)} onChange={() => toggleColumnVisibility(5)} style={{ marginRight: '8px' }} /> Published Result
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(6)} onChange={() => toggleColumnVisibility(6)} style={{ marginRight: '8px' }} /> Description
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(7)} onChange={() => toggleColumnVisibility(7)} style={{ marginRight: '8px' }} /> Created At
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <TableToolbar
+                                                searchTerm={searchTerm}
+                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                recordsPerPage={recordsPerPage}
+                                                onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                columns={tableColumns}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={handleToggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="Exam_List"
+                                                exportTitle="Exam List"
+                                            />
                                         </div>
                                     </div>
                                     <div className="table-responsive mailbox-messages" style={{ border: 'none' }}>
                                         <table className="table table-hover example" style={{ borderCollapse: 'collapse' }}>
                                             <thead>
                                                 <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
-                                                    {!hiddenColumns.includes(0) && <th style={{ borderTop: 'none' }}>Exam Name</th>}
-                                                    {!hiddenColumns.includes(1) && <th style={{ borderTop: 'none' }}>Class (Sections)</th>}
-                                                    {!hiddenColumns.includes(2) && <th style={{ borderTop: 'none' }}>Term</th>}
-                                                    {!hiddenColumns.includes(3) && <th style={{ borderTop: 'none' }}>Subjects Included</th>}
-                                                    {!hiddenColumns.includes(4) && <th style={{ borderTop: 'none' }}>Exam Published</th>}
-                                                    {!hiddenColumns.includes(5) && <th style={{ borderTop: 'none' }}>Published Result</th>}
-                                                    {!hiddenColumns.includes(6) && <th style={{ borderTop: 'none' }}>Description</th>}
-                                                    {!hiddenColumns.includes(7) && <th style={{ borderTop: 'none', whiteSpace: 'nowrap' }}>Created At</th>}
+                                                    {visibleColumns.has('name') && <th style={{ borderTop: 'none' }}>Exam Name</th>}
+                                                    {visibleColumns.has('class_sections') && <th style={{ borderTop: 'none' }}>Class (Sections)</th>}
+                                                    {visibleColumns.has('term') && <th style={{ borderTop: 'none' }}>Term</th>}
+                                                    {visibleColumns.has('subjects') && <th style={{ borderTop: 'none' }}>Subjects Included</th>}
+                                                    {visibleColumns.has('is_publish') && <th style={{ borderTop: 'none' }}>Exam Published</th>}
+                                                    {visibleColumns.has('is_active') && <th style={{ borderTop: 'none' }}>Published Result</th>}
+                                                    {visibleColumns.has('description') && <th style={{ borderTop: 'none' }}>Description</th>}
+                                                    {visibleColumns.has('created_at') && <th style={{ borderTop: 'none', whiteSpace: 'nowrap' }}>Created At</th>}
                                                     <th className="text-right noExport" style={{ borderTop: 'none' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map((exam) => (
                                                     <tr key={exam.id} className="hover-main-entry">
-                                                        {!hiddenColumns.includes(0) && <td style={{ borderTop: 'none' }}><strong>{exam.name}</strong></td>}
-                                                        {!hiddenColumns.includes(1) && <td style={{ borderTop: 'none' }}>{exam.class_sections}</td>}
-                                                        {!hiddenColumns.includes(2) && <td style={{ borderTop: 'none' }}>{exam.term_name}</td>}
-                                                        {!hiddenColumns.includes(3) && <td style={{ borderTop: 'none' }}>{exam.subjectsincluded}</td>}
-                                                        {!hiddenColumns.includes(4) && (
+                                                        {visibleColumns.has('name') && <td style={{ borderTop: 'none' }}><strong>{exam.name}</strong></td>}
+                                                        {visibleColumns.has('class_sections') && <td style={{ borderTop: 'none' }}>{exam.class_sections}</td>}
+                                                        {visibleColumns.has('term') && <td style={{ borderTop: 'none' }}>{exam.term_name}</td>}
+                                                        {visibleColumns.has('subjects') && <td style={{ borderTop: 'none' }}>{exam.subjectsincluded}</td>}
+                                                        {visibleColumns.has('is_publish') && (
                                                             <td style={{ borderTop: 'none' }}>
                                                                 {Number(exam.is_publish) === 1 ? (
                                                                     <i className="fa fa-check-square-o text-success"></i>
@@ -868,7 +810,7 @@ const CBSEExamList = () => {
                                                                 )}
                                                             </td>
                                                         )}
-                                                        {!hiddenColumns.includes(5) && (
+                                                        {visibleColumns.has('is_active') && (
                                                             <td style={{ borderTop: 'none' }}>
                                                                 {Number(exam.is_active) === 1 ? (
                                                                     <i className="fa fa-check-square-o text-success"></i>
@@ -877,8 +819,8 @@ const CBSEExamList = () => {
                                                                 )}
                                                             </td>
                                                         )}
-                                                        {!hiddenColumns.includes(6) && <td style={{ borderTop: 'none' }}>{exam.description}</td>}
-                                                        {!hiddenColumns.includes(7) && <td style={{ borderTop: 'none' }}>{exam.created_at ? exam.created_at.split(' ')[0].split('-').reverse().join('/') : ''}</td>}
+                                                        {visibleColumns.has('description') && <td style={{ borderTop: 'none' }}>{exam.description}</td>}
+                                                        {visibleColumns.has('created_at') && <td style={{ borderTop: 'none' }}>{exam.created_at ? exam.created_at.split(' ')[0].split('-').reverse().join('/') : ''}</td>}
                                                         <td className="text-right noExport" style={{ borderTop: 'none' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '5px', whiteSpace: 'nowrap' }}>
                                                                 <div className="action-button-boxed" title="Assign/View Student" onClick={() => openActionModal(exam, "Assign/View Student", "assign")}>

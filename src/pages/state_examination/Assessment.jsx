@@ -6,7 +6,7 @@ import api from '../../services/api';
 import '../../utils/include_files';
 import { sanitizeDecimal, validatePositiveInteger } from '../../utils/validation';
 import { useSession } from '../../context/SessionContext';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const Assessment = () => {
@@ -276,42 +276,50 @@ const Assessment = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredAssessments.slice(indexOfFirstItem, indexOfLastItem);
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const tableColumns = [
+        { key: 'assessment', label: 'Assessment' },
+        { key: 'description', label: 'Assessment Description' },
+        { key: 'type', label: 'Assessment Type' }
+    ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const [visibleColumns, setVisibleColumns] = useState(
+        () => new Set(tableColumns.map(c => c.key))
+    );
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
 
     const getExportData = () => {
         const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Assessment");
-        if (!hiddenColumns.includes(1)) headers.push("Assessment Description");
-        if (!hiddenColumns.includes(2)) {
-            headers.push("Assessment Type");
-            headers.push("");
-            headers.push("");
-            headers.push("");
-            headers.push("");
+        if (visibleColumns.has('assessment')) headers.push('Assessment');
+        if (visibleColumns.has('description')) headers.push('Assessment Description');
+        if (visibleColumns.has('type')) {
+            headers.push('Assessment Type');
+            headers.push('');
+            headers.push('');
+            headers.push('');
+            headers.push('');
         }
 
         const rows = [];
 
-        // Add a sub-header row for grouped styling
         const subHeaderRow = [];
-        if (!hiddenColumns.includes(0)) subHeaderRow.push("");
-        if (!hiddenColumns.includes(1)) subHeaderRow.push("");
-        if (!hiddenColumns.includes(2)) {
-            subHeaderRow.push("Name");
-            subHeaderRow.push("Code");
-            subHeaderRow.push("Maximum Marks");
-            subHeaderRow.push("Passing Percentage");
-            subHeaderRow.push("Description");
+        if (visibleColumns.has('assessment')) subHeaderRow.push('');
+        if (visibleColumns.has('description')) subHeaderRow.push('');
+        if (visibleColumns.has('type')) {
+            subHeaderRow.push('Name');
+            subHeaderRow.push('Code');
+            subHeaderRow.push('Maximum Marks');
+            subHeaderRow.push('Passing Percentage');
+            subHeaderRow.push('Description');
         }
 
-        // Only push sub headers if we have actual data to export
         if (filteredAssessments.length > 0) {
             rows.push(subHeaderRow);
         }
@@ -319,27 +327,27 @@ const Assessment = () => {
             if (assessment.data && assessment.data.length > 0) {
                 assessment.data.forEach((item, idx) => {
                     const row = [];
-                    if (!hiddenColumns.includes(0)) row.push(idx === 0 ? (assessment.name || '') : "");
-                    if (!hiddenColumns.includes(1)) row.push(idx === 0 ? (assessment.description || '') : "");
-                    if (!hiddenColumns.includes(2)) {
-                        row.push(item.name || "");
-                        row.push(item.code || "");
-                        row.push(item.maximum_marks || "");
-                        row.push(item.pass_percentage || "");
-                        row.push(item.description || "");
+                    if (visibleColumns.has('assessment')) row.push(idx === 0 ? (assessment.name || '') : '');
+                    if (visibleColumns.has('description')) row.push(idx === 0 ? (assessment.description || '') : '');
+                    if (visibleColumns.has('type')) {
+                        row.push(item.name || '');
+                        row.push(item.code || '');
+                        row.push(item.maximum_marks || '');
+                        row.push(item.pass_percentage || '');
+                        row.push(item.description || '');
                     }
                     rows.push(row);
                 });
             } else {
                 const row = [];
-                if (!hiddenColumns.includes(0)) row.push(assessment.name || "");
-                if (!hiddenColumns.includes(1)) row.push(assessment.description || "");
-                if (!hiddenColumns.includes(2)) {
-                    row.push("");
-                    row.push("");
-                    row.push("");
-                    row.push("");
-                    row.push("");
+                if (visibleColumns.has('assessment')) row.push(assessment.name || '');
+                if (visibleColumns.has('description')) row.push(assessment.description || '');
+                if (visibleColumns.has('type')) {
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                    row.push('');
                 }
                 rows.push(row);
             }
@@ -518,93 +526,42 @@ const Assessment = () => {
                                             }
                                         `}
                                     </style>
-                                    <div style={{ padding: '10px 0' }}>
-                                        <div className="row mobile-stack" style={{ marginBottom: '5px' }}>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left mb5" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-right dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Assessment_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Assessment_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Assessment_List.pdf', 'Assessment List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Assessment List'); }}><i className="fa fa-print"></i></button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
-                                                        {showColumnsDropdown && (
-                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '170px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Assessment
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Assessment Description
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Assessment Type
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                        recordsPerPage={recordsPerPage}
+                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                        columns={tableColumns}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={handleToggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="Assessment_List"
+                                        exportTitle="Assessment List"
+                                    />
                                     <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                                         <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                             <thead>
                                                 <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
-                                                    {!hiddenColumns.includes(0) && <th style={{ width: '15%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment</th>}
-                                                    {!hiddenColumns.includes(1) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment Description</th>}
-                                                    {!hiddenColumns.includes(2) && <th style={{ width: '60%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment Type</th>}
+                                                    {visibleColumns.has('assessment') && <th style={{ width: '15%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment</th>}
+                                                    {visibleColumns.has('description') && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment Description</th>}
+                                                    {visibleColumns.has('type') && <th style={{ width: '60%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Assessment Type</th>}
                                                     <th style={{ width: '15%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map(assessment => (
                                                     <tr key={assessment.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
-                                                        {!hiddenColumns.includes(0) && (
+                                                        {visibleColumns.has('assessment') && (
                                                             <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
                                                                 <strong>{assessment.name}</strong>
                                                             </td>
                                                         )}
-                                                        {!hiddenColumns.includes(1) && (
+                                                        {visibleColumns.has('description') && (
                                                             <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
                                                                 {assessment.description}
                                                             </td>
                                                         )}
-                                                        {!hiddenColumns.includes(2) && (
+                                                        {visibleColumns.has('type') && (
                                                             <td style={{ padding: '8px 0', borderTop: 'none' }}>
                                                                 <table style={{ width: '95%', marginBottom: '0', tableLayout: 'fixed' }}>
                                                                     <thead>

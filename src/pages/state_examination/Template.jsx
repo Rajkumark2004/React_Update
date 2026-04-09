@@ -9,7 +9,7 @@ import { api } from '../../services/api';
 import DragDropFileUpload from '../../components/DragDropFileUpload';
 import toast from 'react-hot-toast';
 import ViewTemplate from './ViewTemplate';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 
@@ -23,6 +23,12 @@ const Template = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [viewData, setViewData] = useState(null);
     const [viewLoading, setViewLoading] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const [linkExamData, setLinkExamData] = useState(null);
     const [linkExamLoading, setLinkExamLoading] = useState(false);
     const [linkExamFormData, setLinkExamFormData] = useState({
@@ -626,28 +632,38 @@ const Template = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredTemplates.slice(indexOfFirstItem, indexOfLastItem);
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const tableColumns = [
+        { key: 'template', label: 'Template' },
+        { key: 'class_sections', label: 'Class (Sections)' },
+        { key: 'description', label: 'Template Description' }
+    ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const [visibleColumns, setVisibleColumns] = useState(
+        () => new Set(tableColumns.map(c => c.key))
+    );
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
 
     const getExportData = () => {
-        const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Template");
-        if (!hiddenColumns.includes(1)) headers.push("Class (Sections)");
-        if (!hiddenColumns.includes(2)) headers.push("Template Description");
+        const visibleCols = tableColumns.filter(c => visibleColumns.has(c.key));
+        const headers = visibleCols.map(c => c.label);
 
-        const rows = filteredTemplates.map(template => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(template.name);
-            if (!hiddenColumns.includes(1)) row.push(template.class_sections);
-            if (!hiddenColumns.includes(2)) row.push(template.description);
-            return row;
-        });
+        const fieldMap = {
+            template: t => t.name,
+            class_sections: t => t.class_sections,
+            description: t => t.description
+        };
+
+        const rows = filteredTemplates.map(template =>
+            visibleCols.map(c => String(fieldMap[c.key]?.(template) ?? ''))
+        );
 
         return { headers, rows };
     };
@@ -755,88 +771,57 @@ const Template = () => {
                                                 .DTED_Action_Buttons {
                                                     justify-content: center !important;
                                                 }
+                                                .modal-body-inner {
+                                                    overflow-x: auto;
+                                                    -webkit-overflow-scrolling: touch;
+                                                    border: 1px solid #ddd;
+                                                    border-radius: 4px;
+                                                    -ms-overflow-style: none;
+                                                    scrollbar-width: none;
+                                                    text-align: center;
+                                                }
+                                                .modal-body-inner::-webkit-scrollbar {
+                                                    display: none;
+                                                }
+                                                .modal-body-inner .marksheet-container {
+                                                    min-width: 700px;
+                                                    display: inline-block;
+                                                    text-align: left;
+                                                }
+                                                #viewTemplateModal .modal-body {
+                                                    padding: 15px !important;
+                                                }
                                             }
                                         `}
                                     </style>
-                                    <div style={{ padding: '10px 0' }}>
-                                        <div className="row mobile-stack" style={{ marginBottom: '5px' }}>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left mb5" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-right dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Template_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Template_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Template_List.pdf', 'Template List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Template List'); }}><i className="fa fa-print"></i></button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
-                                                        {showColumnsDropdown && (
-                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Template
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Class (Sections)
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Template Description
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                        recordsPerPage={recordsPerPage}
+                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                        columns={tableColumns}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={handleToggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="Template_List"
+                                        exportTitle="Template List"
+                                    />
                                     <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                                         <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                             <thead>
                                                 <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
-                                                    {!hiddenColumns.includes(0) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Template</th>}
-                                                    {!hiddenColumns.includes(1) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Class (Sections)</th>}
-                                                    {!hiddenColumns.includes(2) && <th style={{ width: '42%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Template Description</th>}
+                                                    {visibleColumns.has('template') && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Template</th>}
+                                                    {visibleColumns.has('class_sections') && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Class (Sections)</th>}
+                                                    {visibleColumns.has('description') && <th style={{ width: '42%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Template Description</th>}
                                                     <th style={{ width: '18%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map(template => (
                                                     <tr key={template.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
-                                                        {!hiddenColumns.includes(0) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}><strong>{template.name}</strong></td>}
-                                                        {!hiddenColumns.includes(1) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{template.class_sections}</td>}
-                                                        {!hiddenColumns.includes(2) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{template.description}</td>}
+                                                        {visibleColumns.has('template') && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}><strong>{template.name}</strong></td>}
+                                                        {visibleColumns.has('class_sections') && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{template.class_sections}</td>}
+                                                        {visibleColumns.has('description') && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{template.description}</td>}
                                                         <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
                                                             <div className="DTED_Action_Buttons" style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', whiteSpace: 'nowrap' }}>
                                                                 <div onClick={() => handleView(template.id)} className="action-button-boxed" title="View">
@@ -1284,7 +1269,7 @@ const Template = () => {
                                         </div>
                                     </div>
                                     <div className="modal-footer clearboth">
-                                        <button type="submit" className="btn btn-primary pull-right" data-loading-text="Submitting">Save</button>
+                                        <button type="submit" className="btn btn-primary pull-right" data-loading-text="Submitting" style={{ borderRadius: '20px', background: 'rgba(126, 74, 175, 1)' }}>Save</button>
                                     </div>
                                 </form>
                             </div>
@@ -1297,21 +1282,47 @@ const Template = () => {
             {/* View Template Modal */}
             {
                 showViewModal && (
-                    <div id="viewTemplateModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
-                        <div className="modal-dialog modal-lg" style={{ margin: '30px auto' }}>
-                            <div className="modal-content">
-                                <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
-                                    <button type="button" className="close" onClick={() => setShowViewModal(false)} style={{ color: 'white', opacity: 1 }}>&times;</button>
-                                    <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{viewData ? viewData.name : 'Template'}</h4>
+                    <div id="viewTemplateModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'block', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
+                        <div className="modal-dialog modal-lg" style={isMobile ? { margin: '10px auto', width: 'calc(100% - 20px)' } : { margin: '30px auto' }}>
+                            <div className="modal-content" style={isMobile ? { display: 'flex', flexDirection: 'column', height: 'calc(100vh - 20px)' } : {}}>
+                                <div className="modal-header" style={{
+                                    backgroundColor: '#7e3abd',
+                                    color: 'white',
+                                    padding: isMobile ? '15px 20px' : '15px 20px',
+                                    borderTopLeftRadius: '5px',
+                                    borderTopRightRadius: '5px',
+                                    minHeight: 'auto',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    position: 'relative',
+                                    borderBottom: 'none'
+                                }}>
+                                    <h4 className="modal-title" style={{ color: 'white', fontWeight: '600', margin: 0, fontSize: isMobile ? '17px' : '18px' }}>{viewData ? viewData.name : 'Template'}</h4>
+                                    <button type="button" className="close" onClick={() => setShowViewModal(false)} style={{
+                                        color: 'white',
+                                        opacity: 1,
+                                        margin: 0,
+                                        padding: '25px 20px',
+                                        position: isMobile ? 'absolute' : 'relative',
+                                        top: isMobile ? '-15px' : '-10px',
+                                        right: isMobile ? '15px' : '2px'
+                                    }}>&times;</button>
                                 </div>
-                                <div className="modal-body modal-body-responsive minheight260">
+                                <div className="modal-body" style={{
+                                    padding: '15px',
+                                    overflowY: 'auto',
+                                    overflowX: 'hidden',
+                                    flex: isMobile ? 1 : 'none',
+                                    minHeight: isMobile ? 0 : '260px'
+                                }}>
                                     {viewLoading ? (
                                         <div className="text-center p10">
                                             <i className="fa fa-spinner fa-spin fa-3x"></i>
                                             <p>Loading template details...</p>
                                         </div>
                                     ) : viewData ? (
-                                        <div className="modal-body-inner">
+                                        <div className="modal-body-inner" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: isMobile ? '1px solid #ddd' : 'none', borderRadius: isMobile ? '4px' : '0' }}>
                                             <ViewTemplate template={viewData} />
                                         </div>
                                     ) : (

@@ -6,7 +6,7 @@ import Footer from '../../components/Footer';
 import '../../utils/include_files';
 import api from '../../services/api';
 import { useSession } from '../../context/SessionContext';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const Term = () => {
@@ -47,28 +47,38 @@ const Term = () => {
         fetchData();
     }, []);
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const tableColumns = [
+        { key: 'name', label: 'Name' },
+        { key: 'code', label: 'Code' },
+        { key: 'description', label: 'Description' }
+    ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const [visibleColumns, setVisibleColumns] = useState(
+        () => new Set(tableColumns.map(c => c.key))
+    );
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
 
     const getExportData = () => {
-        const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Name");
-        if (!hiddenColumns.includes(1)) headers.push("Code");
-        if (!hiddenColumns.includes(2)) headers.push("Description");
+        const visibleCols = tableColumns.filter(c => visibleColumns.has(c.key));
+        const headers = visibleCols.map(c => c.label);
 
-        const rows = filteredTerms.map(term => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(term.name);
-            if (!hiddenColumns.includes(1)) row.push(term.term_code);
-            if (!hiddenColumns.includes(2)) row.push(term.description);
-            return row;
-        });
+        const fieldMap = {
+            name: t => t.name,
+            code: t => t.term_code,
+            description: t => t.description
+        };
+
+        const rows = filteredTerms.map(term =>
+            visibleCols.map(c => String(fieldMap[c.key]?.(term) ?? ''))
+        );
 
         return { headers, rows };
     };
@@ -297,85 +307,34 @@ const Term = () => {
                                                 }
                                             `}
                                     </style>
-                                    <div style={{ padding: '10px 0' }}>
-                                        <div className="row mobile-stack" style={{ marginBottom: '5px' }}>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-left mb5" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-6 col-sm-12">
-                                                <div className="pull-right dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Term_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Term_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Term_List.pdf', 'Term List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Term List'); }}><i className="fa fa-print"></i></button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
-                                                        {showColumnsDropdown && (
-                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Name
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Code
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Description
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                        recordsPerPage={recordsPerPage}
+                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                        columns={tableColumns}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={handleToggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="Term_List"
+                                        exportTitle="Term List"
+                                    />
                                     <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                                         <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                             <thead>
                                                 <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
-                                                    {!hiddenColumns.includes(0) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Name</th>}
-                                                    {!hiddenColumns.includes(1) && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Code</th>}
-                                                    {!hiddenColumns.includes(2) && <th style={{ width: '50%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Description</th>}
+                                                    {visibleColumns.has('name') && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Name</th>}
+                                                    {visibleColumns.has('code') && <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Code</th>}
+                                                    {visibleColumns.has('description') && <th style={{ width: '50%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Description</th>}
                                                     <th style={{ width: '10%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map(term => (
                                                     <tr key={term.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
-                                                        {!hiddenColumns.includes(0) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}><strong>{term.name}</strong></td>}
-                                                        {!hiddenColumns.includes(1) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{term.term_code}</td>}
-                                                        {!hiddenColumns.includes(2) && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{term.description}</td>}
+                                                        {visibleColumns.has('name') && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}><strong>{term.name}</strong></td>}
+                                                        {visibleColumns.has('code') && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{term.term_code}</td>}
+                                                        {visibleColumns.has('description') && <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{term.description}</td>}
                                                         <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', whiteSpace: 'nowrap' }}>
                                                                 <div onClick={() => handleEdit(term)} className="action-button-boxed" title="Edit">

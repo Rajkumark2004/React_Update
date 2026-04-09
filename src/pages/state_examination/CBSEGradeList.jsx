@@ -7,7 +7,7 @@ import { useSession } from '../../context/SessionContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import '../../utils/include_files';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const CBSEGradeList = () => {
@@ -283,40 +283,48 @@ const CBSEGradeList = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredGradeList.slice(indexOfFirstItem, indexOfLastItem);
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const tableColumns = [
+        { key: 'title', label: 'Grade Title' },
+        { key: 'description', label: 'Description' },
+        { key: 'grade', label: 'Grade' }
+    ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
+    const [visibleColumns, setVisibleColumns] = useState(
+        () => new Set(tableColumns.map(c => c.key))
+    );
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
 
     const getExportData = () => {
         const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Grade Title");
-        if (!hiddenColumns.includes(1)) headers.push("Description");
-        if (!hiddenColumns.includes(2)) {
-            headers.push("Grade");
-            headers.push("");
-            headers.push("");
-            headers.push("");
+        if (visibleColumns.has('title')) headers.push('Grade Title');
+        if (visibleColumns.has('description')) headers.push('Description');
+        if (visibleColumns.has('grade')) {
+            headers.push('Grade');
+            headers.push('');
+            headers.push('');
+            headers.push('');
         }
 
         const rows = [];
 
-        // Add a sub-header row for grouped styling
         const subHeaderRow = [];
-        if (!hiddenColumns.includes(0)) subHeaderRow.push("");
-        if (!hiddenColumns.includes(1)) subHeaderRow.push("");
-        if (!hiddenColumns.includes(2)) {
-            subHeaderRow.push("Grade");
-            subHeaderRow.push("Maximum Percentage");
-            subHeaderRow.push("Minimum Percentage");
-            subHeaderRow.push("Remark");
+        if (visibleColumns.has('title')) subHeaderRow.push('');
+        if (visibleColumns.has('description')) subHeaderRow.push('');
+        if (visibleColumns.has('grade')) {
+            subHeaderRow.push('Grade');
+            subHeaderRow.push('Maximum Percentage');
+            subHeaderRow.push('Minimum Percentage');
+            subHeaderRow.push('Remark');
         }
 
-        // Only push sub headers if we have actual data to export
         if (filteredGradeList.length > 0) {
             rows.push(subHeaderRow);
         }
@@ -324,26 +332,25 @@ const CBSEGradeList = () => {
             if (grade.data && grade.data.length > 0) {
                 grade.data.forEach((range, idx) => {
                     const row = [];
-                    // Visual Grouping: Only show Title/Description for the first range of a grade
-                    if (!hiddenColumns.includes(0)) row.push(idx === 0 ? (grade.name || '') : "");
-                    if (!hiddenColumns.includes(1)) row.push(idx === 0 ? (grade.description || '') : "");
-                    if (!hiddenColumns.includes(2)) {
-                        row.push(range.name || "");
-                        row.push(range.maximum_percentage || "");
-                        row.push(range.minimum_percentage || "");
-                        row.push(range.description || "");
+                    if (visibleColumns.has('title')) row.push(idx === 0 ? (grade.name || '') : '');
+                    if (visibleColumns.has('description')) row.push(idx === 0 ? (grade.description || '') : '');
+                    if (visibleColumns.has('grade')) {
+                        row.push(range.name || '');
+                        row.push(range.maximum_percentage || '');
+                        row.push(range.minimum_percentage || '');
+                        row.push(range.description || '');
                     }
                     rows.push(row);
                 });
             } else {
                 const row = [];
-                if (!hiddenColumns.includes(0)) row.push(grade.name || "");
-                if (!hiddenColumns.includes(1)) row.push(grade.description || "");
-                if (!hiddenColumns.includes(2)) {
-                    row.push("");
-                    row.push("");
-                    row.push("");
-                    row.push("");
+                if (visibleColumns.has('title')) row.push(grade.name || '');
+                if (visibleColumns.has('description')) row.push(grade.description || '');
+                if (visibleColumns.has('grade')) {
+                    row.push('');
+                    row.push('');
+                    row.push('');
+                    row.push('');
                 }
                 rows.push(row);
             }
@@ -516,69 +523,18 @@ const CBSEGradeList = () => {
                                             }
                                         `}
                                     </style>
-                                    <div style={{ padding: '10px 0' }}>
-                                        <div className="row mobile-stack">
-                                            <div className="col-md-6 col-sm-6">
-                                                <div className="pull-left mb5" style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-6 col-sm-6">
-                                                <div className="dt-buttons btn-group pull-right">
-                                                    <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Exam_Grade_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Exam_Grade_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Exam_Grade_List.pdf', 'Exam Grade List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Exam Grade List'); }}><i className="fa fa-print"></i></button>
-                                                    <div className="btn-group">
-                                                        <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><i className="fa fa-columns"></i></button>
-                                                        {showColumnsDropdown && (
-                                                            <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Grade Title
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Description
-                                                                </label>
-                                                                <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                                    <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Grade
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                        recordsPerPage={recordsPerPage}
+                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                        columns={tableColumns}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={handleToggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="Exam_Grade_List"
+                                        exportTitle="Exam Grade List"
+                                    />
                                     <div className="mailbox-messages" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                                         <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                             <thead>
