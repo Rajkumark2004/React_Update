@@ -5,8 +5,8 @@ import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
 import AttendanceSidebar from '../../components/AttendanceSidebar';
 import { api } from '../../services/api';
-import toast from 'react-hot-toast';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const AttendanceReport = () => {
@@ -26,24 +26,6 @@ const AttendanceReport = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const isMobile = windowWidth < 768;
-
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
-
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
-    };
 
     const columns = [
         { key: 'sno', label: 'S.NO' },
@@ -53,6 +35,17 @@ const AttendanceReport = () => {
         { key: 'attendance', label: 'Attendance' },
         { key: 'note', label: 'Note' }
     ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
 
 
     const filteredList = studentList.filter(student => {
@@ -86,32 +79,7 @@ const AttendanceReport = () => {
         return '';
     };
 
-    const getVisibleColumnsSet = () => new Set(columns.filter((_, i) => !hiddenColumns.includes(i)).map(c => c.key));
-
-    const handleCopy = () => {
-        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
-        copyToClipboard(headers, rows);
-    };
-
-    const handleCSV = () => {
-        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
-        downloadCSV(headers, rows, 'attendance_report.csv');
-    };
-
-    const handleExcel = () => {
-        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
-        downloadExcel(headers, rows, 'attendance_report.xls');
-    };
-
-    const handlePDF = () => {
-        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
-        downloadPDF(headers, rows, 'attendance_report.pdf', 'Attendance Report');
-    };
-
-    const handlePrint = () => {
-        const { headers, rows } = buildExportData(columns, getVisibleColumnsSet(), filteredList, formatCell);
-        printTable(headers, rows, 'Attendance Report');
-    };
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredList, formatCell);
 
 
     // Derive CSS class from attendance type name
@@ -300,107 +268,21 @@ const AttendanceReport = () => {
                                                 <h3 className="box-title"><i className="fa fa-users"></i> Attendance List</h3>
                                             </div>
                                             <div className="box-body">
-                                                <div
-                                                    className="row mb-2"
-                                                    style={{
-                                                        marginBottom: '10px',
-                                                        display: isMobile ? 'flex' : 'block',
-                                                        flexDirection: isMobile ? 'column' : 'row',
-                                                        alignItems: isMobile ? 'center' : 'stretch',
-                                                        gap: isMobile ? '15px' : '0'
-                                                    }}
-                                                >
-                                                    <div
-                                                        className={isMobile ? "" : "col-sm-6"}
-                                                        style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: isMobile ? '15px' : '20px',
-                                                            justifyContent: isMobile ? 'center' : 'flex-start',
-                                                            flexWrap: 'wrap'
-                                                        }}
-                                                    >
-                                                        <div className="dataTables_length">
-                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                                Records:
-                                                                <select
-                                                                    value={recordsPerPage}
-                                                                    onChange={(e) => {
-                                                                        setRecordsPerPage(Number(e.target.value));
-                                                                        setCurrentPage(1);
-                                                                    }}
-                                                                    className="form-control input-sm"
-                                                                    style={{ width: '80px', margin: '0 10px' }}
-                                                                >
-                                                                    <option value="10">10</option>
-                                                                    <option value="25">25</option>
-                                                                    <option value="50">50</option>
-                                                                    <option value="100">100</option>
-                                                                    <option value="-1">All</option>
-                                                                </select>
-                                                            </label>
-                                                        </div>
-                                                        <div className="dataTables_filter">
-                                                            <input
-                                                                type="search"
-                                                                className="form-control input-sm"
-                                                                placeholder="Search..."
-                                                                style={{
-                                                                    marginLeft: isMobile ? '0' : '10px',
-                                                                    display: 'inline-block',
-                                                                    width: '180px',
-                                                                    border: 'none',
-                                                                    borderBottom: '1px solid #ccc',
-                                                                    borderRadius: '0',
-                                                                    boxShadow: 'none',
-                                                                    backgroundColor: 'transparent',
-                                                                    paddingLeft: '0',
-                                                                    outline: 'none',
-                                                                    textAlign: isMobile ? 'center' : 'left'
-                                                                }}
-                                                                value={searchTerm}
-                                                                onChange={(e) => {
-                                                                    setSearchTerm(e.target.value);
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                                        <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-sm" onClick={handleCopy} title="Copy" style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                                <i className="fa fa-files-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" onClick={handleExcel} title="Excel">
-                                                                <i className="fa fa-file-excel-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" onClick={handleCSV} title="CSV">
-                                                                <i className="fa fa-file-text-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" onClick={handlePDF} title="PDF">
-                                                                <i className="fa fa-file-pdf-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" onClick={handlePrint} title="Print">
-                                                                <i className="fa fa-print"></i>
-                                                            </button>
-                                                            <div className="btn-group">
-                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                                                    <i className="fa fa-columns"></i>
-                                                                </button>
-                                                                {showColumnsDropdown && (
-                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                        {columns.map((col, idx) => (
-                                                                            <label key={idx} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                                <input type="checkbox" checked={!hiddenColumns.includes(idx)} onChange={() => toggleColumnVisibility(idx)} style={{ marginRight: '6px' }} />
-                                                                                {col.label}
-                                                                            </label>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                                    <TableToolbar
+                                                        searchTerm={searchTerm}
+                                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                        recordsPerPage={recordsPerPage}
+                                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                        columns={columns}
+                                                        visibleColumns={visibleColumns}
+                                                        onToggleColumn={handleToggleColumn}
+                                                        getExportData={getExportData}
+                                                        exportFileName="attendance_report"
+                                                        exportTitle="Attendance Report"
+                                                    />
                                                 </div>
+
                                                 <div className="mailbox-controls">
                                                     <div className="pull-right"></div>
                                                 </div>
@@ -409,12 +291,12 @@ const AttendanceReport = () => {
                                                     <table className="table table-hover table-striped example">
                                                         <thead>
                                                             <tr>
-                                                                {!hiddenColumns.includes(0) && <th>S.NO</th>}
-                                                                {!hiddenColumns.includes(1) && <th>Admission No</th>}
-                                                                {!hiddenColumns.includes(2) && <th>Roll Number</th>}
-                                                                {!hiddenColumns.includes(3) && <th>Name</th>}
-                                                                {!hiddenColumns.includes(4) && <th>Attendance</th>}
-                                                                {!hiddenColumns.includes(5) && <th>Note</th>}
+                                                                {visibleColumns.has('sno') && <th>S.NO</th>}
+                                                                {visibleColumns.has('admission_no') && <th>Admission No</th>}
+                                                                {visibleColumns.has('roll_no') && <th>Roll Number</th>}
+                                                                {visibleColumns.has('name') && <th>Name</th>}
+                                                                {visibleColumns.has('attendance') && <th>Attendance</th>}
+                                                                {visibleColumns.has('note') && <th>Note</th>}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -423,16 +305,16 @@ const AttendanceReport = () => {
                                                                 const attClass = getClassForType(attLabel);
                                                                 return (
                                                                     <tr key={index}>
-                                                                        {!hiddenColumns.includes(0) && <td>{indexOfFirstItem + index + 1}</td>}
-                                                                        {!hiddenColumns.includes(1) && <td>{student.admission_no}</td>}
-                                                                        {!hiddenColumns.includes(2) && <td>{student.roll_no}</td>}
-                                                                        {!hiddenColumns.includes(3) && <td>{student.firstname} {student.lastname}</td>}
-                                                                        {!hiddenColumns.includes(4) && <td>
+                                                                        {visibleColumns.has('sno') && <td>{indexOfFirstItem + index + 1}</td>}
+                                                                        {visibleColumns.has('admission_no') && <td>{student.admission_no}</td>}
+                                                                        {visibleColumns.has('roll_no') && <td>{student.roll_no}</td>}
+                                                                        {visibleColumns.has('name') && <td>{student.firstname} {student.lastname}</td>}
+                                                                        {visibleColumns.has('attendance') && <td>
                                                                             <small className={attClass}>
                                                                                 {attLabel}
                                                                             </small>
                                                                         </td>}
-                                                                        {!hiddenColumns.includes(5) && <td>{student.remark}</td>}
+                                                                        {visibleColumns.has('note') && <td>{student.remark}</td>}
                                                                     </tr>
                                                                 );
                                                             })}

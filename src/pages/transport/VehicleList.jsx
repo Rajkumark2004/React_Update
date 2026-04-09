@@ -7,7 +7,8 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { useSession } from '../../context/SessionContext';
 import api from '../../services/api';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const VehicleList = () => {
@@ -35,8 +36,6 @@ const VehicleList = () => {
         note: ''
     });
 
-    // Mock session year
-    const sessionYear = currentSession?.session || '2024-25';
 
     // User data for Header
     const [loggedInUser, setLoggedInUser] = useState(null);
@@ -73,13 +72,17 @@ const VehicleList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
 
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-    const isMobile = windowWidth < 768;
+    const columns = [
+        { key: 'vehicle_no', label: 'Vehicle Number' },
+        { key: 'vehicle_model', label: 'Vehicle Model' },
+        { key: 'manufacture_year', label: 'Year Made' },
+        { key: 'registration_number', label: 'Registration Number' },
+        { key: 'chasis_number', label: 'Chasis Number' },
+        { key: 'max_seating_capacity', label: 'Max Seating Capacity' },
+        { key: 'driver_name', label: 'Driver Name' },
+        { key: 'driver_licence', label: 'Driver License' },
+        { key: 'driver_contact', label: 'Driver Contact' }
+    ];
 
     // Filter vehicles logic
     const filteredVehicles = vehicles.filter(vehicle =>
@@ -94,7 +97,7 @@ const VehicleList = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredVehicles.slice(indexOfFirstItem, indexOfLastItem);
 
-    const userData = loggedInUser ? {
+    {/*} const userData = loggedInUser ? {
         name: loggedInUser.username,
         role: Object.keys(loggedInUser.roles || {})[0] || 'User',
         id: loggedInUser.id,
@@ -112,50 +115,26 @@ const VehicleList = () => {
         localStorage.removeItem('user');
         localStorage.removeItem('isLoggedIn');
         navigate('/');
-    };
+    };*/}
 
     const handleSearch = (e) => {
         e.preventDefault();
         console.log('Search');
     };
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
-    };
-
-    const getExportData = () => {
-        const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Vehicle Number");
-        if (!hiddenColumns.includes(1)) headers.push("Vehicle Model");
-        if (!hiddenColumns.includes(2)) headers.push("Year Made");
-        if (!hiddenColumns.includes(3)) headers.push("Registration Number");
-        if (!hiddenColumns.includes(4)) headers.push("Chasis Number");
-        if (!hiddenColumns.includes(5)) headers.push("Max Seating Capacity");
-        if (!hiddenColumns.includes(6)) headers.push("Driver Name");
-        if (!hiddenColumns.includes(7)) headers.push("Driver License");
-        if (!hiddenColumns.includes(8)) headers.push("Driver Contact");
-
-        const rows = filteredVehicles.map(data => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(data.vehicle_no);
-            if (!hiddenColumns.includes(1)) row.push(data.vehicle_model);
-            if (!hiddenColumns.includes(2)) row.push(data.manufacture_year);
-            if (!hiddenColumns.includes(3)) row.push(data.registration_number);
-            if (!hiddenColumns.includes(4)) row.push(data.chasis_number);
-            if (!hiddenColumns.includes(5)) row.push(data.max_seating_capacity);
-            if (!hiddenColumns.includes(6)) row.push(data.driver_name);
-            if (!hiddenColumns.includes(7)) row.push(data.driver_licence);
-            if (!hiddenColumns.includes(8)) row.push(data.driver_contact);
-            return row;
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
         });
-
-        return { headers, rows };
     };
+
+    const formatCell = (row, key) => row[key] || '';
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredVehicles, formatCell);
 
     const handleInputChange = (e) => {
         const { name, value, type, files } = e.target;
@@ -303,19 +282,9 @@ const VehicleList = () => {
                     -ms-overflow-style: none;
                 }
             `}</style>
-            <Header
-                appName="School Management System"
-                userData={userData}
-                pendingTasks={[]}
-                handleLogout={handleLogout}
-            />
+            <Header />
 
-            <Sidebar
-
-                handleSearch={handleSearch}
-                sessionYear={sessionYear}
-                currentUrl="/admin/vehicle"
-            />
+            <Sidebar />
 
             <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content">
@@ -336,152 +305,70 @@ const VehicleList = () => {
                                 <div className="box-body">
                                     <div >
                                         <div className="download_label">Vehicle List</div>
-                                        <div
-                                            className="row mb-2"
-                                            style={{
-                                                marginBottom: '10px',
-                                                display: isMobile ? 'flex' : 'block',
-                                                flexDirection: isMobile ? 'column' : 'row',
-                                                alignItems: isMobile ? 'center' : 'stretch',
-                                                gap: isMobile ? '15px' : '0'
-                                            }}
-                                        >
-                                            <div
-                                                className={isMobile ? "" : "col-sm-6"}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: isMobile ? '15px' : '20px',
-                                                    justifyContent: isMobile ? 'center' : 'flex-start',
-                                                    flexWrap: 'wrap'
-                                                }}
-                                            >
-                                                <div className="dataTables_length">
-                                                    <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                        Records:
-                                                        <select
-                                                            value={recordsPerPage}
-                                                            onChange={(e) => {
-                                                                setRecordsPerPage(Number(e.target.value));
-                                                                setCurrentPage(1);
-                                                            }}
-                                                            className="form-control input-sm"
-                                                            style={{ width: '80px', margin: '0 10px' }}
-                                                        >
-                                                            <option value="10">10</option>
-                                                            <option value="25">25</option>
-                                                            <option value="50">50</option>
-                                                            <option value="100">100</option>
-                                                            <option value="-1">All</option>
-                                                        </select>
-                                                    </label>
-                                                </div>
-                                                <div className="dataTables_filter">
-                                                    <input
-                                                        type="search"
-                                                        placeholder="Search..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => {
-                                                            setSearchTerm(e.target.value);
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                                <div className="dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                        <i className="fa fa-files-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Vehicle_List.csv'); }}>
-                                                        <i className="fa fa-file-text-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Vehicle_List.xls'); }}>
-                                                        <i className="fa fa-file-excel-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Vehicle_List.pdf', 'Vehicle List'); }}>
-                                                        <i className="fa fa-file-pdf-o"></i>
-                                                    </button>
-                                                    <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Vehicle List'); }}>
-                                                        <i className="fa fa-print"></i>
-                                                    </button>
-                                                    <div className="btn-group">
-                                                        <button
-                                                            className="btn btn-default btn-sm"
-                                                            title="Columns"
-                                                            onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
-                                                            style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
-                                                        >
-                                                            <i className="fa fa-columns"></i>
-                                                        </button>
-                                                        {showColumnsDropdown && (
-                                                            <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto' }}>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} /> Vehicle Number</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} /> Vehicle Model</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} /> Year Made</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(3)} onChange={() => toggleColumnVisibility(3)} /> Registration Number</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(4)} onChange={() => toggleColumnVisibility(4)} /> Chasis Number</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(5)} onChange={() => toggleColumnVisibility(5)} /> Max Seating Capacity</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(6)} onChange={() => toggleColumnVisibility(6)} /> Driver Name</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(7)} onChange={() => toggleColumnVisibility(7)} /> Driver License</label></li>
-                                                                <li><label><input type="checkbox" checked={!hiddenColumns.includes(8)} onChange={() => toggleColumnVisibility(8)} /> Driver Contact</label></li>
-                                                            </ul>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                            <TableToolbar
+                                                searchTerm={searchTerm}
+                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                recordsPerPage={recordsPerPage}
+                                                onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                columns={columns}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={handleToggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="vehicle_list"
+                                                exportTitle="Vehicle List"
+                                            />
                                         </div>
                                         <div className="table-responsive overflow-visible-lg">
                                             <table className="table table-hover table-striped table-bordered example">
-                                            <thead>
-                                                <tr>
-                                                    {!hiddenColumns.includes(0) && <th>Vehicle Number</th>}
-                                                    {!hiddenColumns.includes(1) && <th>Vehicle Model</th>}
-                                                    {!hiddenColumns.includes(2) && <th>Year Made</th>}
-                                                    {!hiddenColumns.includes(3) && <th>Registration Number</th>}
-                                                    {!hiddenColumns.includes(4) && <th>Chasis Number</th>}
-                                                    {!hiddenColumns.includes(5) && <th>Max Seating Capacity</th>}
-                                                    {!hiddenColumns.includes(6) && <th>Driver Name</th>}
-                                                    {!hiddenColumns.includes(7) && <th>Driver License</th>}
-                                                    {!hiddenColumns.includes(8) && <th>Driver Contact</th>}
-                                                    <th className="text-right noExport" width="10%">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {currentItems.length === 0 ? (
-                                                    <tr><td colSpan="10" className="text-center">No Result Found</td></tr>
-                                                ) : (
-                                                    currentItems.map((data) => (
-                                                        <tr key={data.id}>
-                                                            {!hiddenColumns.includes(0) && (
-                                                                <td className="mailbox-name">
-                                                                    <a href="#" data-toggle="popover" className="detail_popover" >{data.vehicle_no}</a>
+                                                <thead>
+                                                    <tr>
+                                                        {visibleColumns.has('vehicle_no') && <th>Vehicle Number</th>}
+                                                        {visibleColumns.has('vehicle_model') && <th>Vehicle Model</th>}
+                                                        {visibleColumns.has('manufacture_year') && <th>Year Made</th>}
+                                                        {visibleColumns.has('registration_number') && <th>Registration Number</th>}
+                                                        {visibleColumns.has('chasis_number') && <th>Chasis Number</th>}
+                                                        {visibleColumns.has('max_seating_capacity') && <th>Max Seating Capacity</th>}
+                                                        {visibleColumns.has('driver_name') && <th>Driver Name</th>}
+                                                        {visibleColumns.has('driver_licence') && <th>Driver License</th>}
+                                                        {visibleColumns.has('driver_contact') && <th>Driver Contact</th>}
+                                                        <th className="text-right noExport" width="10%">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {currentItems.length === 0 ? (
+                                                        <tr><td colSpan="10" className="text-center">No Result Found</td></tr>
+                                                    ) : (
+                                                        currentItems.map((data) => (
+                                                            <tr key={data.id}>
+                                                                {visibleColumns.has('vehicle_no') && (
+                                                                    <td className="mailbox-name">
+                                                                        <a href="#" data-toggle="popover" className="detail_popover" >{data.vehicle_no}</a>
+                                                                    </td>
+                                                                )}
+                                                                {visibleColumns.has('vehicle_model') && <td className="mailbox-name"> {data.vehicle_model}</td>}
+                                                                {visibleColumns.has('manufacture_year') && <td className="mailbox-name"> {data.manufacture_year}</td>}
+                                                                {visibleColumns.has('registration_number') && <td className="mailbox-name"> {data.registration_number}</td>}
+                                                                {visibleColumns.has('chasis_number') && <td className="mailbox-name"> {data.chasis_number}</td>}
+                                                                {visibleColumns.has('max_seating_capacity') && <td className="mailbox-name"> {data.max_seating_capacity}</td>}
+                                                                {visibleColumns.has('driver_name') && <td className="mailbox-name"> {data.driver_name}</td>}
+                                                                {visibleColumns.has('driver_licence') && <td className="mailbox-name"> {data.driver_licence}</td>}
+                                                                {visibleColumns.has('driver_contact') && <td className="mailbox-name"> {data.driver_contact}</td>}
+                                                                <td className="mailbox-date pull-right no-print white-space-nowrap">
+                                                                    <a className="btn btn-default btn-xs vehicledetails" data-toggle="tooltip" title="View" onClick={() => handleView(data.id)}><i className="fa fa-reorder"></i></a>
+                                                                    <a className="btn btn-default btn-xs editvehicle" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data.id)}><i className="fa fa-pencil"></i></a>
+                                                                    <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete" onClick={() => handleDelete(data.id)}><i className="fa fa-remove"></i></a>
                                                                 </td>
-                                                            )}
-                                                            {!hiddenColumns.includes(1) && <td className="mailbox-name"> {data.vehicle_model}</td>}
-                                                            {!hiddenColumns.includes(2) && <td className="mailbox-name"> {data.manufacture_year}</td>}
-                                                            {!hiddenColumns.includes(3) && <td className="mailbox-name"> {data.registration_number}</td>}
-                                                            {!hiddenColumns.includes(4) && <td className="mailbox-name"> {data.chasis_number}</td>}
-                                                            {!hiddenColumns.includes(5) && <td className="mailbox-name"> {data.max_seating_capacity}</td>}
-                                                            {!hiddenColumns.includes(6) && <td className="mailbox-name"> {data.driver_name}</td>}
-                                                            {!hiddenColumns.includes(7) && <td className="mailbox-name"> {data.driver_licence}</td>}
-                                                            {!hiddenColumns.includes(8) && <td className="mailbox-name"> {data.driver_contact}</td>}
-                                                            <td className="mailbox-date pull-right no-print white-space-nowrap">
-                                                                <a className="btn btn-default btn-xs vehicledetails" data-toggle="tooltip" title="View" onClick={() => handleView(data.id)}><i className="fa fa-reorder"></i></a>
-                                                                <a className="btn btn-default btn-xs editvehicle" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data.id)}><i className="fa fa-pencil"></i></a>
-                                                                <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete" onClick={() => handleDelete(data.id)}><i className="fa fa-remove"></i></a>
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
                                         </div>
                                         <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                            <Pagination 
-                                                totalItems={totalItems} 
-                                                itemsPerPage={recordsPerPage} 
+                                            <Pagination
+                                                totalItems={totalItems}
+                                                itemsPerPage={recordsPerPage}
                                                 currentPage={currentPage}
                                                 onPageChange={(page) => setCurrentPage(page)}
                                             />

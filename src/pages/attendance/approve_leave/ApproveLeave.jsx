@@ -8,69 +8,13 @@ import LeaveModal from './LeaveModal';
 import Pagination from '../../../utils/Pagination';
 // AttendanceSidebar removed as per request 
 
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
+import { buildExportData } from '../../../utils/tableExport';
+import TableToolbar from '../../../utils/TableToolbar';
 import toast from 'react-hot-toast';
 import { useRef } from 'react';
 import '../../../utils/include_files'; // Importing global scripts/styles
 
-/**
- * Reusable Column Visibility Dropdown Component
- */
-const ColumnVisibility = ({ columns, visibleColumns, toggleColumn }) => {
-    const [showDropdown, setShowDropdown] = useState(false);
-    const dropdownRef = useRef(null);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setShowDropdown(false);
-            }
-        };
-        if (showDropdown) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [showDropdown]);
-
-    return (
-        <div className="btn-group" ref={dropdownRef} style={{ position: 'relative' }}>
-            <button
-                className="btn btn-default btn-sm"
-                title="Columns"
-                onClick={() => setShowDropdown(!showDropdown)}
-            >
-                <i className="fa fa-columns"></i>
-            </button>
-            {showDropdown && (
-                <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    zIndex: 1000,
-                    background: '#fff',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    padding: '8px 10px',
-                    minWidth: '225px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    marginTop: '2px'
-                }}>
-                    {columns.map(col => (
-                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', margin: 0, fontWeight: 'normal', color: '#333' }}>
-                            <input
-                                type="checkbox"
-                                checked={visibleColumns.has(col.key)}
-                                onChange={() => toggleColumn(col.key)}
-                                style={{ marginRight: '8px', verticalAlign: 'middle' }}
-                            />
-                            {col.label}
-                        </label>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-};
 
 const API_BASE = 'https://newlayout.wisibles.com/api_admin';
 
@@ -115,18 +59,13 @@ const ApproveLeave = () => {
     ];
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    const toggleColumn = (columnKey) => {
-        const newVisible = new Set(visibleColumns);
-        if (newVisible.has(columnKey)) {
-            if (newVisible.size > 1) {
-                newVisible.delete(columnKey);
-            } else {
-                toast.error('At least one column must be visible');
-            }
-        } else {
-            newVisible.add(columnKey);
-        }
-        setVisibleColumns(newVisible);
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
     };
     useEffect(() => {
         const init = async () => {
@@ -315,30 +254,8 @@ const ApproveLeave = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredLeaveList.slice(indexOfFirstItem, indexOfLastItem);
 
-    const handleCopy = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
-        copyToClipboard(headers, rows);
-    };
-
-    const handleCSV = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
-        downloadCSV(headers, rows, 'Approve_Leave_Report.csv');
-    };
-
-    const handleExcel = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
-        downloadExcel(headers, rows, 'Approve_Leave_Report.xls');
-    };
-
-    const handlePDF = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
-        downloadPDF(headers, rows, 'Approve_Leave_Report.pdf', 'Approve Leave List');
-    };
-
-    const handlePrint = () => {
-        const { headers, rows } = buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
-        printTable(headers, rows, 'Approve Leave List');
-    };
+    // Export helpers
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredLeaveList, formatCell);
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -458,45 +375,22 @@ const ApproveLeave = () => {
                                                 </button>
                                             </div>
                                         </div>
-                                        <style>{`
-                                            @media (max-width: 767px) {
-                                                .approve-leave-toolbar {
-                                                    flex-direction: column !important;
-                                                    align-items: center !important;
-                                                    justify-content: center !important;
-                                                    border-bottom: none !important;
-                                                }
-                                                .approve-leave-toolbar .al-search-col,
-                                                .approve-leave-toolbar .al-btn-col {
-                                                    display: flex !important;
-                                                    justify-content: center !important;
-                                                    width: 100% !important;
-                                                }
-                                            }
-                                        `}</style>
-                                        <div className="approve-leave-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
-                                            <div className="al-search-col">
-                                                <input
-                                                    type="search"
-                                                    placeholder="Search..."
-                                                    value={filter.search_text}
-                                                    onChange={(e) => {
-                                                        setFilter(prev => ({ ...prev, search_text: e.target.value }));
-                                                        setCurrentPage(1);
-                                                    }}
-                                                    style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                />
-                                            </div>
-                                            <div className="al-btn-col">
-                                                <div className="dt-buttons btn-group">
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCopy} title="Copy"><i className="fa fa-files-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleExcel} title="Excel"><i className="fa fa-file-excel-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handleCSV} title="CSV"><i className="fa fa-file-text-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePDF} title="PDF"><i className="fa fa-file-pdf-o"></i></button>
-                                                    <button className="btn btn-default btn-sm dt-button" onClick={handlePrint} title="Print"><i className="fa fa-print"></i></button>
-                                                    <ColumnVisibility columns={columns} visibleColumns={visibleColumns} toggleColumn={toggleColumn} />
-                                                </div>
-                                            </div>
+                                        <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                            <TableToolbar
+                                                searchTerm={filter.search_text}
+                                                onSearchChange={(val) => {
+                                                    setFilter(prev => ({ ...prev, search_text: val }));
+                                                    setCurrentPage(1);
+                                                }}
+                                                recordsPerPage={recordsPerPage}
+                                                onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                columns={columns}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={toggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="approve_leave_report"
+                                                exportTitle="Approve Leave List"
+                                            />
                                         </div>
                                         <div className="box-body">
                                             <div className="table-responsive overflow-visible-lg">
