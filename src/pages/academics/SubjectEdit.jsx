@@ -5,8 +5,9 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
-
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
+import Pagination from '../../utils/Pagination';
 const SubjectEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -181,36 +182,47 @@ const SubjectEdit = () => {
         }
     };
 
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+
     const filteredList = subjectList.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    // Calculate pagination
+    const totalItems = filteredList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
-    };
+    const columns = [
+        { key: 'subject', label: 'Subject' },
+        { key: 'subject_code', label: 'Subject Code' },
+        { key: 'subject_type', label: 'Subject Type' }
+    ];
 
-    const getExportData = () => {
-        const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Subject");
-        if (!hiddenColumns.includes(1)) headers.push("Subject Code");
-        if (!hiddenColumns.includes(2)) headers.push("Subject Type");
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-        const rows = filteredList.map(subject => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(subject.name);
-            if (!hiddenColumns.includes(1)) row.push(subject.code);
-            if (!hiddenColumns.includes(2)) row.push(subjectTypes.find(t => t.key === subject.type)?.value || subject.type);
-            return row;
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
         });
-
-        return { headers, rows };
     };
+
+    const formatCell = (row, key) => {
+        if (key === 'subject') return row.name || '';
+        if (key === 'subject_code') return row.code || '';
+        if (key === 'subject_type') return subjectTypes.find(t => t.key === row.type)?.value || row.type || '';
+        return '';
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredList, formatCell);
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -299,41 +311,19 @@ const SubjectEdit = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="dt-controls-between">
-                                        {/* Search Left */}
-                                        <div id="DataTables_Table_0_filter" className="dataTables_filter">
-                                            <input
-                                                type="search"
-                                                placeholder="Search..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                            />
-                                        </div>
-
-                                        {/* Export Icons Right */}
-                                        <div className="dt-buttons btn-group">
-                                            <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>
-                                            <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Subject_List.csv'); }}><span><i className="fa fa-file-text-o"></i></span></a>
-                                            <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Subject_List.xls'); }}><span><i className="fa fa-file-excel-o"></i></span></a>
-                                            <a className="btn btn-default buttons-print btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Subject List'); }}><span><i className="fa fa-print"></i></span></a>
-                                            <div className="btn-group">
-                                                <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
-                                                {showColumnsDropdown && (
-                                                    <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                            <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Subject
-                                                        </label>
-                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                            <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Subject Code
-                                                        </label>
-                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                            <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Subject Type
-                                                        </label>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
+                                    <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                        <TableToolbar
+                                            searchTerm={searchTerm}
+                                            onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                            recordsPerPage={recordsPerPage}
+                                            onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                            columns={columns}
+                                            visibleColumns={visibleColumns}
+                                            onToggleColumn={handleToggleColumn}
+                                            getExportData={getExportData}
+                                            exportFileName="Subject_List"
+                                            exportTitle="Subject List"
+                                        />
                                     </div>
 
                                     <div className="table-responsive mailbox-messages overflow-visible">
@@ -342,18 +332,18 @@ const SubjectEdit = () => {
                                             <table className="table table-striped table-bordered table-hover example">
                                                 <thead>
                                                     <tr>
-                                                        {!hiddenColumns.includes(0) && <th style={{ textAlign: 'left' }}>Subject</th>}
-                                                        {!hiddenColumns.includes(1) && <th style={{ textAlign: 'left' }}>Subject Code</th>}
-                                                        {!hiddenColumns.includes(2) && <th style={{ textAlign: 'left' }}>Subject Type</th>}
+                                                        {visibleColumns.has('subject') && <th style={{ textAlign: 'left' }}>Subject</th>}
+                                                        {visibleColumns.has('subject_code') && <th style={{ textAlign: 'left' }}>Subject Code</th>}
+                                                        {visibleColumns.has('subject_type') && <th style={{ textAlign: 'left' }}>Subject Type</th>}
                                                         <th style={{ textAlign: 'right' }} className="noExport">Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {filteredList.map(subject => (
+                                                    {currentItems.map(subject => (
                                                         <tr key={subject.id}>
-                                                            {!hiddenColumns.includes(0) && <td className="mailbox-name" style={{ textAlign: 'left' }}>{subject.name}</td>}
-                                                            {!hiddenColumns.includes(1) && <td className="mailbox-name" style={{ textAlign: 'left' }}>{subject.code}</td>}
-                                                            {!hiddenColumns.includes(2) && <td className="mailbox-name" style={{ textAlign: 'left' }}>
+                                                            {visibleColumns.has('subject') && <td className="mailbox-name" style={{ textAlign: 'left' }}>{subject.name}</td>}
+                                                            {visibleColumns.has('subject_code') && <td className="mailbox-name" style={{ textAlign: 'left' }}>{subject.code}</td>}
+                                                            {visibleColumns.has('subject_type') && <td className="mailbox-name" style={{ textAlign: 'left' }}>
                                                                 {subjectTypes.find(t => t.key === subject.type)?.value || subject.type}
                                                             </td>}
                                                             <td style={{ textAlign: 'right' }}>
@@ -380,7 +370,7 @@ const SubjectEdit = () => {
                                                             </td>
                                                         </tr>
                                                     ))}
-                                                    {filteredList.length === 0 && (
+                                                    {currentItems.length === 0 && (
                                                         <tr>
                                                             <td colSpan="4" className="text-center">No Result Found</td>
                                                         </tr>
@@ -390,11 +380,13 @@ const SubjectEdit = () => {
                                         </div>
                                     </div>
 
-                                    {/* Records Info Outside */}
-                                    <div className="dt-info-left">
-                                        <div className="dataTables_info">
-                                            Records: 1 to {filteredList.length} of {subjectList.length}
-                                        </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination 
+                                            totalItems={totalItems} 
+                                            itemsPerPage={recordsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div>
                             </div>

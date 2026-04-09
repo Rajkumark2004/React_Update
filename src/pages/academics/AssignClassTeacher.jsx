@@ -5,7 +5,8 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 import '../../utils/include_files';
 
@@ -27,15 +28,7 @@ const AssignClassTeacher = () => {
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const isMobile = windowWidth < 768;
 
     // Edit tracking states
     const [prevIds, setPrevIds] = useState([]);
@@ -312,30 +305,31 @@ const AssignClassTeacher = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const columns = [
+        { key: 'class', label: 'Class' },
+        { key: 'section', label: 'Section' },
+        { key: 'class_teacher', label: 'Class Teacher' }
+    ];
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(col => col !== colIndex) : [...prev, colIndex]
-        );
-    };
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    const headers = ['Class', 'Section', 'Class Teacher'];
-
-    const getExportData = () => {
-        const activeHeaders = headers.filter((_, idx) => !hiddenColumns.includes(idx));
-        const rows = filteredList.map(item => {
-            const firstTeacher = item.teachers?.[0] || {};
-            const classVal = item.class || firstTeacher.class || "";
-            const sectionVal = item.section || firstTeacher.section || "";
-            const teachersList = item.teachers ? item.teachers.map(t => `${t.name} ${t.surname} (${t.employee_id})`).join(', ') : '';
-            
-            const fullRow = [classVal, sectionVal, teachersList];
-            return fullRow.filter((_, idx) => !hiddenColumns.includes(idx));
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
         });
-        return { headers: activeHeaders, rows };
     };
+
+    const formatCell = (row, key) => {
+        if (key === 'class') return row.class || row.teachers?.[0]?.class || '';
+        if (key === 'section') return row.section || row.teachers?.[0]?.section || '';
+        if (key === 'class_teacher') return row.teachers ? row.teachers.map(t => `${t.name} ${t.surname} (${t.employee_id})`).join(', ') : '';
+        return '';
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredList, formatCell);
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -421,68 +415,19 @@ const AssignClassTeacher = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="dt-controls-between" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', marginBottom: '10px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                            <div className="dataTables_length">
-                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                    Records:
-                                                    <select
-                                                        value={recordsPerPage}
-                                                        onChange={(e) => {
-                                                            setRecordsPerPage(Number(e.target.value));
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        className="form-control input-sm"
-                                                        style={{ width: '80px', margin: '0 10px' }}
-                                                    >
-                                                        <option value="10">10</option>
-                                                        <option value="25">25</option>
-                                                        <option value="50">50</option>
-                                                        <option value="100">100</option>
-                                                        <option value="-1">All</option>
-                                                    </select>
-                                                </label>
-                                            </div>
-                                            {/* Search Left */}
-                                            <div id="DataTables_Table_0_filter" className="dataTables_filter" style={{ display: 'flex', alignItems: 'center' }}>
-                                                <input
-                                                    type="search"
-                                                    placeholder="Search..."
-                                                    aria-controls="DataTables_Table_0"
-                                                    value={searchTerm}
-                                                    onChange={(e) => {
-                                                        setSearchTerm(e.target.value);
-                                                        setCurrentPage(1);
-                                                    }}
-                                                    style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Export Icons Right */}
-                                        <div className="dt-buttons btn-group">
-                                            <a className="btn btn-default buttons-copy buttons-html5 btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><span><i className="fa fa-files-o"></i></span></a>
-                                            <a className="btn btn-default buttons-csv buttons-html5 btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Assign_Class_Teacher.csv'); }}><span><i className="fa fa-file-text-o"></i></span></a>
-                                            <a className="btn btn-default buttons-excel buttons-html5 btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Assign_Class_Teacher.xls'); }}><span><i className="fa fa-file-excel-o"></i></span></a>
-                                            <a className="btn btn-default buttons-pdf buttons-html5 btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Assign_Class_Teacher.pdf'); }}><span><i className="fa fa-file-pdf-o"></i></span></a>
-                                            <a className="btn btn-default buttons-print btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Assign Class Teacher'); }}><span><i className="fa fa-print"></i></span></a>
-                                            <div className="btn-group">
-                                                <a className="btn btn-default buttons-collection buttons-colvis btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}><span><i className="fa fa-columns"></i></span></a>
-                                                {showColumnsDropdown && (
-                                                    <div className="dt-button-collection" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '150px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                            <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Class
-                                                        </label>
-                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                            <input type="checkbox" checked={!hiddenColumns.includes(1)} onChange={() => toggleColumnVisibility(1)} style={{ marginRight: '8px' }} /> Section
-                                                        </label>
-                                                        <label style={{ display: 'block', cursor: 'pointer', padding: '5px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left', margin: 0 }}>
-                                                            <input type="checkbox" checked={!hiddenColumns.includes(2)} onChange={() => toggleColumnVisibility(2)} style={{ marginRight: '8px' }} /> Class Teacher
-                                                        </label>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
+                                    <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                        <TableToolbar
+                                            searchTerm={searchTerm}
+                                            onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                            recordsPerPage={recordsPerPage}
+                                            onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                            columns={columns}
+                                            visibleColumns={visibleColumns}
+                                            onToggleColumn={handleToggleColumn}
+                                            getExportData={getExportData}
+                                            exportFileName="Assign_Class_Teacher"
+                                            exportTitle="Assign Class Teacher"
+                                        />
                                     </div>
 
                                     <div className="table-responsive mailbox-messages overflow-visible">
@@ -493,26 +438,26 @@ const AssignClassTeacher = () => {
                                             <table className="table table-striped table-bordered table-hover example" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info">
                                                 <thead>
                                                     <tr role="row">
-                                                        {!hiddenColumns.includes(0) && <th style={{ textAlign: 'left' }}>Class</th>}
-                                                        {!hiddenColumns.includes(1) && <th style={{ textAlign: 'left' }}>Section</th>}
-                                                        {!hiddenColumns.includes(2) && <th style={{ textAlign: 'left' }}>Class Teacher</th>}
+                                                        {visibleColumns.has('class') && <th style={{ textAlign: 'left' }}>Class</th>}
+                                                        {visibleColumns.has('section') && <th style={{ textAlign: 'left' }}>Section</th>}
+                                                        {visibleColumns.has('class_teacher') && <th style={{ textAlign: 'left' }}>Class Teacher</th>}
                                                         <th style={{ textAlign: 'right' }}>Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {currentItems.map((item, index) => (
                                                         <tr key={index} role="row" className={index % 2 === 0 ? "odd" : "even"}>
-                                                            {!hiddenColumns.includes(0) && (
+                                                            {visibleColumns.has('class') && (
                                                                 <td className="mailbox-name" style={{ textAlign: 'left' }}>
                                                                     {item.class || item.teachers?.[0]?.class}
                                                                 </td>
                                                             )}
-                                                            {!hiddenColumns.includes(1) && (
+                                                            {visibleColumns.has('section') && (
                                                                 <td style={{ textAlign: 'left' }}>
                                                                     {item.section || item.teachers?.[0]?.section}
                                                                 </td>
                                                             )}
-                                                            {!hiddenColumns.includes(2) && (
+                                                            {visibleColumns.has('class_teacher') && (
                                                                 <td style={{ textAlign: 'left' }}>
                                                                     {(item.teachers || []).map((t, idx) => (
                                                                         <div key={idx}>

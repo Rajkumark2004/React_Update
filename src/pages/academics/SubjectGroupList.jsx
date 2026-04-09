@@ -5,7 +5,8 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import { api } from '../../services/api';
 import { toast } from 'react-hot-toast';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const SubjectGroupList = () => {
@@ -33,28 +34,31 @@ const SubjectGroupList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const columns = [
+        { key: 'name', label: 'Name' },
+        { key: 'class_section', label: 'Class (Section)' },
+        { key: 'subject', label: 'Subject' }
+    ];
 
-    const headers = ['Name', 'Class (Section)', 'Subject'];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(col => col !== colIndex) : [...prev, colIndex]
-        );
-    };
-
-    const getExportData = () => {
-        const exportHeaders = headers.filter((_, i) => !hiddenColumns.includes(i));
-        const exportRows = filteredList.map(group => {
-            const rowData = [];
-            if (!hiddenColumns.includes(0)) rowData.push(group.name);
-            if (!hiddenColumns.includes(1)) rowData.push(group.sections ? group.sections.map(sec => `${sec.class}(${sec.section})`).join(', ') : '');
-            if (!hiddenColumns.includes(2)) rowData.push(group.group_subject ? group.group_subject.map(subj => subj.name).join(', ') : '');
-            return rowData;
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
         });
-        return { headers: exportHeaders, rows: exportRows };
     };
+
+    const formatCell = (row, key) => {
+        if (key === 'name') return row.name || '';
+        if (key === 'class_section') return row.sections ? row.sections.map(sec => `${sec.class}(${sec.section})`).join(', ') : '';
+        if (key === 'subject') return row.group_subject ? row.group_subject.map(subj => subj.name).join(', ') : '';
+        return '';
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredList, formatCell);
 
     useEffect(() => {
         fetchInitialData();
@@ -428,62 +432,19 @@ const SubjectGroupList = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="dt-controls-between" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', marginBottom: '10px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                            <div className="dataTables_length">
-                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                    Records:
-                                                    <select
-                                                        value={recordsPerPage}
-                                                        onChange={(e) => {
-                                                            setRecordsPerPage(Number(e.target.value));
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        className="form-control input-sm"
-                                                        style={{ width: '80px', margin: '0 10px' }}
-                                                    >
-                                                        <option value="10">10</option>
-                                                        <option value="25">25</option>
-                                                        <option value="50">50</option>
-                                                        <option value="100">100</option>
-                                                        <option value="-1">All</option>
-                                                    </select>
-                                                </label>
-                                            </div>
-                                            {/* Search */}
-                                            <div id="DataTables_Table_0_filter" className="dataTables_filter" style={{ display: 'flex', alignItems: 'center' }}>
-                                                <input
-                                                    type="search"
-                                                    placeholder="Search..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => {
-                                                        setSearchTerm(e.target.value);
-                                                        setCurrentPage(1);
-                                                    }}
-                                                    style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Simplified Toolbar Right */}
-                                        <div className="dt-buttons btn-group">
-                                            <a 
-                                                className="btn btn-default btn-sm" 
-                                                title="Excel" 
-                                                onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Subject_Group_List.xls'); }}
-                                                style={{ borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginRight: '5px' }}
-                                            >
-                                                <i className="fa fa-file-excel-o"></i>
-                                            </a>
-                                            <a 
-                                                className="btn btn-default btn-sm" 
-                                                title="Print" 
-                                                onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Subject Group List'); }}
-                                                style={{ borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-                                            >
-                                                <i className="fa fa-print"></i>
-                                            </a>
-                                        </div>
+                                    <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                        <TableToolbar
+                                            searchTerm={searchTerm}
+                                            onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                            recordsPerPage={recordsPerPage}
+                                            onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                            columns={columns}
+                                            visibleColumns={visibleColumns}
+                                            onToggleColumn={handleToggleColumn}
+                                            getExportData={getExportData}
+                                            exportFileName="Subject_Group_List"
+                                            exportTitle="Subject Group List"
+                                        />
                                     </div>
 
                                     <div className="table-responsive mailbox-messages overflow-visible">
@@ -491,16 +452,16 @@ const SubjectGroupList = () => {
                                         <table className="table table-striped table-bordered table-hover example" id="headerTable">
                                             <thead>
                                                 <tr>
-                                                    {!hiddenColumns.includes(0) && <th style={{ textAlign: 'left' }}>Name</th>}
-                                                    {!hiddenColumns.includes(1) && <th style={{ textAlign: 'left' }}>Class (Section)</th>}
-                                                    {!hiddenColumns.includes(2) && <th style={{ textAlign: 'left' }}>Subject</th>}
+                                                    {visibleColumns.has('name') && <th style={{ textAlign: 'left' }}>Name</th>}
+                                                    {visibleColumns.has('class_section') && <th style={{ textAlign: 'left' }}>Class (Section)</th>}
+                                                    {visibleColumns.has('subject') && <th style={{ textAlign: 'left' }}>Subject</th>}
                                                     <th style={{ textAlign: 'right' }} className="no_print">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map(group => (
                                                     <tr key={group.id}>
-                                                        {!hiddenColumns.includes(0) && <td className="mailbox-name" style={{ textAlign: 'left' }}>
+                                                        {visibleColumns.has('name') && <td className="mailbox-name" style={{ textAlign: 'left' }}>
                                                             <a href="#" className="detail_popover">{group.name}</a>
                                                             <div className="fee_detail_popover" style={{ display: 'none' }}>
                                                                 {group.description ? (
@@ -510,14 +471,14 @@ const SubjectGroupList = () => {
                                                                 )}
                                                             </div>
                                                         </td>}
-                                                        {!hiddenColumns.includes(1) && <td style={{ textAlign: 'left' }}>
+                                                        {visibleColumns.has('class_section') && <td style={{ textAlign: 'left' }}>
                                                             <ol className="p-0" style={{ paddingLeft: '15px', marginBottom: 0 }}>
                                                                 {group.sections && group.sections.map((sec, idx) => (
                                                                     <li key={idx}>{sec.class}({sec.section})</li>
                                                                 ))}
                                                             </ol>
                                                         </td>}
-                                                        {!hiddenColumns.includes(2) && <td style={{ textAlign: 'left' }}>
+                                                        {visibleColumns.has('subject') && <td style={{ textAlign: 'left' }}>
                                                             <table width="100%">
                                                                 <tbody>
                                                                     {group.group_subject && group.group_subject.map((subj, idx) => (
