@@ -97,7 +97,7 @@ const TableToolbar = ({
                     }
                     .table-toolbar-right {
                         justify-content: center !important;
-                        width: 100% !important;
+                        width: auto !important;
                     }
                     .table-toolbar-right .dt-buttons {
                         display: flex !important;

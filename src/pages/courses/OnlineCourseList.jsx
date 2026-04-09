@@ -6,8 +6,10 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
+import '../../utils/include_files';
 
 const OnlineCourseList = () => {
     const navigate = useNavigate();
@@ -62,27 +64,24 @@ const OnlineCourseList = () => {
     const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
     const indexOfLastItem = currentPage * safeRecordsPerPage;
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
-    const currentItems = filteredVideos.slice(indexOfFirstItem, indexOfLastItem); const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+    const currentItems = filteredVideos.slice(indexOfFirstItem, indexOfLastItem);
 
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
-    };
+    const columns = [
+        { key: 'title', label: 'Title' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    const getExportData = () => {
-        const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Title");
-
-        const rows = filteredVideos.map(video => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(video.title);
-            return row;
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
         });
-
-        return { headers, rows };
     };
+
+    const formatCell = (row, key) => row[key] || '-';
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredVideos, formatCell);
 
     const handleAddVideo = async (e) => {
         e.preventDefault();
@@ -350,73 +349,24 @@ const OnlineCourseList = () => {
                                     <div className="tab-pane active" id="tab_1">
                                         <div className="box-body p0">
                                             <div className="mailbox-messages">
-                                                <div className="course-list-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
-                                                    <div className="al-search-col">
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                            <div className="dataTables_length">
-                                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                                    Records:
-                                                                    <select
-                                                                        value={recordsPerPage}
-                                                                        onChange={(e) => {
-                                                                            setRecordsPerPage(Number(e.target.value));
-                                                                            setCurrentPage(1);
-                                                                        }}
-                                                                        className="form-control input-sm"
-                                                                        style={{ width: '80px', margin: '0 10px' }}
-                                                                    >
-                                                                        <option value="10">10</option>
-                                                                        <option value="25">25</option>
-                                                                        <option value="50">50</option>
-                                                                        <option value="100">100</option>
-                                                                        <option value="-1">All</option>
-                                                                    </select>
-                                                                </label>
-                                                            </div>
-                                                            <input
-                                                                type="search"
-                                                                placeholder="Search..."
-                                                                value={searchTerm}
-                                                                onChange={(e) => {
-                                                                    setSearchTerm(e.target.value);
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                            />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="al-btn-col">
-                                                        <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Video_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Video_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Video_List.pdf', 'Video List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Video List'); }}><i className="fa fa-print"></i></button>
-
-                                                            <div className="btn-group" style={{ display: 'inline-flex' }}>
-                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderRight: 'none !important' }}>
-                                                                    <i className="fa fa-columns"></i>
-                                                                </button>
-                                                                {showColumnsDropdown && (
-                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto', minWidth: '150px' }}>
-                                                                        <li>
-                                                                            <label style={{ display: 'block', padding: '5px 15px', margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
-                                                                                <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Title
-                                                                            </label>
-                                                                        </li>
-                                                                    </ul>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <TableToolbar
+                                                    searchTerm={searchTerm}
+                                                    onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                    recordsPerPage={recordsPerPage}
+                                                    onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                    columns={columns}
+                                                    visibleColumns={visibleColumns}
+                                                    onToggleColumn={toggleColumn}
+                                                    getExportData={getExportData}
+                                                    exportFileName="video_list"
+                                                    exportTitle="Video List"
+                                                />
 
                                                 <div className="table-responsive overflow-visible">
                                                     <table className="table table-striped table-bordered table-hover example">
                                                         <thead>
                                                             <tr>
-                                                                {!hiddenColumns.includes(0) && <th>Title</th>}
+                                                                {!visibleColumns.has('title') ? null : <th>Title</th>}
                                                                 <th className="pull-right noExport">Action</th>
                                                             </tr>
                                                         </thead>
@@ -430,7 +380,7 @@ const OnlineCourseList = () => {
                                                             ) : (
                                                                 currentItems.map((video) => (
                                                                     <tr key={video.id}>
-                                                                        {!hiddenColumns.includes(0) && <td>{video.title}</td>}
+                                                                        {!visibleColumns.has('title') ? null : <td>{video.title}</td>}
                                                                         <td className="pull-right noExport">
                                                                             <button className="btn btn-default btn-xs" onClick={() => handleViewVideo(video.url)}>
                                                                                 <i className="fa fa-eye"></i>
@@ -475,33 +425,33 @@ const OnlineCourseList = () => {
                         <div className="modal-dialog" role="document">
                             <div className="modal-content modal-media-content">
                                 <div className="modal-header modal-media-header">
-                                <button type="button" className="close" onClick={() => setShowAddModal(false)}>&times;</button>
-                                <h4 className="modal-title box-title">Add Video</h4>
+                                    <button type="button" className="close" onClick={() => setShowAddModal(false)}>&times;</button>
+                                    <h4 className="modal-title box-title">Add Video</h4>
+                                </div>
+                                <form onSubmit={handleAddVideo}>
+                                    <div className="modal-body">
+                                        <div className="form-group">
+                                            <label>Video Title</label><small className="req"> *</small>
+                                            <input type="text" className="form-control" value={currentVideo.title} onChange={(e) => setCurrentVideo({ ...currentVideo, title: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Video Url</label><small className="req"> *</small>
+                                            <input type="url" className="form-control" value={currentVideo.url} onChange={(e) => setCurrentVideo({ ...currentVideo, url: e.target.value })} />
+                                            <span className="text-danger">{error}</span>
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button type="submit" className="btn btn-primary" disabled={loading}>
+                                            {loading ? <i className='fa fa-spinner fa-spin'></i> : 'Save'}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                            <form onSubmit={handleAddVideo}>
-                                <div className="modal-body">
-                                    <div className="form-group">
-                                        <label>Video Title</label><small className="req"> *</small>
-                                        <input type="text" className="form-control" value={currentVideo.title} onChange={(e) => setCurrentVideo({ ...currentVideo, title: e.target.value })} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Video Url</label><small className="req"> *</small>
-                                        <input type="url" className="form-control" value={currentVideo.url} onChange={(e) => setCurrentVideo({ ...currentVideo, url: e.target.value })} />
-                                        <span className="text-danger">{error}</span>
-                                    </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="submit" className="btn btn-primary" disabled={loading}>
-                                        {loading ? <i className='fa fa-spinner fa-spin'></i> : 'Save'}
-                                    </button>
-                                </div>
-                            </form>
                         </div>
                     </div>
-                </div>
-                <div className="modal-backdrop fade in"></div>
-            </>
-        )}
+                    <div className="modal-backdrop fade in"></div>
+                </>
+            )}
 
             {/* Edit Video Modal */}
             {showEditModal && (
@@ -510,55 +460,55 @@ const OnlineCourseList = () => {
                         <div className="modal-dialog" role="document">
                             <div className="modal-content modal-media-content">
                                 <div className="modal-header modal-media-header">
-                                <button type="button" className="close" onClick={() => setShowEditModal(false)}>&times;</button>
-                                <h4 className="modal-title box-title">Edit Video</h4>
+                                    <button type="button" className="close" onClick={() => setShowEditModal(false)}>&times;</button>
+                                    <h4 className="modal-title box-title">Edit Video</h4>
+                                </div>
+                                <form onSubmit={handleUpdateVideo}>
+                                    <div className="modal-body">
+                                        <div className="form-group">
+                                            <label>Video Title</label><small className="req"> *</small>
+                                            <input type="text" className="form-control" value={currentVideo.title} onChange={(e) => setCurrentVideo({ ...currentVideo, title: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Video Url</label><small className="req"> *</small>
+                                            <input type="url" className="form-control" value={currentVideo.url} onChange={(e) => setCurrentVideo({ ...currentVideo, url: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button type="submit" className="btn btn-primary" disabled={loading}>
+                                            {loading ? <i className='fa fa-spinner fa-spin'></i> : 'Save'}
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
-                            <form onSubmit={handleUpdateVideo}>
-                                <div className="modal-body">
-                                    <div className="form-group">
-                                        <label>Video Title</label><small className="req"> *</small>
-                                        <input type="text" className="form-control" value={currentVideo.title} onChange={(e) => setCurrentVideo({ ...currentVideo, title: e.target.value })} />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Video Url</label><small className="req"> *</small>
-                                        <input type="url" className="form-control" value={currentVideo.url} onChange={(e) => setCurrentVideo({ ...currentVideo, url: e.target.value })} />
-                                    </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="submit" className="btn btn-primary" disabled={loading}>
-                                        {loading ? <i className='fa fa-spinner fa-spin'></i> : 'Save'}
-                                    </button>
-                                </div>
-                            </form>
                         </div>
                     </div>
-                </div>
-                <div className="modal-backdrop fade in"></div>
-            </>
-        )}
+                    <div className="modal-backdrop fade in"></div>
+                </>
+            )}
 
             {/* View Video Modal */}
             {showViewModal && (
                 <>
                     <div className="modal fade in" style={{ display: 'block', overflowY: 'auto' }}>
-br                        <div className="modal-dialog modal-lg" role="document">
+                        <div className="modal-dialog modal-lg" role="document">
                             <div className="modal-content modal-media-content">
                                 <div className="modal-header modal-media-header">
-                                <button type="button" className="close" onClick={() => setShowViewModal(false)}>&times;</button>
-                                <h4 className="modal-title box-title">View Video</h4>
-                            </div>
-                            <div className="modal-body">
-                                <div className="embed-responsive embed-responsive-16by9">
-                                    <iframe className="embed-responsive-item" src={viewUrl} allowFullScreen title="Video Viewer"></iframe>
+                                    <button type="button" className="close" onClick={() => setShowViewModal(false)}>&times;</button>
+                                    <h4 className="modal-title box-title">View Video</h4>
                                 </div>
+                                <div className="modal-body">
+                                    <div className="embed-responsive embed-responsive-16by9">
+                                        <iframe className="embed-responsive-item" src={viewUrl} allowFullScreen title="Video Viewer"></iframe>
+                                    </div>
+                                </div>
+
                             </div>
-                            
                         </div>
                     </div>
-                </div>
-                <div className="modal-backdrop fade in"></div>
-            </>
-        )}
+                    <div className="modal-backdrop fade in"></div>
+                </>
+            )}
         </div>
     );
 };

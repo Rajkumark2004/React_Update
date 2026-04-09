@@ -6,8 +6,10 @@ import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
+import '../../utils/include_files';
 
 const OnlineCourseCategory = () => {
     const navigate = useNavigate();
@@ -20,9 +22,40 @@ const OnlineCourseCategory = () => {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // UI State
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    const isMobile = windowWidth < 768;
+
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
+
+    // Column definitions
+    const columns = [
+        { key: 'category_name', label: 'Category' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const toggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    const formatCell = (row, key) => {
+        return row[key] || '-';
+    };
+
+    const getExportData = () => {
+        return buildExportData(columns, visibleColumns, categories, formatCell);
+    };
 
     // Fetch Categories function
     const fetchCategories = async () => {
@@ -59,26 +92,8 @@ const OnlineCourseCategory = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
 
-    const [hiddenColumns, setHiddenColumns] = useState([]);
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
-
-    const toggleColumnVisibility = (colIndex) => {
-        setHiddenColumns(prev =>
-            prev.includes(colIndex) ? prev.filter(c => c !== colIndex) : [...prev, colIndex]
-        );
-    };
-
-    const getExportData = () => {
-        const headers = [];
-        if (!hiddenColumns.includes(0)) headers.push("Category");
-
-        const rows = filteredCategories.map(cat => {
-            const row = [];
-            if (!hiddenColumns.includes(0)) row.push(cat.category_name);
-            return row;
-        });
-
-        return { headers, rows };
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
     };
 
     const handleAddCategory = async (e) => {
@@ -171,8 +186,8 @@ const OnlineCourseCategory = () => {
                     align-items: center;
                     overflow: visible;
                 }
-                .dt-buttons.btn-group > .btn:first-child { border-top-left-radius: 20px !important; border-bottom-left-radius: 20px !important; }
-                .dt-buttons.btn-group > .btn:last-child,
+               .dt-buttons.btn-group > .btn:first-child { border-top-left-radius: 20px !important; border-bottom-left-radius: 20px !important; }
+               .dt-buttons.btn-group > .btn:last-child,
                 .dt-buttons.btn-group > .btn-group:last-child > .btn { border-top-right-radius: 20px !important; border-bottom-right-radius: 20px !important; }
                 .dt-buttons.btn-group .btn {
                     border: none !important;
@@ -242,101 +257,53 @@ const OnlineCourseCategory = () => {
                                     <div className="tab-pane active" id="tab_1">
                                         <div className="box-body p0">
                                             <div className="mailbox-messages">
-                                                <div className="course-category-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
-                                                    <div className="al-search-col">
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-                                                            <div className="dataTables_length">
-                                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                                    Records:
-                                                                    <select
-                                                                        value={recordsPerPage}
-                                                                        onChange={(e) => {
-                                                                            setRecordsPerPage(Number(e.target.value));
-                                                                            setCurrentPage(1);
-                                                                        }}
-                                                                        className="form-control input-sm"
-                                                                        style={{ width: '80px', margin: '0 10px' }}
-                                                                    >
-                                                                        <option value="10">10</option>
-                                                                        <option value="25">25</option>
-                                                                        <option value="50">50</option>
-                                                                        <option value="100">100</option>
-                                                                        <option value="-1">All</option>
-                                                                    </select>
-                                                                </label>
-                                                            </div>
-                                                            <input
-                                                                type="search"
-                                                                placeholder="Search..."
-                                                                value={searchTerm}
-                                                                onChange={(e) => {
-                                                                    setSearchTerm(e.target.value);
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: 'auto' }}
-                                                            />
-                                                        </div>
-                                                    </div>
+                                                <TableToolbar
+                                                    searchTerm={searchTerm}
+                                                    onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                    recordsPerPage={recordsPerPage}
+                                                    onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                    columns={columns}
+                                                    visibleColumns={visibleColumns}
+                                                    onToggleColumn={toggleColumn}
+                                                    getExportData={getExportData}
+                                                    exportFileName="category_list"
+                                                    exportTitle="Category List"
+                                                />
 
-                                                    <div className="al-btn-col">
-                                                        <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }}><i className="fa fa-files-o"></i></button>
-                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'Category_List.xls'); }}><i className="fa fa-file-excel-o"></i></button>
-                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'Category_List.csv'); }}><i className="fa fa-file-text-o"></i></button>
-                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'Category_List.pdf', 'Category List'); }}><i className="fa fa-file-pdf-o"></i></button>
-                                                            <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Category List'); }}><i className="fa fa-print"></i></button>
-
-                                                            <div className="btn-group" style={{ display: 'inline-flex' }}>
-                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderRight: 'none !important' }}>
-                                                                    <i className="fa fa-columns"></i>
-                                                                </button>
-                                                                {showColumnsDropdown && (
-                                                                    <ul className="dropdown-menu dt-button-collection" style={{ display: 'block', right: 0, left: 'auto', minWidth: '150px' }}>
-                                                                        <li>
-                                                                            <label style={{ display: 'block', padding: '5px 15px', margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
-                                                                                <input type="checkbox" checked={!hiddenColumns.includes(0)} onChange={() => toggleColumnVisibility(0)} style={{ marginRight: '8px' }} /> Category
-                                                                            </label>
-                                                                        </li>
-                                                                    </ul>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="table-responsive overflow-visible">
+                                                <div className="table-responsive overflow-visible" style={{ overflowX: 'auto' }}>
                                                     <table className="table table-striped table-bordered table-hover example">
                                                         <thead>
                                                             <tr>
-                                                                {!hiddenColumns.includes(0) && <th>Category</th>}
+                                                                {!visibleColumns.has('category_name') ? null : <th>Category</th>}
                                                                 <th className="pull-right noExport">Action</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {currentItems.map((cat) => (
-                                                                <tr key={cat.id}>
-                                                                    {!hiddenColumns.includes(0) && <td>{cat.category_name}</td>}
-                                                                    <td className="pull-right noExport">
-                                                                        <Link to={`/admin/onlinecourse/list/${cat.id}`} className="btn btn-default btn-xs">
-                                                                            <i className="fa fa-list"></i>
-                                                                        </Link>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                            {currentItems.length === 0 && (
-                                                                <tr>
-                                                                    <td colSpan="2" className="text-center">No data found</td>
-                                                                </tr>
+                                                            {loading && categories.length === 0 ? (
+                                                                <tr><td colSpan={visibleColumns.size + 1} className="text-center">Loading...</td></tr>
+                                                            ) : currentItems.length > 0 ? (
+                                                                currentItems.map((cat) => (
+                                                                    <tr key={cat.id}>
+                                                                        {!visibleColumns.has('category_name') ? null : <td>{cat.category_name}</td>}
+                                                                        <td className="pull-right noExport">
+                                                                            <Link to={`/admin/onlinecourse/list/${cat.id}`} className="btn btn-default btn-xs">
+                                                                                <i className="fa fa-list"></i>
+                                                                            </Link>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))
+                                                            ) : (
+                                                                <tr><td colSpan={visibleColumns.size + 1} className="text-center">No data found</td></tr>
                                                             )}
                                                         </tbody>
                                                     </table>
                                                 </div>
                                                 <div className="pt15 pb15" style={{ padding: '15px 0' }}>
-                                                    <Pagination 
-                                                        totalItems={totalItems} 
-                                                        itemsPerPage={recordsPerPage} 
+                                                    <Pagination
+                                                        totalItems={totalItems}
+                                                        itemsPerPage={safeRecordsPerPage}
                                                         currentPage={currentPage}
-                                                        onPageChange={(page) => setCurrentPage(page)}
+                                                        onPageChange={handlePageChange}
                                                     />
                                                 </div>
                                             </div>
@@ -362,37 +329,37 @@ const OnlineCourseCategory = () => {
                                     <button type="button" className="close" onClick={() => setShowModal(false)}>&times;</button>
                                     <h4 className="modal-title box-title">Category</h4>
                                 </div>
-                            <form onSubmit={handleAddCategory}>
-                                <div className="modal-body">
-                                    <div className="row">
-                                        <div className="col-sm-12">
-                                            <div className="form-group">
-                                                <label htmlFor="category_name">Category Name</label><small className="req"> *</small> 
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="category_name"
-                                                    name="category_name"
-                                                    value={newCategory.category_name}
-                                                    onChange={(e) => setNewCategory({ ...newCategory, category_name: e.target.value })}
-                                                />
-                                                <span className="text text-danger">{error}</span>
+                                <form onSubmit={handleAddCategory}>
+                                    <div className="modal-body">
+                                        <div className="row">
+                                            <div className="col-sm-12">
+                                                <div className="form-group">
+                                                    <label htmlFor="category_name">Category Name</label><small className="req"> *</small>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        id="category_name"
+                                                        name="category_name"
+                                                        value={newCategory.category_name}
+                                                        onChange={(e) => setNewCategory({ ...newCategory, category_name: e.target.value })}
+                                                    />
+                                                    <span className="text text-danger">{error}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="modal-footer">
-                                    <button type="submit" className="btn btn-primary" disabled={loading}>
-                                        {loading ? <><i className='fa fa-spinner fa-spin'></i> Saving</> : 'Save'}
-                                    </button>
-                                </div>
-                            </form>
+                                    <div className="modal-footer">
+                                        <button type="submit" className="btn btn-primary" disabled={loading}>
+                                            {loading ? <><i className='fa fa-spinner fa-spin'></i> Saving</> : 'Save'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div className="modal-backdrop fade in"></div>
-            </>
-        )}
+                    <div className="modal-backdrop fade in"></div>
+                </>
+            )}
         </div>
     );
 };
