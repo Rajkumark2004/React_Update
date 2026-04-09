@@ -6,8 +6,9 @@ import Footer from '../../../components/Footer';
 import { api } from '../../../services/api';
 import toast from 'react-hot-toast';
 import { useSession } from '../../../context/SessionContext';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
+import { buildExportData } from '../../../utils/tableExport';
 import Pagination from '../../../utils/Pagination';
+import TableToolbar from '../../../utils/TableToolbar';
 import '../../../utils/include_files';
 
 const SearchPayment = () => {
@@ -52,7 +53,7 @@ const SearchPayment = () => {
     ];
 
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
 
     const toggleColumn = (key) => {
         setVisibleColumns(prev => {
@@ -321,115 +322,24 @@ const SearchPayment = () => {
                                         <div className="box-body">
                                             <div className="download_label">Payment ID Detail</div>
 
-                                            {/* Toolbar: Records, Local Search, Export Buttons */}
-                                            <div
-                                                className="row mb-2"
-                                                style={{
-                                                    marginBottom: '10px',
-                                                    display: isMobile ? 'flex' : 'block',
-                                                    flexDirection: isMobile ? 'column' : 'row',
-                                                    alignItems: isMobile ? 'center' : 'stretch',
-                                                    gap: isMobile ? '15px' : '0',
-                                                    position: 'relative',
-                                                    zIndex: 100
+                                            <TableToolbar
+                                                searchTerm={localSearch}
+                                                onSearchChange={(value) => {
+                                                    setLocalSearch(value);
+                                                    setCurrentPage(1);
                                                 }}
-                                            >
-                                                <div
-                                                    className={isMobile ? "" : "col-sm-6"}
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: isMobile ? '15px' : '20px',
-                                                        justifyContent: isMobile ? 'center' : 'flex-start',
-                                                        flexWrap: 'wrap'
-                                                    }}
-                                                >
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                                <option value="-1">All</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <div className="dataTables_filter">
-                                                        <input
-                                                            type="search"
-                                                            className="form-control input-sm"
-                                                            placeholder="Search..."
-                                                            style={{
-                                                                marginLeft: isMobile ? '0' : '10px',
-                                                                display: 'inline-block',
-                                                                width: isMobile ? '180px' : '180px',
-                                                                border: 'none',
-                                                                borderBottom: '1px solid #ccc',
-                                                                borderRadius: '0',
-                                                                boxShadow: 'none',
-                                                                backgroundColor: 'transparent',
-                                                                paddingLeft: '0',
-                                                                outline: 'none',
-                                                                textAlign: isMobile ? 'center' : 'left'
-                                                            }}
-                                                            value={localSearch}
-                                                            onChange={(e) => {
-                                                                setLocalSearch(e.target.value);
-                                                                setCurrentPage(1);
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                                    <div className="dt-buttons btn-group">
-                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                            <i className="fa fa-files-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'payment_list.csv'); }}>
-                                                            <i className="fa fa-file-text-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'payment_list.xls'); }}>
-                                                            <i className="fa fa-file-excel-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'payment_list.pdf', 'Search Fees Payments'); }}>
-                                                            <i className="fa fa-file-pdf-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Search Fees Payments'); }} >
-                                                            <i className="fa fa-print"></i>
-                                                        </button>
-                                                        <div className="btn-group">
-                                                            <button
-                                                                className="btn btn-default btn-sm"
-                                                                title="Columns"
-                                                                onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
-                                                                style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
-                                                            >
-                                                                <i className="fa fa-columns"></i>
-                                                            </button>
-                                                            {showColumnsDropdown && (
-                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 9999, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                    {columns.map(col => (
-                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                            <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
-                                                                            {col.label}
-                                                                        </label>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                recordsPerPage={recordsPerPage}
+                                                onRecordsPerPageChange={(value) => {
+                                                    setRecordsPerPage(value);
+                                                    setCurrentPage(1);
+                                                }}
+                                                columns={columns}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={toggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="payment_list"
+                                                exportTitle="Search Fees Payments"
+                                            />
                                             <div className="table-responsive" style={{ overflowX: 'auto' }}>
                                                 <table className="table table-striped table-bordered table-hover">
                                                 <thead>

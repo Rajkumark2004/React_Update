@@ -7,8 +7,9 @@ import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import { sanitizeNameWithNumbers } from '../../../utils/validation';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable, buildExportData } from '../../../utils/tableExport';
+import { buildExportData } from '../../../utils/tableExport';
 import Pagination from '../../../utils/Pagination';
+import TableToolbar from '../../../utils/TableToolbar';
 
 const FeeGroup = () => {
     const { currentSession } = useSession();
@@ -43,7 +44,7 @@ const FeeGroup = () => {
 
     // Column visibility state
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
 
     const toggleColumn = (key) => {
         setVisibleColumns(prev => {
@@ -207,91 +208,17 @@ const FeeGroup = () => {
                                 </div>
                                 <div className="box-body">
                                     <div className="download_label">Fees Group List</div>
-                                    <div className="row mb-2" style={isMobile ? { marginBottom: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' } : { marginBottom: '10px' }}>
-                                        <div className={isMobile ? "" : "col-sm-6"}>
-                                            <div id="example1_filter" className={isMobile ? "dataTables_filter" : "dataTables_filter pull-left"}>
-                                                <input
-                                                    type="search"
-                                                    className="form-control input-sm"
-                                                    placeholder="Search..."
-                                                    value={searchTerm}
-                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                    style={{ 
-                                                        display: 'inline-block', 
-                                                        width: '180px', 
-                                                        border: 'none', 
-                                                        borderBottom: '1px solid #ccc', 
-                                                        borderRadius: '0', 
-                                                        boxShadow: 'none',
-                                                        backgroundColor: 'transparent',
-                                                        paddingLeft: '0',
-                                                        outline: 'none',
-                                                        textAlign: isMobile ? 'center' : 'left'
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className={isMobile ? "" : "col-sm-6"}>
-                                            <div className={isMobile ? "dt-buttons btn-group" : "pull-right dt-buttons btn-group"}>
-                                                <button className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                    <i className="fa fa-files-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'fees_group.xls'); }}>
-                                                    <i className="fa fa-file-excel-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'fees_group.csv'); }}>
-                                                    <i className="fa fa-file-text-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => {
-                                                    import('jspdf').then(({ default: jsPDF }) => {
-                                                        const { headers, rows } = getExportData();
-                                                        const doc = new jsPDF();
-                                                        doc.text("Fees Group List", 14, 15);
-                                                        let y = 25;
-
-                                                        // Print Headers
-                                                        headers.forEach((header, index) => {
-                                                            doc.text(header, 14 + (index * 60), y);
-                                                        });
-                                                        y += 10;
-
-                                                        // Print Rows
-                                                        rows.forEach(row => {
-                                                            row.forEach((cell, index) => {
-                                                                doc.text((cell || '').toString(), 14 + (index * 60), y);
-                                                            });
-                                                            y += 10;
-                                                            if (y > 280) {
-                                                                doc.addPage();
-                                                                y = 20;
-                                                            }
-                                                        });
-                                                        doc.save("fees_group.pdf");
-                                                    });
-                                                }}>
-                                                    <i className="fa fa-file-pdf-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm buttons-print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Fees Group List'); }} title="Print">
-                                                    <i className="fa fa-print"></i>
-                                                </button>
-                                                <div className="btn-group" style={{ position: 'relative', display: 'inline-block' }}>
-                                                    <button className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                                        <i className="fa fa-columns"></i>
-                                                    </button>
-                                                    {showColumnsDropdown && (
-                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                            {columns.map(col => (
-                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', whiteSpace: 'nowrap', textAlign: 'left' }}>
-                                                                    <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
-                                                                    {col.label}
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={setSearchTerm}
+                                        columns={columns}
+                                        visibleColumns={visibleColumns}
+                                        onToggleColumn={toggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="fees_group"
+                                        exportTitle="Fees Group List"
+                                        showRecordsPerPage={false}
+                                    />
                                     <div className="table-responsive mailbox-messages overflow-visible">
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>

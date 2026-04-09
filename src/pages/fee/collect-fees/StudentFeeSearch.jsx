@@ -7,8 +7,9 @@ import { api } from '../../../services/api';
 import { useSession } from '../../../context/SessionContext';
 import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
+import { buildExportData } from '../../../utils/tableExport';
 import Pagination from '../../../utils/Pagination';
+import TableToolbar from '../../../utils/TableToolbar';
 import '../../../utils/include_files';
 
 const amountFormat = (amount) => {
@@ -35,7 +36,7 @@ const StudentFeeSearch = () => {
         { key: 'mobileno', label: 'Phone', minWidth: '100px', maxWidth: '130px' }
     ];
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+
 
     const toggleColumn = (key) => {
         setVisibleColumns(prev => {
@@ -83,15 +84,7 @@ const StudentFeeSearch = () => {
     const [importing, setImporting] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const isMobile = windowWidth < 768;
 
     // Fetch Classes and Stats on Mount
     useEffect(() => {
@@ -622,115 +615,24 @@ const StudentFeeSearch = () => {
                                             <div className="box-body">
                                                 <div className="download_label">Student List</div>
 
-                                                {/* Controls: Records, local search, export buttons */}
-                                                <div 
-                                                    className="row mb-2" 
-                                                    style={{ 
-                                                        marginBottom: '10px', 
-                                                        display: isMobile ? 'flex' : 'block',
-                                                        flexDirection: isMobile ? 'column' : 'row',
-                                                        alignItems: isMobile ? 'center' : 'stretch',
-                                                        gap: isMobile ? '15px' : '0'
+                                                <TableToolbar
+                                                    searchTerm={localSearch}
+                                                    onSearchChange={(value) => {
+                                                        setLocalSearch(value);
+                                                        setCurrentPage(1);
                                                     }}
-                                                >
-                                                    <div 
-                                                        className={isMobile ? "" : "col-sm-6"} 
-                                                        style={{ 
-                                                            display: 'flex', 
-                                                            alignItems: 'center', 
-                                                            gap: isMobile ? '15px' : '20px',
-                                                            justifyContent: isMobile ? 'center' : 'flex-start',
-                                                            flexWrap: 'wrap'
-                                                        }}
-                                                    >
-                                                        <div className="dataTables_length">
-                                                            <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                                Records:
-                                                                <select
-                                                                    value={recordsPerPage}
-                                                                    onChange={(e) => {
-                                                                        setRecordsPerPage(Number(e.target.value));
-                                                                        setCurrentPage(1);
-                                                                    }}
-                                                                    className="form-control input-sm"
-                                                                    style={{ width: '80px', margin: '0 10px' }}
-                                                                >
-                                                                    <option value="10">10</option>
-                                                                    <option value="25">25</option>
-                                                                    <option value="50">50</option>
-                                                                    <option value="100">100</option>
-                                                                    <option value="-1">All</option>
-                                                                </select>
-                                                            </label>
-                                                        </div>
-                                                        <div className="dataTables_filter">
-                                                            <input
-                                                                type="search"
-                                                                className="form-control input-sm"
-                                                                placeholder="Search..."
-                                                                style={{ 
-                                                                    marginLeft: isMobile ? '0' : '10px',
-                                                                    display: 'inline-block', 
-                                                                    width: isMobile ? '200px' : '180px', 
-                                                                    border: 'none', 
-                                                                    borderBottom: '1px solid #ccc', 
-                                                                    borderRadius: '0', 
-                                                                    boxShadow: 'none',
-                                                                    backgroundColor: 'transparent',
-                                                                    paddingLeft: '0',
-                                                                    outline: 'none',
-                                                                    textAlign: isMobile ? 'center' : 'left'
-                                                                }}
-                                                                value={localSearch}
-                                                                onChange={(e) => {
-                                                                    setLocalSearch(e.target.value);
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                    <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                                        <div className="dt-buttons btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                                <i className="fa fa-files-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'student_list.csv'); }}>
-                                                                <i className="fa fa-file-text-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'student_list.xls'); }}>
-                                                                <i className="fa fa-file-excel-o"></i>
-                                                            </button>
-                                                            <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'student_list.pdf', 'Student List'); }}>
-                                                                <i className="fa fa-file-pdf-o"></i>
-                                                            </button>
-                                                            <button
-                                                                className="btn btn-default btn-sm"
-                                                                title="Print"
-                                                                onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Student List'); }}
-                                                                style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
-                                                            >
-                                                                <i className="fa fa-print"></i>
-                                                            </button>
-                                                            {/* 
-                                                            <div className="btn-group">
-                                                                <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}>
-                                                                    <i className="fa fa-columns"></i>
-                                                                </button>
-                                                                {showColumnsDropdown && (
-                                                                    <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                        {columns.map(col => (
-                                                                            <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                                <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
-                                                                                {col.label}
-                                                                            </label>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            */}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                    recordsPerPage={recordsPerPage}
+                                                    onRecordsPerPageChange={(value) => {
+                                                        setRecordsPerPage(value);
+                                                        setCurrentPage(1);
+                                                    }}
+                                                    columns={columns}
+                                                    visibleColumns={visibleColumns}
+                                                    onToggleColumn={toggleColumn}
+                                                    getExportData={getExportData}
+                                                    exportFileName="student_list"
+                                                    exportTitle="Student List"
+                                                />
 
                                                 <div className="table-responsive">
                                                     <table className="table table-striped table-bordered table-hover student-list">

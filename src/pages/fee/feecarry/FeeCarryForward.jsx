@@ -6,8 +6,8 @@ import Sidebar from '../../../components/Sidebar';
 import Footer from '../../../components/Footer';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
-import { copyToClipboard, downloadCSV, downloadExcel, printTable } from '../../../utils/tableExport';
 import Pagination from '../../../utils/Pagination';
+import TableToolbar from '../../../utils/TableToolbar';
 import toast from 'react-hot-toast';
 
 const FeesForward = () => {
@@ -84,30 +84,30 @@ const FeesForward = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [entriesPerPage] = useState(100);
 
+    const columns = [
+        { key: 'Student Name', label: 'Student Name' },
+        { key: 'Admission No', label: 'Admission No' },
+        { key: 'Admission Date', label: 'Adm Date' },
+        { key: 'Roll Number', label: 'Roll No' },
+        { key: 'Father Name', label: 'Father Name' },
+        { key: 'Balance', label: 'Balance' }
+    ].filter(col => {
+        if (col.key === 'Admission Date' && !schSetting.admission_date) return false;
+        if (col.key === 'Roll Number' && !schSetting.roll_no) return false;
+        if (col.key === 'Father Name' && !schSetting.father_name) return false;
+        return true;
+    });
+
     // Column Visibility State
-    const [visibleColumns, setVisibleColumns] = useState(new Set([
-        'Student Name', 'Admission No', 'Admission Date', 'Roll Number', 'Father Name', 'Balance'
-    ]));
-    const [showColumnDropdown, setShowColumnDropdown] = useState(false);
-    const columnDropdownRef = useRef(null);
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (columnDropdownRef.current && !columnDropdownRef.current.contains(event.target)) {
-                setShowColumnDropdown(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    const toggleColumnVisibility = (columnName) => {
+    const toggleColumn = (key) => {
         setVisibleColumns(prev => {
             const newSet = new Set(prev);
-            if (newSet.has(columnName)) {
-                newSet.delete(columnName);
+            if (newSet.has(key)) {
+                newSet.delete(key);
             } else {
-                newSet.add(columnName);
+                newSet.add(key);
             }
             return newSet;
         });
@@ -141,38 +141,9 @@ const FeesForward = () => {
         return { headers, rows };
     };
 
-    const handleExport = (type) => {
-        const { headers, rows } = getExportData();
-        if (type === 'copy') {
-            copyToClipboard(headers, rows);
-        } else if (type === 'excel') {
-            downloadExcel(headers, rows, 'fees_carry_forward.xls');
-        } else if (type === 'csv') {
-            downloadCSV(headers, rows, 'fees_carry_forward.csv');
-        } else if (type === 'pdf') {
-            import('jspdf').then(({ default: jsPDF }) => {
-                const doc = new jsPDF();
-                doc.text("Fees Carry Forward List", 14, 15);
-                let y = 25;
-                headers.forEach((header, index) => {
-                    doc.text(header, 14 + (index * 30), y);
-                });
-                y += 10;
-                rows.forEach(row => {
-                    row.forEach((cell, index) => {
-                        doc.text((cell || '').toString(), 14 + (index * 30), y);
-                    });
-                    y += 10;
-                    if (y > 280) {
-                        doc.addPage();
-                        y = 20;
-                    }
-                });
-                doc.save("fees_carry_forward.pdf");
-            });
-        } else if (type === 'print') {
-            printTable(headers, rows, 'Fees Carry Forward List');
-        }
+    const handleSearchChange = (val) => {
+        setSearchTerm(val);
+        setCurrentPage(1);
     };
 
     // Initial Fetch (Classes)
@@ -465,70 +436,17 @@ const FeesForward = () => {
                                                     )}
 
                                                     {/* DataTables Controls */}
-                                                    <div className="row mb-2" style={isMobile ? { marginBottom: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' } : { marginBottom: '10px' }}>
-                                                        <div className={isMobile ? "" : "col-sm-6"}>
-                                                            <div className={isMobile ? "dataTables_filter" : "dataTables_filter pull-left"}>
-                                                                <input
-                                                                    type="search"
-                                                                    className="form-control input-sm"
-                                                                    placeholder="Search..."
-                                                                    value={searchTerm}
-                                                                    onChange={(e) => {
-                                                                        setSearchTerm(e.target.value);
-                                                                        setCurrentPage(1);
-                                                                    }}
-                                                                    style={{ 
-                                                                        display: 'inline-block', 
-                                                                        width: '180px', 
-                                                                        border: 'none', 
-                                                                        borderBottom: '1px solid #ccc', 
-                                                                        borderRadius: '0', 
-                                                                        boxShadow: 'none',
-                                                                        backgroundColor: 'transparent',
-                                                                        paddingLeft: '0',
-                                                                        outline: 'none',
-                                                                        textAlign: isMobile ? 'center' : 'left'
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className={isMobile ? "" : "col-sm-6"}>
-                                                            <div className={isMobile ? "dt-buttons btn-group" : "pull-right dt-buttons btn-group"}>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-copy buttons-html5" title="Copy" onClick={() => handleExport('copy')} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}><i className="fa fa-files-o"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-excel buttons-html5" title="Excel" onClick={() => handleExport('excel')}><i className="fa fa-file-excel-o"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-csv buttons-html5" title="CSV" onClick={() => handleExport('csv')}><i className="fa fa-file-text-o"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-pdf buttons-html5" title="PDF" onClick={() => handleExport('pdf')}><i className="fa fa-file-pdf-o"></i></button>
-                                                                <button type="button" className="btn btn-default btn-sm buttons-print" title="Print" onClick={() => handleExport('print')}><i className="fa fa-print"></i></button>
-                                                                <div className="btn-group" ref={columnDropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
-                                                                    <button type="button" className="btn btn-default btn-sm buttons-collection buttons-colvis" title="Columns" onClick={() => setShowColumnDropdown(!showColumnDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                                                        <i className="fa fa-columns"></i>
-                                                                    </button>
-                                                                    {showColumnDropdown && (
-                                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                            {['Student Name', 'Admission No', 'Admission Date', 'Roll Number', 'Father Name', 'Balance'].map(col => {
-                                                                                // Only show options for schSetting enabled fields
-                                                                                if (col === 'Admission Date' && !schSetting.admission_date) return null;
-                                                                                if (col === 'Roll Number' && !schSetting.roll_no) return null;
-                                                                                if (col === 'Father Name' && !schSetting.father_name) return null;
-
-                                                                                return (
-                                                                                    <label key={col} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', whiteSpace: 'nowrap', textAlign: 'left' }}>
-                                                                                        <input
-                                                                                            type="checkbox"
-                                                                                            checked={visibleColumns.has(col)}
-                                                                                            onChange={(e) => { e.stopPropagation(); toggleColumnVisibility(col); }}
-                                                                                            style={{ marginRight: '6px' }}
-                                                                                        />
-                                                                                        {col}
-                                                                                    </label>
-                                                                                );
-                                                                            })}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    <TableToolbar
+                                                        searchTerm={searchTerm}
+                                                        onSearchChange={handleSearchChange}
+                                                        columns={columns}
+                                                        visibleColumns={visibleColumns}
+                                                        onToggleColumn={toggleColumn}
+                                                        getExportData={getExportData}
+                                                        exportFileName="fees_carry_forward"
+                                                        exportTitle="Fees Carry Forward List"
+                                                        showRecordsPerPage={false}
+                                                    />
 
                                                     {studentDueFee.length > 0 ? (
                                                         <>
