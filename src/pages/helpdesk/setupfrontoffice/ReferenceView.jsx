@@ -179,6 +179,11 @@ const ReferenceView = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Add Reference</h3>
+                                    <div className="box-tools pull-right hidden-sm hidden-md hidden-lg">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <form id="form1" onSubmit={handleSubmit} method="post" acceptCharset="utf-8" encType="multipart/form-data">
                                     <div className="box-body">
@@ -216,7 +221,7 @@ const ReferenceView = () => {
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Reference List</h3>
-                                    <div className="box-tools pull-right">
+                                    <div className="box-tools pull-right hidden-xs">
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>
