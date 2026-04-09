@@ -6,6 +6,8 @@ import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 
 const DisableReasonEdit = () => {
@@ -20,13 +22,33 @@ const DisableReasonEdit = () => {
     });
     const [results, setResults] = useState([]);
 
+    const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [recordsPerPage] = useState(10);
+    const [recordsPerPage, setRecordsPerPage] = useState(10);
+
+    const filteredResults = results.filter(item =>
+        item.reason?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const indexOfLastItem = currentPage * recordsPerPage;
     const indexOfFirstItem = indexOfLastItem - recordsPerPage;
-    const currentItems = results.slice(indexOfFirstItem, indexOfLastItem);
-    const totalItems = results.length;
+    const currentItems = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
+    const totalItems = filteredResults.length;
+
+    const columns = [
+        { key: 'reason', label: 'Disable Reason' },
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredResults, (row, key) => row[key]);
 
     // Responsive state
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -163,20 +185,37 @@ const DisableReasonEdit = () => {
                                 <div className="box-body">
                                     <div className="mailbox-messages">
                                         {pageLoading ? <Loader /> : (
-                                            <div className="table-responsive">
-                                                <table className="table table-hover table-striped table-bordered">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Disable Reason</th>
-                                                            <th className="text-right">Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {currentItems.map((value) => (
-                                                            <tr key={value.id}>
-                                                                <td style={{ wordBreak: 'break-word' }}>{value.reason}</td>
-                                                                <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                                                                    {canEdit && (
+                                            <>
+                                                <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                                    <TableToolbar
+                                                        searchTerm={searchTerm}
+                                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                        recordsPerPage={recordsPerPage}
+                                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                        columns={columns}
+                                                        visibleColumns={visibleColumns}
+                                                        onToggleColumn={handleToggleColumn}
+                                                        getExportData={getExportData}
+                                                        exportFileName="disable_reasons"
+                                                        exportTitle="Disable Reason List"
+                                                    />
+                                                </div>
+                                                <div className="table-responsive">
+                                                    <table className="table table-hover table-striped table-bordered">
+                                                        <thead>
+                                                            <tr>
+                                                                {columns.map(col => visibleColumns.has(col.key) && (
+                                                                    <th key={col.key}>{col.label}</th>
+                                                                ))}
+                                                                <th className="text-right noExport">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {currentItems.map((value) => (
+                                                                <tr key={value.id}>
+                                                                    {visibleColumns.has('reason') && <td style={{ wordBreak: 'break-word' }}>{value.reason}</td>}
+                                                                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                                                                        {canEdit && (
                                                                         <Link
                                                                             to={`/admin/disable_reason/edit/${value.id}`}
                                                                             className="btn btn-default btn-xs"
@@ -197,11 +236,12 @@ const DisableReasonEdit = () => {
                                                                         </a>
                                                                     )}
                                                                 </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </>
                                         )}
                                         {!pageLoading && totalItems > 0 && (
                                             <div className="pt15 pb15">

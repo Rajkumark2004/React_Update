@@ -8,7 +8,8 @@ import Loader from '../../components/Loader';
 import { api } from '../../services/api';
 import '../../utils/include_files';
 import { useTableSort } from '../../hooks/useTableSort';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../utils/tableExport';
+import { buildExportData } from '../../utils/tableExport';
+import TableToolbar from '../../utils/TableToolbar';
 import Pagination from '../../utils/Pagination';
 const DisabledStudents = () => {
     const [activeTab, setActiveTab] = useState('list');
@@ -29,15 +30,6 @@ const DisabledStudents = () => {
     const [tableSearchTerm, setTableSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const isMobile = windowWidth < 768;
 
     const columns = [
         { key: 'admission_no', label: 'Admission No' },
@@ -49,9 +41,8 @@ const DisabledStudents = () => {
         { key: 'mobileno', label: 'Mobile Number' },
     ];
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
-    const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
 
-    const toggleColumn = (key) => {
+    const handleToggleColumn = (key) => {
         setVisibleColumns(prev => {
             const next = new Set(prev);
             if (next.has(key)) { next.delete(key); } else { next.add(key); }
@@ -65,6 +56,13 @@ const DisabledStudents = () => {
         desc: <i className="fa fa-angle-down pull-right"></i>,
         default: <i className="fa fa-angle-up pull-right" style={{ color: '#ccc', opacity: 0.5 }}></i>
     });
+
+    // Get full name
+    const getFullName = (student) => {
+        return [student.firstname, student.middlename, student.lastname]
+            .filter(Boolean)
+            .join(' ');
+    };
 
     // Client-side table filter
     const filteredStudents = sortedStudents.filter(s => {
@@ -198,12 +196,6 @@ const DisabledStudents = () => {
         return 'https://newlayout.wisibles.com/uploads/student_images/no_image.png';
     };
 
-    // Get full name
-    const getFullName = (student) => {
-        return [student.firstname, student.middlename, student.lastname]
-            .filter(Boolean)
-            .join(' ');
-    };
 
     // Get disable reason text
     const getDisableReason = (reasonId) => {
@@ -378,105 +370,19 @@ const DisabledStudents = () => {
                                     <div className="tab-content">
                                         {/* List View Tab */}
                                         <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} no-padding`} id="tab_1">
-                                            <div
-                                                className="row mb-2"
-                                                style={{
-                                                    marginBottom: '10px',
-                                                    display: isMobile ? 'flex' : 'block',
-                                                    flexDirection: isMobile ? 'column' : 'row',
-                                                    alignItems: isMobile ? 'center' : 'stretch',
-                                                    gap: isMobile ? '15px' : '0'
-                                                }}
-                                            >
-                                                <div
-                                                    className={isMobile ? "" : "col-sm-6"}
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: isMobile ? '15px' : '20px',
-                                                        justifyContent: isMobile ? 'center' : 'flex-start',
-                                                        flexWrap: 'wrap'
-                                                    }}
-                                                >
-                                                    <div className="dataTables_length">
-                                                        <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                            Records:
-                                                            <select
-                                                                value={recordsPerPage}
-                                                                onChange={(e) => {
-                                                                    setRecordsPerPage(Number(e.target.value));
-                                                                    setCurrentPage(1);
-                                                                }}
-                                                                className="form-control input-sm"
-                                                                style={{ width: '80px', margin: '0 10px' }}
-                                                            >
-                                                                <option value="10">10</option>
-                                                                <option value="25">25</option>
-                                                                <option value="50">50</option>
-                                                                <option value="100">100</option>
-                                                            </select>
-                                                        </label>
-                                                    </div>
-                                                    <div className="dataTables_filter">
-                                                        <input
-                                                            type="search"
-                                                            className="form-control input-sm"
-                                                            placeholder="Search..."
-                                                            style={{
-                                                                marginLeft: isMobile ? '0' : '10px',
-                                                                display: 'inline-block',
-                                                                width: isMobile ? '180px' : '180px',
-                                                                border: 'none',
-                                                                borderBottom: '1px solid #ccc',
-                                                                borderRadius: '0',
-                                                                boxShadow: 'none',
-                                                                backgroundColor: 'transparent',
-                                                                paddingLeft: '0',
-                                                                outline: 'none',
-                                                                textAlign: isMobile ? 'center' : 'left'
-                                                            }}
-                                                            value={tableSearchTerm}
-                                                            onChange={(e) => {
-                                                                setTableSearchTerm(e.target.value);
-                                                                setCurrentPage(1);
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                                    <div className="dt-buttons btn-group">
-                                                        <button className="btn btn-default btn-sm" title="Copy" onClick={() => { const { headers, rows } = getExportData(); copyToClipboard(headers, rows); }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                            <i className="fa fa-files-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="Excel" onClick={() => { const { headers, rows } = getExportData(); downloadExcel(headers, rows, 'disabled_students.xls'); }}>
-                                                            <i className="fa fa-file-excel-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="CSV" onClick={() => { const { headers, rows } = getExportData(); downloadCSV(headers, rows, 'disabled_students.csv'); }}>
-                                                            <i className="fa fa-file-text-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="PDF" onClick={() => { const { headers, rows } = getExportData(); downloadPDF(headers, rows, 'disabled_students.pdf', 'Disabled Students'); }}>
-                                                            <i className="fa fa-file-pdf-o"></i>
-                                                        </button>
-                                                        <button className="btn btn-default btn-sm" title="Print" onClick={() => { const { headers, rows } = getExportData(); printTable(headers, rows, 'Disabled Students'); }}>
-                                                            <i className="fa fa-print"></i>
-                                                        </button>
-                                                        <div className="btn-group">
-                                                            <button className="btn btn-default btn-sm" title="Columns" onClick={() => setShowColumnsDropdown(!showColumnsDropdown)} style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}>
-                                                                <i className="fa fa-columns"></i>
-                                                            </button>
-                                                            {showColumnsDropdown && (
-                                                                <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                                    {columns.map(col => (
-                                                                        <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                            <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => toggleColumn(col.key)} style={{ marginRight: '6px' }} />
-                                                                            {col.label}
-                                                                        </label>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                                <TableToolbar
+                                                    searchTerm={tableSearchTerm}
+                                                    onSearchChange={(val) => { setTableSearchTerm(val); setCurrentPage(1); }}
+                                                    recordsPerPage={recordsPerPage}
+                                                    onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                    columns={columns}
+                                                    visibleColumns={visibleColumns}
+                                                    onToggleColumn={handleToggleColumn}
+                                                    getExportData={getExportData}
+                                                    exportFileName="disabled_students"
+                                                    exportTitle="Disabled Students"
+                                                />
                                             </div>
 
                                             <div className="table-responsive overflow-visible-lg">
