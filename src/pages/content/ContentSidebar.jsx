@@ -10,7 +10,7 @@ const ContentSidebar = () => {
     return (
         <div className="box box-primary">
             <div className="box-body box-profile">
-                <h3 className="profile-username text-center">Download Center</h3>
+                <h3 className="profile-username text-left">Download Center</h3>
                 <ul className="list-group list-group-unbordered">
                     <li className="list-group-item">
                         <Link to="/admin/content/createcontent" className={isActive('/admin/content/createcontent') ? 'active' : ''} style={{ color: isActive('/admin/content/createcontent') ? '#444' : 'inherit', fontWeight: isActive('/admin/content/createcontent') ? 'bold' : 'normal' }}>

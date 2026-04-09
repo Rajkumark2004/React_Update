@@ -8,7 +8,8 @@ import Loader from '../../../components/Loader';
 import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
 import { sanitizeAlphaWithSpaces, validateSource } from '../../../utils/validation';
-import { copyToClipboard, downloadCSV, downloadExcel, downloadPDF, printTable, buildExportData } from '../../../utils/tableExport';
+import { buildExportData } from '../../../utils/tableExport';
+import TableToolbar from '../../../utils/TableToolbar';
 import Pagination from '../../../utils/Pagination';
 
 const SourceEdit = () => {
@@ -41,20 +42,11 @@ const SourceEdit = () => {
         }
     };
 
-    // Pagination and responsive state
+    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
-    const [searchTerm, setSearchTerm] = useState(''); // Global search term
+    const [searchTerm, setSearchTerm] = useState('');
     const [initialLoading, setInitialLoading] = useState(true);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const isMobile = windowWidth < 768;
 
     // Column visibility
     const sourceColumns = [
@@ -62,7 +54,6 @@ const SourceEdit = () => {
         { key: 'description', label: 'Description' }
     ];
     const [sourceVisibleCols, setSourceVisibleCols] = useState(new Set(sourceColumns.map(c => c.key)));
-    const [showSourceColsDd, setShowSourceColsDd] = useState(false);
 
     const filteredResults = source_list.filter(item =>
         item.source?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -77,7 +68,15 @@ const SourceEdit = () => {
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
     const currentItems = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
 
+    const getExportData = () => buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
 
+    const handleToggleColumn = (key) => {
+        setSourceVisibleCols(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            return next;
+        });
+    };
 
     useEffect(() => {
         fetchSourceList();
@@ -152,10 +151,7 @@ const SourceEdit = () => {
         }
     };
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        console.log('Searching...');
-    };
+
 
     return (
         <div className="wrapper">
@@ -239,134 +235,18 @@ const SourceEdit = () => {
                                     <h3 className="box-title titlefix">Source List</h3>
                                 </div>
                                 <div className="box-body">
-                                    {/* Toolbar: Records, Search, Export Buttons */}
-                                    <div
-                                        className="row mb-2"
-                                        style={{
-                                            marginBottom: '10px',
-                                            display: isMobile ? 'flex' : 'block',
-                                            flexDirection: isMobile ? 'column' : 'row',
-                                            alignItems: isMobile ? 'center' : 'stretch',
-                                            gap: isMobile ? '15px' : '0'
-                                        }}
-                                    >
-                                        <div
-                                            className={isMobile ? "" : "col-sm-6"}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: isMobile ? '15px' : '20px',
-                                                justifyContent: isMobile ? 'center' : 'flex-start',
-                                                flexWrap: 'wrap'
-                                            }}
-                                        >
-                                            <div className="dataTables_length">
-                                                <label style={{ fontWeight: 'normal', display: 'flex', alignItems: 'center', margin: 0 }}>
-                                                    Records:
-                                                    <select
-                                                        value={recordsPerPage}
-                                                        onChange={(e) => {
-                                                            setRecordsPerPage(Number(e.target.value));
-                                                            setCurrentPage(1);
-                                                        }}
-                                                        className="form-control input-sm"
-                                                        style={{ width: '80px', margin: '0 10px' }}
-                                                    >
-                                                        <option value="10">10</option>
-                                                        <option value="25">25</option>
-                                                        <option value="50">50</option>
-                                                        <option value="100">100</option>
-                                                        <option value="-1">All</option>
-                                                    </select>
-                                                </label>
-                                            </div>
-                                            <div className="dataTables_filter">
-                                                <input
-                                                    type="search"
-                                                    className="form-control input-sm"
-                                                    placeholder="Search..."
-                                                    style={{
-                                                        marginLeft: isMobile ? '0' : '10px',
-                                                        display: 'inline-block',
-                                                        width: isMobile ? '180px' : '180px',
-                                                        border: 'none',
-                                                        borderBottom: '1px solid #ccc',
-                                                        borderRadius: '0',
-                                                        boxShadow: 'none',
-                                                        backgroundColor: 'transparent',
-                                                        paddingLeft: '0',
-                                                        outline: 'none',
-                                                        textAlign: isMobile ? 'center' : 'left'
-                                                    }}
-                                                    value={searchTerm}
-                                                    onChange={(e) => {
-                                                        setSearchTerm(e.target.value);
-                                                        setCurrentPage(1);
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className={isMobile ? "text-center" : "col-sm-6 text-right"}>
-                                            <div className="dt-buttons btn-group">
-                                                <button className="btn btn-default btn-sm" title="Copy" onClick={() => {
-                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
-                                                    copyToClipboard(headers, rows);
-                                                }} style={{ borderTopLeftRadius: '20px', borderBottomLeftRadius: '20px' }}>
-                                                    <i className="fa fa-files-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm" title="CSV" onClick={() => {
-                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
-                                                    downloadCSV(headers, rows, 'source_list.csv');
-                                                }}>
-                                                    <i className="fa fa-file-text-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm" title="Excel" onClick={() => {
-                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
-                                                    downloadExcel(headers, rows, 'source_list.xls');
-                                                }}>
-                                                    <i className="fa fa-file-excel-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm" title="PDF" onClick={() => {
-                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
-                                                    downloadPDF(headers, rows, 'source_list.pdf', 'Source List');
-                                                }}>
-                                                    <i className="fa fa-file-pdf-o"></i>
-                                                </button>
-                                                <button className="btn btn-default btn-sm" title="Print" onClick={() => {
-                                                    const { headers, rows } = buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
-                                                    printTable(headers, rows, 'Source List');
-                                                }}>
-                                                    <i className="fa fa-print"></i>
-                                                </button>
-                                                <div className="btn-group">
-                                                    <button
-                                                        className="btn btn-default btn-sm"
-                                                        title="Columns"
-                                                        onClick={() => setShowSourceColsDd(!showSourceColsDd)}
-                                                        style={{ borderTopRightRadius: '20px', borderBottomRightRadius: '20px' }}
-                                                    >
-                                                        <i className="fa fa-columns"></i>
-                                                    </button>
-                                                    {showSourceColsDd && (
-                                                        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 1000, background: '#fff', border: '1px solid #ccc', borderRadius: '4px', padding: '8px 10px', minWidth: '180px', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
-                                                            {sourceColumns.map(col => (
-                                                                <label key={col.key} style={{ display: 'block', cursor: 'pointer', padding: '2px 0', fontSize: '13px', fontWeight: 'normal', textAlign: 'left' }}>
-                                                                    <input type="checkbox" checked={sourceVisibleCols.has(col.key)} onChange={() => {
-                                                                        setSourceVisibleCols(prev => {
-                                                                            const next = new Set(prev);
-                                                                            if (next.has(col.key)) { next.delete(col.key); } else { next.add(col.key); }
-                                                                            return next;
-                                                                        });
-                                                                    }} style={{ marginRight: '6px' }} />
-                                                                    {col.label}
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <TableToolbar
+                                        searchTerm={searchTerm}
+                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                        recordsPerPage={recordsPerPage}
+                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                        columns={sourceColumns}
+                                        visibleColumns={sourceVisibleCols}
+                                        onToggleColumn={handleToggleColumn}
+                                        getExportData={getExportData}
+                                        exportFileName="source_list"
+                                        exportTitle="Source List"
+                                    />
                                     <div className="download_label">Source List</div>
                                     <div className="table-responsive mailbox-messages overflow-visible">
                                         <table className="table table-hover table-striped table-bordered example" style={{ tableLayout: 'fixed' }}>

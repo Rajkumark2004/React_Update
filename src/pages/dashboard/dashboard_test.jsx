@@ -313,15 +313,15 @@ const DashboardTest = () => {
                                     <div className="hide-on-mobile border-radius-20 div-user-infomain mt-15 box box-primary">
                                         <div className="widget-user-2 mb0">
                                             <div className="text-right admin-edit">
-                                                <Link to={`/admin/staff/edit/${userData.id}`} className="btn">
-                                                    <span>✏️</span>
+                                                <Link to={`/admin/staff/edit/${userData.id}`} className="btn btn-default btn-xs">
+                                                    <i className="fa fa-pencil"></i>
                                                 </Link>
                                             </div>
                                             <div className="widget-user-header overflow-hidden">
                                                 <div className="div-user-info">
                                                     <h5 className="ml-0 widget-user-desc mb5">{userData.role}</h5>
                                                     <h3 className="ml-0 widget-user-username">{userData.name}</h3>
-                                                    <h5 className="ml-0 mt-20 view-profile widget-user-desc">
+                                                    <h5 className="ml-0 mt-20 view-profile widget-user-desc ">
                                                         <Link to={`/admin/staff/profile/${userData.id}`}>View Profile ✓</Link>
                                                     </h5>
                                                 </div>
