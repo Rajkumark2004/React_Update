@@ -6,6 +6,9 @@ import Footer from '../../components/Footer';
 import ContentSidebar from './ContentSidebar';
 import { useSession } from '../../context/SessionContext';
 import { api } from '../../services/api';
+import TableToolbar from '../../utils/TableToolbar';
+import Pagination from '../../utils/Pagination';
+import { buildExportData } from '../../utils/tableExport';
 
 const CreateContent = () => {
     const navigate = useNavigate();
@@ -22,6 +25,9 @@ const CreateContent = () => {
     });
 
     const [contentList, setContentList] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(10);
     const [classList, setClassList] = useState([]);
     const [sectionList, setSectionList] = useState([]);
     const [isSectionOpen, setIsSectionOpen] = useState(false);
@@ -184,6 +190,48 @@ const CreateContent = () => {
         }
     };
 
+    const filteredList = contentList.filter(item =>
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.class || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const totalItems = filteredList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
+
+    const columns = [
+        { key: 'content_title', label: 'Content Title' },
+        { key: 'type', label: 'Type' },
+        { key: 'date', label: 'Date' },
+        { key: 'class', label: 'Class' },
+        { key: 'available_for', label: 'Available For' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
+
+    const formatCell = (row, key) => {
+        if (key === 'content_title') return row.title || '';
+        if (key === 'type') return row.type || '';
+        if (key === 'date') return row.date || '';
+        if (key === 'class') return row.class || '';
+        if (key === 'available_for') return row.role || '';
+        return '';
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredList, formatCell);
+
     return (
         <div className="wrapper">
             <Header />
@@ -297,29 +345,43 @@ const CreateContent = () => {
                                             <h3 className="box-title titlefix">Content List</h3>
                                         </div>
                                         <div className="box-body">
-                                            <div className="table-responsive mailbox-messages">
+                                            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                                <TableToolbar
+                                                    searchTerm={searchTerm}
+                                                    onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                                    recordsPerPage={recordsPerPage}
+                                                    onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                                    columns={columns}
+                                                    visibleColumns={visibleColumns}
+                                                    onToggleColumn={handleToggleColumn}
+                                                    getExportData={getExportData}
+                                                    exportFileName="Content_List"
+                                                    exportTitle="Content List"
+                                                />
+                                            </div>
+                                            <div className="table-responsive mailbox-messages overflow-visible">
                                                 <div className="download_label">Content List</div>
                                                 <table className="table table-striped table-bordered table-hover example">
                                                     <thead>
                                                         <tr>
-                                                            <th>Content Title</th>
-                                                            <th>Type</th>
-                                                            <th>Date</th>
-                                                            <th>Class</th>
-                                                            <th>Available For</th>
-                                                            <th className="text-right">Action</th>
+                                                            {visibleColumns.has('content_title') && <th>Content Title</th>}
+                                                            {visibleColumns.has('type') && <th>Type</th>}
+                                                            {visibleColumns.has('date') && <th>Date</th>}
+                                                            {visibleColumns.has('class') && <th>Class</th>}
+                                                            {visibleColumns.has('available_for') && <th>Available For</th>}
+                                                            <th className="text-right noExport">Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {contentList.map((item) => (
+                                                        {currentItems.map((item) => (
                                                             <tr key={item.id}>
-                                                                <td className="mailbox-name">
+                                                                {visibleColumns.has('content_title') && <td className="mailbox-name">
                                                                     <a href="#" onClick={(e) => { e.preventDefault(); handleDownload(item.id, item.title); }}>{item.title}</a>
-                                                                </td>
-                                                                <td className="mailbox-name">{item.type}</td>
-                                                                <td className="mailbox-name">{item.date}</td>
-                                                                <td className="mailbox-name">{item.class}</td>
-                                                                <td className="mailbox-name">{item.role}</td>
+                                                                </td>}
+                                                                {visibleColumns.has('type') && <td className="mailbox-name">{item.type}</td>}
+                                                                {visibleColumns.has('date') && <td className="mailbox-name">{item.date}</td>}
+                                                                {visibleColumns.has('class') && <td className="mailbox-name">{item.class}</td>}
+                                                                {visibleColumns.has('available_for') && <td className="mailbox-name">{item.role}</td>}
                                                                 <td className="mailbox-date pull-right">
                                                                     <a href="#" className="btn btn-default btn-xs" data-toggle="tooltip" title="Download" onClick={(e) => { e.preventDefault(); handleDownload(item.id, item.title); }}>
                                                                         <i className="fa fa-download"></i>
@@ -333,8 +395,21 @@ const CreateContent = () => {
                                                                 </td>
                                                             </tr>
                                                         ))}
+                                                        {currentItems.length === 0 && (
+                                                            <tr>
+                                                                <td colSpan="6" className="text-center text-danger">No Record Found</td>
+                                                            </tr>
+                                                        )}
                                                     </tbody>
                                                 </table>
+                                            </div>
+                                            <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                                <Pagination 
+                                                    totalItems={totalItems} 
+                                                    itemsPerPage={recordsPerPage} 
+                                                    currentPage={currentPage}
+                                                    onPageChange={(page) => setCurrentPage(page)}
+                                                />
                                             </div>
                                         </div>
                                     </div>

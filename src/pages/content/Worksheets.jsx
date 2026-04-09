@@ -6,6 +6,9 @@ import Footer from '../../components/Footer';
 import ContentSidebar from './ContentSidebar';
 import { useSession } from '../../context/SessionContext';
 import { api } from '../../services/api';
+import TableToolbar from '../../utils/TableToolbar';
+import Pagination from '../../utils/Pagination';
+import { buildExportData } from '../../utils/tableExport';
 
 const Worksheets = () => {
     const navigate = useNavigate();
@@ -16,6 +19,9 @@ const Worksheets = () => {
     // Mock data based on worksheets.php structure
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(10);
 
     useEffect(() => {
         fetchData();
@@ -55,6 +61,45 @@ const Worksheets = () => {
         }
     };
 
+    const filteredList = list.filter(item =>
+        item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.type?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const totalItems = filteredList.length;
+    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
+    const indexOfLastItem = currentPage * safeRecordsPerPage;
+    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
+    const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
+
+    const columns = [
+        { key: 'content_title', label: 'Content Title' },
+        { key: 'type', label: 'Type' },
+        { key: 'date', label: 'Date' },
+        { key: 'available_for', label: 'Available For' }
+    ];
+
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
+
+    const handleToggleColumn = (key) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
+    };
+
+    const formatCell = (row, key) => {
+        if (key === 'content_title') return row.title || '';
+        if (key === 'type') return row.type || '';
+        if (key === 'date') return row.date || '';
+        if (key === 'available_for') return row.is_public === "Yes" ? "ALL Classes" : `${row.class} (${row.section_names})`;
+        return '';
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredList, formatCell);
+
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
@@ -83,20 +128,30 @@ const Worksheets = () => {
                                     </div>
                                 </div>
                                 <div className="box-body">
-                                    <div className="mailbox-controls">
-                                        <div className="pull-right">
-                                        </div>
+                                    <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                        <TableToolbar
+                                            searchTerm={searchTerm}
+                                            onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                                            recordsPerPage={recordsPerPage}
+                                            onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                            columns={columns}
+                                            visibleColumns={visibleColumns}
+                                            onToggleColumn={handleToggleColumn}
+                                            getExportData={getExportData}
+                                            exportFileName="Worksheets"
+                                            exportTitle="Worksheets"
+                                        />
                                     </div>
-                                    <div className="mailbox-messages table-responsive">
+                                    <div className="mailbox-messages table-responsive overflow-visible">
                                         <div className="download_label">Worksheets</div>
                                         <table className="table table-striped table-bordered table-hover example">
                                             <thead>
                                                 <tr>
-                                                    <th>Content Title</th>
-                                                    <th>Type</th>
-                                                    <th>Date</th>
-                                                    <th>Available For</th>
-                                                    <th className="text-right no-print">Action</th>
+                                                    {visibleColumns.has('content_title') && <th>Content Title</th>}
+                                                    {visibleColumns.has('type') && <th>Type</th>}
+                                                    {visibleColumns.has('date') && <th>Date</th>}
+                                                    {visibleColumns.has('available_for') && <th>Available For</th>}
+                                                    <th className="text-right no-print noExport">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -109,9 +164,9 @@ const Worksheets = () => {
                                                         <td colSpan="5" className="text-center text-danger">No Record Found</td>
                                                     </tr>
                                                 ) : (
-                                                    list.map((data) => (
+                                                    currentItems.map((data) => (
                                                         <tr key={data.id}>
-                                                            <td className="mailbox-name">
+                                                            {visibleColumns.has('content_title') && <td className="mailbox-name">
                                                                 <a href="#" onClick={(e) => { e.preventDefault(); handleDownload(data.id, data.title); }} className="detail_popover">{data.title}</a>
                                                                 <div className="fee_detail_popover" style={{ display: 'block', fontSize: '12px', marginTop: '5px' }}>
                                                                     {data.note === "" || data.note === null ? (
@@ -120,16 +175,16 @@ const Worksheets = () => {
                                                                         <p className="text text-info">{data.note}</p>
                                                                     )}
                                                                 </div>
-                                                            </td>
-                                                            <td className="mailbox-name">
+                                                            </td>}
+                                                            {visibleColumns.has('type') && <td className="mailbox-name">
                                                                 {data.type}
-                                                            </td>
-                                                            <td className="mailbox-name">
+                                                            </td>}
+                                                            {visibleColumns.has('date') && <td className="mailbox-name">
                                                                 {data.date}
-                                                            </td>
-                                                            <td className="mailbox-name">
+                                                            </td>}
+                                                            {visibleColumns.has('available_for') && <td className="mailbox-name">
                                                                 {data.is_public === "Yes" ? "ALL Classes" : `${data.class} (${data.section_names})`}
-                                                            </td>
+                                                            </td>}
                                                             <td className="mailbox-date pull-right no-print">
                                                                 <a href="#" className="btn btn-default btn-xs" data-toggle="tooltip" title="Download" onClick={(e) => { e.preventDefault(); handleDownload(data.id, data.title); }}>
                                                                     <i className="fa fa-download"></i>
@@ -146,6 +201,14 @@ const Worksheets = () => {
                                                 )}
                                             </tbody>
                                         </table>
+                                    </div>
+                                    <div className="pt15 pb15" style={{ padding: '15px 0' }}>
+                                        <Pagination 
+                                            totalItems={totalItems} 
+                                            itemsPerPage={recordsPerPage} 
+                                            currentPage={currentPage}
+                                            onPageChange={(page) => setCurrentPage(page)}
+                                        />
                                     </div>
                                 </div>
                             </div>
