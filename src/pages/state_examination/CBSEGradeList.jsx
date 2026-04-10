@@ -208,6 +208,26 @@ const CBSEGradeList = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        let isValid = true;
+        for (let i = 0; i < formData.ranges.length; i++) {
+            const range = formData.ranges[i];
+            const max = parseFloat(range.maximum_percentage);
+            const min = parseFloat(range.minimum_percentage);
+            
+            if (isNaN(max) || isNaN(min) || max < 0 || max > 100 || min < 0 || min > 100) {
+                toast.error(`Invalid percentage values in row ${i + 1}. Must be between 0 and 100.`);
+                isValid = false;
+                break;
+            }
+            if (min > max) {
+                toast.error(`Row ${i + 1}: Minimum percentage (${min}) cannot be greater than Maximum percentage (${max}).`);
+                isValid = false;
+                break;
+            }
+        }
+        if (!isValid) return;
+
         try {
             setLoading(true);
             // Transform data for API
@@ -260,7 +280,7 @@ const CBSEGradeList = () => {
             }
         } catch (error) {
             console.error("Error saving grade:", error);
-            toast.error("An error occurred while saving.");
+            toast.error(error.message || "An error occurred while saving.");
         } finally {
             setLoading(false);
         }

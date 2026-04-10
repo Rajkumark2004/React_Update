@@ -154,7 +154,7 @@ const TableToolbar = ({
                             <input
                                 type="search"
                                 className="form-control input-sm"
-                                placeholder="bug"
+                                placeholder="Search..."
                                 value={searchTerm}
                                 onChange={(e) => onSearchChange(e.target.value)}
                                 style={{

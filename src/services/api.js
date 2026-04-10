@@ -6511,10 +6511,14 @@ export const api = {
     addCBSEGrade: async (payload) => {
         try {
             const response = await fetch(`${API_BASE}/cbseexam/grade/add`, createFetchOptions('POST', payload));
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            
+            // Allow passing the data through even if response.ok is false, 
+            // the component will check for data.status or throw using data.message
+            if (!response.ok && !data) {
+                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return await response.json();
+            return data;
         } catch (error) {
             console.error('Add CBSE Grade Error:', error);
             throw error;

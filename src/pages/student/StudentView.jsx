@@ -1128,6 +1128,55 @@ const StudentView = () => {
                       </div>
                     </div>
 
+                    {/* Hostel Details Section */}
+                    <div className="tshadow mb25 bozero">
+                      <h3 className="pagetitleh2">Hostel Details</h3>
+                      <div className="table-responsive around10 pt0">
+                        <table className="table3 table-hover table-striped tmb0">
+                          <tbody>
+                            <tr>
+                              <td width="35%">Hostel</td>
+                              <td className="col-md-5">{student.hostel_name || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td>Room No</td>
+                              <td>{student.room_no || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td>Room Type</td>
+                              <td>{student.room_type || '-'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Transport Details Section */}
+                    <div className="tshadow mb25 bozero">
+                      <h3 className="pagetitleh2">Transport Details</h3>
+                      <div className="table-responsive around10 pt0">
+                        <table className="table3 table-hover table-striped tmb0">
+                          <tbody>
+                            <tr>
+                              <td width="35%">Route</td>
+                              <td className="col-md-5">{student.route_title || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td>Vehicle Number</td>
+                              <td>{student.vehicle_no || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td>Driver Name</td>
+                              <td>{student.driver_name || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td>Driver Contact</td>
+                              <td>{student.driver_contact || '-'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
 
                     {/* Miscellaneous Details */}
                     <div className="tshadow mb25 bozero">

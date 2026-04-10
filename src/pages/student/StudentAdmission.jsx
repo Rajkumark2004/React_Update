@@ -425,6 +425,10 @@ const StudentAdmission = () => {
                             data.append('hostel_id', value);
                             return;
                         }
+                        if (key === 'room_no') {
+                            data.append('hostel_room_id', value);
+                            return;
+                        }
 
                         // Convert date fields from YYYY-MM-DD to DD/MM/YYYY
                         const processedValue = dateFields.includes(key) ? formatDate(value) : value;

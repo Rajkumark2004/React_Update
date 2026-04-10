@@ -499,6 +499,10 @@ const StudentEdit = () => {
                             dataToSend.append('hostel_id', value);
                             return;
                         }
+                        if (key === 'room_no') {
+                            dataToSend.append('hostel_room_id', value);
+                            return;
+                        }
                         // Note: house is sent as 'house' by default (key reflects state name)
                         // to match StudentAdmission.jsx behavior which is known to work.
 
@@ -1157,8 +1161,11 @@ const StudentEdit = () => {
                                                                 <label>Room No</label>
                                                                 <select className="form-control" name="hostel_room_id" value={formData.hostel_room_id || formData.room_no} onChange={handleInputChange}>
                                                                     <option value="">Select</option>
-                                                                    <option value="101">101 (AC)</option>
-                                                                    <option value="102">102 (Non-AC)</option>
+                                                                    {hostelRooms.map(room => (
+                                                                        <option key={room.id} value={room.id}>
+                                                                            {room.room_no} ({room.room_type})
+                                                                        </option>
+                                                                    ))}
                                                                 </select>
                                                             </div>
                                                         </div>
