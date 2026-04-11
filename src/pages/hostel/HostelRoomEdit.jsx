@@ -237,6 +237,11 @@ const HostelRoomEdit = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Edit Hostel Room</h3>
+                                    <div className="box-tools pull-right hidden-sm hidden-md hidden-lg">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <form onSubmit={handleSubmit}>
                                     <div className="box-body">
@@ -346,6 +351,11 @@ const HostelRoomEdit = () => {
                             <div className="box box-primary" id="hroom">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Hostel Room List</h3>
+                                    <div className="box-tools pull-right hidden-xs">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="box-body">
                                     <TableToolbar

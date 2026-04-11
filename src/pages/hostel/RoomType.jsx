@@ -194,6 +194,11 @@ const RoomType = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Add Room Type</h3>
+                                    <div className="box-tools pull-right hidden-sm hidden-md hidden-lg">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <form id="form1" onSubmit={handleSubmit}>
                                     <div className="box-body">
@@ -239,7 +244,7 @@ const RoomType = () => {
                             <div className="box box-primary" id="rtype">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Room Type List</h3>
-                                    <div className="btn-group pull-right">
+                                    <div className="btn-group pull-right hidden-xs">
                                         <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm">
                                             <i className="fa fa-arrow-left"></i> Back
                                         </button>

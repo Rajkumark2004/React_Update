@@ -232,6 +232,11 @@ const IncomeEdit = () => {
                             <div className="box box-primary">
                                 <div className="box-header with-border">
                                     <h3 className="box-title">Edit Income</h3>
+                                    <div className="box-tools pull-right hidden-sm hidden-md hidden-lg">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <form onSubmit={handleSubmit}>
                                     <div className="box-body">
@@ -342,6 +347,11 @@ const IncomeEdit = () => {
                             <div className="box box-primary">
                                 <div className="box-header ptbnull">
                                     <h3 className="box-title titlefix">Income List</h3>
+                                    <div className="box-tools pull-right hidden-xs">
+                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
+                                            <i className="fa fa-arrow-left"></i> Back
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="box-body">
                                     <TableToolbar
