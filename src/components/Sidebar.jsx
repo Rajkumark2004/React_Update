@@ -212,6 +212,15 @@ const Sidebar = ({
         '/admin/certificate/generate_id_card',
         '/admin/certificate/staff_id_card',
         '/admin/certificate/generate_staff_id_card',
+        '/admin/timetable/classreport',
+        '/admin/timetable/mytimetable',
+        '/admin/teacher/assign_class_teacher',
+        '/admin/teacher/assign_subject_teacher',
+        '/admin/stdtransfer',
+        '/admin/subject',
+        '/admin/subjectgroup',
+        '/admin/classes',
+        '/admin/section',
         '/settings/notification-setting',
         '/settings/payment_methods',
         '/settings/roles',
@@ -300,11 +309,14 @@ const Sidebar = ({
         ],
         6: [ // Academics
             { label: 'Class Timetable', url: '/admin/timetable/classreport', icon: 'fa fa-clock-o' },
+            { label: 'Teachers Timetable', url: '/admin/timetable/mytimetable', icon: 'fa fa-calendar-check-o' },
             { label: 'Assign Class Teacher', url: '/admin/teacher/assign_class_teacher', icon: 'fa fa-user' },
-            { label: 'Subject', url: '/admin/subject', icon: 'fa fa-book' },
+            { label: 'Promote Students', url: '/admin/stdtransfer', icon: 'fa fa-exchange' },
+            { label: 'Subject Group', url: '/admin/subjectgroup', icon: 'fa fa-reorder' },
+            { label: 'Subjects', url: '/admin/subject', icon: 'fa fa-book' },
             { label: 'Class', url: '/admin/classes', icon: 'fa fa-graduation-cap' },
-            { label: 'Section', url: '/admin/section', icon: 'fa fa-th-large' },
-            { label: 'Student Transfer', url: '/admin/stdtransfer', icon: 'fa fa-exchange' }
+            { label: 'Sections', url: '/admin/section', icon: 'fa fa-th-large' },
+            { label: 'Assign Subject Teacher', url: '/admin/teacher/assign_subject_teacher', icon: 'fa fa-user-plus' }
         ],
         7: [ // State Examinations
             { label: 'Exam', url: '/cbseexam/exam', icon: 'fa fa-pencil-square-o' },
@@ -366,7 +378,7 @@ const Sidebar = ({
         ],
         16: [ // Hostel
             { label: 'Hostel Room', url: '/admin/hostelroom', icon: 'fa fa-bed' },
-            { label: 'Student Hostel Report', url: '/admin/studenthostelreport', icon: 'fa fa-bar-chart' },
+          //  { label: 'Student Hostel Report', url: '/admin/studenthostelreport', icon: 'fa fa-bar-chart' },
             { label: 'Room Type', url: '/admin/roomtype', icon: 'fa fa-th' },
             { label: 'Hostel', url: '/admin/hostel', icon: 'fa fa-home' }
         ],
