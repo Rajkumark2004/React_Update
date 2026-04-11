@@ -247,9 +247,9 @@ const ReferenceView = () => {
                                             <thead>
                                                 <tr>
                                                     {refColumns.map(col => refVisibleCols.has(col.key) && (
-                                                        <th key={col.key}>{col.label}</th>
+                                                        <th key={col.key} style={{ width: col.key === 'reference' ? '30%' : 'auto' }}>{col.label}</th>
                                                     ))}
-                                                    <th className="text-right noExport">Action</th>
+                                                    <th className="text-right noExport" style={{ width: '150px' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -267,7 +267,7 @@ const ReferenceView = () => {
                                                     currentItems.map((value, key) => (
                                                         <tr key={key}>
                                                             {refColumns.map(col => refVisibleCols.has(col.key) && (
-                                                                <td key={col.key} className="mailbox-name">{value[col.key]}</td>
+                                                                <td key={col.key} className="mailbox-name" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{value[col.key]}</td>
                                                             ))}
                                                             <td className="mailbox-date pull-right">
                                                                 <Link to={`/admin/reference/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">

@@ -254,13 +254,13 @@ const SourceEdit = () => {
                                     />
                                     <div className="download_label">Source List</div>
                                     <div className="table-responsive mailbox-messages overflow-visible">
-                                        <table className="table table-hover table-striped table-bordered example" style={{ tableLayout: 'fixed' }}>
+                                        <table className="table table-hover table-striped table-bordered example">
                                             <thead>
                                                 <tr>
                                                     {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
-                                                        <th key={col.key}>{col.label}</th>
+                                                        <th key={col.key} style={{ width: col.key === 'source' ? '30%' : 'auto' }}>{col.label}</th>
                                                     ))}
-                                                    <th className="text-right noExport">Action</th>
+                                                    <th className="text-right noExport" style={{ width: '150px' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -279,7 +279,7 @@ const SourceEdit = () => {
                                                         currentItems.map((value, key) => (
                                                             <tr key={key}>
                                                                 {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
-                                                                    <td key={col.key} className="mailbox-name" style={{ wordBreak: 'break-word' }}>{value[col.key]}</td>
+                                                                    <td key={col.key} className="mailbox-name" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{value[col.key]}</td>
                                                                 ))}
                                                                 <td className="mailbox-date pull-right noExport">
                                                                     <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
