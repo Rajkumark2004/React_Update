@@ -327,7 +327,7 @@ const VehicleList = () => {
                                                         {visibleColumns.has('vehicle_model') && <th>Vehicle Model</th>}
                                                         {visibleColumns.has('manufacture_year') && <th>Year Made</th>}
                                                         {visibleColumns.has('registration_number') && <th>Registration Number</th>}
-                                                        {visibleColumns.has('chasis_number') && <th>Chasis Number</th>}
+                                                        {visibleColumns.has('chasis_number') && <th style={{ width: '15%' }}>Chasis Number</th>}
                                                         {visibleColumns.has('max_seating_capacity') && <th>Max Seating Capacity</th>}
                                                         {visibleColumns.has('driver_name') && <th>Driver Name</th>}
                                                         {visibleColumns.has('driver_licence') && <th>Driver License</th>}
@@ -349,7 +349,7 @@ const VehicleList = () => {
                                                                 {visibleColumns.has('vehicle_model') && <td className="mailbox-name"> {data.vehicle_model}</td>}
                                                                 {visibleColumns.has('manufacture_year') && <td className="mailbox-name"> {data.manufacture_year}</td>}
                                                                 {visibleColumns.has('registration_number') && <td className="mailbox-name"> {data.registration_number}</td>}
-                                                                {visibleColumns.has('chasis_number') && <td className="mailbox-name"> {data.chasis_number}</td>}
+                                                                {visibleColumns.has('chasis_number') && <td className="mailbox-name" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}> {data.chasis_number}</td>}
                                                                 {visibleColumns.has('max_seating_capacity') && <td className="mailbox-name"> {data.max_seating_capacity}</td>}
                                                                 {visibleColumns.has('driver_name') && <td className="mailbox-name"> {data.driver_name}</td>}
                                                                 {visibleColumns.has('driver_licence') && <td className="mailbox-name"> {data.driver_licence}</td>}
@@ -437,7 +437,7 @@ const VehicleList = () => {
                                                     <div className="col-sm-4">
                                                         <div className="form-group">
                                                             <label>Chassis Number</label>
-                                                            <input name="chasis_number" placeholder="" type="text" className="form-control" value={formData.chasis_number} onChange={handleInputChange} />
+                                                            <input name="chasis_number" placeholder="" type="text" className="form-control" value={formData.chasis_number} onChange={handleInputChange} maxLength={100} />
                                                             <span className="text-danger"></span>
                                                         </div>
                                                     </div>

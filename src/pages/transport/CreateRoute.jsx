@@ -313,7 +313,7 @@ const CreateRoute = () => {
                                     <div className="box-body">
                                         <div className="form-group">
                                             <label htmlFor="exampleInputEmail1">Route Title</label><small className="req"> *</small>
-                                            <input autoFocus="" id="route_title" name="route_title" placeholder="" type="text" className="form-control" value={formData.route_title} onChange={handleInputChange} />
+                                            <input autoFocus="" id="route_title" name="route_title" placeholder="" type="text" className="form-control" value={formData.route_title} onChange={handleInputChange} maxLength={100} />
                                             {errors.route_title && <span className="text-danger" style={{ fontSize: '12px' }}>{errors.route_title}</span>}
                                         </div>
                                     </div>
@@ -358,7 +358,7 @@ const CreateRoute = () => {
                                             <table className="table table-striped table-bordered table-hover example">
                                                 <thead>
                                                     <tr>
-                                                        {visibleColumns.has('route_title') && <th>Route Title</th>}
+                                                        {visibleColumns.has('route_title') && <th style={{ width: '70%' }}>Route Title</th>}
                                                         <th className="text-right noExport">Action</th>
                                                     </tr>
                                                 </thead>
@@ -368,7 +368,7 @@ const CreateRoute = () => {
                                                     ) : (
                                                         currentItems.map((data) => (
                                                             <tr key={data.id}>
-                                                                {visibleColumns.has('route_title') && <td className="mailbox-name"> {data.route_title}</td>}
+                                                                {visibleColumns.has('route_title') && <td className="mailbox-name" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}> {data.route_title}</td>}
                                                                 <td className="mailbox-date pull-right no-print">
                                                                     <a className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit" onClick={() => handleEdit(data)}>
                                                                         <i className="fa fa-pencil"></i>

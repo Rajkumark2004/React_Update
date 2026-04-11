@@ -381,7 +381,7 @@ const OnlineStudentList = () => {
                                     </div>
                                     <div className="box-body">
                                         <div className="mailbox-messages">
-                                            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
+                                            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4', position: 'relative', zIndex: 10 }}>
                                                 <TableToolbar
                                                     searchTerm={searchTerm}
                                                     onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
@@ -450,7 +450,7 @@ const OnlineStudentList = () => {
                                                 </table>
                                             </div>
 
-                                            <div className="box-footer">
+                                            <div className="box-footer" style={{ position: 'relative', zIndex: 1 }}>
                                                 <div className="pt15 pb15">
                                                     <Pagination 
                                                         totalItems={totalItems} 

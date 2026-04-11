@@ -559,49 +559,55 @@ const CBSEGradeList = () => {
                                         <table className="table no-margin" style={{ width: '100%', minWidth: '1000px', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed' }}>
                                             <thead>
                                                 <tr style={{ borderBottom: '1px solid #ddd', backgroundColor: '#fff' }}>
-                                                    <th style={{ width: '10%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Grade Title</th>
-                                                    <th style={{ width: '20%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Description</th>
-                                                    <th style={{ width: '65%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Grade Data</th>
+                                                    {visibleColumns.has('title') && <th style={{ width: '15%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Grade Title</th>}
+                                                    {visibleColumns.has('description') && <th style={{ width: '25%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Description</th>}
+                                                    {visibleColumns.has('grade') && <th style={{ width: '55%', fontWeight: '600', padding: '12px 8px', color: '#000' }}>Grade Data</th>}
                                                     <th style={{ width: '5%', fontWeight: '600', padding: '12px 8px', color: '#000', textAlign: 'right' }}>Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {currentItems.map((grade) => (
-                                                    <tr key={grade.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
-                                                        <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
-                                                            <strong>{grade.name}</strong>
-                                                        </td>
-                                                        <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
-                                                            {grade.description}
-                                                        </td>
-                                                        <td style={{ padding: '8px 0', borderTop: 'none' }}>
-                                                            <table style={{ width: '100%', marginBottom: '0', tableLayout: 'fixed' }}>
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th style={{ width: '10%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 8px' }}>Grade</th>
-                                                                        <th style={{ width: '25%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Maximum Percentage</th>
-                                                                        <th style={{ width: '25%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Minimum Percentage</th>
-                                                                        <th style={{ width: '40%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Remark</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {grade.data && grade.data.length > 0 ? (
-                                                                        grade.data.map((range, midx) => (
-                                                                            <tr key={midx} className="hover-nested-row" style={{ borderTop: '1px solid #f4f4f4' }}>
-                                                                                <td style={{ padding: '6px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{range.name}</td>
-                                                                                <td style={{ padding: '6px 40px', borderTop: 'none' }}>{range.maximum_percentage}</td>
-                                                                                <td style={{ padding: '6px 40px', borderTop: 'none' }}>{range.minimum_percentage}</td>
-                                                                                <td style={{ padding: '6px 40px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{range.description}</td>
-                                                                            </tr>
-                                                                        ))
-                                                                    ) : (
+                                                     <tr key={grade.id} className="hover-main-entry" style={{ borderBottom: '1px solid #f4f4f4', transition: 'background-color 0.2s' }}>
+                                                        {visibleColumns.has('title') && (
+                                                            <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                                                                <strong>{grade.name}</strong>
+                                                            </td>
+                                                        )}
+                                                        {visibleColumns.has('description') && (
+                                                            <td style={{ verticalAlign: 'top', padding: '15px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                                                                {grade.description}
+                                                            </td>
+                                                        )}
+                                                        {visibleColumns.has('grade') && (
+                                                            <td style={{ padding: '8px 0', borderTop: 'none' }}>
+                                                                <table style={{ width: '100%', marginBottom: '0', tableLayout: 'fixed' }}>
+                                                                    <thead>
                                                                         <tr>
-                                                                            <td colSpan="4" className="text-muted" style={{ padding: '6px 8px' }}>No ranges defined</td>
+                                                                            <th style={{ width: '10%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 8px' }}>Grade</th>
+                                                                            <th style={{ width: '25%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Maximum Percentage</th>
+                                                                            <th style={{ width: '25%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Minimum Percentage</th>
+                                                                            <th style={{ width: '40%', color: '#000', fontWeight: '600', borderBottom: 'none', padding: '4px 40px' }}>Remark</th>
                                                                         </tr>
-                                                                    )}
-                                                                </tbody>
-                                                            </table>
-                                                        </td>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {grade.data && grade.data.length > 0 ? (
+                                                                            grade.data.map((range, midx) => (
+                                                                                <tr key={midx} className="hover-nested-row" style={{ borderTop: '1px solid #f4f4f4' }}>
+                                                                                    <td style={{ padding: '6px 8px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{range.name}</td>
+                                                                                    <td style={{ padding: '6px 40px', borderTop: 'none' }}>{range.maximum_percentage}</td>
+                                                                                    <td style={{ padding: '6px 40px', borderTop: 'none' }}>{range.minimum_percentage}</td>
+                                                                                    <td style={{ padding: '6px 40px', borderTop: 'none', whiteSpace: 'normal', overflowWrap: 'break-word', wordBreak: 'break-all' }}>{range.description}</td>
+                                                                                </tr>
+                                                                            ))
+                                                                        ) : (
+                                                                            <tr>
+                                                                                <td colSpan="4" className="text-muted" style={{ padding: '6px 8px' }}>No ranges defined</td>
+                                                                            </tr>
+                                                                        )}
+                                                                    </tbody>
+                                                                </table>
+                                                            </td>
+                                                        )}
                                                         <td style={{ verticalAlign: 'top', textAlign: 'right', padding: '15px 8px', borderTop: 'none' }}>
                                                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', whiteSpace: 'nowrap' }}>
                                                                 <div onClick={() => handleEditOpen(grade)} className="action-button-boxed" title="Edit">

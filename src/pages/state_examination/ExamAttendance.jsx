@@ -225,7 +225,7 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
                         <label>&nbsp;</label>
                         <button
                             type="button"
-                            className="btn btn-info btn-block"
+                            className="btn btn-info fetch-btn"
                             onClick={fetchAttendanceData}
                         >
                             Fetch
@@ -321,6 +321,23 @@ const ExamAttendance = ({ examId, handleClose, onSaveSuccess }) => {
                     )}
                 </button>
             </div>
+            <style jsx>{`
+                .mb20 { margin-bottom: 20px; }
+                .fetch-btn {
+                    padding: 5px 20px;
+                    font-size: 13px;
+                    border-radius: 4px;
+                    width: auto;
+                    display: inline-block;
+                }
+                @media (max-width: 767px) {
+                    .fetch-btn {
+                        padding: 8px 16px;
+                        font-size: 13px;
+                        margin-top: 5px;
+                    }
+                }
+            `}</style>
         </form>
     );
 };

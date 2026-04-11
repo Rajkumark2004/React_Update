@@ -186,7 +186,17 @@ const ClassTimetable = () => {
                                         </div>
                                     </div>
                                     <div className="box-footer">
-                                        <button type="submit" className="btn btn-primary pull-right btn-sm" disabled={searchLoading || !selectedClass || !selectedSection}>
+                                        <button 
+                                            type="submit" 
+                                            className="btn btn-primary pull-right btn-sm" 
+                                            disabled={searchLoading || !selectedClass || !selectedSection}
+                                            style={{ 
+                                                backgroundColor: '#9754ca', 
+                                                borderColor: '#9754ca',
+                                                opacity: 1,
+                                                color: '#fff' 
+                                            }}
+                                        >
                                             {searchLoading ? <><i className="fa fa-spinner fa-spin"></i> Searching...</> : <><i className="fa fa-search"></i> Search</>}
                                         </button>
                                     </div>
