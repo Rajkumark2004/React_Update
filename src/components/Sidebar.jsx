@@ -154,6 +154,10 @@ const Sidebar = ({
         '/admin/mail/email_sms_log',
         '/admin/mail/email_template',
         '/admin/notification',
+        '/admin/mailsms/compose',
+        '/admin/mailsms/compose_sms',
+        '/admin/sendwhatsapp/compose_sms',
+        '/admin/notification_class/index',
         '/admin/mail/sms_template',
         '/admin/mail/schedule_log',
         '/admin/mail/send_reminders',
@@ -321,8 +325,10 @@ const Sidebar = ({
         ],
         10: [ // Messages
             { label: 'Notice Board', url: '/admin/notification', icon: 'fa fa-bullhorn' },
-            { label: 'Email / SMS', url: '/admin/mail', icon: 'fa fa-envelope' },
-            { label: 'Send WhatsApp', url: '/admin/sendwhatsapp', icon: 'fa fa-whatsapp' }
+            { label: 'Send Email', url: '/admin/mailsms/compose', icon: 'fa fa-envelope-o' },
+            { label: 'Send SMS', url: '/admin/mailsms/compose_sms', icon: 'fa fa-commenting-o' },
+            { label: 'Send Whatsapp', url: '/admin/sendwhatsapp/compose_sms', icon: 'fa fa-whatsapp' },
+            { label: 'Circular', url: '/admin/notification_class/index', icon: 'fa fa-file-text-o' }
         ],
         11: [ // Human Resource
             { label: 'Staff Directory', url: '/admin/staff/search', icon: 'fa fa-address-book' },
