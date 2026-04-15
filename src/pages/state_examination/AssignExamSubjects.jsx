@@ -18,6 +18,21 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
             fetchExamSubjects();
         }
     }, [examId]);
+    useEffect(() => {
+        const selects = document.querySelectorAll('.subject-select-dropdown');
+        const subjectsSelected = rows.map(r => String(r.subject_id)).filter(Boolean);
+        
+        selects.forEach(select => {
+            if (!select.value) {
+                select.setCustomValidity("");
+                return;
+            }
+            const count = subjectsSelected.filter(id => id === select.value).length;
+            if (count <= 1) {
+                select.setCustomValidity("");
+            }
+        });
+    }, [rows]);
 
     const fetchExamSubjects = async () => {
         setLoading(true);
@@ -222,9 +237,17 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                                                     <tr key={row.id}>
                                                         <td style={{ minWidth: '200px' }}>
                                                             <select
-                                                                className="form-control"
+                                                                className="form-control subject-select-dropdown"
                                                                 value={row.subject_id}
-                                                                onChange={(e) => handleRowChange(row.id, 'subject_id', e.target.value)}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    const isDuplicate = val && rows.some(r => String(r.subject_id) === String(val) && r.id !== row.id);
+                                                                    if (isDuplicate) {
+                                                                        e.target.setCustomValidity("Subject Already Exists");
+                                                                        e.target.reportValidity();
+                                                                    }
+                                                                    handleRowChange(row.id, 'subject_id', val);
+                                                                }}
                                                                 required
                                                             >
                                                                 <option value="">Select</option>
@@ -247,7 +270,24 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
 
                                                             </div>
                                                         </td>
-                                                        <td>
+                                                        <td style={{ position: 'relative' }}>
+                                                            <input 
+                                                                type="text" 
+                                                                value={row.time_from || ''} 
+                                                                onChange={() => {}} 
+                                                                required 
+                                                                tabIndex="-1"
+                                                                style={{ 
+                                                                    position: 'absolute', 
+                                                                    opacity: 0, 
+                                                                    width: '1px', 
+                                                                    height: '1px', 
+                                                                    pointerEvents: 'none', 
+                                                                    zIndex: -1, 
+                                                                    left: '50%', 
+                                                                    top: '50%' 
+                                                                }} 
+                                                            />
                                                             <ClockInput
                                                                 onChange={(val) => handleRowChange(row.id, 'time_from', val)}
                                                                 value={row.time_from}
