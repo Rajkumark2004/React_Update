@@ -876,10 +876,10 @@ const CBSEExamList = () => {
             {showAddModal && (
                 <div className="modal fade in hide-scrollbar" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
                     <div className="modal-dialog modal-lg modal-dialog-centered" style={{ margin: '30px auto' }}>
-                        <div className="modal-content">
-                            <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
-                                <button type="button" className="close" onClick={() => { setShowAddModal(false); setActiveExam(null); }} style={{ color: 'white', opacity: 1, marginRight: '20px' }}>&times;</button>
-                                <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{activeExam ? "Edit Exam" : "Add Exam"}</h4>
+                        <div className="modal-content" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                            <div className="modal-header modal-header-responsive" style={{ background: '#9754ca', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: 'none', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                                <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold', margin: 0 }}>{activeExam ? "Edit Exam" : "Add Exam"}</h4>
+                                <button type="button" className="close-btn-custom" onClick={() => { setShowAddModal(false); setActiveExam(null); }} style={{ color: 'white', opacity: 1, background: 'none', border: 'none', fontSize: '28px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.5s ease' }}>&times;</button>
                             </div>
                             <div className="scroll-area hide-scrollbar">
                                 <form id="add_exam_form" onSubmit={handleSaveExam}>
@@ -1087,7 +1087,22 @@ const CBSEExamList = () => {
                                         </div>
                                     </div>
                                     <div className="modal-footer modal-footer-responsive" style={{ borderTop: 'none', paddingBottom: '20px' }}>
-                                        <button type="submit" className="btn pull-right" style={{ backgroundColor: '#7e3abd', color: 'white', borderRadius: '20px', padding: '8px 25px', fontSize: '14px', fontWeight: 'bold', border: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.15)' }}>{activeExam ? "Update" : "Save"}</button>
+                                        <button 
+                                            type="submit" 
+                                            className="btn no-hover-effect" 
+                                            style={{ 
+                                                backgroundColor: '#9754ca', 
+                                                color: 'white', 
+                                                borderRadius: '20px', 
+                                                padding: '8px 25px', 
+                                                fontSize: '14px', 
+                                                fontWeight: 'bold', 
+                                                border: 'none', 
+                                                boxShadow: 'none' 
+                                            }}
+                                        >
+                                            {activeExam ? "Update" : "Save"}
+                                        </button>
                                     </div>
                                 </form>
                             </div>
@@ -1100,11 +1115,11 @@ const CBSEExamList = () => {
             {/* Action Modals */}
             {modalConfig.show && modalConfig.type !== 'assign' && modalConfig.type !== 'subjects' && modalConfig.type !== 'remarks' && modalConfig.type !== 'attendance' && (
                 <div className="modal fade in" style={{ display: 'block', overflow: 'auto', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
-                    <div className="modal-dialog modal-xl">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" onClick={closeActionModal}>&times;</button>
-                                <h4 className="modal-title">{modalConfig.title} - {activeExam?.name}</h4>
+                    <div className="modal-dialog modal-xl" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                        <div className="modal-content" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                            <div className="modal-header modal-header-responsive" style={{ background: '#9754ca', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: 'none', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                                <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold', margin: 0 }}>{modalConfig.title} - {activeExam?.name}</h4>
+                                <button type="button" className="close-btn-custom" onClick={closeActionModal} style={{ color: 'white', opacity: 1, background: 'none', border: 'none', fontSize: '28px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.5s ease' }}>&times;</button>
                             </div>
                             <div className="modal-body">
                                 {modalConfig.type === 'subjects' && (
@@ -1289,14 +1304,42 @@ const CBSEExamList = () => {
                                 {/* Attendance moved to separate ExamAttendance modal */}
                                 {/* Remarks moved to separate TeacherRemark modal */}
                             </div>
-                            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                                <button type="button" className="btn btn-default" onClick={closeActionModal} style={{ borderRadius: '25px', padding: '6px 20px', minWidth: '100px' }}>Close</button>
+                            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end' }}>
                                 {modalConfig.type === 'marks' && subModalConfig.show ? (
-                                    <button type="button" className="btn btn-primary" onClick={handleSaveExamMarks} disabled={entryLoading} style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px', padding: '6px 20px', minWidth: '100px' }}>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-primary no-hover-effect" 
+                                        onClick={handleSaveExamMarks} 
+                                        disabled={entryLoading} 
+                                        style={{ 
+                                            backgroundColor: '#9754ca', 
+                                            borderColor: '#9754ca', 
+                                            borderRadius: '25px', 
+                                            padding: '6px 20px', 
+                                            minWidth: '100px', 
+                                            fontWeight: 'bold',
+                                            boxShadow: 'none'
+                                        }}
+                                    >
                                         {entryLoading ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                                     </button>
                                 ) : (
-                                    <button type="button" className="btn btn-primary" onClick={closeActionModal} style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px', padding: '6px 20px', minWidth: '100px' }}>Save Changes</button>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-primary no-hover-effect" 
+                                        onClick={closeActionModal} 
+                                        style={{ 
+                                            backgroundColor: '#9754ca', 
+                                            borderColor: '#9754ca', 
+                                            borderRadius: '25px', 
+                                            padding: '6px 20px', 
+                                            minWidth: '100px', 
+                                            fontWeight: 'bold',
+                                            boxShadow: 'none'
+                                        }}
+                                    >
+                                        Save Changes
+                                    </button>
                                 )}
                             </div>
                         </div>
@@ -1314,11 +1357,11 @@ const CBSEExamList = () => {
 
             {modalConfig.show && modalConfig.type === 'remarks' && activeExam && (
                 <div className="modal fade in" style={{ display: 'block' }}>
-                    <div className="modal-dialog modal-xl">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" onClick={closeActionModal}>&times;</button>
-                                <h4 className="modal-title">Teacher Remark - {activeExam?.name}</h4>
+                    <div className="modal-dialog modal-xl" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                        <div className="modal-content" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                            <div className="modal-header modal-header-responsive" style={{ background: '#9754ca', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: 'none', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                                <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold', margin: 0 }}>Teacher Remark - {activeExam?.name}</h4>
+                                <button type="button" className="close-btn-custom" onClick={closeActionModal} style={{ color: 'white', opacity: 1, background: 'none', border: 'none', fontSize: '28px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.5s ease' }}>&times;</button>
                             </div>
                             <div className="modal-body">
                                 <TeacherRemark examId={activeExam.id} handleClose={closeActionModal} />
@@ -1330,11 +1373,11 @@ const CBSEExamList = () => {
 
             {modalConfig.show && modalConfig.type === 'attendance' && activeExam && (
                 <div className="modal fade in" style={{ display: 'block' }}>
-                    <div className="modal-dialog modal-xl">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <button type="button" className="close" onClick={closeActionModal}>&times;</button>
-                                <h4 className="modal-title">Exam Attendance - {activeExam?.name}</h4>
+                    <div className="modal-dialog modal-xl" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                        <div className="modal-content" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                            <div className="modal-header modal-header-responsive" style={{ background: '#9754ca', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: 'none', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                                <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold', margin: 0 }}>Exam Attendance - {activeExam?.name}</h4>
+                                <button type="button" className="close-btn-custom" onClick={closeActionModal} style={{ color: 'white', opacity: 1, background: 'none', border: 'none', fontSize: '28px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.5s ease' }}>&times;</button>
                             </div>
                             <div className="modal-body">
                                 <ExamAttendance examId={activeExam.id} handleClose={closeActionModal} />
@@ -1347,6 +1390,39 @@ const CBSEExamList = () => {
             {modalConfig.show && modalConfig.type !== 'assign' && modalConfig.type !== 'subjects' && modalConfig.type !== 'remarks' && modalConfig.type !== 'attendance' && <div className="modal-backdrop fade in" onClick={closeActionModal}></div>}
             {modalConfig.show && (modalConfig.type === 'remarks' || modalConfig.type === 'attendance') && <div className="modal-backdrop fade in" onClick={closeActionModal}></div>}
 
+            <style>{`
+                .close-btn-custom {
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    transition: transform 0.5s ease, opacity 0.3s ease !important;
+                    transform-origin: center !important;
+                    line-height: 1 !important;
+                    height: 32px !important;
+                    width: 32px !important;
+                    font-size: 34px !important;
+                }
+                .close-btn-custom:hover {
+                    transform: rotate(90deg);
+                    opacity: 1 !important;
+                }
+                .modal-content {
+                    border-radius: 8px !important;
+                    overflow: hidden;
+                    border: none;
+                }
+                .no-hover-effect:hover, 
+                .no-hover-effect:active, 
+                .no-hover-effect:focus,
+                .no-hover-effect:visited {
+                    background-color: #9754ca !important;
+                    border-color: #9754ca !important;
+                    color: white !important;
+                    box-shadow: none !important;
+                    outline: none !important;
+                    opacity: 1 !important;
+                }
+            `}</style>
             <Footer />
         </div>
     );

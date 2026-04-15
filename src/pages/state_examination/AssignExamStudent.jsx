@@ -120,11 +120,12 @@ const AssignExamStudent = ({ examId: propExamId, handleClose }) => {
 
     // Only render the inner content if using as component
     const content = (
-        <div className="modal-content" style={{ border: 'none', borderRadius: 0, boxShadow: 'none', display: 'flex', flexDirection: 'column' }}>
-            <div className="modal-header" style={{ padding: '8px 15px' }}>
-                <h4 className="modal-title" style={{ fontWeight: 'bold', fontSize: '16px', margin: 0 }}>
-                    Assign / view Student
+        <div className="modal-content" style={{ border: 'none', borderRadius: '8px', overflow: 'hidden', boxShadow: 'none', display: 'flex', flexDirection: 'column' }}>
+            <div className="modal-header modal-header-responsive" style={{ background: '#9754ca', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: 'none', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold', margin: 0 }}>
+                    Assign / View Student
                 </h4>
+                <button type="button" className="close-btn-custom" onClick={handleClose} style={{ color: 'white', opacity: 1, background: 'none', border: 'none', fontSize: '28px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.5s ease' }}>&times;</button>
             </div>
 
             <div className="modal-body" style={{ flex: 1, padding: '15px' }}>
@@ -198,11 +199,38 @@ const AssignExamStudent = ({ examId: propExamId, handleClose }) => {
                                 </tbody>
                             </table>
                         </div>
-                        <div className="modal-footer" style={{ borderTop: '1px solid #f4f4f4', padding: '15px 0 0 0', marginTop: '15px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                            <button type="button" className="btn btn-default" onClick={() => handleClose ? handleClose() : navigate('/cbseexam/exam')} style={{ borderRadius: '25px', padding: '6px 10px', minWidth: '100px' }}>Close</button>
-                            <button type="submit" className="btn btn-primary" id="load" disabled={saving} style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px', padding: '6px 10px', minWidth: '100px' }}>
+                        <div className="modal-footer" style={{ borderTop: '1px solid #f4f4f4', padding: '15px 0 0 0', marginTop: '15px', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button 
+                                type="submit" 
+                                className="btn btn-primary no-hover-effect" 
+                                id="load" 
+                                disabled={saving} 
+                                style={{ 
+                                    backgroundColor: '#9754ca', 
+                                    borderColor: '#9754ca', 
+                                    borderRadius: '25px', 
+                                    padding: '6px 20px', 
+                                    minWidth: '100px', 
+                                    fontWeight: 'bold',
+                                    color: 'white',
+                                    boxShadow: 'none'
+                                }}
+                            >
                                 {saving ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                             </button>
+                            <style>{`
+                                .no-hover-effect:hover, 
+                                .no-hover-effect:active, 
+                                .no-hover-effect:focus,
+                                .no-hover-effect:visited {
+                                    background-color: #9754ca !important;
+                                    border-color: #9754ca !important;
+                                    color: white !important;
+                                    box-shadow: none !important;
+                                    outline: none !important;
+                                    opacity: 1 !important;
+                                }
+                            `}</style>
                         </div>
                     </form>
                 )}

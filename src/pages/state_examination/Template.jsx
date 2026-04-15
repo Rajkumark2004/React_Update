@@ -723,12 +723,58 @@ const Template = () => {
                                             .hover-main-entry:hover {
                                                 background-color: #fcfcfc !important;
                                             }
-                                            .modal-header-responsive {
-                                                padding: 15px 20px 15px 20px !important;
+                                            .modal-header.modal-header-responsive {
+                                                padding: 12px 20px !important;
                                                 border-bottom: none !important;
+                                                min-height: auto !important;
+                                                margin-bottom: 0 !important;
+                                                display: flex !important;
+                                                flex-direction: row !important;
+                                                flex-wrap: nowrap !important;
+                                                align-items: center !important;
+                                                justify-content: space-between !important;
+                                                background: #9754ca !important;
+                                                width: 100% !important;
+                                            }
+                                            .modal-header-responsive::before,
+                                            .modal-header-responsive::after {
+                                                display: none !important;
+                                            }
+                                            .modal-header-responsive .modal-title {
+                                                margin: 0 !important;
+                                                padding: 0 !important;
+                                                line-height: 1 !important;
+                                                font-size: 16px !important;
+                                                color: #fff !important;
+                                                font-weight: bold !important;
+                                                display: inline-block !important;
+                                            }
+                                            .modal-header-responsive .close-btn-custom {
+                                                margin: 0 !important;
+                                                padding: 0 !important;
+                                                float: none !important;
+                                                color: #fff !important;
+                                                opacity: 1 !important;
+                                                font-size: 35px !important;
+                                                font-weight: bold !important;
+                                                line-height: 1 !important;
+                                                display: flex !important;
+                                                align-items: center !important;
+                                                justify-content: center !important;
+                                                background: none !important;
+                                                border: none !important;
+                                                cursor: pointer !important;
+                                                transition: transform 0.5s ease !important;
+                                            }
+                                            .modal-header-responsive .close-btn-custom:hover {
+                                                transform: rotate(90deg) !important;
+                                                opacity: 0.8 !important;
                                             }
                                             .modal-body-responsive {
-                                                padding: 20px 20px 20px 20px !important;
+                                                padding: 20px !important;
+                                            }
+                                            .button{
+                                                margin-top: -100px;
                                             }
                                             @media (max-width: 767px) {
                                                 .modal-body-responsive {
@@ -871,9 +917,9 @@ const Template = () => {
                 <div id="myModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
                     <div className="modal-dialog modal-xl" style={{ margin: '30px auto' }}>
                         <div className="modal-content">
-                            <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
-                                <button type="button" className="close" onClick={() => setShowAddModal(false)} style={{ color: 'white', opacity: 1, marginRight: '0px' }}>&times;</button>
-                                <h4 className="modal-title" id="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>{isEditing ? "Edit Template" : "Add Template"}</h4>
+                            <div className="modal-header modal-header-responsive">
+                                <h4 className="modal-title" id="modal-title">{isEditing ? "Edit Template" : "Add Template"}</h4>
+                                <button type="button" className="close-btn-custom" onClick={() => setShowAddModal(false)}>&times;</button>
                             </div>
                             <form role="form" id="form1" onSubmit={handleSubmit} method="post" encType="multipart/form-data">
                                 <div className="modal-body modal-body-responsive">
@@ -969,7 +1015,7 @@ const Template = () => {
                                             name="header_image"
                                             currentFile={formData.header_image}
                                             onFileSelect={handleFileSelect}
-                                            height="150px"
+                                            height="40px"
                                         />
                                         <span className="text-danger" id="error_header_image"></span>
                                     </div>
@@ -994,7 +1040,7 @@ const Template = () => {
                                                     name="left_sign"
                                                     currentFile={formData.left_sign}
                                                     onFileSelect={handleFileSelect}
-                                                    height="80px"
+                                                    height="40px"
                                                 />
                                                 <span className="text-danger" id="error_left_sign"></span>
                                             </div>
@@ -1006,7 +1052,7 @@ const Template = () => {
                                                     name="middle_sign"
                                                     currentFile={formData.middle_sign}
                                                     onFileSelect={handleFileSelect}
-                                                    height="80px"
+                                                    height="40px"
                                                 />
                                                 <span className="text-danger" id="error_middle_sign"></span>
                                             </div>
@@ -1018,7 +1064,7 @@ const Template = () => {
                                                     name="right_sign"
                                                     currentFile={formData.right_sign}
                                                     onFileSelect={handleFileSelect}
-                                                    height="80px"
+                                                    height="40px"
                                                 />
                                                 <span className="text-danger" id="error_right_sign"></span>
                                             </div>
@@ -1031,7 +1077,7 @@ const Template = () => {
                                             name="background_img"
                                             currentFile={formData.background_img}
                                             onFileSelect={handleFileSelect}
-                                            height="150px"
+                                            height="40px"
                                         />
                                         <span className="text-danger" id="error_background_img"></span>
                                     </div>
@@ -1141,135 +1187,98 @@ const Template = () => {
                     <div id="linkexamModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
                         <div className="modal-dialog modal-xl" style={{ margin: '30px auto' }}>
                             <div className="modal-content">
-                                <div className="modal-header modal-header-responsive" style={{ background: '#7e3abd', color: 'white' }}>
-                                    <button type="button" className="close" onClick={() => setShowLinkModal(false)} style={{ color: 'white', opacity: 1 }}>&times;</button>
-                                    <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold' }}>Link Exam</h4>
+                                <div className="modal-header modal-header-responsive">
+                                    <h4 className="modal-title">Link Exam</h4>
+                                    <button type="button" className="close-btn-custom" onClick={() => setShowLinkModal(false)}>&times;</button>
                                 </div>
                                 <form role="form" id="formlink" onSubmit={handleLinkExamSubmit}>
                                     <div className="modal-body modal-body-responsive">
-                                        <div className="row">
-                                            <div className="col-md-3">
-                                                <div className="form-group">
-                                                    <input type="hidden" name="template_id" id="template_id" value={currentTemplateId || ''} />
-                                                    <label>Marksheet Type</label><small className="req"> *</small>
-                                                    <select id="marksheet" name="marksheet" className="form-control" value={marksheetType} onChange={handleMarksheetTypeChange} required>
-                                                        <option value="">Select</option>
-                                                        {marksheetList.map(m => (
-                                                            <option key={m.id} value={m.short_code}>{m.name}</option>
-                                                        ))}
-                                                    </select>
-                                                    <span className="text-danger" id="error_marksheet"></span>
-                                                </div>
-                                            </div>
+                                        <div className="form-group">
+                                            <input type="hidden" name="template_id" id="template_id" value={currentTemplateId || ''} />
+                                            <label style={{ fontWeight: 'bold', fontSize: '13px' }}>Marksheet Type <span style={{ color: 'red' }}>*</span></label>
+                                            <select id="marksheet" name="marksheet" className="form-control" value={marksheetType} onChange={handleMarksheetTypeChange} required style={{ height: '36px', fontSize: '13px', width: '250px' }}>
+                                                <option value="">Select</option>
+                                                {marksheetList.map(m => (
+                                                    <option key={m.id} value={m.short_code}>{m.name}</option>
+                                                ))}
+                                            </select>
+                                            <span className="text-danger" id="error_marksheet"></span>
                                         </div>
-                                        <div className="row mt15">
-                                            <div className="col-md-12" id="examdata">
-                                                {linkExamLoading ? (
-                                                    <div className="text-center p10">
-                                                        <i className="fa fa-spinner fa-spin fa-2x"></i>
-                                                        <p>Loading exams...</p>
-                                                    </div>
-                                                ) : linkExamData && (linkExamData.result || linkExamData.exam_data || linkExamData.subjectgroupList) ? (
-                                                    <div className="table-responsive">
 
-                                                        <table className="table table-striped table-bordered">
-                                                            <thead>
-                                                                <tr className="active">
-                                                                    <th width="5%">Select</th>
-                                                                    <th>Term / Exam Name</th>
-                                                                    <th width="15%">Weightage</th>
-                                                                    <th width="10%">Grading</th>
-                                                                    <th width="15%">Teacher Remark</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {(linkExamData.result || linkExamData.exam_data) ? (
-                                                                    (Array.isArray(linkExamData.result || linkExamData.exam_data)
-                                                                        ? (linkExamData.result || linkExamData.exam_data)
-                                                                        : Object.entries(linkExamData.result || linkExamData.exam_data || {}).map(([id, val]) => ({ ...val, id: id }))
-                                                                    ).map(term => (
-                                                                        <React.Fragment key={term.id || Math.random()}>
-                                                                            <tr className="info">
-                                                                                <td>
-                                                                                    {(marksheetType === 'all_term' || marksheetType === 'term_wise') && (
+                                        <div id="examdata" style={{ marginTop: '15px' }}>
+                                            {linkExamLoading ? (
+                                                <div className="text-center" style={{ padding: '20px' }}>
+                                                    <i className="fa fa-spinner fa-spin fa-2x"></i>
+                                                    <p>Loading exams...</p>
+                                                </div>
+                                            ) : linkExamData && (linkExamData.result || linkExamData.exam_data || linkExamData.subjectgroupList) ? (
+                                                <div style={{ overflowX: 'auto' }}>
+                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                                                        <thead>
+                                                            <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
+                                                                <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '20%', borderBottom: '2px solid #ddd' }}>Term</th>
+                                                                <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Exam Name</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {(linkExamData.result || linkExamData.exam_data) ? (
+                                                                (Array.isArray(linkExamData.result || linkExamData.exam_data)
+                                                                    ? (linkExamData.result || linkExamData.exam_data)
+                                                                    : Object.entries(linkExamData.result || linkExamData.exam_data || {}).map(([id, val]) => ({ ...val, id: id }))
+                                                                ).map(term => (
+                                                                    <React.Fragment key={term.id || Math.random()}>
+                                                                        <tr>
+                                                                            <td style={{ padding: '10px 12px', fontWeight: 'bold', verticalAlign: 'top', borderBottom: '1px solid #eee', color: '#333' }}>{term.name}</td>
+                                                                            <td style={{ borderBottom: '1px solid #eee' }}></td>
+                                                                        </tr>
+                                                                        {(term.exam || []).map(exam => (
+                                                                            <tr key={exam.id}>
+                                                                                <td style={{ borderBottom: '1px solid #eee' }}></td>
+                                                                                <td style={{ padding: '8px 12px', borderBottom: '1px solid #eee' }}>
+                                                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
                                                                                         <input
-                                                                                            type="checkbox"
-                                                                                            checked={linkExamFormData.terms.includes(parseInt(term.id))}
-                                                                                            onChange={(e) => {
-                                                                                                const isChecked = e.target.checked;
-                                                                                                const examIds = (term.exam || []).map(ex => parseInt(ex.id));
+                                                                                            type="radio"
+                                                                                            name="link_exam_selection"
+                                                                                            value={exam.id}
+                                                                                            checked={linkExamFormData.exams.includes(parseInt(exam.id))}
+                                                                                            onChange={() => {
                                                                                                 setLinkExamFormData(prev => ({
                                                                                                     ...prev,
-                                                                                                    terms: isChecked ? [...prev.terms, parseInt(term.id)] : prev.terms.filter(id => id !== parseInt(term.id)),
-                                                                                                    exams: isChecked ? [...new Set([...prev.exams, ...examIds])] : prev.exams.filter(id => !examIds.includes(id))
+                                                                                                    exams: [parseInt(exam.id)]
                                                                                                 }));
                                                                                             }}
+                                                                                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                                                                                         />
-                                                                                    )}
+                                                                                        <span>{exam.name}</span>
+                                                                                    </label>
                                                                                 </td>
-                                                                                <td><strong>{term.name}</strong></td>
-                                                                                <td>
-                                                                                    <input
-                                                                                        type="number"
-                                                                                        className="form-control"
-                                                                                        value={linkExamFormData.term_weightage[term.id] || ''}
-                                                                                        onChange={(e) => setLinkExamFormData({
-                                                                                            ...linkExamFormData,
-                                                                                            term_weightage: { ...linkExamFormData.term_weightage, [term.id]: e.target.value }
-                                                                                        })}
-                                                                                        disabled={!linkExamFormData.terms.includes(parseInt(term.id))}
-                                                                                    />
-                                                                                </td>
-                                                                                <td colSpan={2}></td>
                                                                             </tr>
-                                                                            {(term.exam || []).map(exam => (
-                                                                                <tr key={exam.id}>
-                                                                                    <td className="text-right">
-                                                                                        <input
-                                                                                            type="checkbox"
-                                                                                            checked={linkExamFormData.exams.includes(parseInt(exam.id))}
-                                                                                            onChange={(e) => handleExamCheckboxChange(parseInt(exam.id), e.target.checked)}
-                                                                                        />
-                                                                                    </td>
-                                                                                    <td>&nbsp;&nbsp;&nbsp;{exam.name}</td>
-                                                                                    <td></td>
-                                                                                    <td className="text-center">
-                                                                                        <input
-                                                                                            type="radio"
-                                                                                            name="grading"
-                                                                                            checked={parseInt(linkExamFormData.grading) === parseInt(exam.id)}
-                                                                                            onChange={() => setLinkExamFormData(prev => ({ ...prev, grading: parseInt(exam.id) }))}
-                                                                                            disabled={!linkExamFormData.exams.includes(parseInt(exam.id))}
-                                                                                        />
-                                                                                    </td>
-                                                                                    <td className="text-center">
-                                                                                        <input
-                                                                                            type="radio"
-                                                                                            name="teacher_remark"
-                                                                                            checked={parseInt(linkExamFormData.teacher_remark) === parseInt(exam.id)}
-                                                                                            onChange={() => setLinkExamFormData(prev => ({ ...prev, teacher_remark: parseInt(exam.id) }))}
-                                                                                            disabled={!linkExamFormData.exams.includes(parseInt(exam.id))}
-                                                                                        />
-                                                                                    </td>
-                                                                                </tr>
-                                                                            ))}
-                                                                        </React.Fragment>
-                                                                    ))) : (
-                                                                    <tr>
-                                                                        <td colSpan={5} className="text-center">No exams found</td>
-                                                                    </tr>
-                                                                )}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                ) : marksheetType ? (
-                                                    <div className="text-center text-muted">No exams found for this marksheet type</div>
-                                                ) : null}
-                                            </div>
+                                                                        ))}
+                                                                    </React.Fragment>
+                                                                ))) : (
+                                                                <tr>
+                                                                    <td colSpan={2} style={{ textAlign: 'center', padding: '20px', color: '#999' }}>No exams found</td>
+                                                                </tr>
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : marksheetType ? (
+                                                <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No exams found for this marksheet type</div>
+                                            ) : null}
                                         </div>
                                     </div>
-                                    <div className="modal-footer clearboth">
-                                        <button type="submit" className="btn btn-primary pull-right" data-loading-text="Submitting" style={{ borderRadius: '20px', background: 'rgba(126, 74, 175, 1)' }}>Save</button>
+                                    <div className="modal-footer" style={{ borderTop: '1px solid #e5e5e5', padding: '15px 20px', textAlign: 'right' }}>
+                                        <button type="submit" className="btn" style={{
+                                            borderRadius: '25px',
+                                            background: '#9754ca',
+                                            color: '#fff',
+                                            border: 'none',
+                                            padding: '8px 30px',
+                                            fontSize: '13px',
+                                            fontWeight: '500',
+                                            cursor: 'pointer'
+                                        }}>Save</button>
                                     </div>
                                 </form>
                             </div>
@@ -1282,39 +1291,19 @@ const Template = () => {
             {/* View Template Modal */}
             {
                 showViewModal && (
-                    <div id="viewTemplateModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'block', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
-                        <div className="modal-dialog modal-lg" style={isMobile ? { margin: '10px auto', width: 'calc(100% - 20px)' } : { margin: '30px auto' }}>
-                            <div className="modal-content" style={isMobile ? { display: 'flex', flexDirection: 'column', height: 'calc(100vh - 20px)' } : {}}>
-                                <div className="modal-header" style={{
-                                    backgroundColor: '#7e3abd',
-                                    color: 'white',
-                                    padding: isMobile ? '15px 20px' : '15px 20px',
-                                    borderTopLeftRadius: '5px',
-                                    borderTopRightRadius: '5px',
-                                    minHeight: 'auto',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    position: 'relative',
-                                    borderBottom: 'none'
-                                }}>
-                                    <h4 className="modal-title" style={{ color: 'white', fontWeight: '600', margin: 0, fontSize: isMobile ? '17px' : '18px' }}>{viewData ? viewData.name : 'Template'}</h4>
-                                    <button type="button" className="close" onClick={() => setShowViewModal(false)} style={{
-                                        color: 'white',
-                                        opacity: 1,
-                                        margin: 0,
-                                        padding: '25px 20px',
-                                        position: isMobile ? 'absolute' : 'relative',
-                                        top: isMobile ? '-15px' : '-10px',
-                                        right: isMobile ? '15px' : '2px'
-                                    }}>&times;</button>
+                    <div id="viewTemplateModal" className="modal fade in hide-scrollbar" role="dialog" style={{ display: 'flex', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050, overflowY: 'auto' }}>
+                        <div className="modal-dialog modal-xl" style={{ margin: '30px auto', width: '95%', maxWidth: '1300px' }}>
+                            <div className="modal-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px)' }}>
+                                <div className="modal-header modal-header-responsive">
+                                    <h4 className="modal-title">{viewData ? viewData.name : 'Template'}</h4>
+                                    <button type="button" className="close-btn-custom" onClick={() => setShowViewModal(false)}>&times;</button>
                                 </div>
                                 <div className="modal-body" style={{
-                                    padding: '15px',
+                                    padding: '5px',
                                     overflowY: 'auto',
                                     overflowX: 'hidden',
-                                    flex: isMobile ? 1 : 'none',
-                                    minHeight: isMobile ? 0 : '260px'
+                                    flex: 1,
+                                    minHeight: 0
                                 }}>
                                     {viewLoading ? (
                                         <div className="text-center p10">
@@ -1322,7 +1311,7 @@ const Template = () => {
                                             <p>Loading template details...</p>
                                         </div>
                                     ) : viewData ? (
-                                        <div className="modal-body-inner" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: isMobile ? '1px solid #ddd' : 'none', borderRadius: isMobile ? '4px' : '0' }}>
+                                        <div className="modal-body-inner" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: 'none', borderRadius: '0' }}>
                                             <ViewTemplate template={viewData} />
                                         </div>
                                     ) : (

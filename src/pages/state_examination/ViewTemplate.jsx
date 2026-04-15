@@ -12,7 +12,7 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
     const studentImageUrl = "https://newlayout.wisibles.com/uploads/student_images/default_male.jpg?1685767171"; // Fallback or from session
 
     return (
-        <div style={{ padding: '20px', background: '#fff' }}>
+        <div style={{ padding: '10px', background: '#fff' }}>
             <style>
                 {`
                 .marksheet-container {
@@ -20,7 +20,7 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
                     font-family: Arial, sans-serif;
                     line-height: 20px;
                     font-size: 12px;
-                    width: 97%;
+                    width: 100%;
                     margin: 0 auto;
                     position: relative;
                 }
@@ -80,7 +80,7 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
 
                 <div style={{ width: '100%', height: '100%', margin: '0 auto', position: 'relative' }}>
                     {template.header_image && (
-                        <div className="text-center" style={{ marginTop: '5vh' }}>
+                        <div className="text-center" style={{ marginTop: '2vh' }}>
                             <img
                                 src={getUploadUrl('header_image', template.header_image)}
                                 width="100%"
@@ -97,12 +97,12 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
                                     <table cellPadding="0" cellSpacing="0" width="100%">
                                         <tbody>
                                             <tr>
-                                                <td valign="top" style={{ paddingBottom: '20px' }}>
-                                                    {template.exam_session && (
-                                                        <h4 style={{ fontWeight: 'bold', textAlign: 'center', paddingTop: '5px' }}>
-                                                            Academic Session: {template.session_name || "2024-25"}
-                                                        </h4>
-                                                    )}
+                                                <td valign="top" style={{ paddingBottom: '10px' }}>
+                                                    {/* {template.exam_session && (
+                                                        // <h4 style={{ fontWeight: 'bold', textAlign: 'center', paddingTop: '5px' }}>
+                                                        //     Academic Session: {template.session_name || "2024-25"}
+                                                        // </h4>
+                                                    )} */}
                                                     <h4 style={{ fontWeight: 'bold', textAlign: 'center', paddingTop: '5px' }}>
                                                         REPORT CARD
                                                     </h4>
@@ -201,7 +201,7 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
                                 </td>
                             </tr>
 
-                            <tr><td valign="top" style={{ height: '10px' }}></td></tr>
+                            <tr><td valign="top" style={{ height: '5px' }}></td></tr>
 
                             <tr>
                                 <td valign="top">
@@ -256,7 +256,7 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
                                 </td>
                             </tr>
 
-                            <tr><td valign="top" style={{ height: '20px' }}></td></tr>
+                            <tr><td valign="top" style={{ height: '10px' }}></td></tr>
 
                             <tr>
                                 <td>
@@ -275,7 +275,7 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
                                 </td>
                             </tr>
 
-                            <tr><td valign="top" style={{ height: '20px' }}></td></tr>
+                            <tr><td valign="top" style={{ height: '10px' }}></td></tr>
 
                             <tr>
                                 <td>
@@ -289,7 +289,7 @@ const ViewTemplate = ({ template, marksheetData, appName = "Smart School" }) => 
                                 </td>
                             </tr>
 
-                            <tr><td valign="top" style={{ height: '20px' }}></td></tr>
+                            <tr><td valign="top" style={{ height: '10px' }}></td></tr>
 
                             <tr>
                                 <td valign="top" width="100%" align="center">

@@ -187,11 +187,12 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
     return (
         <div className="modal show" style={{ display: 'block', background: 'rgba(0,0,0,0.5)', minHeight: '100vh', zIndex: 1050, position: 'fixed', top: 0, left: 0, overflow: 'auto' }}>
             <div className="modal-dialog modal-xl" style={{ margin: '30px auto' }}>
-                <div className="modal-content" style={{ border: 'none', borderRadius: 0, boxShadow: 'none', display: 'flex', flexDirection: 'column' }}>
-                    <div className="modal-header" style={{ padding: '8px 15px' }}>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold', fontSize: '16px', margin: 0 }}>
+                <div className="modal-content" style={{ border: 'none', borderRadius: '8px', overflow: 'hidden', boxShadow: 'none', display: 'flex', flexDirection: 'column' }}>
+                    <div className="modal-header modal-header-responsive" style={{ background: '#9754ca', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: 'none', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                        <h4 className="modal-title" style={{ color: 'white', fontWeight: 'bold', margin: 0 }}>
                             Exam Subjects
                         </h4>
+                        <button type="button" className="close-btn-custom" onClick={handleClose} style={{ color: 'white', opacity: 1, background: 'none', border: 'none', fontSize: '28px', fontWeight: 'bold', cursor: 'pointer', transition: 'transform 0.5s ease' }}>&times;</button>
                     </div>
 
                     <div className="modal-body" style={{ flex: 1, padding: '15px' }}>
@@ -213,7 +214,18 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                                 <div className="divider2"></div>
                                 <div className="row">
                                     <div className="col-md-12 pt5">
-                                        <button type="button" className="btn btn-primary btn-sm add pull-right" onClick={handleAddRow} style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px', padding: '5px 15px' }}>
+                                        <button 
+                                            type="button" 
+                                            className="btn btn-primary btn-sm add pull-right no-hover-effect" 
+                                            onClick={handleAddRow} 
+                                            style={{ 
+                                                backgroundColor: '#9754ca', 
+                                                borderColor: '#9754ca', 
+                                                borderRadius: '25px', 
+                                                padding: '5px 15px',
+                                                boxShadow: 'none'
+                                            }}
+                                        >
                                             <span className="fa fa-plus"></span> Add Exam Subject
                                         </button>
                                     </div>
@@ -329,11 +341,38 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div className="modal-footer clearboth mx-nt-lr-15 pb0" style={{ borderTop: 'unset', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                                        <button type="button" className="btn btn-default" onClick={handleClose} style={{ borderRadius: '25px', padding: '6px 20px', minWidth: '100px' }}>Close</button>
-                                        <button type="submit" className="btn btn-primary" id="load" disabled={saving} style={{ backgroundColor: '#9754ca', borderColor: '#8e44ad', borderRadius: '25px', padding: '6px 20px', minWidth: '100px' }}>
+                                    <div className="modal-footer clearboth mx-nt-lr-15 pb0" style={{ borderTop: 'unset', display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button 
+                                            type="submit" 
+                                            className="btn btn-primary no-hover-effect" 
+                                            id="load" 
+                                            disabled={saving} 
+                                            style={{ 
+                                                backgroundColor: '#9754ca', 
+                                                borderColor: '#9754ca', 
+                                                borderRadius: '25px', 
+                                                padding: '6px 20px', 
+                                                minWidth: '100px', 
+                                                fontWeight: 'bold',
+                                                color: 'white',
+                                                boxShadow: 'none'
+                                            }}
+                                        >
                                             {saving ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                                         </button>
+                                        <style>{`
+                                            .no-hover-effect:hover, 
+                                            .no-hover-effect:active, 
+                                            .no-hover-effect:focus,
+                                            .no-hover-effect:visited {
+                                                background-color: #9754ca !important;
+                                                border-color: #9754ca !important;
+                                                color: white !important;
+                                                box-shadow: none !important;
+                                                outline: none !important;
+                                                opacity: 1 !important;
+                                            }
+                                        `}</style>
                                     </div>
                                 </form>
                             </div>
