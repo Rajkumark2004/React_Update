@@ -894,7 +894,20 @@ const CBSEExamList = () => {
                                                         required
                                                         style={{}}
                                                         value={examName}
-                                                        onChange={(e) => setExamName(e.target.value)}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            const isDuplicate = val && exams.some(exam => 
+                                                                exam.name.trim().toLowerCase() === val.trim().toLowerCase() && 
+                                                                String(exam.id) !== String(activeExam?.id)
+                                                            );
+                                                            if (isDuplicate) {
+                                                                e.target.setCustomValidity("Exam Name Already Exists");
+                                                                e.target.reportValidity();
+                                                            } else {
+                                                                e.target.setCustomValidity("");
+                                                            }
+                                                            setExamName(val);
+                                                        }}
                                                     />
                                                 </div>
                                             </div>
