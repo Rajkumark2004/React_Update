@@ -123,6 +123,7 @@ const StudentEdit = () => {
     const [vehRoutes, setVehRoutes] = useState({});
     const [pickupPoints, setPickupPoints] = useState([]);
     const [transportFeesList, setTransportFeesList] = useState([]);
+    const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [initialPhotoUrls, setInitialPhotoUrls] = useState({});
@@ -1100,18 +1101,23 @@ const StudentEdit = () => {
                                                     </div>
 
                                                     {/* Transport & Hostel Details */}
+                                                    <div className="tshadow mb25 bozero">
                                                     <h4 className="pagetitleh2">Transport Details</h4>
-                                                    <div className="row">
+                                                    <div className="row around10">
                                                         <div className="col-md-4">
                                                             <div className="form-group">
                                                                 <label>Route List</label>
-                                                                <select className="form-control" name="vehroute_id" value={formData.vehroute_id || formData.route_list} onChange={handleInputChange}>
+                                                                <select className="form-control" name="route_list" value={formData.vehroute_id || formData.route_list} onChange={(e) => {
+                                                                    handleInputChange(e);
+                                                                    setFormData(prev => ({ ...prev, vehroute_id: e.target.value }));
+                                                                    setPickupPoints([]);
+                                                                }}>
                                                                     <option value="">Select</option>
-                                                                    {Object.values(vehicleRouteList).map(route => (
+                                                                    {Object.values(vehRoutes).map(route => (
                                                                         <optgroup key={route.id} label={route.route_title}>
                                                                             {route.vehicles && route.vehicles.map(vehicle => (
                                                                                 <option key={vehicle.vec_route_id} value={vehicle.vec_route_id}>
-                                                                                    {vehicle.vehicle_no}
+                                                                                    {vehicle.vehicle_no} ({vehicle.vehicle_model})
                                                                                 </option>
                                                                             ))}
                                                                         </optgroup>
@@ -1132,13 +1138,48 @@ const StudentEdit = () => {
                                                         <div className="col-md-4">
                                                             <div className="form-group">
                                                                 <label>Fees Month</label>
-                                                                <select className="form-control" name="fees_month" value={formData.fees_month} onChange={handleInputChange} multiple={true}>
-                                                                    <option value="January">January</option>
-                                                                    <option value="February">February</option>
-                                                                    <option value="March">March</option>
-                                                                </select>
+                                                                <div className={`dropdown ${isMonthDropdownOpen ? 'open' : ''}`} style={{ position: 'relative' }}>
+                                                                    <div
+                                                                        className="form-control"
+                                                                        onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
+                                                                        style={{ cursor: 'pointer', height: 'auto', minHeight: '34px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
+                                                                    >
+                                                                        {formData.fees_month.length > 0
+                                                                            ? formData.fees_month.join(', ')
+                                                                            : 'Select Months'}
+                                                                        <span className="caret pull-right" style={{ marginTop: '7px' }}></span>
+                                                                    </div>
+                                                                    {isMonthDropdownOpen && (
+                                                                        <div className="dropdown-menu" style={{ display: 'block', width: '100%', maxHeight: '200px', overflowY: 'auto', padding: '10px' }}>
+                                                                            {transportFeesList.map(tf => (
+                                                                                <div key={tf.id} className="checkbox" style={{ margin: '5px 0' }}>
+                                                                                    <label style={{ width: '100%', cursor: 'pointer' }}>
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            value={tf.month}
+                                                                                            checked={formData.fees_month.includes(tf.month)}
+                                                                                            onChange={(e) => {
+                                                                                                const { checked, value } = e.target;
+                                                                                                setFormData(prev => {
+                                                                                                    const nextMonths = checked
+                                                                                                        ? [...prev.fees_month, value]
+                                                                                                        : prev.fees_month.filter(m => m !== value);
+                                                                                                    return { ...prev, fees_month: nextMonths };
+                                                                                                });
+                                                                                            }}
+                                                                                        />
+                                                                                        {tf.month}
+                                                                                    </label>
+                                                                                </div>
+                                                                            ))}
+                                                                            {transportFeesList.length === 0 && <div style={{ padding: '5px' }}>No months available</div>}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                {isMonthDropdownOpen && <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9 }} onClick={() => setIsMonthDropdownOpen(false)} />}
                                                             </div>
                                                         </div>
+                                                    </div>
                                                     </div>
 
                                                     <h4 className="pagetitleh2">Hostel Details</h4>
