@@ -216,14 +216,14 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                                     <div className="col-md-12 pt5">
                                         <button 
                                             type="button" 
-                                            className="btn btn-primary btn-sm add pull-right no-hover-effect" 
+                                            className="btn btn-primary btn-sm add pull-right" 
                                             onClick={handleAddRow} 
                                             style={{ 
-                                                backgroundColor: '#9754ca', 
-                                                borderColor: '#9754ca', 
                                                 borderRadius: '25px', 
-                                                padding: '5px 15px',
-                                                boxShadow: 'none'
+                                                padding: '6px 15px',
+                                                boxShadow: 'none',
+                                                outline: 'none',
+                                                marginTop:'10px'
                                             }}
                                         >
                                             <span className="fa fa-plus"></span> Add Exam Subject
@@ -344,35 +344,21 @@ const AssignExamSubjects = ({ examId, handleClose }) => {
                                     <div className="modal-footer clearboth mx-nt-lr-15 pb0" style={{ borderTop: 'unset', display: 'flex', justifyContent: 'flex-end' }}>
                                         <button 
                                             type="submit" 
-                                            className="btn btn-primary no-hover-effect" 
+                                            className="btn btn-primary" 
                                             id="load" 
                                             disabled={saving} 
                                             style={{ 
-                                                backgroundColor: '#9754ca', 
-                                                borderColor: '#9754ca', 
                                                 borderRadius: '25px', 
-                                                padding: '6px 20px', 
-                                                minWidth: '100px', 
+                                                padding: '6px 22px',
                                                 fontWeight: 'bold',
                                                 color: 'white',
-                                                boxShadow: 'none'
+                                                boxShadow: 'none',
+                                                outline: 'none'
                                             }}
                                         >
                                             {saving ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                                         </button>
-                                        <style>{`
-                                            .no-hover-effect:hover, 
-                                            .no-hover-effect:active, 
-                                            .no-hover-effect:focus,
-                                            .no-hover-effect:visited {
-                                                background-color: #9754ca !important;
-                                                border-color: #9754ca !important;
-                                                color: white !important;
-                                                box-shadow: none !important;
-                                                outline: none !important;
-                                                opacity: 1 !important;
-                                            }
-                                        `}</style>
+
                                     </div>
                                 </form>
                             </div>

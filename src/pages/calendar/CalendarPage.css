@@ -469,21 +469,19 @@
 /* ==================== Buttons in forms ==================== */
 .cal-container .btn-primary,
 .modal .btn-primary {
-    background: linear-gradient(135deg, #8E44D3, #7B38B8);
-    border-color: #7B38B8;
+    background-color: #9754ca;
+    border-color: #9754ca;
     border-radius: 6px;
     font-weight: 600;
-    padding: 8px 20px;
+    padding: 7px 20px;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(142, 68, 211, 0.25);
 }
 
-.cal-container .btn-primary:hover,
+/* .cal-container .btn-primary:hover,
 .modal .btn-primary:hover {
-    background: linear-gradient(135deg, #7B38B8, #6A2FA0);
     box-shadow: 0 4px 12px rgba(142, 68, 211, 0.4);
     transform: translateY(-1px);
-}
+} */
 
 .modal .btn-danger {
     border-radius: 6px;

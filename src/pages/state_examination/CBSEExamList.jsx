@@ -1089,7 +1089,7 @@ const CBSEExamList = () => {
                                     <div className="modal-footer modal-footer-responsive" style={{ borderTop: 'none', paddingBottom: '20px' }}>
                                         <button 
                                             type="submit" 
-                                            className="btn no-hover-effect" 
+                                            className="btn" 
                                             style={{ 
                                                 backgroundColor: '#9754ca', 
                                                 color: 'white', 
@@ -1098,7 +1098,8 @@ const CBSEExamList = () => {
                                                 fontSize: '14px', 
                                                 fontWeight: 'bold', 
                                                 border: 'none', 
-                                                boxShadow: 'none' 
+                                                boxShadow: 'none',
+                                                outline: 'none'
                                             }}
                                         >
                                             {activeExam ? "Update" : "Save"}
@@ -1308,7 +1309,7 @@ const CBSEExamList = () => {
                                 {modalConfig.type === 'marks' && subModalConfig.show ? (
                                     <button 
                                         type="button" 
-                                        className="btn btn-primary no-hover-effect" 
+                                        className="btn btn-primary" 
                                         onClick={handleSaveExamMarks} 
                                         disabled={entryLoading} 
                                         style={{ 
@@ -1318,7 +1319,8 @@ const CBSEExamList = () => {
                                             padding: '6px 20px', 
                                             minWidth: '100px', 
                                             fontWeight: 'bold',
-                                            boxShadow: 'none'
+                                            boxShadow: 'none',
+                                            outline: 'none'
                                         }}
                                     >
                                         {entryLoading ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
@@ -1326,7 +1328,7 @@ const CBSEExamList = () => {
                                 ) : (
                                     <button 
                                         type="button" 
-                                        className="btn btn-primary no-hover-effect" 
+                                        className="btn btn-primary" 
                                         onClick={closeActionModal} 
                                         style={{ 
                                             backgroundColor: '#9754ca', 
@@ -1335,7 +1337,8 @@ const CBSEExamList = () => {
                                             padding: '6px 20px', 
                                             minWidth: '100px', 
                                             fontWeight: 'bold',
-                                            boxShadow: 'none'
+                                            boxShadow: 'none',
+                                            outline: 'none'
                                         }}
                                     >
                                         Save Changes
@@ -1410,17 +1413,6 @@ const CBSEExamList = () => {
                     border-radius: 8px !important;
                     overflow: hidden;
                     border: none;
-                }
-                .no-hover-effect:hover, 
-                .no-hover-effect:active, 
-                .no-hover-effect:focus,
-                .no-hover-effect:visited {
-                    background-color: #9754ca !important;
-                    border-color: #9754ca !important;
-                    color: white !important;
-                    box-shadow: none !important;
-                    outline: none !important;
-                    opacity: 1 !important;
                 }
             `}</style>
             <Footer />

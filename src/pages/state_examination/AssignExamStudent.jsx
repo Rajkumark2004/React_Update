@@ -202,35 +202,21 @@ const AssignExamStudent = ({ examId: propExamId, handleClose }) => {
                         <div className="modal-footer" style={{ borderTop: '1px solid #f4f4f4', padding: '15px 0 0 0', marginTop: '15px', display: 'flex', justifyContent: 'flex-end' }}>
                             <button 
                                 type="submit" 
-                                className="btn btn-primary no-hover-effect" 
+                                className="btn btn-primary" 
                                 id="load" 
                                 disabled={saving} 
                                 style={{ 
-                                    backgroundColor: '#9754ca', 
-                                    borderColor: '#9754ca', 
                                     borderRadius: '25px', 
                                     padding: '6px 20px', 
                                     minWidth: '100px', 
                                     fontWeight: 'bold',
                                     color: 'white',
-                                    boxShadow: 'none'
+                                    boxShadow: 'none',
+                                    outline: 'none'
                                 }}
                             >
                                 {saving ? <i className="fa fa-spinner fa-spin"></i> : 'Save'}
                             </button>
-                            <style>{`
-                                .no-hover-effect:hover, 
-                                .no-hover-effect:active, 
-                                .no-hover-effect:focus,
-                                .no-hover-effect:visited {
-                                    background-color: #9754ca !important;
-                                    border-color: #9754ca !important;
-                                    color: white !important;
-                                    box-shadow: none !important;
-                                    outline: none !important;
-                                    opacity: 1 !important;
-                                }
-                            `}</style>
                         </div>
                     </form>
                 )}
