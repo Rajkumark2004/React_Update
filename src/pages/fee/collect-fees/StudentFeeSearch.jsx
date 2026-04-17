@@ -459,7 +459,6 @@ const StudentFeeSearch = () => {
                                         </div>
                                     </div>
 
-                                    {/* Bulk Upload Section - Import payments from CSV */}
                                     <div className="box box-info" style={{ padding: '5px' }}>
                                         <div className="box-header with-border">
                                             <div className="pull-right box-tools">
@@ -469,7 +468,7 @@ const StudentFeeSearch = () => {
                                                     disabled={downloading}
                                                 >
                                                     <i className={`fa ${downloading ? 'fa-spinner fa-spin' : 'fa-download'}`}></i>
-                                                    {downloading ? ' Downloading...' : ' Import Payment Sample File'}
+                                                    {downloading ? ' Downloading...' : ' Download Sample Payment File'}
                                                 </button>
                                             </div>
                                         </div>
@@ -691,9 +690,9 @@ const StudentFeeSearch = () => {
 
                                                 {/* Pagination Footer */}
                                                 <div className="pt15 pb15">
-                                                    <Pagination 
-                                                        totalItems={currentTotal} 
-                                                        itemsPerPage={recordsPerPage} 
+                                                    <Pagination
+                                                        totalItems={currentTotal}
+                                                        itemsPerPage={recordsPerPage}
                                                         currentPage={currentPage}
                                                         onPageChange={(page) => setCurrentPage(page)}
                                                     />

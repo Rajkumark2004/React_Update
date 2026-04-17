@@ -18,7 +18,6 @@ const TemplateWiseRank = () => {
     const [schSetting, setSchSetting] = useState({});
     const [hasRanksGenerated, setHasRanksGenerated] = useState(false);
     const [selectedStudents, setSelectedStudents] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
         if (templateId) {
@@ -87,17 +86,11 @@ const TemplateWiseRank = () => {
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedStudents(filteredStudents.map(s => parseInt(s.student_session_id)));
+            setSelectedStudents(studentList.map(s => parseInt(s.student_session_id)));
         } else {
             setSelectedStudents([]);
         }
     };
-
-    const filteredStudents = studentList.filter(s => {
-        const fullName = `${s.firstname} ${s.middlename || ""} ${s.lastname || ""}`.toLowerCase();
-        const admissionNo = (s.admission_no || "").toLowerCase();
-        return fullName.includes(searchTerm.toLowerCase()) || admissionNo.includes(searchTerm.toLowerCase());
-    });
 
     const getFullName = (s) => {
         let name = s.firstname;
@@ -156,15 +149,6 @@ const TemplateWiseRank = () => {
                                         <div className="col-md-6">
                                             <div className="download_label">Generate Rank</div>
                                         </div>
-                                        <div className="col-md-6 text-right">
-                                            <input
-                                                type="search"
-                                                placeholder="Search..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                                style={{ border: 'none', borderBottom: '1px solid #ccc', outline: 'none', padding: '5px 0', background: 'transparent', width: '200px' }}
-                                            />
-                                        </div>
                                     </div>
 
                                     {hasRanksGenerated && (
@@ -189,7 +173,7 @@ const TemplateWiseRank = () => {
                                                                 <input
                                                                     type="checkbox"
                                                                     onChange={handleSelectAll}
-                                                                    checked={filteredStudents.length > 0 && selectedStudents.length === filteredStudents.length}
+                                                                    checked={studentList.length > 0 && selectedStudents.length === studentList.length}
                                                                 />
                                                             </th>
                                                             <th>Admission No</th>
@@ -203,7 +187,7 @@ const TemplateWiseRank = () => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {filteredStudents.map((student, index) => (
+                                                        {studentList.map((student, index) => (
                                                             <tr key={index}>
                                                                 <td>
                                                                     <input

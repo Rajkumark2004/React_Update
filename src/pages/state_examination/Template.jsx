@@ -389,10 +389,11 @@ const Template = () => {
     };
 
     const handleExamCheckboxChange = (examId, isChecked) => {
+        const id = parseInt(examId);
         setLinkExamFormData(prev => {
             const newExams = isChecked
-                ? [...prev.exams, examId]
-                : prev.exams.filter(id => id !== examId);
+                ? [...prev.exams, id]
+                : prev.exams.filter(exId => exId !== id);
 
             return {
                 ...prev,
@@ -408,6 +409,67 @@ const Template = () => {
                 ...prev.weightages,
                 [examId]: value
             }
+        }));
+    };
+
+    const handleTermWeightageChange = (termId, value) => {
+        setLinkExamFormData(prev => ({
+            ...prev,
+            term_weightage: {
+                ...prev.term_weightage,
+                [termId]: value
+            }
+        }));
+    };
+
+    const handleTermCheckboxChange = (termId, exams, isChecked) => {
+        setLinkExamFormData(prev => {
+            let newTerms;
+            let newExams;
+
+            if (marksheetType === 'term_wise') {
+                // Radio button behavior for term selection
+                newTerms = [termId];
+                // When switching terms in term_wise, select all exams of the new term
+                newExams = (exams || []).map(ex => parseInt(ex.id));
+            } else {
+                newTerms = isChecked
+                    ? [...prev.terms, termId]
+                    : prev.terms.filter(id => id !== termId);
+                
+                newExams = [...prev.exams];
+                if (isChecked) {
+                    (exams || []).forEach(ex => {
+                        const id = parseInt(ex.id);
+                        if (!newExams.includes(id)) {
+                            newExams.push(id);
+                        }
+                    });
+                } else {
+                    const examIds = (exams || []).map(ex => parseInt(ex.id));
+                    newExams = newExams.filter(id => !examIds.includes(id));
+                }
+            }
+
+            return {
+                ...prev,
+                terms: newTerms,
+                exams: newExams
+            };
+        });
+    };
+
+    const handleGradingChange = (examId) => {
+        setLinkExamFormData(prev => ({
+            ...prev,
+            grading: examId
+        }));
+    };
+
+    const handleTeacherRemarkChange = (examId) => {
+        setLinkExamFormData(prev => ({
+            ...prev,
+            teacher_remark: examId
         }));
     };
 
@@ -1211,35 +1273,100 @@ const Template = () => {
                                                     <i className="fa fa-spinner fa-spin fa-2x"></i>
                                                     <p>Loading exams...</p>
                                                 </div>
-                                            ) : linkExamData && (linkExamData.result || linkExamData.exam_data || linkExamData.subjectgroupList) ? (
+                                            ) : (linkExamData && (
+                                                Array.isArray(linkExamData.result || linkExamData.exam_data) 
+                                                    ? (linkExamData.result || linkExamData.exam_data).length > 0 
+                                                    : Object.keys(linkExamData.result || linkExamData.exam_data || {}).length > 0
+                                            )) ? (
                                                 <div style={{ overflowX: 'auto' }}>
-                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                                                    {/* Term Weightage Table - Show only for 'all_term' */}
+                                                    {marksheetType === 'all_term' && (
+                                                        <div style={{ marginBottom: '20px' }}>
+                                                            <table className="table table-bordered" style={{ width: '650px', marginBottom: '10px', fontSize: '13px' }}>
+                                                                <thead>
+                                                                    <tr style={{ backgroundColor: '#f5f5f5' }}>
+                                                                        <th style={{ padding: '8px', fontWeight: 'bold', textAlign: 'left' }}>Term</th>
+                                                                        <th style={{ padding: '8px', fontWeight: 'bold', textAlign: 'left', width: '150px' }}>Weightage</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {(Array.isArray(linkExamData.result || linkExamData.exam_data)
+                                                                        ? (linkExamData.result || linkExamData.exam_data)
+                                                                        : Object.entries(linkExamData.result || linkExamData.exam_data || {}).map(([id, val]) => ({ ...val, id: id }))
+                                                                    ).map(term => (
+                                                                        <tr key={term.id}>
+                                                                            <td style={{ padding: '8px', verticalAlign: 'middle' }}>{term.name}</td>
+                                                                            <td style={{ padding: '8px' }}>
+                                                                                <input 
+                                                                                    type="number" 
+                                                                                    className="form-control" 
+                                                                                    value={linkExamFormData.term_weightage[term.id] || ''} 
+                                                                                    onChange={(e) => handleTermWeightageChange(term.id, e.target.value)}
+                                                                                    style={{ height: '30px', fontSize: '12px', border: '1px solid #000', borderRadius: '4px' }}
+                                                                                />
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    )}
+
+                                                    <table className="table student-list" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                                                         <thead>
                                                             <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                                                                <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: '20%', borderBottom: '2px solid #ddd' }}>Term</th>
-                                                                <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Exam Name</th>
+                                                                <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: (marksheetType.includes('single') || marksheetType === 'exam_wise') ? '40%' : '25%', borderBottom: '2px solid #ddd' }}>Term</th>
+                                                                <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'left', width: (marksheetType === 'term_wise' || marksheetType.includes('multiple') || marksheetType.includes('without_term')) ? '30%' : ((marksheetType.includes('single') || marksheetType === 'exam_wise') ? '60%' : '40%'), borderBottom: '2px solid #ddd' }}>Exam Name</th>
+                                                                {(marksheetType === 'term_wise' || marksheetType.includes('multiple') || marksheetType.includes('without_term')) && (
+                                                                    <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'center', width: '15%', borderBottom: '2px solid #ddd' }}>Weightage</th>
+                                                                )}
+                                                                {!(marksheetType.includes('single') || marksheetType === 'exam_wise') && (
+                                                                    <>
+                                                                        <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'center', width: '15%', borderBottom: '2px solid #ddd' }}>Grading</th>
+                                                                        <th style={{ padding: '10px 12px', fontWeight: 'bold', textAlign: 'center', width: '15%', borderBottom: '2px solid #ddd' }}>Teacher Remark</th>
+                                                                    </>
+                                                                )}
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {(linkExamData.result || linkExamData.exam_data) ? (
-                                                                (Array.isArray(linkExamData.result || linkExamData.exam_data)
-                                                                    ? (linkExamData.result || linkExamData.exam_data)
-                                                                    : Object.entries(linkExamData.result || linkExamData.exam_data || {}).map(([id, val]) => ({ ...val, id: id }))
-                                                                ).map(term => (
-                                                                    <React.Fragment key={term.id || Math.random()}>
-                                                                        <tr>
-                                                                            <td style={{ padding: '10px 12px', fontWeight: 'bold', verticalAlign: 'top', borderBottom: '1px solid #eee', color: '#333' }}>{term.name}</td>
+                                                            {(Array.isArray(linkExamData.result || linkExamData.exam_data)
+                                                                ? (linkExamData.result || linkExamData.exam_data)
+                                                                : Object.entries(linkExamData.result || linkExamData.exam_data || {}).map(([id, val]) => ({ ...val, id: id }))
+                                                            ).map(term => (
+                                                                <React.Fragment key={term.id || Math.random()}>
+                                                                    <tr style={{ backgroundColor: '#fff' }}>
+                                                                        <td style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #eee' }}>
+                                                                            {(marksheetType.includes('single') || marksheetType === 'exam_wise' || marksheetType.includes('multiple') || marksheetType.includes('without_term')) ? (
+                                                                                <span style={{ fontWeight: 'bold', color: '#333' }}>{term.name}</span>
+                                                                            ) : marksheetType === 'term_wise' ? (
+                                                                                <input 
+                                                                                    type="radio" 
+                                                                                    name="term_selection_radio"
+                                                                                    checked={linkExamFormData.terms.includes(String(term.id))}
+                                                                                    onChange={() => handleTermCheckboxChange(String(term.id), term.exam || [], true)}
+                                                                                    style={{ width: '13px', height: '13px', cursor: 'pointer' }}
+                                                                                />
+                                                                            ) : (
+                                                                                <input 
+                                                                                    type="checkbox" 
+                                                                                    checked={linkExamFormData.terms.includes(String(term.id))}
+                                                                                    onChange={(e) => handleTermCheckboxChange(String(term.id), term.exam || [], e.target.checked)}
+                                                                                    style={{ width: '13px', height: '13px', cursor: 'pointer' }}
+                                                                                />
+                                                                            )}
+                                                                            {!(marksheetType.includes('single') || marksheetType === 'exam_wise' || marksheetType.includes('multiple') || marksheetType.includes('without_term')) && <span style={{ fontWeight: 'bold', color: '#333' }}>{term.name}</span>}
+                                                                        </td>
+                                                                        <td colSpan={(marksheetType.includes('single') || marksheetType === 'exam_wise') ? 1 : ((marksheetType === 'term_wise' || marksheetType.includes('multiple') || marksheetType.includes('without_term')) ? 4 : 3)} style={{ borderBottom: '1px solid #eee' }}></td>
+                                                                    </tr>
+                                                                    {(term.exam || []).map(exam => (
+                                                                        <tr key={exam.id}>
                                                                             <td style={{ borderBottom: '1px solid #eee' }}></td>
-                                                                        </tr>
-                                                                        {(term.exam || []).map(exam => (
-                                                                            <tr key={exam.id}>
-                                                                                <td style={{ borderBottom: '1px solid #eee' }}></td>
-                                                                                <td style={{ padding: '8px 12px', borderBottom: '1px solid #eee' }}>
-                                                                                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                            <td style={{ padding: '8px 12px', borderBottom: '1px solid #eee' }}>
+                                                                                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
+                                                                                    {(marksheetType.includes('single') || marksheetType === 'exam_wise') ? (
                                                                                         <input
                                                                                             type="radio"
-                                                                                            name="link_exam_selection"
-                                                                                            value={exam.id}
+                                                                                            name="single_exam_selection"
                                                                                             checked={linkExamFormData.exams.includes(parseInt(exam.id))}
                                                                                             onChange={() => {
                                                                                                 setLinkExamFormData(prev => ({
@@ -1247,24 +1374,73 @@ const Template = () => {
                                                                                                     exams: [parseInt(exam.id)]
                                                                                                 }));
                                                                                             }}
-                                                                                            style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                                                                            style={{ width: '13px', height: '13px', cursor: 'pointer' }}
                                                                                         />
-                                                                                        <span>{exam.name}</span>
-                                                                                    </label>
+                                                                                    ) : (
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            checked={linkExamFormData.exams.includes(parseInt(exam.id))}
+                                                                                            onChange={(e) => handleExamCheckboxChange(exam.id, e.target.checked)}
+                                                                                            style={{ width: '13px', height: '13px', cursor: 'pointer' }}
+                                                                                        />
+                                                                                    )}
+                                                                                    <span>{exam.name}</span>
+                                                                                </label>
+                                                                            </td>
+                                                                            {(marksheetType === 'term_wise' || marksheetType.includes('multiple') || marksheetType.includes('without_term')) && (
+                                                                                <td style={{ padding: '8px 12px', borderBottom: '1px solid #eee' }}>
+                                                                                    <input 
+                                                                                        type="number" 
+                                                                                        className="form-control"
+                                                                                        style={{ height: '30px', fontSize: '12px' }}
+                                                                                        value={linkExamFormData.weightages[exam.id] || ''}
+                                                                                        onChange={(e) => handleWeightageChange(exam.id, e.target.value)}
+                                                                                    />
                                                                                 </td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </React.Fragment>
-                                                                ))) : (
-                                                                <tr>
-                                                                    <td colSpan={2} style={{ textAlign: 'center', padding: '20px', color: '#999' }}>No exams found</td>
-                                                                </tr>
-                                                            )}
+                                                                            )}
+                                                                            {!(marksheetType.includes('single') || marksheetType === 'exam_wise') && (
+                                                                                <>
+                                                                                    <td style={{ textAlign: 'center', padding: '8px 12px', borderBottom: '1px solid #eee' }}>
+                                                                                        <input 
+                                                                                            type="radio" 
+                                                                                            name="grading_selection" 
+                                                                                            checked={linkExamFormData.grading == exam.id}
+                                                                                            onChange={() => handleGradingChange(exam.id)}
+                                                                                            style={{ width: '13px', height: '13px', cursor: 'pointer' }}
+                                                                                        />
+                                                                                    </td>
+                                                                                    <td style={{ textAlign: 'center', padding: '8px 12px', borderBottom: '1px solid #eee' }}>
+                                                                                        <input 
+                                                                                            type="radio" 
+                                                                                            name="remark_selection" 
+                                                                                            checked={linkExamFormData.teacher_remark == exam.id}
+                                                                                            onChange={() => handleTeacherRemarkChange(exam.id)}
+                                                                                            style={{ width: '13px', height: '13px', cursor: 'pointer' }}
+                                                                                        />
+                                                                                    </td>
+                                                                                </>
+                                                                            )}
+                                                                        </tr>
+                                                                    ))}
+                                                                </React.Fragment>
+                                                            ))}
                                                         </tbody>
                                                     </table>
                                                 </div>
                                             ) : marksheetType ? (
-                                                <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No exams found for this marksheet type</div>
+                                                <div style={{
+                                                    backgroundColor: '#d9edf7',
+                                                    color: '#31708f',
+                                                    padding: '20px',
+                                                    borderRadius: '4px',
+                                                    border: '1px solid #bce8f1',
+                                                    textAlign: 'center',
+                                                    marginTop: '10px',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500'
+                                                }}>
+                                                    No Record Found
+                                                </div>
                                             ) : null}
                                         </div>
                                     </div>

@@ -14,6 +14,19 @@ const StaffProfile = () => {
     const { id } = useParams();
     const { currentSession } = useSession();
 
+    // Custom styles for animated upload hover (matching DragDropFileUpload component)
+    const uploadHoverStyles = `
+        .upload-area-hover:hover {
+            background-image: repeating-linear-gradient(-45deg, #fff, #fff 10px, #fdf7f0 10px, #fdf7f0 20px) !important;
+            background-size: 28px 28px !important;
+            animation: moveStripesStaff 0.8s linear infinite !important;
+        }
+        @keyframes moveStripesStaff {
+            0% { background-position: 0 0; }
+            100% { background-position: 28px 0; }
+        }
+    `;
+
     // State for API data
     const [staff, setStaff] = useState(null);
     const [leaves, setLeaves] = useState({ details: [], history: [] });
@@ -25,6 +38,36 @@ const StaffProfile = () => {
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [newPass, setNewPass] = useState('');
     const [confirmPass, setConfirmPass] = useState('');
+
+    const [showTimelineModal, setShowTimelineModal] = useState(false);
+    const [timelineForm, setTimelineForm] = useState({
+        title: '',
+        date: new Date().toISOString().split('T')[0],
+        description: '',
+        document: null,
+        visible: true
+    });
+    const [isUploadHovered, setIsUploadHovered] = useState(false);
+    const [editTimelineId, setEditTimelineId] = useState(null);
+
+    const handleEditTimeline = (item) => {
+        // Convert DD/MM/YYYY to YYYY-MM-DD for date input
+        let formattedDate = item.date;
+        if (item.date && item.date.includes('/')) {
+            const [day, month, year] = item.date.split('/');
+            formattedDate = `${year}-${month}-${day}`;
+        }
+        
+        setTimelineForm({
+            title: item.title,
+            date: formattedDate,
+            description: item.description,
+            document: item.document || null,
+            visible: true // Default or map if available in sample data
+        });
+        setEditTimelineId(item.id);
+        setShowTimelineModal(true);
+    };
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
@@ -282,9 +325,9 @@ const StaffProfile = () => {
                                         <li className={activeTab === 'profile' ? 'active' : ''}>
                                             <a href="#profile" onClick={(e) => { e.preventDefault(); setActiveTab('profile'); }}>Profile</a>
                                         </li>
-                                        {/* <li className={activeTab === 'payroll' ? 'active' : ''}>
+                                        <li className={activeTab === 'payroll' ? 'active' : ''}>
                                             <a href="#payroll" onClick={(e) => { e.preventDefault(); setActiveTab('payroll'); }}>Payroll</a>
-                                        </li> */}
+                                        </li>
                                         <li className={activeTab === 'leaves' ? 'active' : ''}>
                                             <a href="#leaves" onClick={(e) => { e.preventDefault(); setActiveTab('leaves'); }}>Leaves</a>
                                         </li>
@@ -397,9 +440,100 @@ const StaffProfile = () => {
                                         </div>
 
                                         {/* Payroll Tab */}
-                                        {/* <div className={`tab-pane ${activeTab === 'payroll' ? 'active' : ''}`} id="payroll">
-                                            ... (content hidden) ...
-                                        </div> */}
+                                        <div className={`tab-pane ${activeTab === 'payroll' ? 'active' : ''}`} id="payroll">
+                                            <div className="row">
+                                                <div className="col-lg-3 col-md-4 col-sm-6">
+                                                    <div className="staffprofile">
+                                                        <h5>Total Net Salary Paid</h5>
+                                                        <h4>₹{(payroll.payslips || []).reduce((sum, p) => sum + (parseFloat(p.net_salary) || 0), 0).toLocaleString()}</h4>
+                                                        <div className="icon"><i className="fa fa-money"></i></div>
+                                                    </div>
+                                                </div>
+                                                <div className="col-lg-3 col-md-4 col-sm-6">
+                                                    <div className="staffprofile">
+                                                        <h5>Total Gross Salary</h5>
+                                                        <h4>₹{(payroll.payslips || []).reduce((sum, p) => sum + (parseFloat(p.gross_salary) || 0), 0).toLocaleString()}</h4>
+                                                        <div className="icon"><i className="fa fa-money"></i></div>
+                                                    </div>
+                                                </div>
+                                                <div className="col-lg-3 col-md-4 col-sm-6">
+                                                    <div className="staffprofile">
+                                                        <h5>Total Earning</h5>
+                                                        <h4>₹{(payroll.payslips || []).reduce((sum, p) => sum + (parseFloat(p.total_earning) || 0), 0).toLocaleString()}</h4>
+                                                        <div className="icon"><i className="fa fa-money"></i></div>
+                                                    </div>
+                                                </div>
+                                                <div className="col-lg-3 col-md-4 col-sm-6">
+                                                    <div className="staffprofile">
+                                                        <h5>Total Deduction</h5>
+                                                        <h4>₹{(payroll.payslips || []).reduce((sum, p) => sum + (parseFloat(p.total_deduction) || 0), 0).toLocaleString()}</h4>
+                                                        <div className="icon"><i className="fa fa-money"></i></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="table-responsive">
+                                                <table className="table table-hover table-striped table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Payslip #</th>
+                                                            <th>Month - Year</th>
+                                                            <th>Date</th>
+                                                            <th>Mode</th>
+                                                            <th>Status</th>
+                                                            <th className="text-right">Net Salary (₹)</th>
+                                                            <th className="text-right">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {(payroll.payslips || []).map((p, idx) => (
+                                                            <tr key={idx}>
+                                                                <td>{p.id}</td>
+                                                                <td>{p.month} - {p.year}</td>
+                                                                <td>{p.payment_date}</td>
+                                                                <td>{p.payment_mode || 'Cash'}</td>
+                                                                <td>
+                                                                    <span className={`label ${p.status === 'paid' ? 'label-success' : 'label-warning'}`}>
+                                                                        {p.status || 'Paid'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="text-right">₹{parseFloat(p.net_salary).toLocaleString()}</td>
+                                                                <td className="text-right">
+                                                                    <button className="btn btn-primary btn-xs" style={{ borderRadius: '25px', backgroundColor: '#9754ca', border: 'none', padding: '5px 15px' }}>
+                                                                        View Payslip
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                        {(!payroll.payslips || payroll.payslips.length === 0) && (
+                                                            <tr>
+                                                                <td colSpan="7" className="text-center text-muted">No payslip records found</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px', padding: '0 5px' }}>
+                                                <div style={{ color: '#666', fontSize: '13px' }}>
+                                                    Showing 1 to {payroll.payslips.length} of {payroll.payslips.length} Records
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    <a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>&lt;</a>
+                                                    <span style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        width: '28px',
+                                                        height: '28px',
+                                                        backgroundColor: '#eeeeee',
+                                                        color: '#333',
+                                                        fontSize: '12px',
+                                                        fontWeight: '500',
+                                                        borderRadius: '2px'
+                                                    }}>1</span>
+                                                    <a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>&gt;</a>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         {/* Leaves Tab */}
                                         <div className={`tab-pane ${activeTab === 'leaves' ? 'active' : ''}`} id="leaves">
@@ -446,6 +580,27 @@ const StaffProfile = () => {
                                                         ))}
                                                     </tbody>
                                                 </table>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px', padding: '0 5px' }}>
+                                                <div style={{ color: '#666', fontSize: '13px' }}>
+                                                    Showing 1 to {leaves.history.length} of {leaves.history.length} Records
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    <a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>&lt;</a>
+                                                    <span style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        width: '28px',
+                                                        height: '28px',
+                                                        backgroundColor: '#eeeeee',
+                                                        color: '#333',
+                                                        fontSize: '12px',
+                                                        fontWeight: '500',
+                                                        borderRadius: '2px'
+                                                    }}>1</span>
+                                                    <a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}>&gt;</a>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -499,34 +654,84 @@ const StaffProfile = () => {
                                         {/* Documents Tab */}
                                         <div className={`tab-pane ${activeTab === 'documents' ? 'active' : ''}`} id="documents">
                                             <div className="row">
-                                                {documents.map((doc, idx) => (
-                                                    <div className="col-lg-3 col-md-4 col-sm-6" key={idx}>
-                                                        <div className="staffprofile">
-                                                            <h5>{doc.title}</h5>
-                                                            <button className="btn btn-default btn-xs" title="Download"><i className="fa fa-download"></i></button>
-                                                            <div className="icon"><i className="fa fa-file-text-o"></i></div>
+                                                {documents.length > 0 ? (
+                                                    documents.map((doc, idx) => (
+                                                        <div className="col-lg-3 col-md-4 col-sm-6" key={idx}>
+                                                            <div className="staffprofile">
+                                                                <h5>{doc.title}</h5>
+                                                                <button className="btn btn-default btn-xs" title="Download"><i className="fa fa-download"></i></button>
+                                                                <div className="icon"><i className="fa fa-file-text-o"></i></div>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="col-md-12">
+                                                        <div className="alert alert-info" style={{ backgroundColor: '#d9edf7', borderColor: '#bce8f1', color: '#31708f', margin: '10px 0' }}>
+                                                            No Record Found
                                                         </div>
                                                     </div>
-                                                ))}
+                                                )}
                                             </div>
                                         </div>
 
                                         {/* Timeline Tab */}
                                         <div className={`tab-pane ${activeTab === 'timeline' ? 'active' : ''}`} id="timeline">
-                                            <div className="timeline-header no-border">
-                                                <ul className="timeline timeline-inverse">
-                                                    {timeline.map(item => (
-                                                        <li key={item.id}>
-                                                            <i className="fa fa-list-alt bg-blue"></i>
-                                                            <div className="timeline-item">
-                                                                <span className="time"><i className="fa fa-clock-o"></i> {item.date}</span>
-                                                                <h3 className="timeline-header">{item.title}</h3>
-                                                                <div className="timeline-body">{item.description}</div>
-                                                            </div>
-                                                        </li>
-                                                    ))}
-                                                    <li><i className="fa fa-clock-o bg-gray"></i></li>
-                                                </ul>
+                                            <div className="row" style={{ marginBottom: '15px' }}>
+                                                <div className="col-md-12 text-right">
+                                                    <button
+                                                        className="btn btn-primary btn-sm"
+                                                        style={{ borderRadius: '25px', backgroundColor: '#9754ca', border: 'none', padding: '5px 23px', fontSize: '12px' }}
+                                                        onClick={() => {
+                                                            setEditTimelineId(null);
+                                                            setTimelineForm({
+                                                                title: '',
+                                                                date: new Date().toISOString().split('T')[0],
+                                                                description: '',
+                                                                document: null,
+                                                                visible: true
+                                                            });
+                                                            setShowTimelineModal(true);
+                                                        }}
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="timeline-header no-border" style={{ paddingBottom: '30px' }}>
+                                                {timeline.length > 0 ? (
+                                                    <ul className="timeline timeline-inverse">
+                                                        {timeline.map(item => (
+                                                            <React.Fragment key={item.id}>
+                                                                <li className="time-label">
+                                                                    <span className="bg-blue" style={{ borderRadius: '3px', fontSize: '12px', padding: '3px 8px' }}>
+                                                                        {item.date}
+                                                                    </span>
+                                                                </li>
+                                                                <li>
+                                                                    <i className="fa fa-list-alt bg-blue"></i>
+                                                                    <div className="timeline-item" style={{ border: '1px solid #eee', boxShadow: 'none' }}>
+                                                                        <div className="timeline-header" style={{ backgroundColor: '#f9f9f9', borderBottom: '1px solid #f4f4f4', color: '#00c0ef', fontSize: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px' }}>
+                                                                            <span>{item.title}</span>
+                                                                            <div className="timeline-actions">
+                                                                                {(item.document || item.file) && (
+                                                                                    <i className="fa fa-download" style={{ color: '#333', marginRight: '15px', cursor: 'pointer', fontSize: '14px' }} title="Download"></i>
+                                                                                )}
+                                                                                <i className="fa fa-pencil" style={{ color: '#333', marginRight: '15px', cursor: 'pointer', fontSize: '14px' }} onClick={() => handleEditTimeline(item)}></i>
+                                                                                <i className="fa fa-trash" style={{ color: '#333', cursor: 'pointer', fontSize: '14px' }}></i>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="timeline-body" style={{ padding: '10px 15px', color: '#666' }}>{item.description}</div>
+                                                                    </div>
+                                                                </li>
+                                                            </React.Fragment>
+                                                        ))}
+                                                        <li><i className="fa fa-clock-o bg-gray"></i></li>
+                                                    </ul>
+                                                ) : (
+                                                    <div className="alert alert-info" style={{ backgroundColor: '#d9edf7', borderColor: '#bce8f1', color: '#31708f', margin: '10px 0' }}>
+                                                        No Record Found
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -590,6 +795,136 @@ const StaffProfile = () => {
                                 </div>
                                 <div className="modal-footer">
                                     <button type="submit" className="btn btn-primary pull-right">Proceed</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Add Timeline Modal */}
+            {showTimelineModal && (
+                <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <form onSubmit={(e) => { e.preventDefault(); alert('Timeline Added (Mock)'); setShowTimelineModal(false); }}>
+                                <div className="modal-header" style={{ borderBottom: '1px solid #eee', padding: '15px 20px' }}>
+                                    <button type="button" className="close" onClick={() => setShowTimelineModal(false)}>&times;</button>
+                                    <h3 className="modal-title" style={{ fontSize: '18px', fontWeight: '500', color: '#333' }}>
+                                        {editTimelineId ? 'Edit Timeline' : 'Add Timeline'}
+                                    </h3>
+                                </div>
+                                <div className="modal-body">
+                                    <div className="form-group">
+                                        <label>Title <small className="req"> *</small></label>
+                                        <input type="text" required className="form-control" value={timelineForm.title} onChange={(e) => setTimelineForm({ ...timelineForm, title: e.target.value })} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Date <small className="req"> *</small></label>
+                                        <input type="date" required className="form-control" value={timelineForm.date} onChange={(e) => setTimelineForm({ ...timelineForm, date: e.target.value })} />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Description</label>
+                                        <textarea className="form-control" rows="3" value={timelineForm.description} onChange={(e) => setTimelineForm({ ...timelineForm, description: e.target.value })}></textarea>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Attach Document</label>
+                                        <style>{uploadHoverStyles}</style>
+                                        <div
+                                            className={!timelineForm.document ? "upload-area-hover" : ""}
+                                            style={{
+                                                border: 'none',
+                                                borderBottom: '1px solid #e5e5e5',
+                                                padding: timelineForm.document && isUploadHovered ? '0' : '8px 15px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                color: '#444',
+                                                transition: 'all 0.3s ease',
+                                                minHeight: '40px',
+                                                maxHeight: '40px',
+                                                background: timelineForm.document && isUploadHovered ? '#4a4a4a' : '#fafafa',
+                                                overflow: 'hidden',
+                                                position: 'relative'
+                                            }}
+                                            onClick={() => document.getElementById('timeline-file-upload').click()}
+                                            onMouseEnter={() => setIsUploadHovered(true)}
+                                            onMouseLeave={() => setIsUploadHovered(false)}
+                                        >
+                                            {timelineForm.document ? (
+                                                isUploadHovered ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between', padding: '5px 15px' }}>
+                                                        <div style={{ flex: 1, textAlign: 'center' }}>
+                                                            <div style={{ color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>
+                                                                {timelineForm.document instanceof File ? timelineForm.document.name : timelineForm.document.split('/').pop()}
+                                                            </div>
+                                                            <div style={{ color: '#ccc', fontSize: '11px' }}>Drag and drop or click to replace</div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setTimelineForm({ ...timelineForm, document: null });
+                                                            }}
+                                                            style={{
+                                                                border: '1px solid #777',
+                                                                background: 'none',
+                                                                color: '#fff',
+                                                                padding: '4px 10px',
+                                                                fontSize: '11px',
+                                                                borderRadius: '2px'
+                                                            }}
+                                                        >
+                                                            REMOVE
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                                                        {timelineForm.document ? (
+                                                            <>
+                                                                {(timelineForm.document instanceof File && timelineForm.document.type.startsWith('image/')) || 
+                                                                 (typeof timelineForm.document === 'string' && timelineForm.document.match(/\.(jpeg|jpg|gif|png|webp)$/i)) ? (
+                                                                    <img 
+                                                                        src={timelineForm.document instanceof File ? URL.createObjectURL(timelineForm.document) : timelineForm.document} 
+                                                                        alt="Preview" 
+                                                                        style={{ height: '32px', maxWidth: '100%', objectFit: 'contain', borderRadius: '2px' }} 
+                                                                    />
+                                                                ) : (
+                                                                    <div style={{ textAlign: 'center' }}>
+                                                                        <i className="fa fa-file-o" style={{ fontSize: '20px', color: '#666' }}></i>
+                                                                        <div style={{ fontSize: '11px', marginTop: '2px' }}>
+                                                                            {timelineForm.document instanceof File ? timelineForm.document.name : timelineForm.document.split('/').pop()}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        ) : null}
+                                                    </div>
+                                                )
+                                            ) : (
+                                                <>
+                                                    <i className="fa fa-cloud-upload" style={{ fontSize: '20px', marginRight: '10px', color: '#555' }}></i>
+                                                    <span style={{ fontSize: '13px' }}>Drag and drop a file here or click</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                id="timeline-file-upload"
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    setTimelineForm({ ...timelineForm, document: file });
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="checkbox">
+                                        <label>
+                                            <input type="checkbox" checked={timelineForm.visible} onChange={(e) => setTimelineForm({ ...timelineForm, visible: e.target.checked })} /> Visible to this person
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="modal-footer">
+                                    <button type="submit" className="btn btn-primary pull-right" style={{ borderRadius: '25px', backgroundColor: '#9754ca', border: 'none', padding: '5px 20px' }}>Save</button>
                                 </div>
                             </form>
                         </div>
