@@ -1006,6 +1006,9 @@ const StudentInformationReport = () => {
                 }
                 .table-custom td { padding: 10px; border-bottom: 1px solid #f9f9f9; font-size: 13.5px; color: #444; vertical-align: top; white-space: nowrap; }
                 .table-custom tr:hover { background: #fbfbfb; }
+                
+                .sibling-row td { padding: 4px 10px; border-bottom: none; }
+                .sibling-group-start td { border-top: 1px solid #eee; padding-top: 8px; }
 
                 .dt-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 8px; }
                 .dt-pagination { display: flex; list-style: none; padding: 0; margin: 0; }
@@ -1175,27 +1178,29 @@ const StudentInformationReport = () => {
                                                         ) : activeReport === 'Sibling Report' ? (
                                                             <>
                                                                 {currentData.map((group, gIdx) => {
-                                                                    const firstStudent = group[0];
                                                                     return (
                                                                         <React.Fragment key={indexOfFirstItem + gIdx}>
-                                                                            {/* Parent info header row */}
-                                                                            <tr style={{ backgroundColor: '#f5f5f5', borderTop: '2px solid #ddd' }}>
-                                                                                <td><strong>{firstStudent.father_name || '-'}</strong></td>
-                                                                                <td><strong>{firstStudent.mother_name || '-'}</strong></td>
-                                                                                <td><strong>{firstStudent.guardian_name || '-'}</strong></td>
-                                                                                <td><strong>{firstStudent.guardian_phone || '-'}</strong></td>
-                                                                                <td colSpan="4"></td>
-                                                                            </tr>
-                                                                            {/* Individual student rows */}
-                                                                            {group.map((student, sIdx) => (
-                                                                                <tr key={`${indexOfFirstItem + gIdx}-${sIdx}`}>
-                                                                                    <td colSpan="4"></td>
-                                                                                    <td>{student.firstname} {student.lastname || ''}</td>
-                                                                                    <td>{student.class} ({student.section})</td>
-                                                                                    <td>{student.admission_date || '-'}</td>
-                                                                                    <td>{student.gender}</td>
-                                                                                </tr>
-                                                                            ))}
+                                                                            {group.map((student, sIdx) => {
+                                                                                const isFirst = sIdx === 0;
+                                                                                return (
+                                                                                    <tr key={`${indexOfFirstItem + gIdx}-${sIdx}`} className={`sibling-row ${isFirst ? 'sibling-group-start' : ''}`}>
+                                                                                        {isFirst ? (
+                                                                                            <>
+                                                                                                <td>{student.father_name || ''}</td>
+                                                                                                <td>{student.mother_name || ''}</td>
+                                                                                                <td>{student.guardian_name || ''}</td>
+                                                                                                <td>{student.guardian_phone || ''}</td>
+                                                                                            </>
+                                                                                        ) : (
+                                                                                            <td colSpan="4"></td>
+                                                                                        )}
+                                                                                        <td><a style={{ color: '#3c8dbc', cursor: 'pointer' }}>{student.firstname} {student.lastname ? student.lastname + ' ' : ''}({student.admission_no})</a></td>
+                                                                                        <td>{student.class} ({student.section})</td>
+                                                                                        <td>{student.admission_date ? student.admission_date.split('-').reverse().join('/') : '-'}</td>
+                                                                                        <td>{student.gender}</td>
+                                                                                    </tr>
+                                                                                );
+                                                                            })}
                                                                         </React.Fragment>
                                                                     );
                                                                 })}
