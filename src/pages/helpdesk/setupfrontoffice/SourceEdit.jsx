@@ -154,12 +154,12 @@ const SourceEdit = () => {
 
 
     return (
-        <div className="wrapper">
+        <div className="wrapper" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
 
             <Sidebar />
 
-            <div className="content-wrapper" style={{ minHeight: '710px', display: 'block' }}>
+            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
                 <section className="content-header" style={{ display: 'block', padding: '0px 15px 0 15px' }}>
                 </section>
                 <section className="content" style={{ paddingBottom: '80px' }}>
