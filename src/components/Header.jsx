@@ -144,61 +144,71 @@ const Header = ({
                 </Link>
 
                 {/* Navbar */}
-                <nav className="navbar navbar-static-top" role="navigation">
-                    <div className="col-lg-5 col-md-3 col-sm-2 col-xs-4"></div>
+                <nav className="navbar navbar-static-top" role="navigation" style={{ display: 'flex', alignItems: 'center', padding: '0 15px' }}>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                        {/* Modern Search Bar */}
+                        <form
+                            id="header_search_form"
+                            className="header-search-modern"
+                            onSubmit={onSearch}
+                            style={{ margin: '8px 0 0 20px', width: '100%', maxWidth: '380px' }}
+                        >
+                            <div style={{
+                                position: 'relative',
+                                display: 'flex',
+                                alignItems: 'center',
+                                background: '#fff',
+                                borderRadius: '7px',
+                                padding: '0 16px',
+                                border: '1px solid #e2e8f0',
+                                boxShadow: 'none',
+                                transition: 'all 0.3s ease'
+                            }}
+                                className="search-input-wrapper-premium"
+                            >
+                                <input
+                                    type="text"
+                                    name="search_text1"
+                                    id="search_text1"
+                                    placeholder="Search student, records..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        padding: '8px 0',
+                                        fontSize: '14px',
+                                        width: '100%',
+                                        outline: 'none',
+                                        color: '#334155'
+                                    }}
+                                />
+                                <div style={{
+                                    width: '1px',
+                                    height: '20px',
+                                    background: '#e2e8f0',
+                                    margin: '0 12px'
+                                }}></div>
+                                <button
+                                    type="submit"
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        padding: '4px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    <i className="fa fa-search" style={{ color: '#64748b', fontSize: '16px' }}></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
 
-                    <div className="col-lg-7 col-md-9 col-sm-10 col-xs-8" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '20px' }}>
                         <div className="pull-right">
-                            {/* Search Form */}
-                            {loading ? (
-                                <div className="navbar-form navbar-left search-form">
-                                    <div className="skeleton-search"></div>
-                                </div>
-                            ) : (
-                                <div style={{ position: 'relative' }}>
-                                    <form
-                                        id="header_search_form"
-                                        className="navbar-form navbar-left search-form"
-                                        role="search"
-                                        onSubmit={onSearch}
-                                        style={{ margin: 0, padding: 0 }}
-                                    >
-                                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginTop: '7px' }}>
-                                            <input
-                                                type="text"
-                                                name="search_text1"
-                                                id="search_text1"
-                                                className="form-control search-form search-form3"
-                                                placeholder="Search by student name"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                style={{ paddingRight: '35px', borderRadius: '20px', width: '250px' }}
-                                            />
-                                            <button
-                                                type="submit"
-                                                className="btn btn-flat"
-                                                style={{
-                                                    position: 'absolute',
-                                                    right: '5px',
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    background: 'transparent',
-                                                    border: 'none',
-                                                    padding: '5px',
-                                                    color: '#888',
-                                                    minWidth: 'auto',
-                                                    height: 'auto',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}
-                                            >
-                                                <i className="fa fa-search"></i>
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            )}
 
                             {/* Navbar Custom Menu */}
                             <div className="navbar-custom-menu">

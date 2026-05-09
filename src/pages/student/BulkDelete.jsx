@@ -1,48 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Link, useNavigate } from 'react-router-dom';
-import Header from '../../components/Header';
-import Sidebar from '../../components/Sidebar';
-import Footer from '../../components/Footer';
+import { Link } from 'react-router-dom';
+import Loader from '../../components/Loader';
 import { api } from '../../services/api';
 import '../../utils/include_files';
-import { useTableSort } from '../../hooks/useTableSort';
+import SISLayout from './SISLayout';
+import { useSISCounts } from '../../context/SISCountContext';
+import PremiumTableToolbar from '../../utils/PremiumTableToolbar';
 import { buildExportData } from '../../utils/tableExport';
-import TableToolbar from '../../utils/TableToolbar';
-import Pagination from '../../utils/Pagination';
+import { renderName, renderGender } from '../../utils/TableFormatters';
+import './StudentSearch.css';
 
 const BulkDelete = () => {
-    const navigate = useNavigate();
-
-    // UI state for inputs
-    const [classId, setClassId] = useState('');
-    const [sectionId, setSectionId] = useState('');
-    const [classes, setClasses] = useState([]);
-    const [sections, setSections] = useState([]);
+    const { updateCount } = useSISCounts();
+    const [formData, setFormData] = useState({
+        class_id: '',
+        section_id: '',
+        search_text: ''
+    });
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [deleting, setDeleting] = useState(false);
+    const [classes, setClasses] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectAll, setSelectAll] = useState(false);
+    const [selectedStudents, setSelectedStudents] = useState({});
 
-    // UI state for search results
-    const [hasSearched, setHasSearched] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
 
-    // Checkbox UI states
-    const [selectedStudents, setSelectedStudents] = useState([]);
-    const [isAllSelected, setIsAllSelected] = useState(false);
-
-    // Column definitions
+    // Columns
     const columns = [
-        { key: 'admission_no', label: 'Admission No', sortKey: 'admission_no' },
-        { key: 'full_name', label: 'Student Name', sortKey: 'full_name' },
-        { key: 'class_display', label: 'Class', sortKey: 'class_display' },
-        { key: 'dob', label: 'Date Of Birth', sortKey: 'dob' },
+        { key: 'admission_no', label: 'Admission No' },
+        { key: 'name', label: 'Student Name', width: '200px' },
+        { key: 'class', label: 'Class', width: '140px' },
+        { key: 'father_name', label: 'Father Name' },
+        { key: 'dob', label: 'Date Of Birth' },
         { key: 'gender', label: 'Gender' },
         { key: 'category', label: 'Category' },
-        { key: 'mobile_display', label: 'Mobile Number' }
+        { key: 'mobile', label: 'Mobile Number' }
     ];
-
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
     const handleToggleColumn = (key) => {
@@ -54,133 +54,109 @@ const BulkDelete = () => {
         });
     };
 
-    // Sorting Hook
-    const { sortedData: sortedStudents, requestSort, getSortIcon } = useTableSort(students, {
-        asc: <i className="fa fa-angle-up pull-right"></i>,
-        desc: <i className="fa fa-angle-down pull-right"></i>,
-        default: <i className="fa fa-angle-up pull-right" style={{ color: '#ccc', opacity: 0.5 }}></i>
-    });
-
-    // Fetch classes on component mount
     useEffect(() => {
         const fetchClasses = async () => {
             try {
-                const response = await api.getBulkDeleteClasses();
+                const response = await api.getStudentSearchInfo();
                 if (response && response.data && Array.isArray(response.data.classlist)) {
                     setClasses(response.data.classlist);
                 }
             } catch (err) {
                 console.warn('Failed to fetch classes:', err);
+            } finally {
+                setInitialLoading(false);
             }
         };
         fetchClasses();
+        handleSearch(); // Auto fetch on mount
     }, []);
 
-    const handleClassChange = async (e) => {
-        const selectedClassId = e.target.value;
-        setClassId(selectedClassId);
-        setSectionId(''); // Reset section
-        setSections([]); // Clear sections
-        setStudents([]); // Clear current table
-        setHasSearched(false);
+    // Update layout count when students list changes
+    useEffect(() => {
+        updateCount('bulk', students.length);
+    }, [students.length, updateCount]);
 
-        if (selectedClassId) {
+    const handleClassChange = async (e) => {
+        const classId = e.target.value;
+        setFormData(prev => ({
+            ...prev,
+            class_id: classId,
+            section_id: ''
+        }));
+        setSections([]);
+
+        if (classId) {
             try {
-                const response = await api.getSectionsByClass(selectedClassId);
+                const response = await api.getSectionsByClass(classId);
                 if (response && response.data) {
                     setSections(response.data);
                 } else if (response && Array.isArray(response)) {
                     setSections(response);
                 }
-            } catch (error) {
-                console.error('Error fetching sections by class:', error);
-            }
+            } catch (error) { }
         }
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const clearFilters = () => {
+        setFormData({ class_id: '', section_id: '', search_text: '' });
+        setStudents([]);
+        setSelectedStudents({});
+        setSelectAll(false);
     };
 
     const handleSearch = async (e) => {
-        e.preventDefault();
-        // Removed !classId check to allow searching without filters
+        if (e) e.preventDefault();
 
         setLoading(true);
+        setSelectedStudents({});
+        setSelectAll(false);
         try {
-            const response = await api.searchBulkDeleteStudents(classId, sectionId);
-            let sData = [];
-            if (response && response.data && Array.isArray(response.data.students)) {
-                sData = response.data.students;
-            } else if (response && response.data && Array.isArray(response.data)) {
-                sData = response.data;
-            } else if (Array.isArray(response)) {
-                sData = response;
+            let params = {};
+            let classId = '';
+            let sectionId = '';
+
+            if (formData.class_id) {
+                classId = formData.class_id;
+                sectionId = formData.section_id;
+                params = { srch_type: 'search_filter' };
+            } else if (formData.search_text) {
+                params = {
+                    srch_type: 'search_full',
+                    search: formData.search_text
+                };
             }
 
-            // Map students to include display-friendly keys
-            const mappedStudents = sData.map(s => ({
-                ...s,
-                full_name: s.full_name || (s.firstname + ' ' + (s.lastname || '')),
-                class_display: s.class && s.section ? `${s.class} (${s.section})` : (s.class_section || s.class),
-                mobile_display: s.mobile_no || s.mobileno || s.mobile
+            const response = await api.getStudentList(classId, sectionId, params);
+
+            let studentData = [];
+            if (response.data && Array.isArray(response.data)) {
+                studentData = response.data;
+            } else if (Array.isArray(response)) {
+                studentData = response;
+            }
+
+            const mappedStudents = studentData.map(student => ({
+                id: student.id,
+                admission_no: student.admission_no || '-',
+                name: student.full_name || (student.firstname ? student.firstname + ' ' + (student.lastname || '') : '-'),
+                class: student.class_section || student.class || '-',
+                father_name: student.father_name || '-',
+                dob: student.dob || '-',
+                gender: student.gender || '-',
+                category: student.category || '-',
+                mobile: student.mobile_no || student.mobileno || '-'
             }));
 
-            setStudents(mappedStudents);
-            setHasSearched(true);
-            setSelectedStudents([]);
-            setIsAllSelected(false);
-            setCurrentPage(1);
-        } catch (error) {
-            console.error('Error fetching students:', error);
+            const uniqueStudents = Array.from(new Map(mappedStudents.map(item => [item.id, item])).values());
+            setStudents(uniqueStudents);
+        } catch (err) {
+            toast.error(err.message || 'Failed to fetch students');
             setStudents([]);
-            setHasSearched(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Filtering and Pagination Logic
-    const filteredStudents = sortedStudents.filter(student => {
-        const searchText = searchTerm.toLowerCase();
-        const fullName = (student.full_name || '').toLowerCase();
-        const admissionNo = (student.admission_no || '').toLowerCase();
-        return fullName.includes(searchText) || admissionNo.includes(searchText);
-    });
-
-    const totalItems = filteredStudents.length;
-    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
-    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
-    const indexOfLastItem = currentPage * safeRecordsPerPage;
-    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
-    const currentItems = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
-
-
-
-    // Export helpers
-    const getExportData = () => buildExportData(columns, visibleColumns, filteredStudents, (row, key) => row[key]);
-
-    const handleDelete = async () => {
-        if (selectedStudents.length === 0) {
-            toast.error('Please select at least one student to delete.');
-            return;
-        }
-
-        if (!window.confirm('Are you sure you want to delete the selected students?')) {
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const response = await api.deleteBulkStudents(selectedStudents);
-            if (response && response.status) {
-                toast.success(response.message || 'Students deleted successfully');
-                // Remove deleted students from the list
-                setStudents(students.filter(student => !selectedStudents.includes(student.id)));
-                setSelectedStudents([]);
-                setIsAllSelected(false);
-            } else {
-                toast.error(response.message || 'Failed to delete students');
-            }
-        } catch (error) {
-            console.error('Error deleting students:', error);
-            toast.error('An error occurred while deleting students.');
         } finally {
             setLoading(false);
         }
@@ -188,206 +164,281 @@ const BulkDelete = () => {
 
     const handleSelectAll = (e) => {
         const checked = e.target.checked;
-        setIsAllSelected(checked);
-        if (checked) {
-            setSelectedStudents(filteredStudents.map(s => s.id));
+        setSelectAll(checked);
+        const newSelected = {};
+        students.forEach(student => {
+            newSelected[student.id] = checked;
+        });
+        setSelectedStudents(newSelected);
+    };
+
+    const handleSelectStudent = (id, checked) => {
+        const newSelected = { ...selectedStudents, [id]: checked };
+        setSelectedStudents(newSelected);
+        if (!checked) {
+            setSelectAll(false);
         } else {
-            setSelectedStudents([]);
+            const allChecked = students.every(student => newSelected[student.id]);
+            if (allChecked) setSelectAll(true);
         }
     };
 
-    const handleSelectStudent = (e, id) => {
-        const checked = e.target.checked;
-        let newSelected = [...selectedStudents];
-        if (checked) {
-            newSelected.push(id);
-        } else {
-            newSelected = newSelected.filter(sid => sid !== id);
+    const handleDelete = async () => {
+        const idsToDelete = Object.keys(selectedStudents).filter(id => selectedStudents[id]);
+
+        if (idsToDelete.length === 0) {
+            toast.error('Please select at least one student to delete');
+            return;
         }
-        setSelectedStudents(newSelected);
-        setIsAllSelected(newSelected.length === filteredStudents.length && filteredStudents.length > 0);
+
+        if (window.confirm('Are you sure you want to delete selected students?')) {
+            setDeleting(true);
+            try {
+                const response = await api.deleteBulkStudents({ student_id: idsToDelete });
+                if (response.status === 'success' || response.status === true) {
+                    toast.success(response.message || 'Students deleted successfully');
+
+                    const remainingStudents = students.filter(s => !selectedStudents[s.id]);
+                    setStudents(remainingStudents);
+                    setSelectedStudents({});
+                    setSelectAll(false);
+                } else {
+                    toast.error(response.message || 'Failed to delete students');
+                }
+            } catch (error) {
+                console.error('Error deleting students:', error);
+                toast.error('Failed to delete students');
+            } finally {
+                setDeleting(false);
+            }
+        }
     };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, students, (row, key) => row[key]);
+
+    const totalPages = Math.ceil(students.length / recordsPerPage);
+    const currentStudents = students.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage);
 
     return (
-        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Header />
-            <Sidebar />
-            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                <section className="content">
-                    <div className="row">
-                        <div className="col-md-12">
-                            <div className="box box-primary">
-                                <div className="box-header with-border">
-                                    <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
-                                    <div className="btn-group pull-right">
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-sm">
-                                            <i className="fa fa-arrow-left"></i> Back
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="box-body pb0">
-                                    <div className="row">
-                                        <form role="form" onSubmit={handleSearch}>
-                                            <div className="col-sm-6">
-                                                <div className="form-group">
-                                                    <label>Class</label>
-                                                    <select
-                                                        className="form-control"
-                                                        value={classId}
-                                                        onChange={handleClassChange}
-                                                    >
-                                                        <option value="">Select</option>
-                                                        {classes.map((cls) => (
-                                                            <option key={cls.id} value={cls.id}>{cls.class}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-6">
-                                                <div className="form-group">
-                                                    <label>Section</label>
-                                                    <select
-                                                        className="form-control"
-                                                        value={sectionId}
-                                                        onChange={(e) => setSectionId(e.target.value)}
-                                                    >
-                                                        <option value="">Select</option>
-                                                        {sections.map((sec) => (
-                                                            <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-12">
-                                                <div className="form-group">
-                                                    <button type="submit" className="btn btn-primary btn-sm pull-right checkbox-toggle" style={{ padding: '6px 16px', marginBottom: '10px' }} disabled={loading}>
-                                                        {loading ? <><i className="fa fa-spinner fa-spin"></i> Searching...</> : <><i className="fa fa-search"></i> Search</>}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-
-                                {hasSearched && (
-                                    <div className="box-body pt0">
-                                        <div className="row">
-                                            <div className="col-md-12 col-sm-12">
-                                                <div className="mt10">
-                                                    <div className="checkbox bordertop pt15" style={{ marginBottom: '10px', display: 'flow-root' }}>
-                                                        <label style={{ fontWeight: 700 }}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isAllSelected}
-                                                                onChange={handleSelectAll}
-                                                            /> <b>Select All</b>
-                                                        </label>
-
-                                                        {students.length > 0 && (
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-primary pull-right btn-sm"
-                                                                onClick={handleDelete}
-                                                                disabled={loading}
-                                                            >
-                                                                Delete
-                                                            </button>
-                                                        )}
-                                                    </div>
-
-                                                    <div style={{ padding: '8px 0px', borderBottom: '1px solid #f4f4f4' }}>
-                                                        <TableToolbar
-                                                            searchTerm={searchTerm}
-                                                            onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                                                            recordsPerPage={recordsPerPage}
-                                                            onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
-                                                            columns={columns}
-                                                            visibleColumns={visibleColumns}
-                                                            onToggleColumn={handleToggleColumn}
-                                                            getExportData={getExportData}
-                                                            exportFileName="bulk_delete_list"
-                                                            exportTitle="Bulk Delete List"
-                                                        />
-                                                    </div>
-
-                                                    <div className="table-responsive overflow-visible-lg pt15 clearboth">
-                                                        <div className="download_label">Bulk Delete</div>
-                                                        <table className="table table-striped table-bordered table-hover example" cellSpacing="0" width="100%">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>#</th>
-                                                                    {columns.map(col => visibleColumns.has(col.key) && (
-                                                                        <th key={col.key} className={col.sortKey ? "sorting" : ""} style={col.sortKey ? { cursor: 'pointer' } : {}} onClick={col.sortKey ? () => requestSort(col.sortKey) : undefined}>
-                                                                            {col.label} {col.sortKey && getSortIcon(col.sortKey)}
-                                                                        </th>
-                                                                    ))}
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {currentItems.length === 0 ? (
-                                                                    <tr>
-                                                                        <td colSpan={visibleColumns.size + 1} className="text-center">
-                                                                            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-                                                                                <div style={{ color: '#ffb3b3ff', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
-                                                                                <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
-                                                                                <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                ) : (
-                                                                    currentItems.map((student) => (
-                                                                        <tr key={student.id}>
-                                                                            <td>
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    checked={selectedStudents.includes(student.id)}
-                                                                                    onChange={(e) => handleSelectStudent(e, student.id)}
-                                                                                />
-                                                                            </td>
-                                                                            {columns.map(col => visibleColumns.has(col.key) && (
-                                                                                <td key={col.key} style={{ wordBreak: 'break-word' }}>
-                                                                                    {col.key === 'full_name' ? (
-                                                                                        <Link to={`/student/view/${student.id}`}>{student[col.key]}</Link>
-                                                                                    ) : col.key === 'class_display' ? (
-                                                                                        <span className="white-space-nowrap">{student[col.key]}</span>
-                                                                                    ) : (
-                                                                                        student[col.key]
-                                                                                    )}
-                                                                                </td>
-                                                                            ))}
-                                                                        </tr>
-                                                                    ))
-                                                                )}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Responsive Pagination Footer */}
-                                {hasSearched && filteredStudents.length > 0 && (
-                                    <div className="box-footer">
-                                        <div className="pt15 pb15">
-                                            <Pagination 
-                                                totalItems={totalItems} 
-                                                itemsPerPage={recordsPerPage} 
-                                                currentPage={currentPage}
-                                                onPageChange={(page) => setCurrentPage(page)}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+        <SISLayout activeTab="bulk">
+            {initialLoading ? (
+                <Loader />
+            ) : (
+                <div className="sis-content-container">
+                    <div className="sis-search-bar-container">
+                        <div className="sis-search-bar-header">
+                            <h3 className="sis-search-title">Select Criteria</h3>
                         </div>
+                        <form onSubmit={handleSearch} className="sis-search-form">
+                            <div className="sis-search-main-input-wrapper">
+                                <i className="fa fa-search sis-search-icon"></i>
+                                <input
+                                    type="text"
+                                    name="search_text"
+                                    className="sis-search-input"
+                                    placeholder="Search by student name or ID..."
+                                    value={formData.search_text}
+                                    onChange={handleInputChange}
+                                />
+                                <button
+                                    type="button"
+                                    className="btn btn-default sis-filter-toggle-btn"
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    style={{ marginRight: '8px' }}
+                                >
+                                    <i className="fa fa-filter"></i> Filter
+                                </button>
+                                <button type="submit" className="btn btn-primary" style={{ marginRight: '4px' }}>
+                                    Search
+                                </button>
+                            </div>
+
+                            {showFilters && (
+                                <div className="sis-advanced-filters">
+                                    <div className="sis-filter-row">
+                                        <div className="sis-filter-col">
+                                            <select
+                                                name="class_id"
+                                                className="sis-filter-select"
+                                                value={formData.class_id}
+                                                onChange={handleClassChange}
+                                            >
+                                                <option value="">All Classes</option>
+                                                {classes.map((cls) => (
+                                                    <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="sis-filter-col">
+                                            <select
+                                                name="section_id"
+                                                className="sis-filter-select"
+                                                value={formData.section_id}
+                                                onChange={handleInputChange}
+                                                disabled={!formData.class_id}
+                                            >
+                                                <option value="">All Sections</option>
+                                                {sections.map((sec) => (
+                                                    <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="sis-filter-col" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '1px' }}>
+                                            <button type="submit" className="btn btn-primary sis-apply-btn" style={{ height: '40px', width: '100px' }}>
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </form>
                     </div>
-                </section>
-            </div>
-            <Footer />
-        </div>
+
+                    <div className="sis-list-container">
+                        <div className="sis-list-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3>Students List ({students.length})</h3>
+                            {students.length > 0 && (
+                                <PremiumTableToolbar
+                                    columns={columns}
+                                    visibleColumns={visibleColumns}
+                                    onToggleColumn={handleToggleColumn}
+                                    getExportData={getExportData}
+                                    exportFileName="bulk_delete"
+                                    exportTitle="Bulk Delete"
+                                    recordsPerPage={recordsPerPage}
+                                    onRecordsPerPageChange={(num) => {
+                                        setRecordsPerPage(num);
+                                        setCurrentPage(1);
+                                    }}
+                                />
+                            )}
+                        </div>
+
+                        <div className="sis-list-body" style={{ padding: '0' }}>
+                            {loading ? (
+                                <div className="text-center p-4"><Loader type="table" rows={5} /></div>
+                            ) : students.length === 0 ? (
+                                <div className="sis-empty-state">
+                                    <p>No data available in table</p>
+                                    <img src="/images/addnewitem.svg" alt="No Data" />
+                                    <p className="text-success">&lt;- Add new record or search with different criteria</p>
+                                </div>
+                            ) : (
+                                <div className="table-responsive">
+                                    <table className="table table-striped table-bordered table-hover example" style={{ margin: 0 }}>
+                                        <thead>
+                                            <tr>
+                                                <th style={{ width: '40px', textAlign: 'center' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectAll}
+                                                        onChange={handleSelectAll}
+                                                    />
+                                                </th>
+                                                {columns.map(col => visibleColumns.has(col.key) && (
+                                                    <th key={col.key} style={col.width ? { width: col.width } : {}}>{col.label}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {currentStudents.map((student) => (
+                                                <tr key={student.id}>
+                                                    <td style={{ textAlign: 'center' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="checkbox"
+                                                            value={student.id}
+                                                            checked={!!selectedStudents[student.id]}
+                                                            onChange={(e) => handleSelectStudent(student.id, e.target.checked)}
+                                                        />
+                                                    </td>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <td key={col.key}>
+                                                            {col.key === 'name' ? (
+                                                                renderName(student[col.key], student.id)
+                                                            ) : col.key === 'gender' ? (
+                                                                renderGender(student[col.key])
+                                                            ) : (
+                                                                student[col.key]
+                                                            )}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
+                        {students.length > 0 && Object.values(selectedStudents).some(Boolean) && (
+                            <div style={{ padding: '16px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 500, color: '#475569' }}>
+                                    {Object.values(selectedStudents).filter(Boolean).length} students selected
+                                </span>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={handleDelete}
+                                    disabled={deleting}
+                                    style={{ background: '#ef4444', borderColor: '#ef4444' }}
+                                >
+                                    {deleting ? 'Deleting...' : 'Delete Selected'}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Pagination Footer */}
+                        {!loading && students.length > 0 && (
+                            <div style={{
+                                padding: '20px 24px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                background: '#ffffff',
+                                borderTop: '1px solid #f1f5f9',
+                                borderBottomLeftRadius: '12px',
+                                borderBottomRightRadius: '12px'
+                            }}>
+                                <div style={{ color: '#64748b', fontSize: '14px' }}>
+                                    Showing {(currentPage - 1) * recordsPerPage + 1} to {Math.min(currentPage * recordsPerPage, students.length)} of {students.length} entries
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        className="btn btn-default btn-sm"
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage === 1 ? '#cbd5e1' : '#475569' }}
+                                    >
+                                        <i className="fa fa-angle-left"></i>
+                                    </button>
+                                    <button className="btn btn-sm" style={{
+                                        borderRadius: '6px',
+                                        background: '#7c3aed',
+                                        color: '#ffffff',
+                                        minWidth: '32px',
+                                        height: '32px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: '600'
+                                    }}>
+                                        {currentPage}
+                                    </button>
+                                    <button
+                                        className="btn btn-default btn-sm"
+                                        disabled={currentPage >= totalPages}
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage >= totalPages ? '#cbd5e1' : '#475569' }}
+                                    >
+                                        <i className="fa fa-angle-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </SISLayout>
     );
 };
 

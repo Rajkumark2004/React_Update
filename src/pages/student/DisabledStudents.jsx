@@ -1,551 +1,382 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
-import Header from '../../components/Header';
-import Sidebar from '../../components/Sidebar';
-import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
+import SISLayout from './SISLayout';
+import { useSISCounts } from '../../context/SISCountContext';
 import { api } from '../../services/api';
 import '../../utils/include_files';
-import { useTableSort } from '../../hooks/useTableSort';
+import PremiumTableToolbar from '../../utils/PremiumTableToolbar';
 import { buildExportData } from '../../utils/tableExport';
-import TableToolbar from '../../utils/TableToolbar';
-import Pagination from '../../utils/Pagination';
+import { renderName, renderGender } from '../../utils/TableFormatters';
+import './StudentSearch.css';
+
 const DisabledStudents = () => {
-    const [activeTab, setActiveTab] = useState('list');
+    const { updateCount } = useSISCounts();
+    const [formData, setFormData] = useState({
+        class_id: '',
+        section_id: '',
+        search_text: ''
+    });
     const [students, setStudents] = useState([]);
-    const [classList, setClassList] = useState([]);
-    const [sectionList, setSectionList] = useState([]);
-    const [disableReasons, setDisableReasons] = useState({});
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [searchPerformed, setSearchPerformed] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [classes, setClasses] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [showFilters, setShowFilters] = useState(false);
 
-    // Form states
-    const [classId, setClassId] = useState('');
-    const [sectionId, setSectionId] = useState('');
-    const [searchText, setSearchText] = useState('');
-
-    const [tableSearchTerm, setTableSearchTerm] = useState('');
+    // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
 
+    // Columns
     const columns = [
         { key: 'admission_no', label: 'Admission No' },
-        { key: 'firstname', label: 'Student Name' },
-        { key: 'class', label: 'Class' },
+        { key: 'name', label: 'Student Name', width: '200px' },
+        { key: 'class', label: 'Class', width: '140px' },
         { key: 'father_name', label: 'Father Name' },
-        { key: 'disable_reason', label: 'Disable Reason' },
+        { key: 'dob', label: 'Date Of Birth' },
         { key: 'gender', label: 'Gender' },
-        { key: 'mobileno', label: 'Mobile Number' },
+        { key: 'category', label: 'Category' },
+        { key: 'mobile', label: 'Mobile Number' }
     ];
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
     const handleToggleColumn = (key) => {
         setVisibleColumns(prev => {
             const next = new Set(prev);
-            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
             return next;
         });
     };
 
-    // Sorting Hook
-    const { sortedData: sortedStudents, requestSort, getSortIcon } = useTableSort(students, {
-        asc: <i className="fa fa-angle-up pull-right"></i>,
-        desc: <i className="fa fa-angle-down pull-right"></i>,
-        default: <i className="fa fa-angle-up pull-right" style={{ color: '#ccc', opacity: 0.5 }}></i>
-    });
-
-    // Get full name
-    const getFullName = (student) => {
-        return [student.firstname, student.middlename, student.lastname]
-            .filter(Boolean)
-            .join(' ');
-    };
-
-    // Client-side table filter
-    const filteredStudents = sortedStudents.filter(s => {
-        if (tableSearchTerm === '') return true;
-        const term = tableSearchTerm.toLowerCase();
-        return [s.admission_no, getFullName(s), s.class, s.section, s.father_name, s.gender, s.mobileno]
-            .some(val => String(val ?? '').toLowerCase().includes(term));
-    });
-
-    // Pagination Logic
-    const totalItems = filteredStudents.length;
-    const indexOfLastItem = currentPage * recordsPerPage;
-    const indexOfFirstItem = indexOfLastItem - recordsPerPage;
-    const currentItems = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
-
-
-
-    // Export helpers
-    const getExportData = () => buildExportData(columns, visibleColumns, filteredStudents, (student, key) => {
-        if (key === 'firstname') return getFullName(student);
-        if (key === 'class') return `${student.class}(${student.section})`;
-        if (key === 'disable_reason') return getDisableReason(student.dis_reason);
-        return student[key];
-    });
-
-    // Fetch classes on component mount
     useEffect(() => {
+        const fetchClasses = async () => {
+            try {
+                const response = await api.getStudentSearchInfo();
+                if (response && response.data && Array.isArray(response.data.classlist)) {
+                    setClasses(response.data.classlist);
+                }
+            } catch (err) {
+                console.warn('Failed to fetch classes:', err);
+            } finally {
+                setInitialLoading(false);
+            }
+        };
         fetchClasses();
+        handleSearch(); // Auto fetch on mount
     }, []);
 
-    // Fetch sections when class changes
+    // Update layout count when students list changes
     useEffect(() => {
+        updateCount('disabled', students.length);
+    }, [students.length, updateCount]);
+
+    const handleClassChange = async (e) => {
+        const classId = e.target.value;
+        setFormData(prev => ({
+            ...prev,
+            class_id: classId,
+            section_id: ''
+        }));
+        setSections([]);
+
         if (classId) {
-            fetchSections(classId);
-        } else {
-            setSectionList([]);
-            setSectionId('');
-        }
-    }, [classId]);
-
-    const fetchClasses = async () => {
-        try {
-            const response = await api.getDisabledStudentsPreData();
-            if (response && response.status && response.data && response.data.classlist) {
-                setClassList(response.data.classlist);
-            }
-        } catch (error) {
-            console.error('Error fetching classes:', error);
-        } finally {
-            setInitialLoading(false);
-        }
-    };
-
-    const fetchSections = async (classId) => {
-        try {
-            const response = await api.getSectionsByClass(classId);
-            if (response && response.data) {
-                setSectionList(response.data);
-            } else if (response && Array.isArray(response)) {
-                setSectionList(response);
-            }
-        } catch (error) {
-            console.error('Error fetching sections:', error);
-        }
-    };
-
-    const handleClassSearch = async (e) => {
-        e.preventDefault();
-        if (!classId) {
-            toast.error('Please select a class');
-            return;
-        }
-        setLoading(true);
-        setCurrentPage(1);
-        try {
-            const response = await api.getDisabledStudentList({
-                class_id: classId,
-                section_id: sectionId,
-                search_type: 'filter'
-            });
-            if (response.status) {
-                const studentList = response.data || response.students || [];
-                setStudents(studentList);
-
-                if (response.disable_reason) {
-                    setDisableReasons(response.disable_reason);
-                } else if (response.disable_reasons) {
-                    setDisableReasons(response.disable_reasons);
+            try {
+                const response = await api.getSectionsByClass(classId);
+                if (response && response.data) {
+                    setSections(response.data);
+                } else if (response && Array.isArray(response)) {
+                    setSections(response);
                 }
-            }
-            setSearchPerformed(true);
-        } catch (error) {
-            console.error('Error searching students:', error);
-            setStudents([]);
-        } finally {
-            setLoading(false);
+            } catch (error) { }
         }
     };
 
-    const handleKeywordSearch = async (e) => {
-        e.preventDefault();
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const clearFilters = () => {
+        setFormData({ class_id: '', section_id: '', search_text: '' });
+        setStudents([]);
+        setTotalRecords(0);
+    };
+
+    const handleSearch = async (e) => {
+        if (e) e.preventDefault();
+
         setLoading(true);
-        setCurrentPage(1);
         try {
-            const response = await api.searchDisabledStudents(searchText);
-
-            if (response.status) {
-                const studentList = response.data || response.students || [];
-                setStudents(studentList);
-
-                if (response.disable_reason) {
-                    setDisableReasons(response.disable_reason);
-                } else if (response.disable_reasons) {
-                    setDisableReasons(response.disable_reasons);
-                }
-            }
-            setSearchPerformed(true);
-        } catch (error) {
-            console.error('Error searching students:', error);
-            setStudents([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Helper function to get image URL
-    const getImageUrl = (imagePath) => {
-        if (imagePath) {
-            return `https://newlayout.wisibles.com/${imagePath}`;
-        }
-        return 'https://newlayout.wisibles.com/uploads/student_images/no_image.png';
-    };
-
-
-    // Get disable reason text
-    const getDisableReason = (reasonId) => {
-        if (disableReasons[reasonId]) {
-            return disableReasons[reasonId].reason || '-';
-        }
-        return '-';
-    };
-
-    // Enable student handler
-    const handleEnableStudent = async (studentId, studentName) => {
-        if (!window.confirm("Are you sure you want to enable this student?")) {
-            return;
-        }
-        try {
-            const response = await api.enableStudent(studentId);
-            if (response.status === 'success' || response.status === true) {
-                toast.success(response.message || 'Student enabled successfully');
-                setStudents(prev => prev.filter(s => s.id !== studentId));
+            let response;
+            if (formData.class_id) {
+                response = await api.getDisabledStudentList({ class_id: formData.class_id, section_id: formData.section_id });
             } else {
-                toast.error(response.message || 'Failed to enable student');
+                response = await api.searchDisabledStudents(formData.search_text || '');
             }
-        } catch (error) {
-            console.error('Enable student error:', error);
-            toast.error(error.message || 'Failed to enable student');
+
+            let studentData = [];
+            if (response.data && Array.isArray(response.data)) {
+                studentData = response.data;
+            } else if (Array.isArray(response)) {
+                studentData = response;
+            }
+
+            if (formData.search_text) {
+                const searchLower = formData.search_text.toLowerCase();
+                studentData = studentData.filter(student => {
+                    const fullName = (student.full_name || `${student.firstname || ''} ${student.lastname || ''}`).toLowerCase();
+                    const adminNo = (student.admission_no || '').toLowerCase();
+                    return fullName.includes(searchLower) || adminNo.includes(searchLower);
+                });
+            }
+
+            const mappedStudents = studentData.map(student => ({
+                id: student.id,
+                admission_no: student.admission_no || '-',
+                name: student.full_name || (student.firstname ? student.firstname + ' ' + (student.lastname || '') : '-'),
+                class: student.class_section || student.class || '-',
+                father_name: student.father_name || '-',
+                dob: student.dob || '-',
+                gender: student.gender || '-',
+                category: student.category || '-',
+                mobile: student.mobile_no || student.mobileno || '-',
+                reason: student.disable_reason || ''
+            }));
+
+            setStudents(mappedStudents);
+            setTotalRecords(mappedStudents.length);
+        } catch (err) {
+            toast.error(err.message || 'Failed to fetch disabled students');
+            setStudents([]);
+            setTotalRecords(0);
+        } finally {
+            setLoading(false);
         }
     };
+
+    const handleEnableStudent = async (studentId, studentName) => {
+        if (window.confirm(`Are you sure you want to enable student ${studentName}?`)) {
+            try {
+                const response = await api.enableStudent(studentId);
+                if (response.status === "success") {
+                    toast.success("Student enabled successfully");
+                    setStudents(prev => prev.filter(s => s.id !== studentId));
+                    setTotalRecords(prev => prev - 1);
+                } else {
+                    toast.error(response.message || "Failed to enable student");
+                }
+            } catch (err) {
+                toast.error("Failed to enable student");
+            }
+        }
+    };
+
+    const getExportData = () => buildExportData(columns, visibleColumns, students, (row, key) => row[key]);
+
+    const totalPages = Math.ceil(students.length / recordsPerPage);
+    const currentStudents = students.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage);
 
     return (
-        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Header />
-            <Sidebar />
-            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                <section className="content-header">
-                    <h1>
-                        <i className="fa fa-user-plus"></i> Student Information
-                        <small></small>
-                    </h1>
-                </section>
+        <SISLayout activeTab="disabled">
+            {initialLoading ? (
+                <Loader />
+            ) : (
+                <div className="sis-content-container">
+                    <div className="sis-search-bar-container">
+                        <div className="sis-search-bar-header">
+                            <h3 className="sis-search-title">Disabled Students</h3>
+                        </div>
+                        <form onSubmit={handleSearch} className="sis-search-form">
+                            <div className="sis-search-main-input-wrapper">
+                                <i className="fa fa-search sis-search-icon"></i>
+                                <input
+                                    type="text"
+                                    name="search_text"
+                                    className="sis-search-input"
+                                    placeholder="Search by student name, admission no..."
+                                    value={formData.search_text}
+                                    onChange={handleInputChange}
+                                />
+                                <button
+                                    type="button"
+                                    className="btn btn-default sis-filter-toggle-btn"
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    style={{ marginRight: '8px' }}
+                                >
+                                    <i className="fa fa-filter"></i> Filter
+                                </button>
+                                <button type="submit" className="btn btn-primary" style={{ marginRight: '4px' }}>
+                                    Search
+                                </button>
+                            </div>
 
-                <section className="content">
-                    {initialLoading ? (
-                        <Loader />
-                    ) : (
-                        <div className="row">
-                            <div className="col-md-12">
-                                <div className="box box-primary">
-                                    <div className="box-header with-border">
-                                        <h3 className="box-title">
-                                            <i className="fa fa-search"></i> Select Criteria
-                                        </h3>
-                                        <div className="btn-group pull-right">
-                                            <button onClick={() => window.history.back()} className="btn btn-primary btn-sm">
-                                                <i className="fa fa-arrow-left"></i> Back
+                            {showFilters && (
+                                <div className="sis-advanced-filters">
+                                    <div className="sis-filter-row">
+                                        <div className="sis-filter-col">
+                                            <select
+                                                name="class_id"
+                                                className="sis-filter-select"
+                                                value={formData.class_id}
+                                                onChange={handleClassChange}
+                                            >
+                                                <option value="">All Classes</option>
+                                                {classes.map((cls) => (
+                                                    <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="sis-filter-col">
+                                            <select
+                                                name="section_id"
+                                                className="sis-filter-select"
+                                                value={formData.section_id}
+                                                onChange={handleInputChange}
+                                                disabled={!formData.class_id}
+                                            >
+                                                <option value="">All Sections</option>
+                                                {sections.map((sec) => (
+                                                    <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="sis-filter-col" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '1px' }}>
+                                            <button type="submit" className="btn btn-primary sis-apply-btn" style={{ height: '40px', width: '100px' }}>
+                                                Apply
                                             </button>
                                         </div>
                                     </div>
-
-                                    <div className="box-body">
-                                        {successMessage && (
-                                            <div className="alert alert-success">{successMessage}</div>
-                                        )}
-
-                                        <div className="row">
-                                            {/* Class/Section Filter */}
-                                            <div className="col-md-6">
-                                                <div className="row">
-                                                    <form onSubmit={handleClassSearch}>
-                                                        <div className="col-sm-6">
-                                                            <div className="form-group">
-                                                                <label>Class <small className="req">*</small></label>
-                                                                <select
-                                                                    id="class_id"
-                                                                    name="class_id"
-                                                                    className="form-control"
-                                                                    value={classId}
-                                                                    onChange={(e) => setClassId(e.target.value)}
-                                                                    autoFocus
-                                                                >
-                                                                    <option value="">Select</option>
-                                                                    {classList.map((cls) => (
-                                                                        <option key={cls.id} value={cls.id}>
-                                                                            {cls.class}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-sm-6">
-                                                            <div className="form-group">
-                                                                <label>Section</label>
-                                                                <select
-                                                                    id="section_id"
-                                                                    name="section_id"
-                                                                    className="form-control"
-                                                                    value={sectionId}
-                                                                    onChange={(e) => setSectionId(e.target.value)}
-                                                                >
-                                                                    <option value="">Select</option>
-                                                                    {sectionList.map((section) => (
-                                                                        <option key={section.section_id || section.id} value={section.section_id}>{section.section}</option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-sm-12">
-                                                            <div className="form-group">
-                                                                <button
-                                                                    type="submit"
-                                                                    className="btn btn-primary btn-sm pull-right"
-                                                                    disabled={loading}
-                                                                >
-                                                                    <i className="fa fa-search"></i> Search
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-
-                                            {/* Keyword Search */}
-                                            <div className="col-md-6">
-                                                <div className="row">
-                                                    <form onSubmit={handleKeywordSearch}>
-                                                        <div className="col-sm-12">
-                                                            <div className="form-group">
-                                                                <label>Search By Keyword</label>
-                                                                <input
-                                                                    type="text"
-                                                                    name="search_text"
-                                                                    className="form-control"
-                                                                    placeholder="Search by student name"
-                                                                    value={searchText}
-                                                                    onChange={(e) => setSearchText(e.target.value)}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-sm-12">
-                                                            <div className="form-group">
-                                                                <button
-                                                                    type="submit"
-                                                                    className="btn btn-primary pull-right btn-sm"
-                                                                    disabled={loading}
-                                                                >
-                                                                    <i className="fa fa-search"></i> Search
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
+                            )}
+                        </form>
+                    </div>
 
-                                {/* Results Section */}
-                                <div className="nav-tabs-custom border0 navnoshadow">
-                                    <div className="box-header ptbnull"></div>
-                                    <ul className="nav nav-tabs">
-                                        <li className={activeTab === 'list' ? 'active' : ''}>
-                                            <a href="#tab_1" onClick={(e) => { e.preventDefault(); setActiveTab('list'); }}>
-                                                <i className="fa fa-list"></i> List View
-                                            </a>
-                                        </li>
-                                        <li className={activeTab === 'details' ? 'active' : ''}>
-                                            <a href="#tab_2" onClick={(e) => { e.preventDefault(); setActiveTab('details'); }}>
-                                                <i className="fa fa-newspaper-o"></i> Details View
-                                            </a>
-                                        </li>
-                                    </ul>
+                    <div className="sis-list-container">
+                        <div className="sis-list-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h3>Disabled Students ({students.length})</h3>
+                            {students.length > 0 && (
+                                <PremiumTableToolbar
+                                    columns={columns}
+                                    visibleColumns={visibleColumns}
+                                    onToggleColumn={handleToggleColumn}
+                                    getExportData={getExportData}
+                                    exportFileName="disabled_students"
+                                    exportTitle="Disabled Students"
+                                    recordsPerPage={recordsPerPage}
+                                    onRecordsPerPageChange={(num) => {
+                                        setRecordsPerPage(num);
+                                        setCurrentPage(1);
+                                    }}
+                                />
+                            )}
+                        </div>
 
-                                    <div className="tab-content">
-                                        {/* List View Tab */}
-                                        <div className={`tab-pane ${activeTab === 'list' ? 'active' : ''} no-padding`} id="tab_1">
-                                            <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
-                                                <TableToolbar
-                                                    searchTerm={tableSearchTerm}
-                                                    onSearchChange={(val) => { setTableSearchTerm(val); setCurrentPage(1); }}
-                                                    recordsPerPage={recordsPerPage}
-                                                    onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
-                                                    columns={columns}
-                                                    visibleColumns={visibleColumns}
-                                                    onToggleColumn={handleToggleColumn}
-                                                    getExportData={getExportData}
-                                                    exportFileName="disabled_students"
-                                                    exportTitle="Disabled Students"
-                                                />
-                                            </div>
+                        <div className="sis-list-body" style={{ padding: '0' }}>
+                            {loading ? (
+                                <div className="text-center p-4"><Loader type="table" rows={5} /></div>
+                            ) : students.length === 0 ? (
+                                <div className="sis-empty-state">
+                                    <p>No data available in table</p>
+                                    <img src="/images/addnewitem.svg" alt="No Data" />
+                                    <p className="text-success">&lt;- Add new record or search with different criteria</p>
+                                </div>
+                            ) : (
+                                <div className="table-responsive">
+                                    <table className="table table-striped table-bordered table-hover example" style={{ margin: 0 }}>
+                                        <thead>
+                                            <tr>
+                                                {columns.map(col => visibleColumns.has(col.key) && (
+                                                    <th key={col.key} style={col.width ? { width: col.width } : {}}>{col.label}</th>
+                                                ))}
+                                                <th className="text-right noExport">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {currentStudents.map((student) => (
+                                                <tr key={student.id}>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <td key={col.key}>
+                                                            {col.key === 'name' ? (
+                                                                renderName(student[col.key], student.id)
+                                                            ) : col.key === 'gender' ? (
+                                                                renderGender(student[col.key])
+                                                            ) : (
+                                                                student[col.key]
+                                                            )}
+                                                        </td>
+                                                    ))}
+                                                    <td className="text-right white-space-nowrap noExport">
+                                                        <Link to={`/student/view/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="View" style={{ marginRight: '4px' }}>
+                                                            <i className="fa fa-reorder"></i>
+                                                        </Link>
+                                                        <button className="btn btn-success btn-xs" data-toggle="tooltip" title="Enable Student" onClick={() => handleEnableStudent(student.id, student.name)}>
+                                                            <i className="fa fa-check"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
 
-                                            <div className="table-responsive overflow-visible-lg">
-                                                <table className="table table-striped table-bordered table-hover student-list">
-                                                <thead>
-                                                    <tr>
-                                                        {columns.map(col => visibleColumns.has(col.key) && (
-                                                            <th key={col.key} className="sorting" style={{ cursor: 'pointer' }} onClick={() => requestSort(col.key)}>
-                                                                {col.label} {getSortIcon(col.key)}
-                                                            </th>
-                                                        ))}
-                                                        <th className="text-right noExport">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {loading ? (
-                                                        <tr>
-                                                            <td colSpan={visibleColumns.size + 1} className="text-center">
-                                                                <Loader type="table" rows={recordsPerPage} />
-                                                            </td>
-                                                        </tr>
-                                                    ) : currentItems.length === 0 ? (
-                                                        <tr>
-                                                            <td colSpan={visibleColumns.size + 1} className="text-center">
-                                                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-                                                                    <div style={{ color: '#ffb3b3ff', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
-                                                                    <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
-                                                                    <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ) : (
-                                                        currentItems.map((student) => (
-                                                            <tr key={student.id}>
-                                                                {columns.map(col => visibleColumns.has(col.key) && (
-                                                                    <td key={col.key} style={{ wordBreak: 'break-word' }}>
-                                                                        {col.key === 'firstname' ? (
-                                                                            <Link to={`/student/view/${student.id}`}>{getFullName(student)}</Link>
-                                                                        ) : col.key === 'class' ? (
-                                                                            `${student.class}(${student.section})`
-                                                                        ) : col.key === 'disable_reason' ? (
-                                                                            <span data-toggle="tooltip" title={student.dis_note || ''} style={{ cursor: 'pointer' }}>
-                                                                                {getDisableReason(student.dis_reason)}
-                                                                            </span>
-                                                                        ) : (student[col.key] || '-')}
-                                                                    </td>
-                                                                ))}
-                                                                <td className="text-right white-space-nowrap noExport">
-                                                                    <Link to={`/student/view/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="View" style={{ marginRight: '3px' }}>
-                                                                        <i className="fa fa-reorder"></i>
-                                                                    </Link>
-                                                                    <button className="btn btn-success btn-xs" data-toggle="tooltip" title="Enable Student" onClick={() => handleEnableStudent(student.id, getFullName(student))}>
-                                                                        <i className="fa fa-check"></i>
-                                                                    </button>
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    )}
-                                                </tbody>
-                                                </table>
-                                            </div>
-
-                                            <div className="box-footer">
-                                                <div className="pt15 pb15">
-                                                    <Pagination 
-                                                        totalItems={totalItems} 
-                                                        itemsPerPage={recordsPerPage} 
-                                                        currentPage={currentPage}
-                                                        onPageChange={(page) => setCurrentPage(page)}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Details View Tab */}
-                                        <div className={`tab-pane ${activeTab === 'details' ? 'active' : ''}`} id="tab_2">
-                                            {loading ? (
-                                                <div className="text-center" style={{ padding: '20px' }}>
-                                                    <Loader type="table" rows={5} />
-                                                </div>
-                                            ) : students.length === 0 ? (
-                                                <div className="text-center" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px', minHeight: '200px' }}>
-                                                    <div style={{ color: '#999', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
-                                                    <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
-                                                    <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
-                                                </div>
-                                            ) : (
-                                                students.map((student) => (
-                                                    <div className="carousel-row" key={student.id}>
-                                                        <div className="slide-row">
-                                                            <div id={`carousel-${student.id}`} className="carousel slide slide-carousel" data-ride="carousel">
-                                                                <div className="carousel-inner">
-                                                                    <div className="item active">
-                                                                        <Link to={`/student/view/${student.id}`}>
-                                                                            <img
-                                                                                className="img-responsive img-thumbnail width150"
-                                                                                alt={getFullName(student)}
-                                                                                src={getImageUrl(student.image)}
-                                                                            />
-                                                                        </Link>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="slide-content">
-                                                                <h4>
-                                                                    <Link to={`/student/view/${student.id}`}>
-                                                                        {getFullName(student)}
-                                                                    </Link>
-                                                                </h4>
-                                                                <div className="row">
-                                                                    <div className="col-xs-6 col-md-6">
-                                                                        <address>
-                                                                            <strong><b>Class: </b>{student.class}({student.section})</strong><br />
-                                                                            <b>Admission No: </b>{student.admission_no || '-'}<br />
-                                                                            <b>Date of Birth: </b>{student.dob || '-'}<br />
-                                                                            <b>Gender:&nbsp;</b>{student.gender || '-'}<br />
-                                                                        </address>
-                                                                    </div>
-                                                                    <div className="col-xs-6 col-md-6">
-                                                                        <b>Local Identification Number:&nbsp;</b>{student.samagra_id || '-'}<br />
-                                                                        <b>Guardian Name:&nbsp;</b>{student.guardian_name || '-'}<br />
-                                                                        <b>Guardian Phone: </b>
-                                                                        <abbr title="Phone"><i className="fa fa-phone-square"></i>&nbsp;</abbr>
-                                                                        {student.guardian_phone || '-'}<br />
-                                                                        <b>Current Address:&nbsp;</b>{student.current_address || '-'} {student.city || ''}<br />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="slide-footer">
-                                                                <span className="pull-right buttons">
-                                                                    <Link
-                                                                        to={`/student/view/${student.id}`}
-                                                                        className="btn btn-default btn-xs"
-                                                                        data-toggle="tooltip"
-                                                                        title="View"
-                                                                    >
-                                                                        <i className="fa fa-reorder"></i>
-                                                                    </Link>
-                                                                    {' '}
-                                                                    <button
-                                                                        className="btn btn-success btn-xs"
-                                                                        data-toggle="tooltip"
-                                                                        title="Enable Student"
-                                                                        onClick={() => handleEnableStudent(student.id, getFullName(student))}
-                                                                    >
-                                                                        <i className="fa fa-check"></i>
-                                                                    </button>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </div>
+                        {/* Pagination Footer */}
+                        {!loading && students.length > 0 && (
+                            <div style={{
+                                padding: '20px 24px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                background: '#ffffff',
+                                borderTop: '1px solid #f1f5f9',
+                                borderBottomLeftRadius: '12px',
+                                borderBottomRightRadius: '12px'
+                            }}>
+                                <div style={{ color: '#64748b', fontSize: '14px' }}>
+                                    Showing {(currentPage - 1) * recordsPerPage + 1} to {Math.min(currentPage * recordsPerPage, students.length)} of {students.length} entries
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        className="btn btn-default btn-sm"
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage === 1 ? '#cbd5e1' : '#475569' }}
+                                    >
+                                        <i className="fa fa-angle-left"></i>
+                                    </button>
+                                    <button className="btn btn-sm" style={{
+                                        borderRadius: '6px',
+                                        background: '#7c3aed',
+                                        color: '#ffffff',
+                                        minWidth: '32px',
+                                        height: '32px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: '600'
+                                    }}>
+                                        {currentPage}
+                                    </button>
+                                    <button
+                                        className="btn btn-default btn-sm"
+                                        disabled={currentPage >= totalPages}
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage >= totalPages ? '#cbd5e1' : '#475569' }}
+                                    >
+                                        <i className="fa fa-angle-right"></i>
+                                    </button>
                                 </div>
                             </div>
-                        </div>
-                    )}
-                </section>
-            </div>
-            <Footer />
-        </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </SISLayout>
     );
 };
 

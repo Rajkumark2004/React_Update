@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { PermissionProvider } from './context/PermissionContext';
 import DashboardTest from './pages/dashboard/dashboard_test';
+import { SISCountProvider } from './context/SISCountContext';
 
 import LoginPage from './pages/auth/LoginPage';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -239,6 +240,7 @@ function App() {
               }
             }}
           />
+          <SISCountProvider>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<LoginPage />} />
@@ -869,6 +871,7 @@ function App() {
             <Route path="/admin/reports/subject_lesson_plan" element={<ProtectedRoute><SubjectLessonPlanReport /></ProtectedRoute>} />
             <Route path="/admin/reports/user_log" element={<ProtectedRoute><UserLog /></ProtectedRoute>} />
           </Routes>
+          </SISCountProvider>
         </BrowserRouter>
       </SessionProvider>
     </LogoProvider>
