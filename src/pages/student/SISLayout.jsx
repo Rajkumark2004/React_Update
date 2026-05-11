@@ -84,17 +84,7 @@ const SISLayout = ({ children, activeTab }) => {
                             <div className="sis-card-subtitle">total disabled students</div>
                         </Link>
 
-                        {/* 4. Bulk Delete */}
-                        <Link to="/student/bulkdelete" className={`sis-card ${activeTab === 'bulk' ? 'active' : ''}`}>
-                            <div className="sis-card-header">
-                                <span className="sis-card-title">Bulk Delete</span>
-                                <i className="fa fa-trash sis-card-icon"></i>
-                            </div>
-                            <div className="sis-card-value">{counts.bulkCount}</div>
-                            <div className="sis-card-subtitle">total records available</div>
-                        </Link>
-
-                        {/* 5. Disable Reason */}
+                        {/* 4. Disable Reason */}
                         <Link to="/admin/disable-reason" className={`sis-card ${activeTab === 'reason' ? 'active' : ''}`}>
                             <div className="sis-card-header">
                                 <span className="sis-card-title">Disable Reason</span>
@@ -102,6 +92,16 @@ const SISLayout = ({ children, activeTab }) => {
                             </div>
                             <div className="sis-card-value">{counts.disableReasons}</div>
                             <div className="sis-card-subtitle">total disabled reasons</div>
+                        </Link>
+
+                        {/* 5. Bulk Delete */}
+                        <Link to="/student/bulkdelete" className={`sis-card ${activeTab === 'bulk' ? 'active' : ''}`}>
+                            <div className="sis-card-header">
+                                <span className="sis-card-title">Bulk Delete</span>
+                                <i className="fa fa-trash sis-card-icon"></i>
+                            </div>
+                            <div className="sis-card-value">{counts.bulkCount}</div>
+                            <div className="sis-card-subtitle">total records available</div>
                         </Link>
                     </div>
                 </section>

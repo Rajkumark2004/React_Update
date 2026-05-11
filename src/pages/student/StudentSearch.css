@@ -530,6 +530,184 @@
     color: #1e293b;
 }
 
+.sis-details-toggle-container {
+    display: flex;
+    justify-content: center;
+    margin: 32px 0;
+}
+
+.sis-btn-details-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 32px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 50px;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.sis-btn-details-toggle:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.sis-btn-details-toggle i {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+@media (max-width: 1024px) {
+    .sis-form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .sis-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Premium Table Styles for Student View */
+.sis-table-premium {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sis-table-premium tr {
+    border-bottom: 1px solid #e2e8f0;
+    transition: background-color 0.2s ease;
+}
+
+.sis-table-premium tr:hover {
+    background-color: #f8fafc;
+}
+
+.sis-table-premium tr:last-child {
+    border-bottom: none;
+}
+
+.sis-table-premium td {
+    padding: 14px 15px;
+    font-size: 14px;
+    color: #475569;
+    vertical-align: top;
+}
+
+.sis-table-premium td:first-child {
+    width: 45%;
+    font-weight: 500;
+    color: #64748b;
+    padding-left: 0;
+    padding-right: 20px;
+}
+
+.sis-table-premium td:nth-child(2) {
+    color: #1e293b;
+    font-weight: 600;
+    width: auto;
+}
+
+.sis-details-section {
+    transition: all 0.3s ease;
+}
+
+.sis-details-section:hover {
+    border-color: #7c3aed !important;
+}
+
+.btn-premium-back:hover {
+    background-color: #f8fafc !important;
+    border-color: #7c3aed !important;
+    color: #7c3aed;
+}
+
+.student_custom_field {
+    padding-left: 15px;
+    margin: 0;
+}
+
+/* Listing Table Styles (Fees, Attendance, etc.) */
+.sis-listing-table {
+    border: none !important;
+    margin-top: 10px;
+    border-collapse: collapse !important;
+}
+
+.sis-listing-table tr {
+    transition: all 0.2s ease;
+}
+
+.sis-listing-table tr:hover {
+    background-color: #f8fafc !important;
+}
+
+.sis-listing-table thead th {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    font-size: 11px !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 15px !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    border-top: none !important;
+}
+
+.sis-listing-table tbody td {
+    padding: 12px 15px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 13px !important;
+    color: #1e293b !important;
+}
+
+.sis-listing-table .label {
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-weight: 500;
+}
+
+/* Student Profile Banner Styles */
+.profile-banner-image img {
+    transition: all 0.3s ease;
+}
+
+.profile-banner-image img:hover {
+    transform: scale(1.02);
+}
+
+.banner-actions .btn:hover {
+    background-color: #f8fafc !important;
+    border-color: #7c3aed !important;
+    transform: translateY(-2px);
+}
+
+.sibling-card {
+    transition: all 0.3s ease;
+}
+
+.sibling-card:hover {
+    background-color: #ffffff !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+
+
+.sis-btn-details-toggle i {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
 @media (max-width: 1024px) {
     .sis-form-grid {
         grid-template-columns: repeat(2, 1fr);

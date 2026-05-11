@@ -87,19 +87,19 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
 
     return (
         <>
-            <div className="modal fade in" style={{ display: 'block', paddingRight: '17px' }}>
-                <div className="modal-dialog">
-                    <div className="modal-content">
-                        <div className="modal-header">
-                            <button type="button" className="close" onClick={onClose}>×</button>
-                            <h4 className="modal-title">Sibling Matching</h4>
+            <div className="modal fade in" style={{ display: 'block', paddingRight: '17px', zIndex: 1050 }}>
+                <div className="modal-dialog" style={{ marginTop: '100px' }}>
+                    <div className="modal-content" style={{ borderRadius: '15px', overflow: 'hidden', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
+                        <div className="modal-header" style={{ backgroundColor: '#7c3aed', color: '#fff', padding: '20px' }}>
+                            <button type="button" className="close" onClick={onClose} style={{ color: '#fff', opacity: '1' }}>×</button>
+                            <h4 className="modal-title" style={{ fontWeight: '600', color: '#fff' }}>Sibling Matching</h4>
                         </div>
-                        <div className="modal-body popup_details">
+                        <div className="modal-body popup_details" style={{ padding: '25px' }}>
                             <div className="row">
                                 <div className="col-md-4">
                                     <div className="form-group">
-                                        <label>Class</label>
-                                        <select className="form-control" value={searchParams.class_id} onChange={handleClassChange}>
+                                        <label style={{ color: '#64748b', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Class</label>
+                                        <select className="form-control" value={searchParams.class_id} onChange={handleClassChange} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
                                             <option value="">Select</option>
                                             {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.class}</option>)}
                                         </select>
@@ -107,8 +107,8 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
                                 </div>
                                 <div className="col-md-4">
                                     <div className="form-group">
-                                        <label>Section</label>
-                                        <select className="form-control" value={searchParams.section_id} onChange={handleSectionChange}>
+                                        <label style={{ color: '#64748b', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Section</label>
+                                        <select className="form-control" value={searchParams.section_id} onChange={handleSectionChange} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
                                             <option value="">Select</option>
                                             {sections.map(sec => <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>)}
                                         </select>
@@ -116,8 +116,8 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
                                 </div>
                                 <div className="col-md-4">
                                     <div className="form-group">
-                                        <label>Student</label>
-                                        <select className="form-control" value={searchParams.student_id} onChange={(e) => setSearchParams({ ...searchParams, student_id: e.target.value })}>
+                                        <label style={{ color: '#64748b', fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Student</label>
+                                        <select className="form-control" value={searchParams.student_id} onChange={(e) => setSearchParams({ ...searchParams, student_id: e.target.value })} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
                                             <option value="">Select</option>
                                             {students.map(student => (
                                                 <option key={student.id} value={student.id}>
@@ -129,13 +129,28 @@ const SiblingModal = ({ isOpen, onClose, onAddSibling }) => {
                                 </div>
                             </div>
                         </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-primary" onClick={handleCopy}>Add</button>
+                        <div className="modal-footer" style={{ borderTop: '1px solid #f1f5f9', padding: '15px 25px', backgroundColor: '#f8fafc' }}>
+                            <button 
+                                type="button" 
+                                className="btn" 
+                                onClick={handleCopy}
+                                style={{ 
+                                    backgroundColor: '#7c3aed', 
+                                    color: '#fff', 
+                                    padding: '8px 24px', 
+                                    borderRadius: '8px', 
+                                    fontWeight: '600',
+                                    border: 'none',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Add Sibling
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div className="modal-backdrop fade in"></div>
+            <div className="modal-backdrop fade in" style={{ opacity: '0.5' }}></div>
         </>
     );
 };

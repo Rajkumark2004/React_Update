@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import moment from "moment";
 import Header from "../../components/Header";
@@ -18,6 +18,7 @@ const StudentView = () => {
   };
 
   const { id } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("activity");
   const [student, setStudent] = useState(null);
   // Data State
@@ -588,238 +589,169 @@ const StudentView = () => {
       <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
         <section className="content">
           <div className="row">
-            {/* Left Sidebar - Profile Card */}
-            <div className="col-lg-3 col-md-3 col-sm-12">
-              {/* Profile Card */}
+            {/* Top Section - Profile Banner (Full Width) */}
+            <div className="col-lg-12 col-md-12 col-sm-12">
               <div
-                className="box box-primary"
-                style={isDisabled ? { backgroundColor: "#f0dddd" } : {}}
+                className="box box-primary theme-shadow"
+                style={{
+                  ...(isDisabled ? { backgroundColor: "#fdf2f2" } : {}),
+                  borderTop: 'none',
+                  borderRadius: '12px',
+                  marginBottom: '20px'
+                }}
               >
-                <div className="box box-widget widget-user-2 mb0">
-                  <div className="widget-user-header bg-gray-light overflow-hidden">
-                    <div className="widget-user-image">
+                <div className="box-body" style={{ padding: '25px', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      className="btn-premium-back"
+                      onClick={() => navigate('/student/search')}
+                      style={{ padding: '6px 16px', borderRadius: '20px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', transition: 'all 0.3s ease', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+                    >
+                      <i className="fa fa-arrow-left"></i> Back
+                    </button>
+                  </div>
+
+                  <div className="d-flex align-items-center" style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
+                    {/* Student Avatar */}
+                    <div className="profile-banner-image">
                       <img
-                        className="profile-user-img img-responsive img-rounded"
+                        className="img-responsive img-rounded theme-shadow"
                         src={getImageUrl(student.image)}
                         alt="User profile picture"
+                        style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '15px', border: '4px solid #fff' }}
                       />
                     </div>
-                    <h3 className="widget-user-username">
-                      {student.firstname} {student.middlename}{" "}
-                      {student.lastname}
-                    </h3>
-                    <h5 className="widget-user-desc mb5">
-                      Admission No{" "}
-                      <span className="text-aqua">{student.admission_no}</span>
-                    </h5>
-                    <h5 className="widget-user-desc">
-                      Roll Number{" "}
-                      <span className="text-aqua">{student.roll_no}</span>
-                    </h5>
-                  </div>
-                </div>
 
-                <div className="box-body box-profile pt0">
-                  <ul className="list-group list-group-unbordered">
-                    {isDisabled && (
-                      <>
-                        <li className="list-group-item listnoback">
-                          <b>Disable Reason</b>
-                          <span className="pull-right text-aqua">
-                            {student.disable_reason}
-                          </span>
-                        </li>
-                        <li className="list-group-item listnoback">
-                          <b>Disable Note</b>
-                          <span className="pull-right text-aqua">
-                            {student.dis_note}
-                          </span>
-                        </li>
-                        <li className="list-group-item listnoback">
-                          <b>Disable Date</b>
-                          <span className="pull-right text-aqua">
-                            {formatDate(student.disable_at)}
-                          </span>
-                        </li>
-                      </>
-                    )}
-                    <li className="list-group-item listnoback border0">
-                      <b>Class</b>
-                      <a className="pull-right text-aqua">
-                        {student.class} ({student.section})
-                      </a>
-                    </li>
-                    <li className="list-group-item listnoback">
-                      <b>Section</b>
-                      <a className="pull-right text-aqua">{student.section}</a>
-                    </li>
-                    <li className="list-group-item listnoback">
-                      <b>RTE</b>
-                      <a className="pull-right text-aqua">
-                        {student.rte}
-                      </a>
-                    </li>
-                    <li className="list-group-item listnoback">
-                      <b>Gender</b>
-                      <a className="pull-right text-aqua">
-                        {student.gender}
-                      </a>
-                    </li>
-                    {/* Barcode */}
-                    {student.admission_no && (
-                      <li className="list-group-item listnoback">
-                        <b>Barcode</b>
-                        <a className="pull-right text-aqua">
-                          <img
-                            className="h-36"
-                            src={`https://newlayout.wisibles.com/uploads/student_id_card/barcodes/${student.admission_no}.png`}
-                            alt="Barcode"
-                            style={{ height: "36px", width: "auto" }}
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                            }}
-                          />
-                        </a>
-                      </li>
-                    )}
-                    {student.total_points && (
-                      <li className="list-group-item listnoback">
-                        <b>Behaviour Score</b>
-                        <a className="pull-right text-aqua">
-                          {student.total_points}
-                        </a>
-                      </li>
-                    )}
-                  </ul>
+                    {/* Info and Stats Container */}
+                    <div style={{ flex: 1, minWidth: '300px' }}>
+                      <div style={{ marginBottom: '20px' }}>
+                        <h1 style={{ margin: '0 0 5px 0', fontWeight: '700', color: '#1e293b', fontSize: '28px', letterSpacing: '-0.5px' }}>
+                          {student.firstname} {student.middlename} {student.lastname}
+                        </h1>
+                        <div style={{ display: 'flex', gap: '20px', color: '#64748b', fontSize: '14px', fontWeight: '500' }}>
+                          <span>Admission No: <b style={{ color: '#7c3aed' }}>{student.admission_no}</b></span>
+                          <span>Roll No: <b style={{ color: '#7c3aed' }}>{student.roll_no || "-"}</b></span>
+                        </div>
+                      </div>
+
+                      <div className="profile-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+                        <div className="stat-item">
+                          <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700', marginBottom: '4px' }}>Class & Section</span>
+                          <span style={{ fontWeight: '600', color: '#334155', fontSize: '14px' }}>{student.class} ({student.section})</span>
+                        </div>
+                        <div className="stat-item">
+                          <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700', marginBottom: '4px' }}>Gender</span>
+                          <span style={{ fontWeight: '600', color: '#334155', fontSize: '14px' }}>{student.gender}</span>
+                        </div>
+                        <div className="stat-item">
+                          <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700', marginBottom: '4px' }}>RTE Status</span>
+                          <span style={{ fontWeight: '600', color: '#334155', fontSize: '14px' }}>{student.rte}</span>
+                        </div>
+                        {student.admission_no && (
+                          <div className="stat-item">
+                            <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700', marginBottom: '4px' }}>Barcode</span>
+                            <img
+                              src={`https://newlayout.wisibles.com/uploads/student_id_card/barcodes/${student.admission_no}.png`}
+                              alt="Barcode"
+                              style={{ height: '24px', width: 'auto', opacity: '1', display: 'block', marginTop: '4px' }}
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                          </div>
+                        )}
+                        {student.total_points && (
+                          <div className="stat-item">
+                            <span style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700', marginBottom: '4px' }}>Behaviour Score</span>
+                            <span style={{ fontWeight: '700', color: '#7c3aed', fontSize: '14px' }}>{student.total_points}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Disable Status Banner */}
+                  {isDisabled && (
+                    <div className="mt-4" style={{ marginTop: '20px', padding: '12px 20px', backgroundColor: '#fff1f2', borderRadius: '10px', borderLeft: '4px solid #e11d48' }}>
+                      <div style={{ display: 'flex', gap: '25px', fontSize: '13px', color: '#9f1239', fontWeight: '500' }}>
+                        <span><i className="fa fa-info-circle"></i> <b>Reason:</b> {student.disable_reason}</span>
+                        <span><b>Date:</b> {formatDate(student.disable_at)}</span>
+                        <span><b>Note:</b> {student.dis_note}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Siblings Box */}
               {console.log("Rendering Sibling section, siblings count:", siblings.length)}
+              {/* Siblings Section (Full Width) */}
               {siblings && siblings.length > 0 && (
-                <div className="box box-primary">
-                  <div className="box-header with-border">
-                    <h3 className="box-title">Sibling</h3>
-                  </div>
-                  <div className="box-body">
-                    {siblings.map((sibling, index) => (
-                      <div key={index} className="mb20" style={{ borderBottom: index < siblings.length - 1 ? '1px solid #f4f4f4' : 'none', paddingBottom: '10px' }}>
-                        <div className="widget-user-2">
-                          <div className="widget-user-header bg-gray-light overflow-hidden">
-                            <div className="widget-user-image">
+                <div className="col-lg-12 col-md-12 col-sm-12">
+                  <div className="box box-primary theme-shadow" style={{ borderRadius: '12px', borderTop: '3px solid #7c3aed', marginBottom: '20px' }}>
+                    <div className="box-header with-border" style={{ padding: '16px 24px' }}>
+                      <h3 className="box-title" style={{ fontWeight: '600', color: '#1e293b' }}>
+                        <i className="fa fa-users" style={{ marginRight: '10px', color: '#7c3aed' }}></i> Siblings
+                      </h3>
+                    </div>
+                    <div className="box-body" style={{ padding: '24px' }}>
+                      <div className="siblings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
+                        {siblings.map((sibling, index) => (
+                          <div key={index} className="sibling-card" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', backgroundColor: '#f8fafc' }}>
+                            <div className="d-flex align-items-center" style={{ display: 'flex', gap: '16px' }}>
                               <img
-                                className="profile-user-img img-responsive img-rounded"
+                                className="img-responsive img-rounded"
                                 src={getImageUrl(sibling.image)}
                                 alt="Sibling"
+                                style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
                               />
+                              <div style={{ flex: 1 }}>
+                                <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '700' }}>
+                                  <Link to={`/student/view/${sibling.id}`} style={{ color: '#7c3aed' }}>
+                                    {sibling.firstname} {sibling.lastname}
+                                  </Link>
+                                </h4>
+                                <div style={{ fontSize: '13px', color: '#64748b' }}>
+                                  <div><b>Adm No:</b> {sibling.admission_no}</div>
+                                  <div><b>Class:</b> {sibling.class} ({sibling.section})</div>
+                                </div>
+                              </div>
                             </div>
-                            <h4 className="widget-user-username">
-                              <Link to={`/student/view/${sibling.id}`}>
-                                {sibling.firstname} {sibling.lastname}
-                              </Link>
-                            </h4>
-                            <h5 className="widget-user-desc mb5">
-                              Admission No{" "}
-                              <span className="text-aqua">
-                                {sibling.admission_no}
-                              </span>
-                            </h5>
-                            <h5 className="widget-user-desc">
-                              Roll Number{" "}
-                              <span className="text-aqua">{sibling.roll_no || "-"}</span>
-                            </h5>
-                          </div>
-                          <div className="box-body no-padding">
-                            <ul className="list-group list-group-unbordered">
-                              <li className="list-group-item">
-                                <b>Class</b>{" "}
-                                <a className="pull-right text-aqua">
-                                  {sibling.class} ({sibling.section})
-                                </a>
-                              </li>
-                              <li className="list-group-item">
-                                <b>Gender</b>{" "}
-                                <a className="pull-right text-aqua">
-                                  {sibling.gender}
-                                </a>
-                              </li>
-                              <li className="list-group-item">
-                                <b>RTE</b>{" "}
-                                <a className="pull-right text-aqua">
-                                  {sibling.rte}
-                                </a>
-                              </li>
-                              {sibling.admission_no && (
-                                <li className="list-group-item">
-                                  <b>Barcode</b>
-                                  <a className="pull-right text-aqua">
-                                    <img
-                                      className="h-36"
-                                      src={`https://newlayout.wisibles.com/uploads/student_id_card/barcodes/${sibling.admission_no}.png`}
-                                      alt="Barcode"
-                                      style={{ height: "36px", width: "auto" }}
-                                      onError={(e) => {
-                                        e.target.style.display = "none";
-                                      }}
-                                    />
-                                  </a>
-                                </li>
-                              )}
-                            </ul>
 
-                            {/* Detailed Sibling Info */}
-                            <table className="table3 table-hover table-striped tmb0">
-                              <tbody>
-                                <tr>
-                                  <td width="40%">Date of Birth</td>
-                                  <td className="text-aqua">{formatDate(sibling.dob)}</td>
-                                </tr>
-                                <tr>
-                                  <td>Category</td>
-                                  <td className="text-aqua">{(categoryList.find(c => String(c.id) === String(sibling.category_id))?.category) || "-"}</td>
-                                </tr>
-                                <tr>
-                                  <td>Mobile Number</td>
-                                  <td className="text-aqua">{sibling.mobileno || "-"}</td>
-                                </tr>
-                                <tr>
-                                  <td>Caste</td>
-                                  <td className="text-aqua">{sibling.cast || "-"}</td>
-                                </tr>
-                                <tr>
-                                  <td>Religion</td>
-                                  <td className="text-aqua">{sibling.religion || "-"}</td>
-                                </tr>
-                              </tbody>
-                            </table>
+                            <div className="mt-3 pt-3" style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #cbd5e1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '13px' }}>
+                              <div><span style={{ color: '#94a3b8' }}>Gender:</span> {sibling.gender}</div>
+                              <div><span style={{ color: '#94a3b8' }}>DOB:</span> {formatDate(sibling.dob)}</div>
+                              <div><span style={{ color: '#94a3b8' }}>Category:</span> {(categoryList.find(c => String(c.id) === String(sibling.category_id))?.category) || "-"}</div>
+                              <div><span style={{ color: '#94a3b8' }}>Relation:</span> {sibling.religion || "-"}</div>
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Right Content - Tabs */}
-            <div className="col-lg-9 col-md-9 col-sm-12">
-              <div className="nav-tabs-custom theme-shadow" style={{ paddingBottom: '30px' }}>
-                <ul className="nav nav-tabs">
-                  <li className={activeTab === "activity" ? "active" : ""}>
-                    <a
-                      href="#activity"
-                      data-toggle="tab"
-                      onClick={() => setActiveTab("activity")}
-                    >
-                      Profile
-                    </a>
-                  </li>
+            {/* Bottom Section - Tabs and Details (Full Width) */}
+            <div className="col-lg-12 col-md-12 col-sm-12">
+              <div className="nav-tabs-custom theme-shadow" style={{ paddingBottom: '30px', borderRadius: '12px', overflow: 'hidden' }}>
+                <ul className="nav nav-tabs">                  <li className={activeTab === "activity" ? "active" : ""}>
+                  <a
+                    href="#activity"
+                    data-toggle="tab"
+                    onClick={() => setActiveTab("activity")}
+                  >
+                    <i className="fa fa-user" style={{ marginRight: '8px' }}></i>
+                    Profile
+                  </a>
+                </li>
                   <li className={activeTab === "fee" ? "active" : ""}>
                     <a
                       href="#fee"
                       data-toggle="tab"
                       onClick={() => setActiveTab("fee")}
                     >
+                      <i className="fa fa-money" style={{ marginRight: '8px' }}></i>
                       Fees
                     </a>
                   </li>
@@ -829,16 +761,17 @@ const StudentView = () => {
                       data-toggle="tab"
                       onClick={() => setActiveTab("cbseexam")}
                     >
+                      <i className="fa fa-graduation-cap" style={{ marginRight: '8px' }}></i>
                       CBSE Exam
                     </a>
                   </li>
-
                   <li className={activeTab === "attendance" ? "active" : ""}>
                     <a
                       href="#attendance"
                       data-toggle="tab"
                       onClick={() => setActiveTab("attendance")}
                     >
+                      <i className="fa fa-calendar-check-o" style={{ marginRight: '8px' }}></i>
                       Attendance
                     </a>
                   </li>
@@ -848,6 +781,7 @@ const StudentView = () => {
                       data-toggle="tab"
                       onClick={() => setActiveTab("documents")}
                     >
+                      <i className="fa fa-file-text-o" style={{ marginRight: '8px' }}></i>
                       Documents
                     </a>
                   </li>
@@ -857,9 +791,11 @@ const StudentView = () => {
                       data-toggle="tab"
                       onClick={() => setActiveTab("timelineh")}
                     >
+                      <i className="fa fa-clock-o" style={{ marginRight: '8px' }}></i>
                       Timeline
                     </a>
                   </li>
+
                   {/*  <li
                     className={activeTab === "behavioural_note" ? "active" : ""}
                   >
@@ -871,68 +807,57 @@ const StudentView = () => {
                       Behavioural Note
                     </a>
                   </li>*/}
-
                   {/* Action Buttons */}
-                  {!isDisabled && (
-                    <>
-                      <li className="pull-right">
-                        <a
-                          href="#"
-                          className="text-red"
-                          data-toggle="tooltip"
-                          title="Disable"
-                          onClick={handleDisableClick}
-                        >
-                          <i className="fa fa-thumbs-o-down"></i>
-                        </a>
-                      </li>
-                      <li className="pull-right">
-                        <a
-                          href="#"
-                          className="text-green"
-                          data-toggle="tooltip"
-                          title="Login Details"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCredentialsModalOpen(true);
-                          }}
-                        >
-                          <i className="fa fa-key"></i>
-                        </a>
-                      </li>
-                      <li className="pull-right">
-                        <Link
-                          to={`/studentfee/addfee/${student.student_session_id}`}
-                          data-toggle="tooltip"
-                          title="Collect Fees"
-                        >
-                          <b>₹</b>
-                        </Link>
-                      </li>
-                      <li className="pull-right">
+                  <li className="pull-right" style={{ display: 'flex', gap: '8px', padding: '8px 15px' }}>
+                    {!isDisabled ? (
+                      <>
                         <Link
                           to={`/student/edit/${student.id}`}
-                          data-toggle="tooltip"
+                          className="btn btn-default btn-sm theme-shadow"
                           title="Edit"
+                          style={{ borderRadius: '8px', border: '1px solid #e2e8f0', padding: '6px 12px' }}
                         >
-                          <i className="fa fa-pencil"></i>
+                          <i className="fa fa-pencil text-purple" style={{ color: '#7c3aed' }}></i> Edit
                         </Link>
-                      </li>
-                    </>
-                  )}
-                  {isDisabled && (
-                    <li className="pull-right">
-                      <a
-                        href="#"
-                        className="text-green"
-                        data-toggle="tooltip"
+                        <Link
+                          to={`/studentfee/addfee/${student.student_session_id}`}
+                          className="btn btn-default btn-sm theme-shadow"
+                          title="Collect Fees"
+                          style={{ borderRadius: '8px', border: '1px solid #e2e8f0', padding: '6px 12px' }}
+                        >
+                          <b style={{ color: '#059669' }}>₹</b> Fees
+                        </Link>
+                        <button
+                          type="button"
+                          className="btn btn-default btn-sm theme-shadow"
+                          title="Login Details"
+                          onClick={() => setCredentialsModalOpen(true)}
+                          style={{ borderRadius: '8px', border: '1px solid #e2e8f0', padding: '6px 12px' }}
+                        >
+                          <i className="fa fa-key text-blue" style={{ color: '#2563eb' }}></i> Credentials
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-default btn-sm theme-shadow"
+                          title="Disable"
+                          onClick={handleDisableClick}
+                          style={{ borderRadius: '8px', border: '1px solid #e2e8f0', padding: '6px 12px' }}
+                        >
+                          <i className="fa fa-thumbs-o-down text-red" style={{ color: '#dc2626' }}></i> Disable
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-default btn-sm theme-shadow"
                         title="Enable"
                         onClick={handleEnableStudent}
+                        style={{ borderRadius: '8px', border: '1px solid #e2e8f0', padding: '6px 12px' }}
                       >
-                        <i className="fa fa-thumbs-o-up"></i>
-                      </a>
-                    </li>
-                  )}
+                        <i className="fa fa-thumbs-o-up text-green" style={{ color: '#059669' }}></i> Enable
+                      </button>
+                    )}
+                  </li>
                 </ul>
 
                 <div className="tab-content">
@@ -942,9 +867,9 @@ const StudentView = () => {
                     id="activity"
                   >
                     {/* Basic Info */}
-                    <div className="tshadow mb25 bozero">
-                      <div className="table-responsive around10 pt0">
-                        <table className="table3 table-hover table-striped tmb0">
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <div className="table-responsive">
+                        <table className="table sis-table-premium mb0">
                           <tbody>
                             <tr>
                               <td width="35%">Admission Date</td>
@@ -1021,10 +946,10 @@ const StudentView = () => {
                     </div>
 
                     {/* Address Section */}
-                    <div className="tshadow mb25 bozero">
-                      <h3 className="pagetitleh2">Address</h3>
-                      <div className="table-responsive around10 pt0">
-                        <table className="table3 table-hover table-striped tmb0">
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <h3 className="pagetitleh2" style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#1e293b', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>Address</h3>
+                      <div className="table-responsive">
+                        <table className="table sis-table-premium mb0">
                           <tbody>
                             <tr>
                               <td width="35%">Current Address</td>
@@ -1042,10 +967,10 @@ const StudentView = () => {
                     </div>
 
                     {/* Parent/Guardian Section */}
-                    <div className="tshadow mb25 bozero">
-                      <h3 className="pagetitleh2">Parent / Guardian Detail</h3>
-                      <div className="table-responsive around10 pt10">
-                        <table className="table3 table-hover table-striped tmb0">
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <h3 className="pagetitleh2" style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#1e293b', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>Parent / Guardian Detail</h3>
+                      <div className="table-responsive">
+                        <table className="table sis-table-premium mb0">
                           <tbody>
                             {/* Father */}
                             <tr>
@@ -1129,10 +1054,10 @@ const StudentView = () => {
                     </div>
 
                     {/* Hostel Details Section */}
-                    <div className="tshadow mb25 bozero">
-                      <h3 className="pagetitleh2">Hostel Details</h3>
-                      <div className="table-responsive around10 pt0">
-                        <table className="table3 table-hover table-striped tmb0">
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <h3 className="pagetitleh2" style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#1e293b', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>Hostel Details</h3>
+                      <div className="table-responsive">
+                        <table className="table sis-table-premium mb0">
                           <tbody>
                             <tr>
                               <td width="35%">Hostel</td>
@@ -1152,10 +1077,10 @@ const StudentView = () => {
                     </div>
 
                     {/* Transport Details Section */}
-                    <div className="tshadow mb25 bozero">
-                      <h3 className="pagetitleh2">Transport Details</h3>
-                      <div className="table-responsive around10 pt0">
-                        <table className="table3 table-hover table-striped tmb0">
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <h3 className="pagetitleh2" style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#1e293b', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>Transport Details</h3>
+                      <div className="table-responsive">
+                        <table className="table sis-table-premium mb0">
                           <tbody>
                             <tr>
                               <td width="35%">Route</td>
@@ -1179,10 +1104,10 @@ const StudentView = () => {
                     </div>
 
                     {/* Miscellaneous Details */}
-                    <div className="tshadow mb25 bozero">
-                      <h3 className="pagetitleh2">Miscellaneous Details</h3>
-                      <div className="table-responsive around10 pt0">
-                        <table className="table3 table-hover table-striped tmb0">
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <h3 className="pagetitleh2" style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '600', color: '#1e293b', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>Miscellaneous Details</h3>
+                      <div className="table-responsive">
+                        <table className="table sis-table-premium mb0">
                           <tbody>
                             <tr>
                               <td width="35%">Blood Group</td>
@@ -1243,116 +1168,118 @@ const StudentView = () => {
                     className={`tab-pane ${activeTab === "fee" ? "active" : ""}`}
                     id="fee"
                   >
-                    <div className="table-responsive">
-                      <table className="table table-striped table-bordered table-hover example">
-                        <thead>
-                          <tr>
-                            <th>Fees Group</th>
-                            <th>Fees Code</th>
-                            <th>Due Date</th>
-                            <th>Status</th>
-                            <th style={{ textAlign: 'right' }}>Amount</th>
-                            <th>Payment Id</th>
-                            <th>Mode</th>
-                            <th>Date</th>
-                            <th style={{ textAlign: 'right' }}>Discount</th>
-                            <th style={{ textAlign: 'right' }}>Fine</th>
-                            <th style={{ textAlign: 'right' }}>Paid</th>
-                            <th style={{ textAlign: 'right' }}>Balance</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {fees.length === 0 ? (
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <div className="table-responsive">
+                        <table className="table sis-listing-table example">
+                          <thead>
                             <tr>
-                              <td
-                                colSpan="12"
-                                className="text-danger text-center"
-                              >
-                                No Fees Found
-                              </td>
+                              <th>Fees Group</th>
+                              <th>Fees Code</th>
+                              <th>Due Date</th>
+                              <th>Status</th>
+                              <th style={{ textAlign: 'right' }}>Amount</th>
+                              <th>Payment Id</th>
+                              <th>Mode</th>
+                              <th>Date</th>
+                              <th style={{ textAlign: 'right' }}>Discount</th>
+                              <th style={{ textAlign: 'right' }}>Fine</th>
+                              <th style={{ textAlign: 'right' }}>Paid</th>
+                              <th style={{ textAlign: 'right' }}>Balance</th>
                             </tr>
-                          ) : (
-                            fees.map((fee, index) => (
-                              <React.Fragment key={index}>
-                                <tr>
-                                  <td>{fee.name}</td>
-                                  <td>{fee.code}</td>
-                                  <td>{formatDate(fee.due_date)}</td>
+                          </thead>
+                          <tbody>
+                            {fees.length === 0 ? (
+                              <tr>
+                                <td
+                                  colSpan="12"
+                                  className="text-danger text-center"
+                                >
+                                  No Fees Found
+                                </td>
+                              </tr>
+                            ) : (
+                              fees.map((fee, index) => (
+                                <React.Fragment key={index}>
+                                  <tr>
+                                    <td>{fee.name}</td>
+                                    <td>{fee.code}</td>
+                                    <td>{formatDate(fee.due_date)}</td>
+                                    <td>
+                                      <span
+                                        className={`label ${fee.status === "Paid" ? "label-success" : fee.status === "Partial" ? "label-warning" : "label-danger"}`}
+                                      >
+                                        {fee.status}
+                                      </span>
+                                    </td>
+                                    <td className="text-right">
+                                      {fee.amount || fee.fees}
+                                      {fee.penalty_fine > 0 && (
+                                        <span className="text-danger" style={{ marginLeft: '5px' }} title="Fine">+{fee.penalty_fine.toFixed(2)}</span>
+                                      )}
+                                    </td>
+                                    <td>{fee.payment_id || "-"}</td>
+                                    <td>{fee.payment_mode || "-"}</td>
+                                    <td>{formatDate(fee.payment_date)}</td>
+                                    <td className="text-right">{fee.discount || "0.00"}</td>
+                                    <td className="text-right" title="Fine">{fee.fine || "0.00"}</td>
+                                    <td className="text-right">{fee.paid || "0.00"}</td>
+                                    <td className="text-right">{fee.balance || "0.00"}</td>
+                                  </tr>
+                                  {fee.payment_details && fee.payment_details.map((payment, pIndex) => (
+                                    <tr key={`payment-${pIndex}`} style={{ backgroundColor: '#fff', color: '#666' }}>
+                                      <td colSpan="5"></td>
+                                      <td>
+                                        <i className="fa fa-level-up fa-rotate-90" style={{ color: '#ccc', marginRight: '5px' }}></i>
+                                        {fee.student_fees_deposite_id}/{payment.inv_no}
+                                      </td>
+                                      <td>{payment.payment_mode}</td>
+                                      <td>{formatDate(payment.date)}</td>
+                                      <td className="text-right">{parseFloat(payment.amount_discount || 0).toFixed(2)}</td>
+                                      <td className="text-right">{parseFloat(payment.amount_fine || 0).toFixed(2)}</td>
+                                      <td className="text-right">{parseFloat(payment.amount || 0).toFixed(2)}</td>
+                                      <td></td>
+                                    </tr>
+                                  ))}
+                                </React.Fragment>
+                              ))
+                            )}
+                            {studentDiscountFee && studentDiscountFee.length > 0 &&
+                              studentDiscountFee.map((discount, dIndex) => (
+                                <tr key={`discount-${dIndex}`} style={{ backgroundColor: '#fcf8e3' }}>
+                                  <td></td>
+                                  <td>Discount</td>
+                                  <td>{discount.code}</td>
+                                  <td></td>
                                   <td>
-                                    <span
-                                      className={`label ${fee.status === "Paid" ? "label-success" : fee.status === "Partial" ? "label-warning" : "label-danger"}`}
-                                    >
-                                      {fee.status}
-                                    </span>
-                                  </td>
-                                  <td className="text-right">
-                                    {fee.amount || fee.fees}
-                                    {fee.penalty_fine > 0 && (
-                                      <span className="text-danger" style={{ marginLeft: '5px' }} title="Fine">+{fee.penalty_fine.toFixed(2)}</span>
+                                    {discount.status === 'applied' ? (
+                                      <span className="text-success small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} Applied</span>
+                                    ) : (
+                                      <span className="text-danger small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} {discount.status}</span>
                                     )}
                                   </td>
-                                  <td>{fee.payment_id || "-"}</td>
-                                  <td>{fee.payment_mode || "-"}</td>
-                                  <td>{formatDate(fee.payment_date)}</td>
-                                  <td className="text-right">{fee.discount || "0.00"}</td>
-                                  <td className="text-right" title="Fine">{fee.fine || "0.00"}</td>
-                                  <td className="text-right">{fee.paid || "0.00"}</td>
-                                  <td className="text-right">{fee.balance || "0.00"}</td>
+                                  <td colSpan="7"></td>
                                 </tr>
-                                {fee.payment_details && fee.payment_details.map((payment, pIndex) => (
-                                  <tr key={`payment-${pIndex}`} style={{ backgroundColor: '#fff', color: '#666' }}>
-                                    <td colSpan="5"></td>
-                                    <td>
-                                      <i className="fa fa-level-up fa-rotate-90" style={{ color: '#ccc', marginRight: '5px' }}></i>
-                                      {fee.student_fees_deposite_id}/{payment.inv_no}
-                                    </td>
-                                    <td>{payment.payment_mode}</td>
-                                    <td>{formatDate(payment.date)}</td>
-                                    <td className="text-right">{parseFloat(payment.amount_discount || 0).toFixed(2)}</td>
-                                    <td className="text-right">{parseFloat(payment.amount_fine || 0).toFixed(2)}</td>
-                                    <td className="text-right">{parseFloat(payment.amount || 0).toFixed(2)}</td>
-                                    <td></td>
-                                  </tr>
-                                ))}
-                              </React.Fragment>
-                            ))
-                          )}
-                          {studentDiscountFee && studentDiscountFee.length > 0 &&
-                            studentDiscountFee.map((discount, dIndex) => (
-                              <tr key={`discount-${dIndex}`} style={{ backgroundColor: '#fcf8e3' }}>
-                                <td></td>
-                                <td>Discount</td>
-                                <td>{discount.code}</td>
-                                <td></td>
-                                <td>
-                                  {discount.status === 'applied' ? (
-                                    <span className="text-success small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} Applied</span>
-                                  ) : (
-                                    <span className="text-danger small">Discount of {currencySymbol}{parseFloat(discount.amount || 0).toFixed(2)} {discount.status}</span>
+                              ))
+                            }
+                            {fees.length > 0 && (
+                              <tr style={{ fontWeight: 'bold', backgroundColor: '#f4f4f4' }}>
+                                <td colSpan="4" className="text-right">Grand Total</td>
+                                <td className="text-right">
+                                  {currencySymbol}{feeTotals.totalAmount.toFixed(2)}
+                                  {feeTotals.totalPenaltyFine > 0 && (
+                                    <span className="text-danger" style={{ marginLeft: '5px' }}>+{currencySymbol}{feeTotals.totalPenaltyFine.toFixed(2)}</span>
                                   )}
                                 </td>
-                                <td colSpan="7"></td>
+                                <td colSpan="3"></td>
+                                <td className="text-right">{currencySymbol}{feeTotals.totalDiscount.toFixed(2)}</td>
+                                <td className="text-right">{currencySymbol}{feeTotals.totalFine.toFixed(2)}</td>
+                                <td className="text-right">{currencySymbol}{feeTotals.totalPaid.toFixed(2)}</td>
+                                <td className="text-right">{currencySymbol}{feeTotals.totalBalance.toFixed(2)}</td>
                               </tr>
-                            ))
-                          }
-                          {fees.length > 0 && (
-                            <tr style={{ fontWeight: 'bold', backgroundColor: '#f4f4f4' }}>
-                              <td colSpan="4" className="text-right">Grand Total</td>
-                              <td className="text-right">
-                                {currencySymbol}{feeTotals.totalAmount.toFixed(2)}
-                                {feeTotals.totalPenaltyFine > 0 && (
-                                  <span className="text-danger" style={{ marginLeft: '5px' }}>+{currencySymbol}{feeTotals.totalPenaltyFine.toFixed(2)}</span>
-                                )}
-                              </td>
-                              <td colSpan="3"></td>
-                              <td className="text-right">{currencySymbol}{feeTotals.totalDiscount.toFixed(2)}</td>
-                              <td className="text-right">{currencySymbol}{feeTotals.totalFine.toFixed(2)}</td>
-                              <td className="text-right">{currencySymbol}{feeTotals.totalPaid.toFixed(2)}</td>
-                              <td className="text-right">{currencySymbol}{feeTotals.totalBalance.toFixed(2)}</td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
 
@@ -1360,35 +1287,37 @@ const StudentView = () => {
                     className={`tab-pane ${activeTab === "cbseexam" ? "active" : ""}`}
                     id="cbseexam"
                   >
-                    <div className="table-responsive">
-                      <table className="table table-striped table-bordered">
-                        <thead>
-                          <tr>
-                            <th>Exam</th>
-                            <th>Marks</th>
-                            <th>Grade</th>
-                            <th>Rank</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {cbseExams.length === 0 ? (
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <div className="table-responsive">
+                        <table className="table sis-listing-table">
+                          <thead>
                             <tr>
-                              <td colSpan="4" className="text-danger text-center">
-                                No CBSE Exam Result Found
-                              </td>
+                              <th>Exam</th>
+                              <th>Marks</th>
+                              <th>Grade</th>
+                              <th>Rank</th>
                             </tr>
-                          ) : (
-                            cbseExams.map((exam, i) => (
-                              <tr key={i}>
-                                <td>{exam.name}</td>
-                                <td>{exam.total_marks}</td>
-                                <td>{exam.grade}</td>
-                                <td>{exam.rank}</td>
+                          </thead>
+                          <tbody>
+                            {cbseExams.length === 0 ? (
+                              <tr>
+                                <td colSpan="4" className="text-danger text-center">
+                                  No CBSE Exam Result Found
+                                </td>
                               </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
+                            ) : (
+                              cbseExams.map((exam, i) => (
+                                <tr key={i}>
+                                  <td>{exam.name}</td>
+                                  <td>{exam.total_marks}</td>
+                                  <td>{exam.grade}</td>
+                                  <td>{exam.rank}</td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
 
@@ -1397,53 +1326,55 @@ const StudentView = () => {
                     className={`tab-pane ${activeTab === "attendance" ? "active" : ""}`}
                     id="attendance"
                   >
-                    <div className="row">
-                      {attendanceTypes.map((type) => {
-                        const iconMap = {
-                          'present': 'fa-check-square-o',
-                          'absent': 'fa-times-circle-o',
-                          'late': 'fa-clock-o',
-                          'half day': 'fa-calendar-minus-o',
-                          'holiday': 'fa-sun-o',
-                          'late with excuse': 'fa-clock-o'
-                        };
-                        const iconClass = iconMap[type.type.toLowerCase()] || 'fa-check-square-o';
-                        return (
-                          <div className="col-lg-3 col-md-4 col-sm-6 col20per" key={type.id}>
-                            <div className="staffprofile">
-                              <h5>Total {type.type.toUpperCase()}</h5>
-                              <h4>{countAttendance[type.type] || 0}</h4>
-                              <div className="icon"><i className={`fa ${iconClass}`}></i></div>
+                    <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                      <div className="row">
+                        {attendanceTypes.map((type) => {
+                          const iconMap = {
+                            'present': 'fa-check-square-o',
+                            'absent': 'fa-times-circle-o',
+                            'late': 'fa-clock-o',
+                            'half day': 'fa-calendar-minus-o',
+                            'holiday': 'fa-sun-o',
+                            'late with excuse': 'fa-clock-o'
+                          };
+                          const iconClass = iconMap[type.type.toLowerCase()] || 'fa-check-square-o';
+                          return (
+                            <div className="col-lg-3 col-md-4 col-sm-6 col20per" key={type.id}>
+                              <div className="staffprofile">
+                                <h5>Total {type.type.toUpperCase()}</h5>
+                                <h4>{countAttendance[type.type] || 0}</h4>
+                                <div className="icon"><i className={`fa ${iconClass}`}></i></div>
+                              </div>
                             </div>
+                          );
+                        })}
+                      </div>
+                      <div className="row">
+                        <div className="col-md-3">
+                          <div className="form-group">
+                            <label>Year</label>
+                            <select
+                              className="form-control"
+                              value={attendanceYear}
+                              onChange={(e) => setAttendanceYear(e.target.value)}
+                            >
+                              <option value="">Select Year</option>
+                              {attendanceYears.map((y, i) => (
+                                <option key={i} value={y.year}>
+                                  {y.year}
+                                </option>
+                              ))}
+                            </select>
                           </div>
-                        );
-                      })}
-                    </div>
-                    <div className="row">
-                      <div className="col-md-3">
-                        <div className="form-group">
-                          <label>Year</label>
-                          <select
-                            className="form-control"
-                            value={attendanceYear}
-                            onChange={(e) => setAttendanceYear(e.target.value)}
-                          >
-                            <option value="">Select Year</option>
-                            {attendanceYears.map((y, i) => (
-                              <option key={i} value={y.year}>
-                                {y.year}
-                              </option>
-                            ))}
-                          </select>
                         </div>
                       </div>
-                    </div>
-                    <div className="row">
-                      <div className="col-md-12">
-                        <AttendanceGrid
-                          attendanceResult={attendanceResult}
-                          year={attendanceYear}
-                        />
+                      <div className="row">
+                        <div className="col-md-12">
+                          <AttendanceGrid
+                            attendanceResult={attendanceResult}
+                            year={attendanceYear}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1466,58 +1397,60 @@ const StudentView = () => {
                         className="table-responsive"
                         style={{ clear: "both", marginTop: '10px' }}
                       >
-                        <table className="table table-striped table-bordered table-hover">
-                          <thead>
-                            <tr>
-                              <th>Title</th>
-                              <th>File Name</th>
-                              <th className="mailbox-date text-right">
-                                Action
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {documents.length === 0 ? (
+                        <div className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '25px', border: '1px solid #e2e8f0' }}>
+                          <table className="table sis-listing-table">
+                            <thead>
                               <tr>
-                                <td
-                                  colSpan="3"
-                                  className="text-danger text-center"
-                                >
-                                  No record found
-                                </td>
+                                <th>Title</th>
+                                <th>File Name</th>
+                                <th className="mailbox-date text-right">
+                                  Action
+                                </th>
                               </tr>
-                            ) : (
-                              documents.map((doc, idx) => (
-                                <tr key={idx}>
-                                  <td>{doc.title}</td>
-                                  <td>{doc.doc}</td>
-                                  <td className="text-right">
-                                    <a
-                                      href={`https://newlayout.wisibles.com/student/download/${student.id}/${doc.id}`}
-                                      download
-                                      className="btn btn-default btn-xs"
-                                      data-toggle="tooltip"
-                                      title="Download"
-                                    >
-                                      <i className="fa fa-download"></i>
-                                    </a>
-                                    <button
-                                      className="btn btn-default btn-xs"
-                                      data-toggle="tooltip"
-                                      title="Delete"
-                                      onClick={() =>
-                                        handleDeleteDocument(doc.id)
-                                      }
-                                      style={{ marginLeft: "5px" }}
-                                    >
-                                      <i className="fa fa-remove"></i>
-                                    </button>
+                            </thead>
+                            <tbody>
+                              {documents.length === 0 ? (
+                                <tr>
+                                  <td
+                                    colSpan="3"
+                                    className="text-danger text-center"
+                                  >
+                                    No record found
                                   </td>
                                 </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
+                              ) : (
+                                documents.map((doc, idx) => (
+                                  <tr key={idx}>
+                                    <td>{doc.title}</td>
+                                    <td>{doc.doc}</td>
+                                    <td className="text-right">
+                                      <a
+                                        href={`https://newlayout.wisibles.com/student/download/${student.id}/${doc.id}`}
+                                        download
+                                        className="btn btn-default btn-xs"
+                                        data-toggle="tooltip"
+                                        title="Download"
+                                      >
+                                        <i className="fa fa-download"></i>
+                                      </a>
+                                      <button
+                                        className="btn btn-default btn-xs"
+                                        data-toggle="tooltip"
+                                        title="Delete"
+                                        onClick={() =>
+                                          handleDeleteDocument(doc.id)
+                                        }
+                                        style={{ marginLeft: "5px" }}
+                                      >
+                                        <i className="fa fa-remove"></i>
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1527,11 +1460,12 @@ const StudentView = () => {
                     className={`tab-pane ${activeTab === "timelineh" ? "active" : ""}`}
                     id="timelineh"
                   >
-                    <div>
+                    <div className="timeline-header theme-shadow" style={{ marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h3 className="timeline-title" style={{ margin: 0, fontSize: '16px', fontWeight: '600' }}>Student Timeline</h3>
                       <button
-                        type="button"
-                        className="btn btn-sm btn-primary pull-right"
-                        onClick={handleAddTimeline}
+                        className="btn btn-default btn-sm"
+                        onClick={() => setTimelineModalOpen(true)}
+                        style={{ borderRadius: '20px', border: '1px solid #e2e8f0' }}
                       >
                         <i className="fa fa-plus"></i> Add
                       </button>
@@ -1548,12 +1482,15 @@ const StudentView = () => {
                           {timeline.map((item, index) => (
                             <li key={index} className="time-label">
                               <span
-                                className="bg-blue"
+                                className="bg-purple"
                                 style={{
-                                  borderRadius: "4px",
-                                  fontSize: "13px",
-                                  padding: "5px 10px",
+                                  borderRadius: "20px",
+                                  fontSize: "12px",
+                                  padding: "6px 15px",
                                   display: "inline-block",
+                                  backgroundColor: "#7c3aed",
+                                  color: "#fff",
+                                  fontWeight: "600"
                                 }}
                               >
                                 {formatDate(item.timeline_date)}
@@ -1576,32 +1513,34 @@ const StudentView = () => {
                                   {/* Custom line just for this block to give gap */}
 
                                   <i
-                                    className="fa fa-id-card-o bg-blue"
+                                    className="fa fa-id-card-o bg-purple"
                                     style={{
-                                      width: "30px",
-                                      height: "30px",
-                                      lineHeight: "30px",
-                                      fontSize: "13px",
+                                      width: "36px",
+                                      height: "36px",
+                                      lineHeight: "36px",
+                                      fontSize: "14px",
                                       borderRadius: "50%",
                                       textAlign: "center",
                                       position: "absolute",
-                                      left: "29px",
+                                      left: "26px",
                                       top: "5px",
                                       color: "#fff",
-                                      backgroundColor: "#0073b7",
+                                      backgroundColor: "#7c3aed",
                                       zIndex: 2,
+                                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                                     }}
                                   ></i>
                                   <div
-                                    className="timeline-item"
+                                    className="timeline-item theme-shadow"
                                     style={{
                                       marginLeft: "80px",
-                                      border: "1px solid #e1e1e1",
-                                      borderRadius: "4px",
+                                      border: "1px solid #e2e8f0",
+                                      borderRadius: "12px",
                                       backgroundColor: "#fff",
                                       boxShadow: "none",
                                       position: "relative",
                                       zIndex: 2,
+                                      overflow: 'hidden'
                                     }}
                                   >
                                     <div
@@ -1621,8 +1560,8 @@ const StudentView = () => {
                                         style={{
                                           margin: 0,
                                           fontSize: "15px",
-                                          color: "#00b4e4",
-                                          fontWeight: "500",
+                                          color: "#7c3aed",
+                                          fontWeight: "600",
                                         }}
                                       >
                                         {item.title}
@@ -1720,51 +1659,50 @@ const StudentView = () => {
                         <div className="alert alert-info">No record found</div>
                       ) : (
                         behaviouralNotes.map((note, index) => (
-                          <div key={index}>
-                            <table className="table table-striped mb0">
+                          <div key={index} className="sis-details-section theme-shadow" style={{ background: '#fff', borderRadius: '12px', padding: '20px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
+                            <table className="table sis-table-premium mb0">
                               <tbody>
                                 <tr>
-                                  <th width="35%">Staff</th>
+                                  <td width="35%">Staff</td>
                                   <td>{note.collected_by}</td>
                                 </tr>
                                 <tr>
-                                  <th>Date</th>
+                                  <td>Date</td>
                                   <td>{formatDate(note.date)}</td>
                                 </tr>
                                 <tr>
-                                  <th>Handwriting</th>
+                                  <td>Handwriting</td>
                                   <td colSpan="3">{note.parameter_1}</td>
                                 </tr>
                                 <tr>
-                                  <th>Listening</th>
+                                  <td>Listening</td>
                                   <td colSpan="3">{note.parameter_2}</td>
                                 </tr>
                                 <tr>
-                                  <th>Behaviour In Class Room</th>
+                                  <td>Behaviour In Class Room</td>
                                   <td colSpan="3">{note.parameter_3}</td>
                                 </tr>
                                 <tr>
-                                  <th>Behaviour With Teachers</th>
+                                  <td>Behaviour With Teachers</td>
                                   <td colSpan="3">{note.parameter_4}</td>
                                 </tr>
                                 <tr>
-                                  <th>
+                                  <td>
                                     Behaviour With Classmates / Elders And
                                     Youngers
-                                  </th>
+                                  </td>
                                   <td colSpan="3">{note.parameter_5}</td>
                                 </tr>
                                 <tr>
-                                  <th>Behaviour In Campus</th>
+                                  <td>Behaviour In Campus</td>
                                   <td colSpan="3">{note.parameter_6}</td>
                                 </tr>
                                 <tr>
-                                  <th>Bike</th>
+                                  <td>Bike</td>
                                   <td colSpan="3">{note.parameter_7}</td>
                                 </tr>
                               </tbody>
                             </table>
-                            <hr />
                           </div>
                         ))
                       )}

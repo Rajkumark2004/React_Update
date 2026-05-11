@@ -151,7 +151,7 @@ const Header = ({
                             id="header_search_form"
                             className="header-search-modern"
                             onSubmit={onSearch}
-                            style={{ margin: '8px 0 0 20px', width: '100%', maxWidth: '380px' }}
+                            style={{ margin: '8px 0 0 20px', width: '100%', maxWidth: '550px' }}
                         >
                             <div style={{
                                 position: 'relative',

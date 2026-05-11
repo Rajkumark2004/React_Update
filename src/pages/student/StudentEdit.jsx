@@ -1,32 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Header from '../../components/Header';
-import Sidebar from '../../components/Sidebar';
-import Footer from '../../components/Footer';
-import SiblingModal from '../../components/SiblingModal';
-import Loader from '../../components/Loader';
+import toast from 'react-hot-toast';
 import { api } from '../../services/api';
-import { toast } from 'react-hot-toast';
+import Loader from '../../components/Loader';
+import SISLayout from './SISLayout';
+import SiblingModal from '../../components/SiblingModal';
 import '../../utils/include_files';
-
-const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://newlayout.wisibles.com/uploads/student_images/no_image.png';
-    return `https://newlayout.wisibles.com/${imagePath}`;
-};
+import './StudentSearch.css';
 
 const StudentEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [isSiblingModalOpen, setIsSiblingModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [classes, setClasses] = useState([]);
+    const [sections, setSections] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [houses, setHouses] = useState([]);
+    const [bloodGroups, setBloodGroups] = useState([]);
+    const [hostelList, setHostelList] = useState([]);
+    const [hostelRooms, setHostelRooms] = useState([]);
+    const [vehRoutes, setVehRoutes] = useState([]);
+    const [pickupPoints, setPickupPoints] = useState([]);
+    const [transportFeesList, setTransportFeesList] = useState([]);
+    const [feeGroups, setFeeGroups] = useState([]);
+    const [schSetting, setSchSetting] = useState(null);
     const [showMoreDetails, setShowMoreDetails] = useState(false);
-    const [initialLoading, setInitialLoading] = useState(true);
+    const [autofillCurrent, setAutofillCurrent] = useState(false);
+    const [autofillPermanent, setAutofillPermanent] = useState(false);
+    const [isSiblingModalOpen, setIsSiblingModalOpen] = useState(false);
+    const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
+
     const [formData, setFormData] = useState({
         admission_no: '',
         roll_no: '',
         class_id: '',
         section_id: '',
         firstname: '',
-        middlename: '',
         lastname: '',
         gender: '',
         dob: '',
@@ -36,15 +46,13 @@ const StudentEdit = () => {
         mobileno: '',
         email: '',
         admission_date: '',
-        image: null,
+        student_photo: null,
         blood_group: '',
-        house: '',
+        school_house_id: '',
         height: '',
         weight: '',
         measurement_date: '',
-        class_of_admission: '',
-
-        // Parent Details
+        as_on_date: '',
         father_name: '',
         father_phone: '',
         father_occupation: '',
@@ -53,1238 +61,751 @@ const StudentEdit = () => {
         mother_phone: '',
         mother_occupation: '',
         mother_pic: null,
-
-        // Guardian Details
         guardian_is: 'father',
         guardian_name: '',
         guardian_relation: '',
         guardian_phone: '',
         guardian_occupation: '',
         guardian_email: '',
-        guardian_address: '',
         guardian_pic: null,
-
-        // Address
+        guardian_address: '',
         current_address: '',
         permanent_address: '',
-        city: '', // Added based on recent request
-        state: '', // Added based on recent request
-        pincode: '', // Added based on recent request
-
-        // Miscellaneous
         bank_account_no: '',
         bank_name: '',
         ifsc_code: '',
-        national_identification_no: '', // Check mapping: adhar_no?
-        local_identification_no: '', // Check mapping: samagra_id?
+        national_identification_no: '',
+        local_identification_no: '',
         rte: 'No',
         previous_school: '',
         note: '',
-
-        // Transport & Hostel
-        route_list: '',
-        pickup_point: '',
+        vehroute_id: '',
+        route_pickup_point_id: '',
+        hostel_id: '',
+        hostel_room_id: '',
         fees_month: [],
-        hostel: '',
-        room_no: '',
-
-        // Child ID
+        fee_session_group_id: [],
         child_id: '',
-
-        // Sibling Details
-        sibling_id: '',
-        sibling_name: '',
-
-        // Student Identifiers
-        student_id: '',
-        student_session_id: '',
-
-        // Upload Documents
-        first_title: '', first_doc: null,
-        second_title: '', second_doc: null,
-        third_title: '', third_doc: null,
-        fourth_title: '', fourth_doc: null
+        city: '',
+        state: '',
+        pincode: ''
     });
 
-    const [autofillCurrent, setAutofillCurrent] = useState(false);
-    const [autofillPermanent, setAutofillPermanent] = useState(false);
-    const [classes, setClasses] = useState([]);
-    const [sections, setSections] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [houseList, setHouseList] = useState([]);
-    const [bloodgroupList, setBloodgroupList] = useState([]);
-    const [hostelList, setHostelList] = useState([]);
-    const [vehicleRouteList, setVehicleRouteList] = useState({});
+    const [initialPhotoUrls, setInitialPhotoUrls] = useState({
+        student_photo: '',
+        father_pic: '',
+        mother_pic: '',
+        guardian_pic: ''
+    });
+
     const [siblings, setSiblings] = useState([]);
+    const [errors, setErrors] = useState({});
 
-    // Transport & Hostel Lists
-    const [hostels, setHostels] = useState([]);
-    const [hostelRooms, setHostelRooms] = useState([]);
-    const [vehRoutes, setVehRoutes] = useState({});
-    const [pickupPoints, setPickupPoints] = useState([]);
-    const [transportFeesList, setTransportFeesList] = useState([]);
-    const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
-
-    const [loading, setLoading] = useState(false);
-    const [initialPhotoUrls, setInitialPhotoUrls] = useState({});
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-
-    // Fetch classes and sections on component mount
     useEffect(() => {
-        const fetchStudentData = async () => {
-            if (!id) return;
+        const fetchData = async () => {
             try {
-                const studentRes = await api.getStudentEditDetails(id);
-                if (studentRes && (studentRes.status === true || studentRes.status === 'success') && studentRes.student_data) {
-                    const data = studentRes.student_data.student;
+                const [studentRes, preDataRes] = await Promise.all([
+                    api.getStudentEditDetails(id),
+                    api.getStudentCreatePreData()
+                ]);
 
-                    if (Array.isArray(studentRes.student_data.classlist)) {
-                        setClasses(studentRes.student_data.classlist);
-                    }
-                    if (Array.isArray(studentRes.student_data.categorylist)) {
-                        setCategories(studentRes.student_data.categorylist);
-                    }
-                    const hList = studentRes.student_data.houseList || [];
-                    if (Array.isArray(hList)) {
-                        setHouseList(hList);
-                    }
-                    if (studentRes.student_data.bloodgroupList) {
-                        const bgList = studentRes.student_data.bloodgroupList;
-                        setBloodgroupList(Array.isArray(bgList) ? bgList : Object.values(bgList));
-                    }
-                    if (studentRes.student_data.hostelList) {
-                        setHostelList(studentRes.student_data.hostelList);
-                    }
-                    if (studentRes.student_data.vehroutelist) {
-                        setVehicleRouteList(studentRes.student_data.vehroutelist);
+                if (preDataRes && preDataRes.status === 'success' && preDataRes.data) {
+                    const d = preDataRes.data;
+                    setClasses(d.classlist || []);
+                    setCategories(d.categorylist || []);
+                    setHouses(d.houseList || d.houselist || []);
+                    setBloodGroups(d.bloodgroupList ? (Array.isArray(d.bloodgroupList) ? d.bloodgroupList : Object.values(d.bloodgroupList)) : []);
+                    setHostelList(d.hostellist ? (Array.isArray(d.hostellist) ? d.hostellist : Object.values(d.hostellist)) : []);
+                    setVehRoutes(d.vehroutelist ? (Array.isArray(d.vehroutelist) ? d.vehroutelist : Object.values(d.vehroutelist)) : []);
+                    setTransportFeesList(d.transport_fees || []);
+                    setFeeGroups(d.feesessiongroup_model ? (Array.isArray(d.feesessiongroup_model) ? d.feesessiongroup_model : Object.values(d.feesessiongroup_model)) : []);
+                    setSchSetting(d.sch_setting || null);
+                }
+
+                if (studentRes && studentRes.student_data) {
+                    const s = studentRes.student_data.student;
+                    const sibs = studentRes.student_data.siblings || [];
+                    setSiblings(sibs);
+
+                    // Fetch sections for current class
+                    if (s.class_id) {
+                        const secRes = await api.getSectionsByClass(s.class_id);
+                        setSections(secRes.data || secRes || []);
                     }
 
-                    if (data && data.class_id) {
-                        try {
-                            const response = await api.getSectionsByClass(data.class_id);
-                            if (response && response.data) setSections(response.data);
-                            else if (response && Array.isArray(response)) setSections(response);
-                        } catch (err) {
-                            console.error('Error fetching sections:', err);
-                        }
+                    // Fetch pickup points for current route
+                    if (s.vehroute_id) {
+                        const ppRes = await api.getPickupPointsByRoute(s.vehroute_id);
+                        setPickupPoints(ppRes.data || ppRes || []);
+                    }
+
+                    // Fetch hostel rooms for current hostel
+                    if (s.hostel_id) {
+                        const roomRes = await api.getHostelRooms(s.hostel_id);
+                        setHostelRooms(roomRes.data || roomRes || []);
                     }
 
                     setFormData(prev => ({
                         ...prev,
-                        ...data,
-                        // Ensure null values are handled and map specific fields
-                        admission_date: data.admission_date || '',
-                        dob: data.dob || '',
-                        measurement_date: data.measurement_date || '',
-                        religion: data.religion || '',
-                        cast: data.cast || '',
-                        mobileno: data.mobileno || '',
-                        email: data.email || '',
-                        current_address: data.current_address || '',
-                        permanent_address: data.permanent_address || '',
-                        city: data.city || '',
-                        state: data.state || '',
-                        pincode: data.pincode || '',
-
-                        bank_account_no: data.bank_account_no || '',
-                        bank_name: data.bank_name || '',
-                        ifsc_code: data.ifsc_code || '',
-                        national_identification_no: data.adhar_no || '', // Map adhar_no to national_identification_no
-                        local_identification_no: data.samagra_id || '', // Map samagra_id to local_identification_no
-                        rte: data.rte || 'No',
-                        previous_school: data.previous_school || '',
-                        note: data.note || '',
-
-                        father_name: data.father_name || '',
-                        father_phone: data.father_phone || '',
-                        father_occupation: data.father_occupation || '',
-                        mother_name: data.mother_name || '',
-                        mother_phone: data.mother_phone || '',
-                        mother_occupation: data.mother_occupation || '',
-
-                        guardian_is: data.guardian_is ? data.guardian_is.toLowerCase() : 'father',
-                        guardian_name: data.guardian_name || '',
-                        guardian_relation: data.guardian_relation || '',
-                        guardian_phone: data.guardian_phone || '',
-                        guardian_occupation: data.guardian_occupation || '',
-                        guardian_email: data.guardian_email || '',
-                        guardian_address: data.guardian_address || '',
-
-                        height: data.height || '',
-                        weight: data.weight || '',
-                        house: data.house_id ? String(data.house_id) :
-                            (data.school_house_id ? String(data.school_house_id) :
-                                (data.student_house_id ? String(data.student_house_id) :
-                                    (data.house && !isNaN(data.house) ? String(data.house) :
-                                        (data.house && hList.length > 0 ? (hList.find(h => h.house_name === data.house)?.id || '') : '')))),
-                        blood_group: data.blood_group || '',
-                        class_id: data.class_id ? String(data.class_id) : '',
-                        section_id: data.section_id ? String(data.section_id) : '',
-                        category_id: data.category_id ? String(data.category_id) : '',
-
-                        child_id: data.child_id || '',
-                        class_of_admission: data.class_of_admission || '',
-
-                        // Transport
-                        vehroute_id: data.vehroute_id || '',
-                        route_id: data.route_id || '',
-                        vehicle_id: data.vehicle_id || '',
-                        route_pickup_point_id: data.route_pickup_point_id || '',
-                        transport_fees: data.transport_fees || '',
-
-                        // Hostel
-                        hostel_id: data.hostel_id || '',
-                        hostel_room_id: data.hostel_room_id || '',
-
-                        sibling_id: data.sibling_id || '',
-                        sibling_name: data.sibling_name || '',
-
-                        student_id: data.id || id,
-                        student_session_id: data.student_session_id || '',
+                        ...s,
+                        national_identification_no: s.adhar_no || s.national_identification_no || '',
+                        local_identification_no: s.samagra_id || s.local_identification_no || '',
+                        fees_month: s.fees_month ? (Array.isArray(s.fees_month) ? s.fees_month : String(s.fees_month).split(',')) : [],
+                        fee_session_group_id: s.fee_session_group_id ? (Array.isArray(s.fee_session_group_id) ? s.fee_session_group_id : String(s.fee_session_group_id).split(',')) : []
                     }));
 
-                    // Infer autofill states based on existing address data
-                    if (data.current_address && data.guardian_address && data.current_address === data.guardian_address) {
-                        setAutofillCurrent(true);
-                    }
-                    if (data.permanent_address && data.current_address && data.permanent_address === data.current_address) {
-                        setAutofillPermanent(true);
-                    }
-
-                    // Store initial photo URLs for Dropify
                     setInitialPhotoUrls({
-                        image: getImageUrl(data.image),
-                        father_pic: getImageUrl(data.father_pic),
-                        mother_pic: getImageUrl(data.mother_pic),
-                        guardian_pic: getImageUrl(data.guardian_pic),
-                        first_doc: data.first_doc ? getImageUrl(`uploads/student_documents/${data.id}/${data.first_doc}`) : '',
-                        second_doc: data.second_doc ? getImageUrl(`uploads/student_documents/${data.id}/${data.second_doc}`) : '',
-                        third_doc: data.third_doc ? getImageUrl(`uploads/student_documents/${data.id}/${data.third_doc}`) : '',
-                        fourth_doc: data.fourth_doc ? getImageUrl(`uploads/student_documents/${data.id}/${data.fourth_doc}`) : '',
+                        student_photo: s.image ? `${api.baseHost}/${s.image}` : '',
+                        father_pic: s.father_pic ? `${api.baseHost}/${s.father_pic}` : '',
+                        mother_pic: s.mother_pic ? `${api.baseHost}/${s.mother_pic}` : '',
+                        guardian_pic: s.guardian_pic ? `${api.baseHost}/${s.guardian_pic}` : ''
                     });
-
-                    // Use siblings from studentRes if available
-                    if (studentRes.student_data.siblings) {
-                        setSiblings(studentRes.student_data.siblings);
-                    }
-
-                    // Populate Transport & Hostel Lists from studentRes if available
-                    if (studentRes.student_data.vehroutelist) {
-                        setVehRoutes(studentRes.student_data.vehroutelist);
-                    }
-                    if (Array.isArray(studentRes.student_data.hostelList)) {
-                        setHostels(studentRes.student_data.hostelList);
-                    }
-
-                    // Initial fetch for rooms if hostel_id is already set
-                    const initialHostelId = data.hostel_id || data.hostel;
-                    if (initialHostelId) {
-                        try {
-                            const roomRes = await api.getHostelRooms(initialHostelId);
-                            if (roomRes && roomRes.data) setHostelRooms(roomRes.data);
-                        } catch (err) { console.error('Error fetching initial rooms:', err); }
-                    }
-                }
-
-                // If transport/hostel lists weren't in studentRes, fetch from pre-data
-                try {
-                    const preRes = await api.getStudentCreatePreData();
-                    if (preRes && preRes.status === 'success' && preRes.data) {
-                        const d = preRes.data;
-                        if (d.vehroutelist) setVehRoutes(d.vehroutelist);
-                        if (Array.isArray(d.hostelList)) setHostels(d.hostelList);
-                        if (Array.isArray(d.transport_fees)) setTransportFeesList(d.transport_fees);
-                        if (d.bloodgroupList && bloodgroupList.length === 0) {
-                            const bg = Array.isArray(d.bloodgroupList) ? d.bloodgroupList : Object.values(d.bloodgroupList);
-                            setBloodgroupList(bg);
-                        }
-                        if (Array.isArray(d.houseList) && houseList.length === 0) setHouseList(d.houseList);
-                    }
-                } catch (preErr) { console.warn("Failed to fetch pre-data:", preErr); }
-
-                // If siblings weren't in main response or we want to ensure latest
-                if (studentRes.student_data && !studentRes.student_data.siblings) {
-                    const siblingRes = await api.getSiblingDetails(id);
-                    if (siblingRes && siblingRes.status) {
-                        let siblingData = [];
-                        if (Array.isArray(siblingRes.data)) {
-                            siblingData = siblingRes.data;
-                        } else if (siblingRes.data && typeof siblingRes.data === 'object' && siblingRes.data.id) {
-                            siblingData = [siblingRes.data];
-                        } else if (siblingRes.data && (siblingRes.data.siblings || siblingRes.data.sibling)) {
-                            const nested = siblingRes.data.siblings || siblingRes.data.sibling;
-                            siblingData = Array.isArray(nested) ? nested : [nested];
-                        } else if (siblingRes.siblings || siblingRes.sibling) {
-                            const direct = siblingRes.siblings || siblingRes.sibling;
-                            siblingData = Array.isArray(direct) ? direct : [direct];
-                        }
-                        setSiblings(siblingData);
-                    }
                 }
             } catch (err) {
-                console.error("Error fetching student details:", err);
-                setErrorMessage('Failed to load student details');
+                toast.error('Failed to load student details');
+                console.error(err);
             } finally {
-                setInitialLoading(false);
+                setLoading(false);
+                // Initialize Dropify after data is loaded and DOM is updated
+                setTimeout(() => {
+                    if (window.$ && window.$.fn.dropify) {
+                        window.$('.dropify').dropify();
+                    }
+                }, 100);
             }
         };
 
-        fetchStudentData();
+        fetchData();
     }, [id]);
 
     const handleInputChange = async (e) => {
-        const { name, value, type, files } = e.target;
-        if (type === 'file') {
+        const { name, value, files } = e.target;
+
+        if (files) {
             setFormData(prev => ({ ...prev, [name]: files[0] }));
-        } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
+            return;
+        }
 
-            // Trigger section fetch if class changes
-            if (name === 'class_id') {
-                setSections([]); // Clear sections
-                setFormData(prev => ({ ...prev, section_id: '' })); // Reset section selection
+        setFormData(prev => ({ ...prev, [name]: value }));
 
-                if (value) {
-                    try {
-                        const response = await api.getSectionsByClass(value);
-                        if (response && response.data) {
-                            setSections(response.data);
-                        } else if (response && Array.isArray(response)) {
-                            setSections(response);
-                        }
-                    } catch (error) {
-                        console.error('Error fetching sections by class:', error);
-                    }
+        if (name === 'class_id') {
+            setFormData(prev => ({ ...prev, section_id: '' }));
+            if (value) {
+                try {
+                    const res = await api.getSectionsByClass(value);
+                    setSections(res.data || res || []);
+                } catch (error) {
+                    setSections([]);
                 }
+            } else {
+                setSections([]);
             }
+        }
 
-            // Trigger hostel room fetch if hostel changes
-            if (name === 'vehroute_id' || name === 'route_list') {
-                // Future: fetch pickup points when route is selected
+        if (name === 'vehroute_id') {
+            setFormData(prev => ({ ...prev, route_pickup_point_id: '' }));
+            if (value) {
+                try {
+                    const res = await api.getPickupPointsByRoute(value);
+                    setPickupPoints(res.data || res || []);
+                } catch (error) {
+                    setPickupPoints([]);
+                }
+            } else {
+                setPickupPoints([]);
             }
+        }
 
-            if (name === 'hostel_id' || name === 'hostel') {
+        if (name === 'hostel_id') {
+            setFormData(prev => ({ ...prev, hostel_room_id: '' }));
+            if (value) {
+                try {
+                    const res = await api.getHostelRooms(value);
+                    setHostelRooms(res.data || res || []);
+                } catch (error) {
+                    setHostelRooms([]);
+                }
+            } else {
                 setHostelRooms([]);
-                setFormData(prev => ({ ...prev, hostel_room_id: '', room_no: '' }));
-                if (value) {
-                    try {
-                        const response = await api.getHostelRooms(value);
-                        if (response && response.data) setHostelRooms(response.data);
-                    } catch (error) {
-                        console.error('Error fetching hostel rooms:', error);
-                    }
-                }
             }
         }
     };
 
     const handleGuardianChange = (e) => {
-        const val = e.target.value;
+        const { value } = e.target;
         setFormData(prev => {
-            let newData = { ...prev, guardian_is: val };
-            if (val === 'father') {
-                newData.guardian_name = prev.father_name;
-                newData.guardian_phone = prev.father_phone;
-                newData.guardian_occupation = prev.father_occupation;
-                newData.guardian_relation = 'Father';
-            } else if (val === 'mother') {
-                newData.guardian_name = prev.mother_name;
-                newData.guardian_phone = prev.mother_phone;
-                newData.guardian_occupation = prev.mother_occupation;
-                newData.guardian_relation = 'Mother';
+            let updates = { guardian_is: value };
+            if (value === 'father') {
+                updates.guardian_name = prev.father_name;
+                updates.guardian_phone = prev.father_phone;
+                updates.guardian_occupation = prev.father_occupation;
+                updates.guardian_relation = 'Father';
+            } else if (value === 'mother') {
+                updates.guardian_name = prev.mother_name;
+                updates.guardian_phone = prev.mother_phone;
+                updates.guardian_occupation = prev.mother_occupation;
+                updates.guardian_relation = 'Mother';
             } else {
-                // Keep existing or clear? Let's clear for other to imply manual entry
-                newData.guardian_name = '';
-                newData.guardian_phone = '';
-                newData.guardian_occupation = '';
-                newData.guardian_relation = '';
+                updates.guardian_name = '';
+                updates.guardian_phone = '';
+                updates.guardian_occupation = '';
+                updates.guardian_relation = '';
             }
-            return newData;
+            return { ...prev, ...updates };
         });
     };
 
     const handleAutofillGuardianAddress = (e) => {
-        const checked = e.target.checked;
-        setAutofillCurrent(checked);
-        if (checked) {
+        setAutofillCurrent(e.target.checked);
+        if (e.target.checked) {
             setFormData(prev => ({ ...prev, current_address: prev.guardian_address }));
         }
     };
 
     const handleAutofillPermanentAddress = (e) => {
-        const checked = e.target.checked;
-        setAutofillPermanent(checked);
-        if (checked) {
+        setAutofillPermanent(e.target.checked);
+        if (e.target.checked) {
             setFormData(prev => ({ ...prev, permanent_address: prev.current_address }));
         }
     };
 
-    // Update addresses if autofill is checked and source changes
-    useEffect(() => {
-        if (autofillCurrent) {
-            setFormData(prev => ({ ...prev, current_address: prev.guardian_address }));
-        }
-    }, [formData.guardian_address, autofillCurrent]);
+    const handleAddSibling = (sibling) => {
+        setSiblings(prev => {
+            if (prev.find(s => s.id === sibling.id)) return prev;
+            return [...prev, sibling];
+        });
+        setFormData(prev => ({ ...prev, child_id: sibling.id }));
+    };
 
-    useEffect(() => {
-        if (autofillPermanent) {
-            setFormData(prev => ({ ...prev, permanent_address: prev.current_address }));
-        }
-    }, [formData.current_address, autofillPermanent]);
-
-    // Initialize Dropify
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            try {
-                const $ = window.jQuery;
-                if ($ && $.fn && typeof $.fn.dropify === 'function') {
-                    $('.dropify').dropify();
-                }
-            } catch (error) {
-                console.error('Dropify initialization error:', error);
-            }
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [showMoreDetails, initialLoading]); // Re-run when details shown or loading finishes
+    const handleRemoveSibling = (siblingId) => {
+        setSiblings(prev => prev.filter(s => s.id !== siblingId));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setSuccessMessage('');
-        setErrorMessage('');
+        setSaving(true);
+        setErrors({});
 
         try {
-            const dataToSend = new FormData();
-
-            // Convert YYYY-MM-DD → DD/MM/YYYY for date fields the API expects
-            const dateFields = ['dob', 'admission_date', 'measurement_date'];
-            // Append all fields
-            const skipFields = ['adhar_no', 'samagra_id', 'username', 'password', 'user_id'];
+            const data = new FormData();
             Object.keys(formData).forEach(key => {
-                if (skipFields.includes(key)) return;
-                const value = formData[key];
-
-                // Only append if value is not empty (null, undefined, empty string, or empty array)
-                const isEmpty = (val) => {
-                    if (val === null || val === undefined) return true;
-                    if (typeof val === 'string' && val.trim() === '') return true;
-                    if (Array.isArray(val) && val.length === 0) return true;
-                    return false;
-                };
-
-                if (!isEmpty(value)) {
-                    if (value instanceof File) {
-                        dataToSend.append(key, value);
-                    } else if (Array.isArray(value)) {
-                        value.forEach(val => dataToSend.append(`${key}[]`, val));
+                if (formData[key] !== null && formData[key] !== undefined) {
+                    if (key === 'fees_month') {
+                        data.append('fees_month[]', formData[key]);
+                    } else if (key === 'fee_session_group_id') {
+                        formData[key].forEach(val => data.append('fee_session_group_id[]', val));
+                    } else if (['dob', 'admission_date', 'measurement_date'].includes(key) && formData[key]) {
+                        // Ensure date is in DD/MM/YYYY for API if it's in YYYY-MM-DD
+                        const dateVal = formData[key];
+                        if (dateVal.includes('-')) {
+                            const [y, m, d] = dateVal.split('-');
+                            data.append(key, `${d}/${m}/${y}`);
+                        } else {
+                            data.append(key, dateVal);
+                        }
+                    } else if (key === 'national_identification_no') {
+                        data.append('adhar_no', formData[key]);
+                    } else if (key === 'local_identification_no') {
+                        data.append('samagra_id', formData[key]);
                     } else {
-                        // Mapping back specific fields
-                        if (key === 'national_identification_no') {
-                            dataToSend.append('adhar_no', value);
-                            return;
-                        }
-                        if (key === 'local_identification_no') {
-                            dataToSend.append('samagra_id', value);
-                            return;
-                        }
-                        if (key === 'measurement_date') {
-                            dataToSend.append('measure_date', value);
-                            return;
-                        }
-                        if (key === 'route_list') {
-                            dataToSend.append('vehroute_id', value);
-                            return;
-                        }
-                        if (key === 'hostel') {
-                            dataToSend.append('hostel_id', value);
-                            return;
-                        }
-                        if (key === 'room_no') {
-                            dataToSend.append('hostel_room_id', value);
-                            return;
-                        }
-                        // Note: house is sent as 'house' by default (key reflects state name)
-                        // to match StudentAdmission.jsx behavior which is known to work.
-
-                        const imageFields = ['image', 'father_pic', 'mother_pic', 'guardian_pic', 'first_doc', 'second_doc', 'third_doc', 'fourth_doc'];
-                        if (imageFields.includes(key) && !(value instanceof File)) {
-                            return;
-                        }
-
-                        dataToSend.append(key, value);
+                        data.append(key, formData[key]);
                     }
                 }
             });
 
-            // Explicitly ensure student_id and student_session_id are present
-            if (formData.student_id) {
-                dataToSend.append('id', formData.student_id);
-            }
-            if (formData.student_session_id) {
-                dataToSend.append('student_session_id', formData.student_session_id);
-            }
+            // Add siblings
+            siblings.forEach((sib, index) => {
+                data.append(`sibling_id[${index}]`, sib.id || sib.student_session_id);
+            });
 
-            const res = await api.updateStudent(id, dataToSend); // Use updateStudent
-
-            if (res.status || res.success) {
-                toast.success('Student updated successfully!');
-                navigate(-1);
+            const response = await api.updateStudent(id, data);
+            if (response.status) {
+                toast.success('Student details updated successfully');
+                navigate(`/student/view/${id}`);
             } else {
-                toast.error(res.message || 'Failed to update student');
-                setErrorMessage(res.message || 'Failed to update student');
-                window.scrollTo(0, 0);
+                toast.error(response.message || 'Failed to update student');
             }
-
-        } catch (error) {
-            console.error('Submission Error:', error);
-            setErrorMessage(error.message || 'Failed to update student');
-            window.scrollTo(0, 0);
+        } catch (err) {
+            if (err.response && err.response.error) {
+                setErrors(err.response.error);
+                toast.error('Please fix the errors in the form');
+            } else {
+                toast.error(err.message || 'An error occurred while updating');
+            }
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
-    // Callback for sibling modal
-    const handleAddSibling = (siblingData) => {
-        if (!siblingData) return;
-
-        // Add to siblings list for display
-        setSiblings(prev => [...prev, siblingData]);
-
-        setFormData(prev => ({
-            ...prev,
-            religion: siblingData.religion || '',
-            cast: siblingData.cast || '',
-            blood_group: siblingData.blood_group || '',
-            category_id: siblingData.category_id || '',
-            father_name: siblingData.father_name || '',
-            father_phone: siblingData.father_phone || siblingData.guardian_phone || '',
-            father_occupation: siblingData.father_occupation || '',
-            mother_name: siblingData.mother_name || '',
-            mother_phone: siblingData.mother_phone || '',
-            mother_occupation: siblingData.mother_occupation || '',
-            guardian_is: siblingData.guardian_is || (siblingData.guardian_relation ? siblingData.guardian_relation.toLowerCase() : 'father'),
-            guardian_name: siblingData.guardian_name || '',
-            guardian_relation: siblingData.guardian_relation || '',
-            guardian_phone: siblingData.guardian_phone || '',
-            guardian_occupation: siblingData.guardian_occupation || '',
-            guardian_email: siblingData.guardian_email || '',
-            guardian_address: siblingData.guardian_address || '',
-            current_address: siblingData.current_address || '',
-            permanent_address: siblingData.permanent_address || '',
-            bank_account_no: siblingData.bank_account_no || '',
-            bank_name: siblingData.bank_name || '',
-            ifsc_code: siblingData.ifsc_code || '',
-            national_identification_no: siblingData.adhar_no || '',
-            local_identification_no: siblingData.samagra_id || '',
-            sibling_id: siblingData.id || '',
-            sibling_name: `${siblingData.firstname} ${siblingData.lastname}`.trim()
-        }));
-        toast.success(`Parent details populated from sibling: ${siblingData.firstname}`);
+    const getImageUrl = (path) => {
+        if (!path) return '/images/no-image.png';
+        if (path.startsWith('http')) return path;
+        return `${api.baseHost}/${path}`;
     };
 
-    const handleRemoveSibling = (siblingId) => {
-        setSiblings(prev => prev.filter(s => String(s.id) !== String(siblingId)));
-        if (String(formData.sibling_id) === String(siblingId)) {
-            setFormData(prev => ({
-                ...prev,
-                sibling_id: '',
-                sibling_name: ''
-            }));
-        }
-        toast.success('Sibling removed from this record');
-    };
+    if (loading) return <Loader />;
 
-    // UI Render - Copied from StudentAdmission but adapted
     return (
-        <div className="wrapper">
-            <Header />
-            <Sidebar />
-            <div className="content-wrapper">
-                <section className="content">
-                    {initialLoading ? (
-                        <Loader />
-                    ) : (
-                        <div className="row">
-                            <div className="col-md-12">
-                                <div className="box box-primary">
-                                    <div className="box-header with-border">
-                                        <h3 className="box-title">Edit Student</h3>
-                                        <div className="box-tools pull-right impbtntitle" style={{ zIndex: 0, position: 'relative' }}>
-                                            <div className="btn-group pull-right mml15">
-                                                <button onClick={() => navigate('/student/search')} className="btn btn-primary btn-sm"><i className="fa fa-arrow-left"></i> Back</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <form id="form1" className="" method="post" acceptCharset="utf-8" encType="multipart/form-data" onSubmit={handleSubmit}>
-                                        <div className="box-body">
-                                            {successMessage && (
-                                                <div className="alert alert-success alert-dismissible">
-                                                    <button type="button" className="close" onClick={() => setSuccessMessage('')}>×</button>
-                                                    <h4><i className="icon fa fa-check"></i> Success!</h4>
-                                                    <p>{successMessage}</p>
-                                                </div>
-                                            )}
-
-                                            {errorMessage && (
-                                                <div className="alert alert-danger alert-dismissible">
-                                                    <button type="button" className="close" onClick={() => setErrorMessage('')}>×</button>
-                                                    <h4><i className="icon fa fa-ban"></i> Error!</h4>
-                                                    {errorMessage}
-                                                </div>
-                                            )}
-
-                                            {/* Core Profile */}
-                                            <div className="row">
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Admission No <small className="req"> *</small></label>
-                                                        <input autoFocus="" name="admission_no" type="text" className="form-control" value={formData.admission_no} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Roll Number</label>
-                                                        <input name="roll_no" type="text" className="form-control" value={formData.roll_no} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Class <small className="req"> *</small></label>
-                                                        <select name="class_id" className="form-control" value={formData.class_id} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            {classes.map(cls => <option key={cls.id} value={String(cls.id)}>{cls.class}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Section <small className="req"> *</small></label>
-                                                        <select name="section_id" className="form-control" value={formData.section_id} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            {sections.map(sec => <option key={sec.section_id || sec.id} value={String(sec.section_id || sec.id)}>{sec.section}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>First Name <small className="req"> *</small></label>
-                                                        <input name="firstname" type="text" className="form-control" value={formData.firstname} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Last Name</label>
-                                                        <input name="lastname" type="text" className="form-control" value={formData.lastname} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Gender <small className="req"> *</small></label>
-                                                        <select className="form-control" name="gender" value={formData.gender} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            <option value="Male">Male</option>
-                                                            <option value="Female">Female</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Date Of Birth <small className="req"> *</small></label>
-                                                        <input name="dob" type="date" className="form-control" value={formData.dob} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Category</label>
-                                                        {/* Mock categories for now, usually fetched */}
-                                                        <select name="category_id" className="form-control" value={formData.category_id} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            {categories.map((cat) => (
-                                                                <option key={cat.id} value={String(cat.id)}>{cat.category}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Religion</label>
-                                                        <input name="religion" type="text" className="form-control" value={formData.religion} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Caste</label>
-                                                        <input name="cast" type="text" className="form-control" value={formData.cast} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mobile Number</label>
-                                                        <input name="mobileno" type="text" className="form-control" value={formData.mobileno} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Email</label>
-                                                        <input name="email" type="text" className="form-control" value={formData.email} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Admission Date</label>
-                                                        <input name="admission_date" type="date" className="form-control" value={formData.admission_date} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Class Of Admission</label>
-                                                        <input name="class_of_admission" type="text" className="form-control" value={formData.class_of_admission} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Student Photo</label>
-                                                        <input className="dropify" type='file' name='image' data-default-file={initialPhotoUrls.image} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Blood Group</label>
-                                                        <select className="form-control" name="blood_group" value={formData.blood_group} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            {bloodgroupList.map((bg, idx) => (
-                                                                <option key={idx} value={bg}>
-                                                                    {bg}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>House</label>
-                                                        <select className="form-control" name="house" value={formData.house} onChange={handleInputChange}>
-                                                            <option value="">Select</option>
-                                                            {houseList.map((house) => (
-                                                                <option key={house.id} value={String(house.id)}>
-                                                                    {house.house_name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Height</label>
-                                                        <input name="height" type="text" className="form-control" value={formData.height} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Weight</label>
-                                                        <input name="weight" type="text" className="form-control" value={formData.weight} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Measurement Date</label>
-                                                        <input name="measurement_date" type="date" className="form-control" value={formData.measurement_date} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-
-                                                <div className="row">
-                                                    <div className="col-md-3">
-                                                        <div className="form-group">
-                                                            <label>Child ID <small className="req"> *</small></label>
-                                                            <input name="child_id" type="text" className="form-control" value={formData.child_id} onChange={handleInputChange} />
-                                                        </div>
-                                                    </div>
-                                                    {/* Sibling button removed or kept depending on requirements, kept for now */}
-                                                    <div className="col-md-3 pt25">
-                                                        <button type="button" className="btn btn-sm mysiblings anchorbtn" onClick={() => setIsSiblingModalOpen(true)}>
-                                                            <i className="fa fa-plus"></i> Add Sibling
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                {siblings && siblings.length > 0 && (
-                                                    <div className="row">
-                                                        <div className="col-md-12">
-                                                            <h4 className="pagetitleh2" style={{ marginTop: '0' }}>Existing Siblings</h4>
-                                                            <div className="row">
-                                                                {siblings.map((sibling) => (
-                                                                    <div className="col-md-4" key={sibling.id || sibling.student_session_id}>
-                                                                        <div className="box box-widget widget-user-2" style={{ border: '1px solid #eee', marginBottom: '15px', borderRadius: '4px' }}>
-                                                                            <div className="widget-user-header bg-gray-light" style={{ padding: '10px', display: 'flex', alignItems: 'center' }}>
-                                                                                <div className="widget-user-image" style={{ marginRight: '15px', flexShrink: 0 }}>
-                                                                                    <img
-                                                                                        className="img-circle"
-                                                                                        src={getImageUrl(sibling.image)}
-                                                                                        alt="Sibling"
-                                                                                        style={{ width: '60px', height: '60px', objectFit: 'cover', border: '2px solid #fff' }}
-                                                                                    />
-                                                                                </div>
-                                                                                <div className="widget-user-details" style={{ flexGrow: 1, overflow: 'hidden' }}>
-                                                                                    <div className="pull-right">
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            className="btn btn-default btn-xs text-red"
-                                                                                            title="Remove"
-                                                                                            onClick={() => handleRemoveSibling(sibling.id)}
-                                                                                            style={{ border: "none", background: "transparent" }}
-                                                                                        >
-                                                                                            <i className="fa fa-trash-o" style={{ fontSize: "16px" }}></i>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                    <h5 style={{ margin: '0', fontSize: '12px', color: '#888', fontWeight: '600' }}>
-                                                                                        {sibling.class} ({sibling.section})
-                                                                                    </h5>
-                                                                                    <h4 style={{ margin: '2px 0 0 0', fontSize: '15px', fontWeight: 'bold', color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                                                        {sibling.firstname} {sibling.lastname}
-                                                                                    </h4>
-                                                                                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#555' }}>
-                                                                                        Adm No: <strong>{sibling.admission_no}</strong>
-                                                                                    </p>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Parent Guardian Detail */}
-                                            <h4 className="pagetitleh2">Parent Guardian Details</h4>
-                                            <div className="row">
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Father Name</label>
-                                                        <input name="father_name" type="text" className="form-control" value={formData.father_name} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Father Phone</label>
-                                                        <input name="father_phone" type="text" className="form-control" value={formData.father_phone} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Father Occupation</label>
-                                                        <input name="father_occupation" type="text" className="form-control" value={formData.father_occupation} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Father Photo</label>
-                                                        <input className="dropify" type='file' name='father_pic' data-default-file={initialPhotoUrls.father_pic} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="row">
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mother Name</label>
-                                                        <input name="mother_name" type="text" className="form-control" value={formData.mother_name} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mother Phone</label>
-                                                        <input name="mother_phone" type="text" className="form-control" value={formData.mother_phone} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mother Occupation</label>
-                                                        <input name="mother_occupation" type="text" className="form-control" value={formData.mother_occupation} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Mother Photo</label>
-                                                        <input className="dropify" type='file' name='mother_pic' data-default-file={initialPhotoUrls.mother_pic} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="form-group col-md-12">
-                                                    <label>If Guardian Is <small className="req"> *</small>&nbsp;&nbsp;&nbsp;</label>
-                                                    <label className="radio-inline">
-                                                        <input type="radio" name="guardian_is" value="father" checked={formData.guardian_is === 'father'} onChange={handleGuardianChange} /> Father
-                                                    </label>
-                                                    <label className="radio-inline">
-                                                        <input type="radio" name="guardian_is" value="mother" checked={formData.guardian_is === 'mother'} onChange={handleGuardianChange} /> Mother
-                                                    </label>
-                                                    <label className="radio-inline">
-                                                        <input type="radio" name="guardian_is" value="other" checked={formData.guardian_is === 'other'} onChange={handleGuardianChange} /> Other
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-6">
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Guardian Name <small className="req"> *</small></label>
-                                                                <input name="guardian_name" type="text" className="form-control" value={formData.guardian_name} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Guardian Relation</label>
-                                                                <input name="guardian_relation" type="text" className="form-control" value={formData.guardian_relation} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Guardian Phone <small className="req"> *</small></label>
-                                                                <input name="guardian_phone" type="text" className="form-control" value={formData.guardian_phone} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Guardian Occupation</label>
-                                                                <input name="guardian_occupation" type="text" className="form-control" value={formData.guardian_occupation} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Guardian Email</label>
-                                                        <input name="guardian_email" type="text" className="form-control" value={formData.guardian_email} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Guardian Photo</label>
-                                                        <input className="dropify" type='file' name='guardian_pic' data-default-file={initialPhotoUrls.guardian_pic} onChange={handleInputChange} />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <div className="form-group">
-                                                        <label>Guardian Address</label>
-                                                        <textarea name="guardian_address" className="form-control" rows="2" value={formData.guardian_address} onChange={handleInputChange}></textarea>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {/* Add More Details Toggle */}
-                                            <div className="box-group">
-                                                <div className="panel box border0 mb0">
-                                                    <div className="addmoredetail-title">
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-link boxplus"
-                                                            onClick={() => setShowMoreDetails(!showMoreDetails)}
-                                                            style={{ textDecoration: 'none', color: '#444', fontWeight: 'bold' }}
-                                                        >
-                                                            <i className={`fa fa-fw ${showMoreDetails ? 'fa-minus' : 'fa-plus'}`}></i>
-                                                            {showMoreDetails ? ' Hide More Details' : ' Add More Details'}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {showMoreDetails && (
-                                                <div className="show-more-details-section">
-                                                    <h4 className="pagetitleh2">Student Address Details</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="checkbox">
-                                                                <label>
-                                                                    <input type="checkbox" checked={autofillCurrent} onChange={handleAutofillGuardianAddress} /> If Guardian Address is Current Address
-                                                                </label>
-                                                            </div>
-                                                            <div className="form-group">
-                                                                <label>Current Address</label>
-                                                                <textarea name="current_address" rows="2" className="form-control" value={formData.current_address} onChange={handleInputChange}></textarea>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="checkbox">
-                                                                <label>
-                                                                    <input type="checkbox" checked={autofillPermanent} onChange={handleAutofillPermanentAddress} /> If Permanent Address is Current Address
-                                                                </label>
-                                                            </div>
-                                                            <div className="form-group">
-                                                                <label>Permanent Address</label>
-                                                                <textarea name="permanent_address" rows="2" className="form-control" value={formData.permanent_address} onChange={handleInputChange}></textarea>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Misc */}
-                                                    <h4 className="pagetitleh2">Miscellaneous Details</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Bank Account Number</label>
-                                                                <input name="bank_account_no" type="text" className="form-control" value={formData.bank_account_no} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Bank Name</label>
-                                                                <input name="bank_name" type="text" className="form-control" value={formData.bank_name} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>IFSC Code</label>
-                                                                <input name="ifsc_code"
-                                                                    type="text"
-                                                                    className="form-control"
-                                                                    value={formData.ifsc_code}
-                                                                    onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>National Identification No</label>
-                                                                <input name="national_identification_no" type="text" className="form-control" value={formData.national_identification_no} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Local Identification No</label>
-                                                                <input name="local_identification_no" type="text" className="form-control" value={formData.local_identification_no} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>RTE</label>
-                                                                <select className="form-control" name="rte" value={formData.rte} onChange={handleInputChange}>
-                                                                    <option value="Yes">Yes</option>
-                                                                    <option value="No">No</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Previous School Details</label>
-                                                                <textarea name="previous_school" rows="2" className="form-control" value={formData.previous_school} onChange={handleInputChange}></textarea>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Note</label>
-                                                                <textarea name="note" rows="2" className="form-control" value={formData.note} onChange={handleInputChange}></textarea>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Transport & Hostel Details */}
-                                                    <div className="tshadow mb25 bozero">
-                                                    <h4 className="pagetitleh2">Transport Details</h4>
-                                                    <div className="row around10">
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Route List</label>
-                                                                <select className="form-control" name="route_list" value={formData.vehroute_id || formData.route_list} onChange={(e) => {
-                                                                    handleInputChange(e);
-                                                                    setFormData(prev => ({ ...prev, vehroute_id: e.target.value }));
-                                                                    setPickupPoints([]);
-                                                                }}>
-                                                                    <option value="">Select</option>
-                                                                    {Object.values(vehRoutes).map(route => (
-                                                                        <optgroup key={route.id} label={route.route_title}>
-                                                                            {route.vehicles && route.vehicles.map(vehicle => (
-                                                                                <option key={vehicle.vec_route_id} value={vehicle.vec_route_id}>
-                                                                                    {vehicle.vehicle_no} ({vehicle.vehicle_model})
-                                                                                </option>
-                                                                            ))}
-                                                                        </optgroup>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Pickup Point</label>
-                                                                <select className="form-control" name="route_pickup_point_id" value={formData.route_pickup_point_id || formData.pickup_point} onChange={handleInputChange}>
-                                                                    <option value="">Select</option>
-                                                                    <option value="Point A">Point A</option>
-                                                                    <option value="Point B">Point B</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Fees Month</label>
-                                                                <div className={`dropdown ${isMonthDropdownOpen ? 'open' : ''}`} style={{ position: 'relative' }}>
-                                                                    <div
-                                                                        className="form-control"
-                                                                        onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
-                                                                        style={{ cursor: 'pointer', height: 'auto', minHeight: '34px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
-                                                                    >
-                                                                        {formData.fees_month.length > 0
-                                                                            ? formData.fees_month.join(', ')
-                                                                            : 'Select Months'}
-                                                                        <span className="caret pull-right" style={{ marginTop: '7px' }}></span>
-                                                                    </div>
-                                                                    {isMonthDropdownOpen && (
-                                                                        <div className="dropdown-menu" style={{ display: 'block', width: '100%', maxHeight: '200px', overflowY: 'auto', padding: '10px' }}>
-                                                                            {transportFeesList.map(tf => (
-                                                                                <div key={tf.id} className="checkbox" style={{ margin: '5px 0' }}>
-                                                                                    <label style={{ width: '100%', cursor: 'pointer' }}>
-                                                                                        <input
-                                                                                            type="checkbox"
-                                                                                            value={tf.month}
-                                                                                            checked={formData.fees_month.includes(tf.month)}
-                                                                                            onChange={(e) => {
-                                                                                                const { checked, value } = e.target;
-                                                                                                setFormData(prev => {
-                                                                                                    const nextMonths = checked
-                                                                                                        ? [...prev.fees_month, value]
-                                                                                                        : prev.fees_month.filter(m => m !== value);
-                                                                                                    return { ...prev, fees_month: nextMonths };
-                                                                                                });
-                                                                                            }}
-                                                                                        />
-                                                                                        {tf.month}
-                                                                                    </label>
-                                                                                </div>
-                                                                            ))}
-                                                                            {transportFeesList.length === 0 && <div style={{ padding: '5px' }}>No months available</div>}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                {isMonthDropdownOpen && <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex: 9 }} onClick={() => setIsMonthDropdownOpen(false)} />}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    </div>
-
-                                                    <h4 className="pagetitleh2">Hostel Details</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Hostel</label>
-                                                                <select className="form-control" name="hostel_id" value={formData.hostel_id || formData.hostel} onChange={handleInputChange}>
-                                                                    <option value="">Select</option>
-                                                                    {hostelList.map(hostel => (
-                                                                        <option key={hostel.id} value={hostel.id}>
-                                                                            {hostel.hostel_name}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            <div className="form-group">
-                                                                <label>Room No</label>
-                                                                <select className="form-control" name="hostel_room_id" value={formData.hostel_room_id || formData.room_no} onChange={handleInputChange}>
-                                                                    <option value="">Select</option>
-                                                                    {hostelRooms.map(room => (
-                                                                        <option key={room.id} value={room.id}>
-                                                                            {room.room_no} ({room.room_type})
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Upload Documents Details */}
-                                                    {/* <h4 className="pagetitleh2">Upload Documents</h4>
-                                                    <div className="row">
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Title</label>
-                                                                <input type="text" className="form-control" name="first_title" value={formData.first_title} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Documents</label>
-                                                                <input className="dropify" type="file" name="first_doc" onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Title</label>
-                                                                <input type="text" className="form-control" name="second_title" value={formData.second_title} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Documents</label>
-                                                                <input className="dropify" type="file" name="second_doc" onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="row">
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Title</label>
-                                                                <input type="text" className="form-control" name="third_title" value={formData.third_title} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Documents</label>
-                                                                <input className="dropify" type="file" name="third_doc" onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Title</label>
-                                                                <input type="text" className="form-control" name="fourth_title" value={formData.fourth_title} onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Documents</label>
-                                                                <input className="dropify" type="file" name="fourth_doc" onChange={handleInputChange} />
-                                                            </div>
-                                                        </div>
-                                                    </div> */}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="box-footer">
-                                            <button type="submit" className="btn btn-info pull-right">{loading ? 'Saving...' : 'Save'}</button>
-                                        </div>
-                                    </form>
+        <SISLayout activeTab="details">
+            <div className="sis-content-container">
+                <form onSubmit={handleSubmit} className="sis-main-form">
+                    <div className="sis-form-card">
+                        {/* 1. Academic Details Section */}
+                        <div className="sis-form-section">
+                            <div className="sis-section-header">
+                                <i className="fa fa-university"></i>
+                                <h4>Academic Details</h4>
+                            </div>
+                            <div className="sis-form-grid">
+                                <div className={`sis-field-group ${errors.admission_no ? 'sis-field-error' : ''}`}>
+                                    <label>Admission No <small className="req"> *</small></label>
+                                    <input name="admission_no" type="text" value={formData.admission_no} onChange={handleInputChange} />
+                                    {errors.admission_no && <span className="error-msg">{errors.admission_no}</span>}
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Roll Number</label>
+                                    <input name="roll_no" type="text" value={formData.roll_no} onChange={handleInputChange} />
+                                </div>
+                                <div className={`sis-field-group ${errors.class_id ? 'sis-field-error' : ''}`}>
+                                    <label>Class <small className="req"> *</small></label>
+                                    <select name="class_id" value={formData.class_id} onChange={handleInputChange}>
+                                        <option value="">Select</option>
+                                        {classes.map(cls => <option key={cls.id} value={cls.id}>{cls.class}</option>)}
+                                    </select>
+                                    {errors.class_id && <span className="error-msg">{errors.class_id}</span>}
+                                </div>
+                                <div className={`sis-field-group ${errors.section_id ? 'sis-field-error' : ''}`}>
+                                    <label>Section <small className="req"> *</small></label>
+                                    <select name="section_id" value={formData.section_id} onChange={handleInputChange}>
+                                        <option value="">Select</option>
+                                        {sections.map(sec => <option key={sec.section_id || sec.id} value={sec.section_id || sec.id}>{sec.section}</option>)}
+                                    </select>
+                                    {errors.section_id && <span className="error-msg">{errors.section_id}</span>}
                                 </div>
                             </div>
                         </div>
-                    )
-                    }
-                </section >
-            </div >
-            <Footer />
-            {isSiblingModalOpen && <SiblingModal isOpen={isSiblingModalOpen} onClose={() => setIsSiblingModalOpen(false)} onAddSibling={handleAddSibling} />}
-        </div >
+
+                        {/* 2. Personal Details Section */}
+                        <div className="sis-form-section">
+                            <div className="sis-section-header">
+                                <i className="fa fa-user"></i>
+                                <h4>Personal Details</h4>
+                            </div>
+                            <div className="sis-form-grid">
+                                <div className={`sis-field-group ${errors.firstname ? 'sis-field-error' : ''}`}>
+                                    <label>First Name <small className="req"> *</small></label>
+                                    <input name="firstname" type="text" value={formData.firstname} onChange={handleInputChange} />
+                                    {errors.firstname && <span className="error-msg">{errors.firstname}</span>}
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Last Name</label>
+                                    <input name="lastname" type="text" value={formData.lastname} onChange={handleInputChange} />
+                                </div>
+                                <div className={`sis-field-group ${errors.gender ? 'sis-field-error' : ''}`}>
+                                    <label>Gender <small className="req"> *</small></label>
+                                    <select name="gender" value={formData.gender} onChange={handleInputChange}>
+                                        <option value="">Select</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                    {errors.gender && <span className="error-msg">{errors.gender}</span>}
+                                </div>
+                                <div className={`sis-field-group ${errors.dob ? 'sis-field-error' : ''}`}>
+                                    <label>Date Of Birth <small className="req"> *</small></label>
+                                    <input name="dob" type="date" value={formData.dob} onChange={handleInputChange} />
+                                    {errors.dob && <span className="error-msg">{errors.dob}</span>}
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Category</label>
+                                    <select name="category_id" value={formData.category_id} onChange={handleInputChange}>
+                                        <option value="">Select</option>
+                                        {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.category}</option>)}
+                                    </select>
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Religion</label>
+                                    <input name="religion" type="text" value={formData.religion} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Caste</label>
+                                    <input name="cast" type="text" value={formData.cast} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Mobile Number</label>
+                                    <input name="mobileno" type="text" value={formData.mobileno} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Email</label>
+                                    <input name="email" type="email" value={formData.email} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Admission Date</label>
+                                    <input name="admission_date" type="date" value={formData.admission_date} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Blood Group</label>
+                                    <select name="blood_group" value={formData.blood_group} onChange={handleInputChange}>
+                                        <option value="">Select</option>
+                                        {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                                    </select>
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>House</label>
+                                    <select name="school_house_id" value={formData.school_house_id} onChange={handleInputChange}>
+                                        <option value="">Select</option>
+                                        {houses.map(house => <option key={house.id} value={house.id}>{house.house_name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Height</label>
+                                    <input name="height" type="text" value={formData.height} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Weight</label>
+                                    <input name="weight" type="text" value={formData.weight} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Measurement Date</label>
+                                    <input name="measurement_date" type="date" value={formData.measurement_date} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Child ID <small className="req"> *</small></label>
+                                    <input name="child_id" type="text" value={formData.child_id} onChange={handleInputChange} />
+                                </div>
+                            </div>
+
+                            {/* Student Photo and Sibling Toggle - Matching StudentAdmission */}
+                            <div className="row" style={{ marginTop: '32px' }}>
+                                <div className="col-md-3">
+                                    <div className="sis-field-group">
+                                        <label>Student Photo</label>
+                                        <input
+                                            type="file"
+                                            name="student_photo"
+                                            className="dropify sis-dropify-compact"
+                                            data-default-file={initialPhotoUrls.student_photo}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="col-md-8 d-flex align-items-end">
+                                    <button
+                                        type="button"
+                                        className="btn btn-default"
+                                        onClick={() => setIsSiblingModalOpen(true)}
+                                        style={{ transform: 'translate(40px, 15px)', marginBottom: '10px' }}
+                                    >
+                                        <i className="fa fa-plus"></i> Add Sibling
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Sibling List Section */}
+                        {siblings.length > 0 && (
+                            <div className="sis-form-section">
+                                <div className="sis-section-header">
+                                    <i className="fa fa-users"></i>
+                                    <h4>Siblings</h4>
+                                </div>
+                                <div className="sis-sibling-grid">
+                                    {siblings.map(sib => (
+                                        <div key={sib.id || sib.student_session_id} className="sis-sibling-card">
+                                            <img src={getImageUrl(sib.image)} alt="Sibling" />
+                                            <div className="sis-sibling-info">
+                                                <span className="sib-name">{sib.firstname} {sib.lastname}</span>
+                                                <span className="sib-class">{sib.class} ({sib.section})</span>
+                                                <span className="sib-adm">Adm No: {sib.admission_no}</span>
+                                            </div>
+                                            <button type="button" className="sib-remove-btn" onClick={() => handleRemoveSibling(sib.id)}>
+                                                <i className="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+
+                        {/* 3. Parent/Guardian Details Section */}
+                        <div className="sis-form-section">
+                            <div className="sis-section-header">
+                                <i className="fa fa-users"></i>
+                                <h4>Parent/Guardian Details</h4>
+                            </div>
+                            <div className="sis-form-grid">
+                                <div className="sis-field-group">
+                                    <label>Father Name</label>
+                                    <input name="father_name" type="text" value={formData.father_name} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Father Phone</label>
+                                    <input name="father_phone" type="text" value={formData.father_phone} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Father Occupation</label>
+                                    <input name="father_occupation" type="text" value={formData.father_occupation} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Father Photo</label>
+                                    <input
+                                        type="file"
+                                        name="father_pic"
+                                        className="dropify sis-dropify-compact"
+                                        data-default-file={initialPhotoUrls.father_pic}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Mother Name</label>
+                                    <input name="mother_name" type="text" value={formData.mother_name} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Mother Phone</label>
+                                    <input name="mother_phone" type="text" value={formData.mother_phone} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Mother Occupation</label>
+                                    <input name="mother_occupation" type="text" value={formData.mother_occupation} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Mother Photo</label>
+                                    <input
+                                        type="file"
+                                        name="mother_pic"
+                                        className="dropify sis-dropify-compact"
+                                        data-default-file={initialPhotoUrls.mother_pic}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sis-guardian-is-section mt-4 d-flex align-items-center">
+                                <label className="sis-label-primary mb-0" style={{ marginRight: '30px' }}>If Guardian Is <small className="req"> *</small></label>
+                                <div className="sis-radio-group-row mb-0" style={{ display: 'flex', alignItems: 'center', gap: '15px', paddingTop: '20px' }}>
+                                    <label className="sis-radio-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input type="radio" name="guardian_is" value="father" checked={formData.guardian_is === 'father'} onChange={handleGuardianChange} style={{ margin: 0 }} />
+                                        <span style={{ fontSize: '14px', color: '#1e293b' }}>Father</span>
+                                    </label>
+                                    <label className="sis-radio-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input type="radio" name="guardian_is" value="mother" checked={formData.guardian_is === 'mother'} onChange={handleGuardianChange} style={{ margin: 0 }} />
+                                        <span style={{ fontSize: '14px', color: '#1e293b' }}>Mother</span>
+                                    </label>
+                                    <label className="sis-radio-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                        <input type="radio" name="guardian_is" value="other" checked={formData.guardian_is === 'other'} onChange={handleGuardianChange} style={{ margin: 0 }} />
+                                        <span style={{ fontSize: '14px', color: '#1e293b' }}>Other</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="sis-form-grid mt-3">
+                                <div className={`sis-field-group ${errors.guardian_name ? 'sis-field-error' : ''}`}>
+                                    <label>Guardian Name <small className="req"> *</small></label>
+                                    <input name="guardian_name" type="text" value={formData.guardian_name} onChange={handleInputChange} />
+                                    {errors.guardian_name && <span className="error-msg">{errors.guardian_name}</span>}
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Guardian Relation</label>
+                                    <input name="guardian_relation" type="text" value={formData.guardian_relation} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Guardian Email</label>
+                                    <input name="guardian_email" type="email" value={formData.guardian_email} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Guardian Photo</label>
+                                    <input
+                                        type="file"
+                                        name="guardian_pic"
+                                        className="dropify sis-dropify-compact"
+                                        data-default-file={initialPhotoUrls.guardian_pic}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className={`sis-field-group ${errors.guardian_phone ? 'sis-field-error' : ''}`}>
+                                    <label>Guardian Phone <small className="req"> *</small></label>
+                                    <input name="guardian_phone" type="text" value={formData.guardian_phone} onChange={handleInputChange} />
+                                    {errors.guardian_phone && <span className="error-msg">{errors.guardian_phone}</span>}
+                                </div>
+                                <div className="sis-field-group">
+                                    <label>Guardian Occupation</label>
+                                    <input name="guardian_occupation" type="text" value={formData.guardian_occupation} onChange={handleInputChange} />
+                                </div>
+                                <div className="sis-field-group" style={{ gridColumn: 'span 2' }}>
+                                    <label>Guardian Address</label>
+                                    <textarea name="guardian_address" rows="2" value={formData.guardian_address} onChange={handleInputChange}></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* More Details Toggle */}
+                        <div className="sis-details-toggle-container">
+                            <button
+                                type="button"
+                                className="sis-btn-details-toggle"
+                                onClick={() => setShowMoreDetails(!showMoreDetails)}
+                            >
+                                <i className={`fa fa-${showMoreDetails ? 'chevron-up' : 'chevron-down'}`}></i>
+                                {showMoreDetails ? 'Show Less Details' : 'Add More Details'}
+                            </button>
+                        </div>
+
+                        {showMoreDetails && (
+                            <div className="sis-collapsible-sections">
+                                {/* Address Details */}
+                                <div className="sis-form-section">
+                                    <div className="sis-section-header">
+                                        <i className="fa fa-map-marker"></i>
+                                        <h4>Address Details</h4>
+                                    </div>
+                                    <div className="sis-form-grid">
+                                        <div className="sis-field-group" style={{ gridColumn: 'span 2' }}>
+                                            <div className="d-flex justify-content-between">
+                                                <label>Current Address</label>
+                                                <label className="sis-checkbox-mini">
+                                                    <input type="checkbox" checked={autofillCurrent} onChange={handleAutofillGuardianAddress} />
+                                                    <span>Same as Guardian</span>
+                                                </label>
+                                            </div>
+                                            <textarea name="current_address" rows="3" value={formData.current_address} onChange={handleInputChange}></textarea>
+                                        </div>
+                                        <div className="sis-field-group" style={{ gridColumn: 'span 2' }}>
+                                            <div className="d-flex justify-content-between">
+                                                <label>Permanent Address</label>
+                                                <label className="sis-checkbox-mini">
+                                                    <input type="checkbox" checked={autofillPermanent} onChange={handleAutofillPermanentAddress} />
+                                                    <span>Same as Current</span>
+                                                </label>
+                                            </div>
+                                            <textarea name="permanent_address" rows="3" value={formData.permanent_address} onChange={handleInputChange}></textarea>
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>City</label>
+                                            <input name="city" type="text" value={formData.city} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>State</label>
+                                            <input name="state" type="text" value={formData.state} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>Pincode</label>
+                                            <input name="pincode" type="text" value={formData.pincode} onChange={handleInputChange} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Transport & Hostel Details */}
+                                <div className="sis-form-section">
+                                    <div className="sis-section-header">
+                                        <i className="fa fa-bus"></i>
+                                        <h4>Transport & Hostel</h4>
+                                    </div>
+                                    <div className="sis-form-grid">
+                                        <div className="sis-field-group">
+                                            <label>Route</label>
+                                            <select name="vehroute_id" value={formData.vehroute_id} onChange={handleInputChange}>
+                                                <option value="">Select</option>
+                                                {vehRoutes.map(route => (
+                                                    <optgroup key={route.id} label={route.route_title}>
+                                                        {route.vehicles && route.vehicles.map(vehicle => (
+                                                            <option key={vehicle.vec_route_id} value={vehicle.vec_route_id}>
+                                                                {vehicle.vehicle_no} ({vehicle.vehicle_model})
+                                                            </option>
+                                                        ))}
+                                                    </optgroup>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>Pickup Point</label>
+                                            <select name="route_pickup_point_id" value={formData.route_pickup_point_id} onChange={handleInputChange}>
+                                                <option value="">Select</option>
+                                                {pickupPoints.map(pp => <option key={pp.id} value={pp.id}>{pp.name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>Hostel</label>
+                                            <select name="hostel_id" value={formData.hostel_id} onChange={handleInputChange}>
+                                                <option value="">Select</option>
+                                                {hostelList.map(h => <option key={h.id} value={h.id}>{h.hostel_name}</option>)}
+                                            </select>
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>Room No</label>
+                                            <select name="hostel_room_id" value={formData.hostel_room_id} onChange={handleInputChange}>
+                                                <option value="">Select</option>
+                                                {hostelRooms.map(r => <option key={r.id} value={r.id}>{r.room_no} ({r.room_type})</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Miscellaneous Details */}
+                                <div className="sis-form-section">
+                                    <div className="sis-section-header">
+                                        <i className="fa fa-list-alt"></i>
+                                        <h4>Miscellaneous</h4>
+                                    </div>
+                                    <div className="sis-form-grid">
+                                        <div className="sis-field-group">
+                                            <label>Bank Account Number</label>
+                                            <input name="bank_account_no" type="text" value={formData.bank_account_no} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>Bank Name</label>
+                                            <input name="bank_name" type="text" value={formData.bank_name} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>IFSC Code</label>
+                                            <input name="ifsc_code" type="text" value={formData.ifsc_code} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>Aadhar Number</label>
+                                            <input name="national_identification_no" type="text" value={formData.national_identification_no} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>Samagra ID</label>
+                                            <input name="local_identification_no" type="text" value={formData.local_identification_no} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="sis-field-group">
+                                            <label>RTE</label>
+                                            <select name="rte" value={formData.rte} onChange={handleInputChange}>
+                                                <option value="No">No</option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                        </div>
+                                        <div className="sis-field-group" style={{ gridColumn: 'span 2' }}>
+                                            <label>Previous School Details</label>
+                                            <textarea name="previous_school" rows="2" value={formData.previous_school} onChange={handleInputChange}></textarea>
+                                        </div>
+                                        <div className="sis-field-group" style={{ gridColumn: 'span 2' }}>
+                                            <label>Note</label>
+                                            <textarea name="note" rows="2" value={formData.note} onChange={handleInputChange}></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="sis-form-footer">
+                            <button type="button" className="btn btn-default" onClick={() => navigate(-1)}>Cancel</button>
+                            <button type="submit" className="btn-premium-save" disabled={saving}>
+                                {saving ? <><i className="fa fa-spinner fa-spin"></i> Updating...</> : <><i className="fa fa-check"></i> Update Student</>}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {isSiblingModalOpen && (
+                <SiblingModal
+                    isOpen={isSiblingModalOpen}
+                    onClose={() => setIsSiblingModalOpen(false)}
+                    onAddSibling={handleAddSibling}
+                />
+            )}
+        </SISLayout>
     );
 };
 
 export default StudentEdit;
-
