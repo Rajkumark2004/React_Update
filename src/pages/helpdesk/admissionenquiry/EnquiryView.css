@@ -334,3 +334,106 @@
     visibility: visible;
     /* Placeholder for DataTables export exclusion */
 }
+
+/* Premium Search & Filter Bar */
+.sis-search-bar-container {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.sis-search-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 16px 0;
+}
+
+.sis-search-main-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 4px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sis-search-main-input-wrapper:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.sis-search-icon {
+    color: #94a3b8;
+    padding: 0 16px;
+}
+
+.sis-search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 0;
+    font-size: 14px;
+    color: #334155;
+    outline: none;
+}
+
+.sis-search-input::placeholder {
+    color: #94a3b8;
+}
+
+.sis-filter-toggle-btn {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-weight: 500;
+    color: #475569;
+    margin-right: 4px;
+}
+
+.sis-filter-toggle-btn:hover {
+    background: #f1f5f9;
+}
+
+/* Advanced Filters */
+.sis-advanced-filters {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.sis-filter-row {
+    display: flex;
+    gap: 16px;
+}
+
+.sis-filter-col {
+    flex: 1;
+}
+
+.sis-filter-select {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #475569;
+    background-color: white;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.sis-filter-select:focus {
+    border-color: #3b82f6;
+}
+
+.sis-apply-btn {
+    border-radius: 6px;
+    padding: 8px 24px;
+}
