@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { PermissionProvider } from './context/PermissionContext';
 import DashboardTest from './pages/dashboard/dashboard_test';
 import { SISCountProvider } from './context/SISCountContext';
+import { HelpdeskCountProvider } from './context/HelpdeskCountContext';
 
 import LoginPage from './pages/auth/LoginPage';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -78,6 +79,8 @@ import SourceView from './pages/helpdesk/setupfrontoffice/SourceView';
 import ReferenceView from './pages/helpdesk/setupfrontoffice/ReferenceView';
 import SourceEdit from './pages/helpdesk/setupfrontoffice/SourceEdit';
 import ReferenceEdit from './pages/helpdesk/setupfrontoffice/ReferenceEdit';
+import VisitorView from './pages/helpdesk/visitor/VisitorView';
+import ComplainView from './pages/helpdesk/complain/ComplainView';
 import FeeType from './pages/fee/feetype/FeeType';
 import FeeTypeEdit from './pages/fee/feetype/FeeTypeEdit';
 import FeeGroup from './pages/fee/feegroup/FeeGroup';
@@ -241,6 +244,7 @@ function App() {
             }}
           />
           <SISCountProvider>
+          <HelpdeskCountProvider>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<LoginPage />} />
@@ -739,6 +743,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            {/* Visitor & Complain Routes */}
+            <Route path="/admin/visitors" element={<ProtectedRoute><VisitorView /></ProtectedRoute>} />
+            <Route path="/admin/complain" element={<ProtectedRoute><ComplainView /></ProtectedRoute>} />
             {/* Fee Module Routes */}
             <Route path="/studentfee" element={<ProtectedRoute><StudentFeeSearch /></ProtectedRoute>} />
             <Route path="/studentfee/addfee/:id" element={<ProtectedRoute><StudentAddFee /></ProtectedRoute>} />
@@ -871,6 +878,7 @@ function App() {
             <Route path="/admin/reports/subject_lesson_plan" element={<ProtectedRoute><SubjectLessonPlanReport /></ProtectedRoute>} />
             <Route path="/admin/reports/user_log" element={<ProtectedRoute><UserLog /></ProtectedRoute>} />
           </Routes>
+          </HelpdeskCountProvider>
           </SISCountProvider>
         </BrowserRouter>
       </SessionProvider>

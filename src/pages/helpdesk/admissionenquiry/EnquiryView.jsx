@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
 import Loader from '../../../components/Loader';
 import AddEnquiryModal from './AddEnquiryModal';
 import EditEnquiryModal from './EditEnquiryModal';
@@ -11,13 +8,39 @@ import FollowUpModal from './FollowUpModal';
 import { api } from '../../../services/api';
 import { filterEnquiries } from './enquiryFilterLogic';
 import { buildExportData } from '../../../utils/tableExport';
-import Pagination from '../../../utils/Pagination';
-import TableToolbar from '../../../utils/TableToolbar';
-import '../../../utils/include_files';
 import { useTableSort } from '../../../hooks/useTableSort';
+import HelpdeskLayout from '../HelpdeskLayout';
+import { useHelpdeskCounts } from '../../../context/HelpdeskCountContext';
+import PremiumTableToolbar from '../../../utils/PremiumTableToolbar';
 import './EnquiryView.css';
 
+// Move pure utility functions outside component to avoid re-creation and hoisting issues
+const formatDate = (dateStr) => {
+    if (!dateStr || dateStr === '0000-00-00' || dateStr === '1970-01-01') return '';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-GB');
+    } catch { return dateStr; }
+};
+
+const getAvatarColor = (name) => {
+    const colors = [
+        { bg: '#e0f2fe', text: '#0284c7' },
+        { bg: '#f3e8ff', text: '#9333ea' },
+        { bg: '#dcfce7', text: '#16a34a' },
+        { bg: '#fef3c7', text: '#d97706' },
+        { bg: '#ffe4e6', text: '#e11d48' },
+    ];
+    let hash = 0;
+    const nameStr = name || '??';
+    for (let i = 0; i < nameStr.length; i++) {
+        hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+};
+
 const EnquiryView = () => {
+    const { updateCount } = useHelpdeskCounts();
     // Filter form state
     const [filterForm, setFilterForm] = useState({
         class_id: '',
@@ -28,7 +51,7 @@ const EnquiryView = () => {
     });
 
     // Data states
-    const [masterEnquiryList, setMasterEnquiryList] = useState([]); // Store all data
+    const [masterEnquiryList, setMasterEnquiryList] = useState([]);
     const [enquiryList, setEnquiryList] = useState([]);
     const [classList, setClassList] = useState([]);
     const [sourceList, setSourceList] = useState([]);
@@ -43,8 +66,6 @@ const EnquiryView = () => {
     });
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
-    const [flashMessage, setFlashMessage] = useState('');
-    const [error, setError] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
 
     // Modal states
@@ -53,14 +74,14 @@ const EnquiryView = () => {
     const [showFollowUpModal, setShowFollowUpModal] = useState(false);
     const [selectedEnquiry, setSelectedEnquiry] = useState(null);
 
-    // Pagination and responsive state
+    // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
-    const [searchTerm, setSearchTerm] = useState(''); // Global search term
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Column definitions
     const columns = [
-        { key: 'name', label: 'Name', sortKey: 'name' },
+        { key: 'name', label: 'Name', sortKey: 'name', width: '200px' },
         { key: 'contact', label: 'Phone' },
         { key: 'source', label: 'Source' },
         { key: 'classname', label: 'Class', sortKey: 'classname' },
@@ -90,85 +111,38 @@ const EnquiryView = () => {
         return row[key];
     };
 
-    const getExportData = () => buildExportData(columns, visibleColumns, finalFilteredEnquiries, formatCell);
-
-    // Use sorting hook
-    const { sortedData: sortedEnquiries, requestSort: handleSort, getSortIcon } = useTableSort(enquiryList);
-
-    // Fetch enquiry list from API
     const fetchEnquiryList = async (filters = null) => {
         try {
-            setError('');
             setLoading(true);
-
-            // Use POST search if filters are provided, otherwise GET initial list
             const response = filters
                 ? await api.searchEnquiryList(filters)
                 : await api.getEnquiryList();
 
-            console.log('DEBUG: Enquiry API Response:', response);
-
-            // Handle different response formats and ensure array
-            // The API response can be directly the object or wrapped in .data
             const enquiryData = (response && response.data) ? response.data : response;
-
-            console.log('DEBUG: Parsed Enquiry Data Object:', enquiryData);
 
             let enquiries = [];
             if (enquiryData && Array.isArray(enquiryData.enquiry_list)) {
                 enquiries = enquiryData.enquiry_list;
-
-                // Set class list
-                if (Array.isArray(enquiryData.class_list)) {
-                    console.log('DEBUG: Setting classList:', enquiryData.class_list);
-                    setClassList(enquiryData.class_list);
-                }
-
-                // Set source list (handles both sourcelist and source_list)
+                if (Array.isArray(enquiryData.class_list)) setClassList(enquiryData.class_list);
                 const sources = enquiryData.sourcelist || enquiryData.source_list;
-                if (Array.isArray(sources)) {
-                    console.log('DEBUG: Setting sourceList:', sources);
-                    setSourceList(sources);
-                }
-
-                // Set staff list
-                if (Array.isArray(enquiryData.staff_list)) {
-                    console.log('DEBUG: Setting staffList:', enquiryData.staff_list);
-                    setStaffList(enquiryData.staff_list);
-                }
-
-                // Set reference list
-                if (Array.isArray(enquiryData.reference)) {
-                    console.log('DEBUG: Setting referenceList:', enquiryData.reference);
-                    setReferenceList(enquiryData.reference);
-                }
-
-                // Set enquiry status mapping
-                if (enquiryData.enquiry_status) {
-                    console.log('DEBUG: Setting enquiryStatus:', enquiryData.enquiry_status);
-                    setEnquiryStatus(enquiryData.enquiry_status);
-                }
+                if (Array.isArray(sources)) setSourceList(sources);
+                if (Array.isArray(enquiryData.staff_list)) setStaffList(enquiryData.staff_list);
+                if (Array.isArray(enquiryData.reference)) setReferenceList(enquiryData.reference);
+                if (enquiryData.enquiry_status) setEnquiryStatus(enquiryData.enquiry_status);
             } else if (Array.isArray(enquiryData)) {
                 enquiries = enquiryData;
             }
 
-            console.log('DEBUG: Final enquiries extracted:', enquiries.length);
-
-            // Client-side fallback because the server is currently ignoring the class_id filter
-            // We apply the local filtering logic to ensure the UI matches the requested criteria
             if (filters) {
-                console.log('DEBUG: Applying client-side filters:', filters);
                 enquiries = filterEnquiries(enquiries, filters);
-                console.log('DEBUG: Enquiries after client-side filtering:', enquiries.length);
             }
 
             setMasterEnquiryList(enquiries);
             setEnquiryList(enquiries);
+            updateCount('totalEnquiries', enquiries.length);
         } catch (err) {
             console.error('Error fetching enquiry list:', err);
-            setError(err.message || 'Failed to load enquiry list');
-            setMasterEnquiryList([]);
-            setEnquiryList([]); // Ensure it's an empty array on error
+            setEnquiryList([]);
         } finally {
             setInitialLoading(false);
             setLoading(false);
@@ -176,55 +150,35 @@ const EnquiryView = () => {
     };
 
     useEffect(() => {
-        fetchEnquiryList(); // Hits GET /admin/enquiry
+        fetchEnquiryList();
     }, []);
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
-        setFilterForm(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setFilterForm(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSearch = (e) => {
         e.preventDefault();
-
-        if (loading || initialLoading) return; //search button weas flashing blue color on initial loading so added this
-
-
         const errors = {};
-        if (!filterForm.from_date) {
-            errors.from_date = 'The Enquiry From Date field is required.';
-        }
-        if (!filterForm.to_date) {
-            errors.to_date = 'The Enquiry To Date field is required.';
-        }
+        if (!filterForm.from_date) errors.from_date = 'Required';
+        if (!filterForm.to_date) errors.to_date = 'Required';
 
-        // Validation: Date logic check
         if (filterForm.from_date && filterForm.to_date) {
-            const start = new Date(filterForm.from_date);
-            const end = new Date(filterForm.to_date);
-
-            if (end < start) {
-                errors.to_date = 'Enquiry To Date cannot be before Enquiry From Date';
+            if (new Date(filterForm.to_date) < new Date(filterForm.from_date)) {
+                errors.to_date = 'Invalid range';
             }
         }
 
         setValidationErrors(errors);
-
-        if (Object.keys(errors).length > 0) {
-            return;
-        }
+        if (Object.keys(errors).length > 0) return;
 
         const searchFilters = {
             ...filterForm,
             status: filterForm.status === 'all' ? '' : filterForm.status
         };
-
-        console.log('Search with API:', searchFilters);
         fetchEnquiryList(searchFilters);
-        setCurrentPage(1); // Reset to first page
+        setCurrentPage(1);
     };
 
     const handleFollowUp = (enquiry) => {
@@ -238,60 +192,19 @@ const EnquiryView = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this record?')) {
+        if (window.confirm('Are you sure?')) {
             try {
-                // Call API
                 await api.deleteEnquiry(id);
-
-                // Update State
-                const updatedList = masterEnquiryList.filter(e => e.id !== id);
-                setMasterEnquiryList(updatedList);
                 setEnquiryList(prev => prev.filter(e => e.id !== id));
-
-                setFlashMessage('Record Deleted Successfully');
-                setTimeout(() => setFlashMessage(''), 3000);
+                toast.success('Deleted');
             } catch (err) {
-                console.error('Delete Error:', err);
-                // Fallback: If 404/500, still maybe remove or show error
-                // alert('Failed to delete record: ' + err.message);
-                setFlashMessage('Failed to delete record');
-                setTimeout(() => setFlashMessage(''), 3000);
+                toast.error('Failed');
             }
         }
     };
 
-    const formatDate = (dateStr) => {
-        if (!dateStr || dateStr === '0000-00-00') return '';
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        } catch {
-            return dateStr;
-        }
-    };
+    const { sortedData: sortedEnquiries, requestSort: handleSort, getSortIcon } = useTableSort(enquiryList);
 
-    const isOverdue = (enquiry) => {
-        let checkDate = enquiry.next_date;
-        if (!checkDate || checkDate === '0000-00-00') {
-            // PHP logic uses follow_up_date for calculation, but table displays followupdate. Check both for safety.
-            checkDate = enquiry.follow_up_date || enquiry.followupdate;
-        }
-
-        if (!checkDate || checkDate === '0000-00-00') return false;
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const next = new Date(checkDate);
-        return next < today;
-    };
-
-    // Combine API filters + Client-side search + Sorting
-    // Note: sortedEnquiries already contains the sorted result of filtered API data
-    // We now further filter `sortedEnquiries` based on `searchTerm`
     const finalFilteredEnquiries = sortedEnquiries.filter(item => {
         if (!searchTerm) return true;
         const lowerTerm = searchTerm.toLowerCase();
@@ -299,391 +212,251 @@ const EnquiryView = () => {
             item.name?.toLowerCase().includes(lowerTerm) ||
             item.contact?.toLowerCase().includes(lowerTerm) ||
             item.source?.toLowerCase().includes(lowerTerm) ||
-            item.classname?.toLowerCase().includes(lowerTerm) ||
-            item.status?.toLowerCase().includes(lowerTerm)
+            item.classname?.toLowerCase().includes(lowerTerm)
         );
     });
 
-    // Calculate pagination
     const totalItems = finalFilteredEnquiries.length;
     const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
     const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
-    const indexOfLastItem = currentPage * safeRecordsPerPage;
-    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
-    const currentEnquiries = finalFilteredEnquiries.slice(indexOfFirstItem, indexOfLastItem);
+    const currentEnquiries = finalFilteredEnquiries.slice((currentPage - 1) * safeRecordsPerPage, currentPage * safeRecordsPerPage);
 
+    const getExportData = () => buildExportData(columns, visibleColumns, finalFilteredEnquiries, formatCell);
 
+    const renderEnquiryName = (enquiry) => {
+        const color = getAvatarColor(enquiry.name);
+        const initials = enquiry.name ? enquiry.name.substring(0, 2).toUpperCase() : '??';
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    backgroundColor: color.bg, color: color.text,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: '600', fontSize: '13px', flexShrink: 0
+                }}>
+                    {initials}
+                </div>
+                <Link to="#" onClick={() => handleFollowUp(enquiry)} style={{ color: '#1e293b', fontWeight: '500' }}>
+                    {enquiry.name}
+                </Link>
+            </div>
+        );
+    };
 
     return (
-        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Header />
-            <Sidebar />
-            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                {/* Content Header */}
-                <section className="content-header">
-                    <h1>
-                        <i className="fa fa-ioxhost"></i> Help Desk
-                    </h1>
-                </section>
-
-                {/* Main Content */}
-                <section className="content">
-                    <div className="row">
-                        {/* Left Sidebar - Front Office Menu */}
-                        <div className="col-md-2 sidebar-menu-mobile-hide">
-                            <div className="box border0">
-                                <div className="box-header with-border">
-                                    <h3 className="box-title">Help Desk</h3>
-                                </div>
-                                <ul className="tablists">
-                                    <li>
-                                        <Link to="/admin/enquiry">
-                                            <img src="/images/admission_enquiry.png" alt="icon1" className="img-fluid" style={{ width: '20px' }} /> Admission Enquiry
-                                        </Link>
-                                    </li>
-                                    {/*
-                                    <li>
-                                        <Link to="/admin/visitors">
-                                            <img src="/images/visitor_book.png" alt="icon2" className="img-fluid" style={{ width: '20px' }} /> Visitor Book
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/admin/visitor_management">
-                                            <img src="/images/visitor_management.png" alt="icon2" className="img-fluid" style={{ width: '20px' }} /> Visitor Management
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/admin/generalcall">
-                                            <img src="/images/phone_call_log.png" alt="icon3" className="img-fluid" style={{ width: '20px' }} /> Phone Call Log
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/admin/dispatch">
-                                            <img src="/images/postal_dispatch.png" alt="icon4" className="img-fluid" style={{ width: '20px' }} /> Postal Dispatch
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/admin/receive">
-                                            <img src="/images/postal_receive.png" alt="icon5" className="img-fluid" style={{ width: '20px' }} /> Postal Receive
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link to="/admin/complaint">
-                                            <img src="/images/complain.png" alt="icon6" className="img-fluid" style={{ width: '20px' }} /> Complain
-                                        </Link>
-                                    </li>*/}
-                                    <li>
-                                        <Link to="/admin/source">
-                                            <img src="/images/set_up_front_office.png" alt="icon7" className="img-fluid" style={{ width: '20px' }} /> Setup Front Office
-                                        </Link>
-                                    </li>
-
-                                </ul>
-                            </div>
+        <HelpdeskLayout activeTab="enquiry">
+            <div className="row">
+                <div className="col-md-12">
+                    {/* Select Criteria Box */}
+                    <div className="box box-primary theme-shadow" style={{ borderRadius: '12px', borderTop: 'none', marginBottom: '24px' }}>
+                        <div className="box-header with-border" style={{ padding: '15px 20px', borderBottom: '1px solid #f1f5f9' }}>
+                            <h3 className="box-title" style={{ fontWeight: '600', fontSize: '16px' }}>
+                                <i className="fa fa-filter" style={{ marginRight: '8px', color: '#7c3aed' }}></i> Select Criteria
+                            </h3>
                         </div>
-
-                        {/* Main Content Area */}
-                        <div className="col-md-10">
-                            <div className="box box-primary">
-                                <div className="box-header with-border">
-                                    <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
-                                </div>
-
-                                {/* Flash Message */}
-                                {flashMessage && (
-                                    <div className="col-md-12">
-                                        <div className="alert alert-info">{flashMessage}</div>
-                                    </div>
-                                )}
-
-                                {/* Filter Form */}
-                                <form role="form" onSubmit={handleSearch}>
-                                    <div className="box-body row">
-                                        {/* Class */}
-                                        <div className="col-sm-6 col-md-2 col-lg-2">
-                                            <div className="form-group">
-                                                <label>Class</label>
-                                                <select
-                                                    id="class"
-                                                    name="class_id"
-                                                    className="form-control"
-                                                    value={filterForm.class_id}
-                                                    onChange={handleFilterChange}
-                                                >
-                                                    <option value="">Select</option>
-                                                    {classList.map(cls => (
-                                                        <option key={cls.id} value={cls.id}>{cls.class}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {/* Source */}
-                                        <div className="col-sm-6 col-md-2 col-lg-2">
-                                            <div className="form-group">
-                                                <label>Source</label>
-                                                <select
-                                                    id="source"
-                                                    name="source"
-                                                    className="form-control"
-                                                    value={filterForm.source}
-                                                    onChange={handleFilterChange}
-                                                >
-                                                    <option value="">Select</option>
-                                                    {sourceList.map((src, idx) => (
-                                                        <option key={idx} value={src.source}>{src.source}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {/* From Date */}
-                                        <div className="col-sm-3 col-md-2 col-lg-2">
-                                            <div className="form-group">
-                                                <label>Enquiry From Date<small className="req"> *</small></label>
-                                                <input
-                                                    type="date"
-                                                    autoComplete="off"
-                                                    name="from_date"
-                                                    className="form-control"
-                                                    value={filterForm.from_date}
-                                                    onChange={handleFilterChange}
-                                                />
-                                                {validationErrors.from_date && <span className="text-danger">{validationErrors.from_date}</span>}
-                                            </div>
-                                        </div>
-
-                                        {/* To Date */}
-                                        <div className="col-sm-3 col-md-2 col-lg-2">
-                                            <div className="form-group">
-                                                <label>Enquiry To Date<small className="req"> *</small></label>
-                                                <input
-                                                    type="date"
-                                                    autoComplete="off"
-                                                    name="to_date"
-                                                    className="form-control"
-                                                    value={filterForm.to_date}
-                                                    onChange={handleFilterChange}
-                                                />
-                                                {validationErrors.to_date && <span className="text-danger">{validationErrors.to_date}</span>}
-                                            </div>
-                                        </div>
-
-                                        {/* Status */}
-                                        <div className="col-sm-3 col-md-2 col-lg-2">
-                                            <div className="form-group">
-                                                <label>Status</label>
-                                                <select
-                                                    id="status"
-                                                    name="status"
-                                                    className="form-control"
-                                                    value={filterForm.status}
-                                                    onChange={handleFilterChange}
-                                                >
-                                                    <option value="">Select</option>
-                                                    <option value="all">All</option>
-                                                    {Object.entries(enquiryStatus).map(([key, value]) => (
-                                                        <option key={key} value={key}>{value}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {/* Search Button */}
-                                        <div className="col-sm-3 col-md-2 col-lg-2">
-                                            <div className="form-group pl10">
-                                                <label className="displayblock opacity d-sm-none">&nbsp;</label>
-                                                <button
-                                                    type="submit"
-                                                    name="search"
-                                                    className="btn btn-primary smallbtn28 btn-sm pull-right"
-                                                >
-                                                    {loading && !initialLoading ? (
-                                                        <><i className="fa fa-spinner fa-spin"></i> Searching...</>
-                                                    ) : (
-                                                        <><i className="fa fa-search"></i> Search</>
-                                                    )}
-                                                </button>
-                                            </div>
+                        <div className="box-body" style={{ padding: '20px' }}>
+                            <form role="form" onSubmit={handleSearch}>
+                                <div className="row" style={{ display: 'flex', flexWrap: 'wrap', gap: '0' }}>
+                                    {/* 1. Class */}
+                                    <div className="col-md-2 col-sm-6">
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Class</label>
+                                            <select name="class_id" className="form-control input-sm" value={filterForm.class_id} onChange={handleFilterChange} style={{ borderRadius: '6px' }}>
+                                                <option value="">Select Class</option>
+                                                {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
+                                            </select>
                                         </div>
                                     </div>
-                                </form>
-
-                                {/* Enquiry List Section */}
-                                <div className="ptt10">
-                                    <div className="bordertop">
-                                        <div className="box-header with-border">
-                                            <h3 className="box-title titlefix">Admission Enquiry</h3>
-                                            <div className="box-tools pull-right">
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-sm btn-primary"
-                                                    onClick={() => setShowAddModal(true)}
-                                                >
-                                                    <i className="fa fa-plus"></i> Add
-                                                </button>
-                                            </div>
+                                    {/* 2. Source */}
+                                    <div className="col-md-2 col-sm-6">
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Source</label>
+                                            <select name="source" className="form-control input-sm" value={filterForm.source} onChange={handleFilterChange} style={{ borderRadius: '6px' }}>
+                                                <option value="">Select Source</option>
+                                                {sourceList.map(s => <option key={s.id} value={s.source}>{s.source}</option>)}
+                                            </select>
                                         </div>
-                                        <div className="box-body">
-                                            <div className="download_label">Admission Enquiry List</div>
-
-                                            <TableToolbar
-                                                searchTerm={searchTerm}
-                                                onSearchChange={(value) => {
-                                                    setSearchTerm(value);
-                                                    setCurrentPage(1);
-                                                }}
-                                                recordsPerPage={recordsPerPage}
-                                                onRecordsPerPageChange={(value) => {
-                                                    setRecordsPerPage(value);
-                                                    setCurrentPage(1);
-                                                }}
-                                                columns={columns}
-                                                visibleColumns={visibleColumns}
-                                                onToggleColumn={toggleColumn}
-                                                getExportData={getExportData}
-                                                exportFileName="enquiry_list"
-                                                exportTitle="Admission Enquiry List"
-                                            />
-
-                                            <div className="mailbox-messages">
-                                                <div className="table-responsive overflow-visible-lg">
-                                                    <table className="table table-hover table-striped table-bordered" id="enquirytable">
-                                                        <thead>
-                                                            <tr>
-                                                                {columns.map(col => visibleColumns.has(col.key) && (
-                                                                    <th key={col.key}
-                                                                        className={col.sortKey ? 'sorting' : ''}
-                                                                        style={col.sortKey ? { cursor: 'pointer' } : {}}
-                                                                        onClick={col.sortKey ? () => handleSort(col.sortKey) : undefined}
-                                                                    >
-                                                                        {col.label} {col.sortKey && getSortIcon(col.sortKey)}
-                                                                    </th>
-                                                                ))}
-                                                                <th className="text-right noExport">Action</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {initialLoading ? (
-                                                                <tr>
-                                                                    <td colSpan={visibleColumns.size + 1} className="text-center">
-                                                                        <Loader type="table" rows={recordsPerPage === -1 ? 10 : recordsPerPage} />
-                                                                    </td>
-                                                                </tr>
-                                                            ) : finalFilteredEnquiries.length === 0 ? (
-                                                                <tr>
-                                                                    <td colSpan={visibleColumns.size + 1} className="text-center">
-                                                                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-                                                                            <div style={{ color: 'red', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
-                                                                            <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
-                                                                            <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            ) : (
-                                                                currentEnquiries.map((enquiry) => (
-                                                                    <tr key={enquiry.id} className={isOverdue(enquiry) ? 'danger' : ''}>
-                                                                        {columns.map(col => visibleColumns.has(col.key) && (
-                                                                            <td key={col.key} className="mailbox-name">{formatCell(enquiry, col.key)}</td>
-                                                                        ))}
-                                                                        <td className="mailbox-date text-right white-space-nowrap noExport">
-                                                                            <a
-                                                                                className="btn btn-default btn-xs"
-                                                                                onClick={() => handleFollowUp(enquiry)}
-                                                                                title="Follow Up Admission Enquiry"
-                                                                                style={{ cursor: 'pointer' }}
-                                                                            >
-                                                                                <i className="fa fa-phone"></i>
-                                                                            </a>
-                                                                            <a
-                                                                                className="btn btn-default btn-xs"
-                                                                                onClick={() => handleEdit(enquiry)}
-                                                                                title="Edit"
-                                                                                style={{ cursor: 'pointer' }}
-                                                                            >
-                                                                                <i className="fa fa-pencil"></i>
-                                                                            </a>
-                                                                            <a
-                                                                                className="btn btn-default btn-xs"
-                                                                                onClick={() => handleDelete(enquiry.id)}
-                                                                                title="Delete"
-                                                                                style={{ cursor: 'pointer' }}
-                                                                            >
-                                                                                <i className="fa fa-remove"></i>
-                                                                            </a>
-                                                                        </td>
-                                                                    </tr>
-                                                                ))
-                                                            )}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-
-                                            {/* Pagination Footer */}
-                                            <div className="pt15 pb15">
-                                                <Pagination
-                                                    totalItems={totalItems}
-                                                    itemsPerPage={recordsPerPage}
-                                                    currentPage={currentPage}
-                                                    onPageChange={(page) => setCurrentPage(page)}
-                                                />
-                                            </div>
+                                    </div>
+                                    {/* 3. Enquiry From */}
+                                    <div className="col-md-2 col-sm-6">
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Enquiry From</label>
+                                            <input type="date" name="from_date" className="form-control input-sm" value={filterForm.from_date} onChange={handleFilterChange} style={{ borderRadius: '6px' }} />
                                         </div>
+                                    </div>
+                                    {/* 4. Enquiry To */}
+                                    <div className="col-md-2 col-sm-6">
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Enquiry To</label>
+                                            <input type="date" name="to_date" className="form-control input-sm" value={filterForm.to_date} onChange={handleFilterChange} style={{ borderRadius: '6px' }} />
+                                        </div>
+                                    </div>
+                                    {/* 5. Status */}
+                                    <div className="col-md-2 col-sm-6">
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Status</label>
+                                            <select name="status" className="form-control input-sm" value={filterForm.status} onChange={handleFilterChange} style={{ borderRadius: '6px' }}>
+                                                <option value="all">All Status</option>
+                                                {Object.entries(enquiryStatus).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {/* Search Button aligned with fields */}
+                                    <div className="col-md-2 col-sm-6" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '15px' }}>
+                                        <button type="submit" className="btn" disabled={loading} style={{ backgroundColor: '#7c3aed', color: '#fff', borderRadius: '8px', padding: '6px 0', width: '100%', fontWeight: '600', height: '30px', fontSize: '13px' }}>
+                                            {loading ? '...' : 'Search'}
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
-                </section>
 
-                {/* Add Enquiry Modal */}
-                <AddEnquiryModal
-                    show={showAddModal}
-                    onClose={() => setShowAddModal(false)}
-                    classList={classList}
-                    sourceList={sourceList}
-                    staffList={staffList}
-                    referenceList={referenceList}
-                    onSuccess={() => {
-                        setShowAddModal(false);
-                        setFlashMessage('Enquiry added successfully');
-                        fetchEnquiryList(); // Refresh list
-                        setTimeout(() => setFlashMessage(''), 3000);
-                    }}
-                />
+                    {/* Enquiry List Container - Cleaned up to match SIS */}
+                    <div className="sis-list-container" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
+                        {/* Header Section */}
+                        <div className="sis-list-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Enquiry List</h3>
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="btn btn-sm"
+                                style={{ backgroundColor: '#7c3aed', color: '#fff', borderRadius: '8px', padding: '8px 20px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}
+                            >
+                                <i className="fa fa-plus"></i> Add
+                            </button>
+                        </div>
 
-                {/* Edit Enquiry Modal */}
-                <EditEnquiryModal
-                    show={showEditModal}
-                    onClose={() => setShowEditModal(false)}
-                    enquiry={selectedEnquiry}
-                    classList={classList}
-                    sourceList={sourceList}
-                    staffList={staffList}
-                    referenceList={referenceList}
-                    onSuccess={() => {
-                        setShowEditModal(false);
-                        setFlashMessage('Enquiry updated successfully');
-                        fetchEnquiryList(); // Refresh list
-                        setTimeout(() => setFlashMessage(''), 3000);
-                    }}
-                />
+                        {/* Toolbar Section */}
+                        <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
+                            <div style={{ position: 'relative', width: '300px' }}>
+                                <i className="fa fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}></i>
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="form-control"
+                                    value={searchTerm}
+                                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                    style={{ paddingLeft: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                                />
+                            </div>
+                            <PremiumTableToolbar
+                                columns={columns}
+                                visibleColumns={visibleColumns}
+                                onToggleColumn={toggleColumn}
+                                getExportData={getExportData}
+                                exportFileName="enquiry_list"
+                                exportTitle="Enquiry List"
+                                recordsPerPage={recordsPerPage}
+                                onRecordsPerPageChange={(num) => { setRecordsPerPage(num); setCurrentPage(1); }}
+                            />
+                        </div>
 
-                {/* Follow Up Modal */}
-                <FollowUpModal
-                    show={showFollowUpModal}
-                    onClose={() => setShowFollowUpModal(false)}
-                    enquiry={selectedEnquiry}
-                    onSuccess={() => {
-                        setFlashMessage('Follow up recorded successfully');
-                        fetchEnquiryList(); // Refresh list
-                        setTimeout(() => setFlashMessage(''), 3000);
-                    }}
-                />
-            </div >
-            <Footer />
-        </div >
+                        <div className="sis-list-body" style={{ padding: '0' }}>
+                            <div className="table-responsive mailbox-messages overflow-visible">
+                                <table className="table table-hover sis-listing-table" style={{ margin: 0 }}>
+                                    <thead>
+                                        <tr style={{ background: '#f8fafc' }}>
+                                            {columns.map(col => visibleColumns.has(col.key) && (
+                                                <th key={col.key} onClick={() => col.sortKey && handleSort(col.sortKey)} style={{
+                                                    cursor: col.sortKey ? 'pointer' : 'default',
+                                                    padding: '12px 24px',
+                                                    fontSize: '13px',
+                                                    fontWeight: '600',
+                                                    color: '#475569',
+                                                    borderBottom: '1px solid #e2e8f0',
+                                                    ...(col.width ? { width: col.width } : {})
+                                                }}>
+                                                    {col.label} {col.sortKey && getSortIcon(col.sortKey)}
+                                                </th>
+                                            ))}
+                                            <th className="text-right noExport" style={{ padding: '12px 24px', borderBottom: '1px solid #e2e8f0' }}>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {initialLoading ? (
+                                            <tr>
+                                                <td colSpan={visibleColumns.size + 1} className="text-center p-4">
+                                                    <Loader type="table" rows={10} />
+                                                </td>
+                                            </tr>
+                                        ) : currentEnquiries.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={visibleColumns.size + 1} className="text-center p-5 text-muted">
+                                                    No enquiries found matching your criteria.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            currentEnquiries.map((enquiry, idx) => (
+                                                <tr key={enquiry.id || idx}>
+                                                    {columns.map(col => visibleColumns.has(col.key) && (
+                                                        <td key={col.key} style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b' }}>
+                                                            {col.key === 'name' ? (
+                                                                renderEnquiryName(enquiry)
+                                                            ) : formatCell(enquiry, col.key)}
+                                                        </td>
+                                                    ))}
+                                                    <td className="text-right white-space-nowrap noExport" style={{ padding: '12px 24px' }}>
+                                                        <button onClick={() => handleFollowUp(enquiry)} className="btn btn-default btn-xs" title="Follow Up" style={{ marginRight: '4px', borderRadius: '4px' }}>
+                                                            <i className="fa fa-phone"></i>
+                                                        </button>
+                                                        <button onClick={() => handleEdit(enquiry)} className="btn btn-default btn-xs" title="Edit" style={{ marginRight: '4px', borderRadius: '4px' }}>
+                                                            <i className="fa fa-pencil"></i>
+                                                        </button>
+                                                        <button onClick={() => handleDelete(enquiry.id)} className="btn btn-default btn-xs" title="Delete" style={{ borderRadius: '4px' }}>
+                                                            <i className="fa fa-remove"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Pagination Footer */}
+                        {!initialLoading && totalItems > 0 && (
+                            <div style={{
+                                padding: '20px 24px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                borderTop: '1px solid #f1f5f9'
+                            }}>
+                                <div style={{ color: '#64748b', fontSize: '14px' }}>
+                                    Showing {(currentPage - 1) * recordsPerPage + 1} to {Math.min(currentPage * recordsPerPage, totalItems)} of {totalItems} entries
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        className="btn btn-default btn-sm"
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(prev => prev - 1)}
+                                        style={{ borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                                    >
+                                        <i className="fa fa-angle-left"></i>
+                                    </button>
+                                    <button className="btn btn-sm" style={{ borderRadius: '6px', background: '#7c3aed', color: '#ffffff', minWidth: '32px' }}>
+                                        {currentPage}
+                                    </button>
+                                    <button
+                                        className="btn btn-default btn-sm"
+                                        disabled={currentPage >= totalPages}
+                                        onClick={() => setCurrentPage(prev => prev + 1)}
+                                        style={{ borderRadius: '6px', border: '1px solid #e2e8f0' }}
+                                    >
+                                        <i className="fa fa-angle-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <AddEnquiryModal show={showAddModal} onClose={() => setShowAddModal(false)} onSuccess={() => { setShowAddModal(false); fetchEnquiryList(); }} classList={classList} sourceList={sourceList} referenceList={referenceList} staffList={staffList} />
+            <EditEnquiryModal show={showEditModal} onClose={() => setShowEditModal(false)} enquiry={selectedEnquiry} onSuccess={() => { setShowEditModal(false); fetchEnquiryList(); }} classList={classList} sourceList={sourceList} referenceList={referenceList} staffList={staffList} />
+            <FollowUpModal show={showFollowUpModal} onClose={() => setShowFollowUpModal(false)} enquiry={selectedEnquiry} onSuccess={() => { setShowFollowUpModal(false); fetchEnquiryList(); }} />
+        </HelpdeskLayout>
     );
 };
 

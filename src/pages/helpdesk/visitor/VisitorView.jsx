@@ -1,94 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import Loader from '../../../components/Loader';
-import { api } from '../../../services/api';
 import { buildExportData } from '../../../utils/tableExport';
 import PremiumTableToolbar from '../../../utils/PremiumTableToolbar';
 import HelpdeskLayout from '../HelpdeskLayout';
-import AddReferenceModal from './AddReferenceModal';
-import EditReferenceModal from './EditReferenceModal';
-import { useHelpdeskCounts } from '../../../context/HelpdeskCountContext';
+import AddVisitorModal from './AddVisitorModal';
 
-const ReferenceView = () => {
-    const { updateCount } = useHelpdeskCounts();
-    const [reference_list, setReferenceList] = useState([]);
-    const [initialLoading, setInitialLoading] = useState(true);
+// Mock data matching the reference screenshot
+const MOCK_VISITORS = [
+    { id: 1, purpose: 'permission', meeting_with: 'Staff (Agent One - SBD003)', visitor_name: 'ascdddddd', phone: '', id_card: '', number_of_person: '0', date: '12/02/2026', in_time: '11:44 AM', out_time: '11:44 AM' },
+    { id: 2, purpose: 'HEALTH ISSUE', meeting_with: 'Staff (Agent One - SBD003)', visitor_name: 'champ', phone: '14789632520', id_card: '7412369852', number_of_person: '2', date: '09/02/2026', in_time: '02:30 PM', out_time: '02:30 PM' },
+    { id: 3, purpose: 'VISITING', meeting_with: 'Staff (Super Admin - 9000)', visitor_name: 'none', phone: '1235896347', id_card: 'mnmmmn', number_of_person: '2', date: '07/02/2026', in_time: '02:41 PM', out_time: '02:41 PM' },
+    { id: 4, purpose: 'VISITING', meeting_with: 'Student (Siva Sai Venkat Nandhu Odella - 1005)', visitor_name: 'abcd', phone: 'abod', id_card: '123', number_of_person: '2', date: '05/12/2025', in_time: '12:23 PM', out_time: '12:23 PM' },
+    { id: 5, purpose: 'AAA', meeting_with: 'Student (mahesh posa - 23PRE001)', visitor_name: 'ABCD', phone: '12345', id_card: '', number_of_person: '1', date: '05/12/2025', in_time: '11:45 AM', out_time: '11:45 AM' },
+    { id: 6, purpose: 'Visiting', meeting_with: 'Staff (admin - admin001)', visitor_name: 'sai aveen', phone: '23456787654', id_card: '', number_of_person: '0', date: '17/05/2025', in_time: '02:41 PM', out_time: '02:41 PM' },
+    { id: 7, purpose: 'Visiting', meeting_with: 'Staff (Sunil - 1876)', visitor_name: 'reddy', phone: '7894561230', id_card: '343', number_of_person: '3', date: '18/02/2025', in_time: '05:26 PM', out_time: '05:26 PM' },
+];
+
+const VisitorView = () => {
+    const [visitorList, setVisitorList] = useState(MOCK_VISITORS);
+    const [initialLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
-
-    // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedReference, setSelectedReference] = useState(null);
 
-    const fetchReferenceList = async () => {
-        setInitialLoading(true);
-        try {
-            const data = await api.getReferenceList();
-            const list = data.data || [];
-            setReferenceList(list);
-            updateCount('totalReferences', list.length);
-        } catch (error) {
-            console.error('Fetch Error:', error);
-            toast.error('Failed to fetch reference list');
-        } finally {
-            setInitialLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchReferenceList();
-    }, []);
-
-    const refColumns = [
-        { key: 'reference', label: 'Reference' },
-        { key: 'description', label: 'Description' }
+    const columns = [
+        { key: 'purpose', label: 'Purpose' },
+        { key: 'meeting_with', label: 'Meeting With' },
+        { key: 'visitor_name', label: 'Visitor Name' },
+        { key: 'phone', label: 'Phone' },
+        { key: 'id_card', label: 'ID Card' },
+        { key: 'number_of_person', label: 'Number Of Person' },
+        { key: 'date', label: 'Date' },
+        { key: 'in_time', label: 'In Time' },
+        { key: 'out_time', label: 'Out Time' }
     ];
-    const [refVisibleCols, setRefVisibleCols] = useState(new Set(refColumns.map(c => c.key)));
-
-    const filteredResults = reference_list.filter(item =>
-        item.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const totalItems = filteredResults.length;
-    const totalPages = Math.ceil(totalItems / recordsPerPage);
-    const currentItems = filteredResults.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage);
-
-    const getExportData = () => buildExportData(refColumns, refVisibleCols, filteredResults, (row, key) => row[key]);
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
     const handleToggleColumn = (key) => {
-        setRefVisibleCols(prev => {
+        setVisibleColumns(prev => {
             const next = new Set(prev);
             if (next.has(key)) next.delete(key); else next.add(key);
             return next;
         });
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this record?')) {
-            try {
-                await api.deleteReference(id);
-                toast.success('Reference deleted successfully');
-                fetchReferenceList();
-            } catch (error) {
-                toast.error(error.message || 'Failed to delete reference');
-            }
+    const filteredResults = visitorList.filter(item =>
+        item.purpose?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.meeting_with?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.visitor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const totalItems = filteredResults.length;
+    const totalPages = Math.ceil(totalItems / recordsPerPage);
+    const currentItems = filteredResults.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage);
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredResults, (row, key) => row[key]);
+
+    const handleDelete = (id) => {
+        if (window.confirm('Are you sure you want to delete this visitor?')) {
+            setVisitorList(prev => prev.filter(v => v.id !== id));
+            toast.success('Visitor deleted successfully');
         }
     };
 
-    const handleEdit = (reference) => {
-        setSelectedReference(reference);
-        setShowEditModal(true);
+    const handleAddSuccess = (newVisitor) => {
+        const newId = visitorList.length > 0 ? Math.max(...visitorList.map(v => v.id)) + 1 : 1;
+        const formattedDate = new Date(newVisitor.date).toLocaleDateString('en-GB');
+        setVisitorList(prev => [{
+            ...newVisitor,
+            id: newId,
+            date: formattedDate
+        }, ...prev]);
+        setShowAddModal(false);
     };
 
     return (
-        <HelpdeskLayout activeTab="reference">
+        <HelpdeskLayout activeTab="visitors">
             <div className="sis-list-container" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
-                {/* Header Section */}
                 <div className="sis-list-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
-                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Reference List</h3>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Visitor List</h3>
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="btn btn-sm"
@@ -112,31 +105,30 @@ const ReferenceView = () => {
                         />
                     </div>
                     <PremiumTableToolbar
-                        columns={refColumns}
-                        visibleColumns={refVisibleCols}
+                        columns={columns}
+                        visibleColumns={visibleColumns}
                         onToggleColumn={handleToggleColumn}
                         getExportData={getExportData}
-                        exportFileName="reference_list"
-                        exportTitle="Reference List"
+                        exportFileName="visitor_list"
+                        exportTitle="Visitor List"
                         recordsPerPage={recordsPerPage}
                         onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
                     />
                 </div>
 
-                {/* Table Section */}
+                {/* Table */}
                 <div className="sis-list-body" style={{ padding: '0' }}>
                     <div className="table-responsive mailbox-messages overflow-visible">
-                        <table className="table table-hover" style={{ margin: 0 }}>
+                        <table className="table table-hover sis-listing-table" style={{ margin: 0 }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc' }}>
-                                    {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                    {columns.map(col => visibleColumns.has(col.key) && (
                                         <th key={col.key} style={{
                                             padding: '12px 24px',
                                             fontSize: '13px',
                                             fontWeight: '600',
                                             color: '#475569',
-                                            borderBottom: '1px solid #e2e8f0',
-                                            ...(col.key === 'reference' ? { width: '30%' } : {})
+                                            borderBottom: '1px solid #e2e8f0'
                                         }}>
                                             {col.label}
                                         </th>
@@ -147,29 +139,34 @@ const ReferenceView = () => {
                             <tbody>
                                 {initialLoading ? (
                                     <tr>
-                                        <td colSpan={refVisibleCols.size + 1} className="text-center p-4">
+                                        <td colSpan={visibleColumns.size + 1} className="text-center p-4">
                                             <Loader type="table" rows={5} />
                                         </td>
                                     </tr>
                                 ) : currentItems.length === 0 ? (
                                     <tr>
-                                        <td colSpan={refVisibleCols.size + 1} className="text-center p-5 text-muted">No data available in table</td>
+                                        <td colSpan={visibleColumns.size + 1} className="text-center p-5 text-muted">No data available in table</td>
                                     </tr>
                                 ) : (
                                     currentItems.map((value, idx) => (
                                         <tr key={value.id || idx}>
-                                            {refColumns.map(col => refVisibleCols.has(col.key) && (
+                                            {columns.map(col => visibleColumns.has(col.key) && (
                                                 <td key={col.key} style={{ padding: '16px 24px', fontSize: '14px', color: '#1e293b' }}>
                                                     {value[col.key]}
                                                 </td>
                                             ))}
                                             <td className="text-right noExport" style={{ padding: '16px 24px' }}>
-                                                <button onClick={() => handleEdit(value)} className="btn btn-link btn-xs" title="Edit" style={{ color: '#475569', padding: '0 8px' }}>
-                                                    <i className="fa fa-pencil" style={{ fontSize: '16px' }}></i>
-                                                </button>
-                                                <button onClick={() => handleDelete(value.id)} className="btn btn-link btn-xs" title="Delete" style={{ color: '#475569', padding: '0 8px' }}>
-                                                    <i className="fa fa-remove" style={{ fontSize: '16px' }}></i>
-                                                </button>
+                                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
+                                                    <button className="btn btn-link btn-xs" title="View" style={{ color: '#64748b', padding: '4px 8px' }}>
+                                                        <i className="fa fa-list" style={{ fontSize: '16px' }}></i>
+                                                    </button>
+                                                    <button className="btn btn-link btn-xs" title="Edit" style={{ color: '#64748b', padding: '4px 8px' }}>
+                                                        <i className="fa fa-pencil" style={{ fontSize: '16px' }}></i>
+                                                    </button>
+                                                    <button onClick={() => handleDelete(value.id)} className="btn btn-link btn-xs" title="Delete" style={{ color: '#64748b', padding: '4px 8px' }}>
+                                                        <i className="fa fa-remove" style={{ fontSize: '16px' }}></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -179,7 +176,7 @@ const ReferenceView = () => {
                     </div>
                 </div>
 
-                {/* Pagination Section */}
+                {/* Pagination */}
                 {!initialLoading && totalItems > 0 && (
                     <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
                         <div style={{ color: '#64748b', fontSize: '14px' }}>
@@ -200,19 +197,13 @@ const ReferenceView = () => {
                 )}
             </div>
 
-            <AddReferenceModal
+            <AddVisitorModal
                 show={showAddModal}
                 onClose={() => setShowAddModal(false)}
-                onSuccess={() => { setShowAddModal(false); fetchReferenceList(); }}
-            />
-            <EditReferenceModal
-                show={showEditModal}
-                onClose={() => setShowEditModal(false)}
-                referenceData={selectedReference}
-                onSuccess={() => { setShowEditModal(false); fetchReferenceList(); }}
+                onSuccess={handleAddSuccess}
             />
         </HelpdeskLayout>
     );
 };
 
-export default ReferenceView;
+export default VisitorView;

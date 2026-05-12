@@ -1,37 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import '../../../utils/include_files.js';
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
-import Footer from '../../../components/Footer';
 import Loader from '../../../components/Loader';
-import { useSession } from '../../../context/SessionContext';
 import { api } from '../../../services/api';
-import { sanitizeAlphaWithSpaces, validateSource } from '../../../utils/validation';
 import { buildExportData } from '../../../utils/tableExport';
-import TableToolbar from '../../../utils/TableToolbar';
-import Pagination from '../../../utils/Pagination';
+import PremiumTableToolbar from '../../../utils/PremiumTableToolbar';
+import HelpdeskLayout from '../HelpdeskLayout';
+import AddSourceModal from './AddSourceModal';
+import EditSourceModal from './EditSourceModal';
+import { useHelpdeskCounts } from '../../../context/HelpdeskCountContext';
 
-const Source = () => {
-    const navigate = useNavigate();
-    const { currentSession, clearSession } = useSession();
-    const pendingTasks = [];
-
-    // Form State
-    const [formData, setFormData] = useState({
-        source: '',
-        description: ''
-    });
-
-    // List State
+const SourceView = () => {
+    const { updateCount } = useHelpdeskCounts();
     const [source_list, setSourceList] = useState([]);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(10);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Modal states
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedSource, setSelectedSource] = useState(null);
 
     const fetchSourceList = async () => {
         setInitialLoading(true);
         try {
             const data = await api.getSourceList();
-            setSourceList(data.data || []);
+            const list = data.data || [];
+            setSourceList(list);
+            updateCount('totalSources', list.length);
         } catch (error) {
             console.error('Fetch Error:', error);
             toast.error('Failed to fetch source list');
@@ -44,14 +41,6 @@ const Source = () => {
         fetchSourceList();
     }, []);
 
-    // Pagination state
-    const [currentPage, setCurrentPage] = useState(1);
-    const [recordsPerPage, setRecordsPerPage] = useState(100);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [initialLoading, setInitialLoading] = useState(true);
-
-    // Column visibility
     const sourceColumns = [
         { key: 'source', label: 'Source' },
         { key: 'description', label: 'Description' }
@@ -63,241 +52,167 @@ const Source = () => {
         item.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Calculate pagination
     const totalItems = filteredResults.length;
-    const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
-    const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
-    const indexOfLastItem = currentPage * safeRecordsPerPage;
-    const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
-    const currentItems = filteredResults.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(totalItems / recordsPerPage);
+    const currentItems = filteredResults.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage);
+
     const getExportData = () => buildExportData(sourceColumns, sourceVisibleCols, filteredResults, (row, key) => row[key]);
 
     const handleToggleColumn = (key) => {
         setSourceVisibleCols(prev => {
             const next = new Set(prev);
-            if (next.has(key)) { next.delete(key); } else { next.add(key); }
+            if (next.has(key)) next.delete(key); else next.add(key);
             return next;
         });
     };
 
-
-    // Handlers
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        let sanitized = value;
-        if (name === 'source') sanitized = sanitizeAlphaWithSpaces(value);
-        setFormData({ ...formData, [name]: sanitized });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        const sourceErr = validateSource(formData.source);
-        if (sourceErr) {
-            toast.error(sourceErr);
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const response = await api.addSource(formData);
-            toast.success(response.message || 'Source added successfully');
-            setFormData({ source: '', description: '' });
-            fetchSourceList();
-        } catch (error) {
-            console.error('Submit Error:', error);
-            toast.error(error.message || 'An error occurred while saving');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this record?')) {
-            setLoading(true);
             try {
-                const response = await api.deleteSource(id);
-                toast.success(response.message || 'Source deleted successfully');
+                await api.deleteSource(id);
+                toast.success('Source deleted successfully');
                 fetchSourceList();
             } catch (error) {
-                console.error('Delete Error:', error);
                 toast.error(error.message || 'Failed to delete source');
-            } finally {
-                setLoading(false);
             }
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('isLoggedIn');
-        clearSession();
-        navigate('/login');
+    const handleEdit = (source) => {
+        setSelectedSource(source);
+        setShowEditModal(true);
     };
 
-
-
-    useEffect(() => {
-        if (window.$ && window.$.fn && window.$.fn.popover) {
-            window.$('.detail_popover').popover({
-                placement: 'right',
-                trigger: 'hover',
-                container: 'body',
-                html: true,
-                content: function () {
-                    return window.$(this).closest('td').find('.fee_detail_popover').html();
-                }
-            });
-        }
-    }, [source_list]);
-
     return (
-        <div className="wrapper" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Header />
+        <HelpdeskLayout activeTab="source">
+            <div className="sis-list-container" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
+                {/* Header Section */}
+                <div className="sis-list-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Source List</h3>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="btn btn-sm"
+                        style={{ backgroundColor: '#7c3aed', color: '#fff', borderRadius: '8px', padding: '8px 20px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                        <i className="fa fa-plus"></i> Add
+                    </button>
+                </div>
 
-            <Sidebar />
+                {/* Toolbar Section */}
+                <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
+                    <div style={{ position: 'relative', width: '300px' }}>
+                        <i className="fa fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}></i>
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="form-control"
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            style={{ paddingLeft: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                        />
+                    </div>
+                    <PremiumTableToolbar
+                        columns={sourceColumns}
+                        visibleColumns={sourceVisibleCols}
+                        onToggleColumn={handleToggleColumn}
+                        getExportData={getExportData}
+                        exportFileName="source_list"
+                        exportTitle="Source List"
+                        recordsPerPage={recordsPerPage}
+                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                    />
+                </div>
 
-            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                <section className="content-header" style={{ display: 'block', padding: '0px 15px 0 15px' }}>
+                {/* Table Section */}
+                <div className="sis-list-body" style={{ padding: '0' }}>
+                    <div className="table-responsive mailbox-messages overflow-visible">
+                        <table className="table table-hover" style={{ margin: 0 }}>
+                            <thead>
+                                <tr style={{ background: '#f8fafc' }}>
+                                    {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
+                                        <th key={col.key} style={{
+                                            padding: '12px 24px',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            color: '#475569',
+                                            borderBottom: '1px solid #e2e8f0',
+                                            ...(col.key === 'source' ? { width: '30%' } : {})
+                                        }}>
+                                            {col.label}
+                                        </th>
+                                    ))}
+                                    <th className="text-right noExport" style={{ padding: '12px 24px', borderBottom: '1px solid #e2e8f0' }}>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {initialLoading ? (
+                                    <tr>
+                                        <td colSpan={sourceVisibleCols.size + 1} className="text-center p-4">
+                                            <Loader type="table" rows={5} />
+                                        </td>
+                                    </tr>
+                                ) : currentItems.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={sourceVisibleCols.size + 1} className="text-center p-5 text-muted">No data available in table</td>
+                                    </tr>
+                                ) : (
+                                    currentItems.map((value, idx) => (
+                                        <tr key={value.id || idx}>
+                                            {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
+                                                <td key={col.key} style={{ padding: '16px 24px', fontSize: '14px', color: '#1e293b' }}>
+                                                    {value[col.key]}
+                                                </td>
+                                            ))}
+                                            <td className="text-right noExport" style={{ padding: '16px 24px' }}>
+                                                <button onClick={() => handleEdit(value)} className="btn btn-link btn-xs" title="Edit" style={{ color: '#475569', padding: '0 8px' }}>
+                                                    <i className="fa fa-pencil" style={{ fontSize: '16px' }}></i>
+                                                </button>
+                                                <button onClick={() => handleDelete(value.id)} className="btn btn-link btn-xs" title="Delete" style={{ color: '#475569', padding: '0 8px' }}>
+                                                    <i className="fa fa-remove" style={{ fontSize: '16px' }}></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-                </section>
-                <section className="content" style={{ paddingBottom: '80px' }}>
-                    <div className="row">
-                        <div className="col-md-3">
-                            <div className="box border0">
-                                <ul className="tablists">
-                                    <li><Link to="/admin/source" className="active">Source</Link></li>
-                                    <li><Link to="/admin/reference">Reference</Link></li>
-                                </ul>
-                            </div>
+                {/* Pagination Section */}
+                {!initialLoading && totalItems > 0 && (
+                    <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
+                        <div style={{ color: '#64748b', fontSize: '14px' }}>
+                            Showing {(currentPage - 1) * recordsPerPage + 1} to {Math.min(currentPage * recordsPerPage, totalItems)} of {totalItems} entries
                         </div>
-                        <div className="col-md-4">
-                            <div className="box box-primary">
-                                <div className="box-header with-border">
-                                    <h3 className="box-title">Add Source</h3>
-                                    <div className="box-tools pull-right hidden-sm hidden-md hidden-lg">
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
-                                            <i className="fa fa-arrow-left"></i> Back
-                                        </button>
-                                    </div>
-                                </div>
-                                <form id="form1" onSubmit={handleSubmit} method="post" acceptCharset="utf-8" encType="multipart/form-data">
-                                    <div className="box-body">
-                                        <div className="form-group">
-                                            <label htmlFor="pwd">Source</label> <small className="req"> *</small>
-                                            <input
-                                                className="form-control"
-                                                id="description"
-                                                name="source"
-                                                maxLength={100}
-                                                value={formData.source}
-                                                onChange={handleInputChange}
-                                                required
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label htmlFor="pwd">Description</label>
-                                            <textarea
-                                                className="form-control"
-                                                id="description"
-                                                name="description"
-                                                rows="3"
-                                                value={formData.description}
-                                                onChange={handleInputChange}
-                                            ></textarea>
-                                        </div>
-                                    </div>
-                                    <div className="box-footer">
-                                        <button type="submit" className="btn btn-info pull-right" disabled={loading}>{loading ? 'Saving...' : 'Save'}</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                        <div className="col-md-5">
-                            <div className="box box-primary">
-                                <div className="box-header ptbnull">
-                                    <h3 className="box-title titlefix">Source List</h3>
-                                    <div className="box-tools pull-right hidden-xs">
-                                        <button onClick={() => navigate(-1)} className="btn btn-primary btn-xs">
-                                            <i className="fa fa-arrow-left"></i> Back
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="box-body">
-                                    <div className="download_label">Source List</div>
-
-                                    <TableToolbar
-                                        searchTerm={searchTerm}
-                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                                        recordsPerPage={recordsPerPage}
-                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
-                                        columns={sourceColumns}
-                                        visibleColumns={sourceVisibleCols}
-                                        onToggleColumn={handleToggleColumn}
-                                        getExportData={getExportData}
-                                        exportFileName="source_list"
-                                        exportTitle="Source List"
-                                    />
-                                    <div className="table-responsive mailbox-messages overflow-visible">
-                                        <table className="table table-hover table-striped table-bordered example">
-                                            <thead>
-                                                <tr>
-                                                    {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
-                                                        <th key={col.key} style={{ width: col.key === 'source' ? '30%' : 'auto' }}>{col.label}</th>
-                                                    ))}
-                                                    <th className="text-right noExport" style={{ width: '150px' }}>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {initialLoading ? (
-                                                    <tr>
-                                                        <td colSpan={sourceVisibleCols.size + 1} className="text-center">
-                                                            <Loader type="table" rows={recordsPerPage === -1 ? 10 : recordsPerPage} />
-                                                        </td>
-                                                    </tr>
-                                                ) : currentItems.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan={sourceVisibleCols.size + 1} className="text-center text-danger">No data available in table</td>
-                                                    </tr>
-                                                ) : (
-                                                    currentItems.map((value, key) => (
-                                                        <tr key={key}>
-                                                            {sourceColumns.map(col => sourceVisibleCols.has(col.key) && (
-                                                                <td key={col.key} className="mailbox-name" style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{value[col.key]}</td>
-                                                            ))}
-                                                            <td className="mailbox-date pull-right noExport">
-                                                                <Link to={`/admin/source/edit/${value.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit">
-                                                                    <i className="fa fa-pencil"></i>
-                                                                </Link>
-                                                                <Link to="#" onClick={() => handleDelete(value.id)} className="btn btn-default btn-xs" data-toggle="tooltip" title="Delete">
-                                                                    <i className="fa fa-remove"></i>
-                                                                </Link>
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    {/* Pagination Footer */}
-                                    <div className="pt15 pb15">
-                                        <Pagination 
-                                            totalItems={totalItems} 
-                                            itemsPerPage={recordsPerPage} 
-                                            currentPage={currentPage}
-                                            onPageChange={(page) => setCurrentPage(page)}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button className="btn btn-default btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} style={{ borderRadius: '6px' }}>
+                                <i className="fa fa-angle-left"></i>
+                            </button>
+                            <button className="btn btn-sm" style={{ borderRadius: '6px', background: '#7c3aed', color: '#ffffff', minWidth: '32px' }}>
+                                {currentPage}
+                            </button>
+                            <button className="btn btn-default btn-sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => prev + 1)} style={{ borderRadius: '6px' }}>
+                                <i className="fa fa-angle-right"></i>
+                            </button>
                         </div>
                     </div>
-                </section>
-            </div >
-            <Footer />
-        </div >
+                )}
+            </div>
+
+            <AddSourceModal
+                show={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSuccess={() => { setShowAddModal(false); fetchSourceList(); }}
+            />
+            <EditSourceModal
+                show={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                sourceData={selectedSource}
+                onSuccess={() => { setShowEditModal(false); fetchSourceList(); }}
+            />
+        </HelpdeskLayout>
     );
 };
 
-export default Source;
+export default SourceView;
