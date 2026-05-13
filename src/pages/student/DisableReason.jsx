@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Pencil, Trash2, Ban, Calendar } from 'lucide-react';
 import { api } from '../../services/api';
 import SISLayout from './SISLayout';
 import { useSISCounts } from '../../context/SISCountContext';
@@ -225,43 +226,46 @@ const DisableReason = () => {
                             <div className="table-responsive">
                                 <table className="table table-hover" style={{ margin: 0 }}>
                                     <thead>
-                                        <tr style={{ background: '#ffffff' }}>
+                                        <tr className="modern-table-header">
                                             {columns.filter(col => visibleColumns.has(col.key)).map(col => (
-                                                <th key={col.key} style={{ padding: '16px 24px', borderBottom: '1px solid #f1f5f9', color: '#64748b', fontWeight: '600', fontSize: '12px', textTransform: 'uppercase' }}>{col.label}</th>
+                                                <th key={col.key}>{col.label}</th>
                                             ))}
-                                            <th className="text-right" style={{ padding: '16px 24px', borderBottom: '1px solid #f1f5f9', color: '#64748b', fontWeight: '600', fontSize: '12px', textTransform: 'uppercase' }}>Action</th>
+                                            <th className="text-right">Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody style={{ background: '#ffffff' }}>
+                                    <tbody>
                                         {reasons.length === 0 ? (
                                             <tr>
                                                 <td colSpan={columns.filter(col => visibleColumns.has(col.key)).length + 1} className="text-center" style={{ padding: '40px', color: '#94a3b8' }}>No disable reasons found</td>
                                             </tr>
                                         ) : (
                                             currentReasons.map((reason, index) => (
-                                                <tr key={reason.id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                                                <tr key={reason.id} className="modern-table-row">
                                                     {columns.filter(col => visibleColumns.has(col.key)).map(col => (
-                                                        <td key={col.key} style={{ padding: '16px 24px', color: col.key === 'reason' ? '#1e293b' : '#64748b', fontWeight: col.key === 'reason' ? '500' : 'normal' }}>
+                                                        <td key={col.key}>
                                                             {col.key === 'index' ? (currentPage - 1) * recordsPerPage + index + 1 :
-                                                                col.key === 'created_at' ? formatDate(reason.created_at) :
-                                                                    reason[col.key]}
+                                                                col.key === 'reason' ? (
+                                                                    <div className="cell-icon-wrapper">
+                                                                        <Ban size={14} className="cell-icon" />
+                                                                        <span>{reason.reason}</span>
+                                                                    </div>
+                                                                ) :
+                                                                    col.key === 'created_at' ? (
+                                                                        <div className="cell-icon-wrapper">
+                                                                            <Calendar size={14} className="cell-icon" />
+                                                                            <span>{formatDate(reason.created_at)}</span>
+                                                                        </div>
+                                                                    ) :
+                                                                        reason[col.key]}
                                                         </td>
                                                     ))}
-                                                    <td className="text-right" style={{ padding: '16px 24px' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                                                            <button
-                                                                onClick={() => handleEdit(reason)}
-                                                                style={{ border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
-                                                                title="Edit"
-                                                            >
-                                                                <i className="fa fa-pencil" style={{ fontSize: '16px' }}></i>
+                                                    <td className="text-right">
+                                                        <div className="action-btns-wrapper">
+                                                            <button onClick={() => handleEdit(reason)} className="action-btn-circle btn-edit-circle" title="Edit">
+                                                                <Pencil size={14} />
                                                             </button>
-                                                            <button
-                                                                onClick={() => handleDelete(reason.id)}
-                                                                style={{ border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
-                                                                title="Delete"
-                                                            >
-                                                                <i className="fa fa-trash-o" style={{ fontSize: '16px' }}></i>
+                                                            <button onClick={() => handleDelete(reason.id)} className="action-btn-circle btn-delete-circle" title="Delete">
+                                                                <Trash2 size={14} />
                                                             </button>
                                                         </div>
                                                     </td>

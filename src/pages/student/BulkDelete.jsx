@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import { Calendar, Phone } from 'lucide-react';
 import Loader from '../../components/Loader';
 import { api } from '../../services/api';
 import '../../utils/include_files';
@@ -327,7 +328,7 @@ const BulkDelete = () => {
                                 <div className="table-responsive">
                                     <table className="table table-striped table-bordered table-hover example" style={{ margin: 0 }}>
                                         <thead>
-                                            <tr>
+                                            <tr className="modern-table-header">
                                                 <th style={{ width: '40px', textAlign: 'center' }}>
                                                     <input
                                                         type="checkbox"
@@ -342,7 +343,7 @@ const BulkDelete = () => {
                                         </thead>
                                         <tbody>
                                             {currentStudents.map((student) => (
-                                                <tr key={student.id}>
+                                                <tr key={student.id} className="modern-table-row">
                                                     <td style={{ textAlign: 'center' }}>
                                                         <input
                                                             type="checkbox"
@@ -358,6 +359,16 @@ const BulkDelete = () => {
                                                                 renderName(student[col.key], student.id)
                                                             ) : col.key === 'gender' ? (
                                                                 renderGender(student[col.key])
+                                                            ) : col.key === 'dob' ? (
+                                                                <div className="cell-icon-wrapper">
+                                                                    <Calendar size={14} className="cell-icon" />
+                                                                    <span>{student[col.key]}</span>
+                                                                </div>
+                                                            ) : col.key === 'mobile' ? (
+                                                                <div className="cell-icon-wrapper">
+                                                                    <Phone size={14} className="cell-icon" />
+                                                                    <span>{student[col.key]}</span>
+                                                                </div>
                                                             ) : (
                                                                 student[col.key]
                                                             )}

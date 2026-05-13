@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import { Calendar, Phone, Eye, IndianRupee, Pencil, Wallet } from 'lucide-react';
 import Loader from '../../components/Loader';
 import { api } from '../../services/api';
 import '../../utils/include_files';
@@ -278,7 +279,7 @@ const StudentSearch = () => {
                                 <div className="table-responsive">
                                     <table className="table table-striped table-bordered table-hover example" style={{ margin: 0 }}>
                                         <thead>
-                                            <tr>
+                                            <tr className="modern-table-header">
                                                 {columns.map(col => visibleColumns.has(col.key) && (
                                                     <th key={col.key} style={col.width ? { width: col.width } : {}}>{col.label}</th>
                                                 ))}
@@ -287,28 +288,40 @@ const StudentSearch = () => {
                                         </thead>
                                         <tbody>
                                             {currentStudents.map((student) => (
-                                                <tr key={student.id}>
+                                                <tr key={student.id} className="modern-table-row">
                                                     {columns.map(col => visibleColumns.has(col.key) && (
                                                         <td key={col.key}>
                                                             {col.key === 'name' ? (
                                                                 renderName(student[col.key], student.id)
                                                             ) : col.key === 'gender' ? (
                                                                 renderGender(student[col.key])
+                                                            ) : col.key === 'dob' ? (
+                                                                <div className="cell-icon-wrapper">
+                                                                    <Calendar size={14} className="cell-icon" />
+                                                                    <span>{student[col.key]}</span>
+                                                                </div>
+                                                            ) : col.key === 'mobile' ? (
+                                                                <div className="cell-icon-wrapper">
+                                                                    <Phone size={14} className="cell-icon" />
+                                                                    <span>{student[col.key]}</span>
+                                                                </div>
                                                             ) : (
                                                                 student[col.key]
                                                             )}
                                                         </td>
                                                     ))}
-                                                    <td className="text-right white-space-nowrap noExport">
-                                                        <Link to={`/student/view/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Show" style={{ marginRight: '4px' }}>
-                                                            <i className="fa fa-reorder"></i>
-                                                        </Link>
-                                                        <Link to={`/student/edit/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Edit" style={{ marginRight: '4px' }}>
-                                                            <i className="fa fa-pencil"></i>
-                                                        </Link>
-                                                        <Link to={`/studentfee/addfee/${student.student_session_id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="Add Fee">
-                                                            <i className="fa fa-money"></i>
-                                                        </Link>
+                                                    <td className="text-right noExport">
+                                                        <div className="action-btns-wrapper">
+                                                            <Link to={`/student/view/${student.id}`} className="action-btn-circle btn-view-circle" title="Show">
+                                                                <Eye size={14} />
+                                                            </Link>
+                                                            <Link to={`/student/edit/${student.id}`} className="action-btn-circle btn-edit-circle" title="Edit">
+                                                                <Pencil size={14} />
+                                                            </Link>
+                                                            <Link to={`/studentfee/addfee/${student.student_session_id}`} className="action-btn-circle btn-phone-circle" title="Add Fee">
+                                                                <IndianRupee size={14} />
+                                                            </Link>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}

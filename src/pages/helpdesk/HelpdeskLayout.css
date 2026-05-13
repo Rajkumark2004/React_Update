@@ -1,4 +1,5 @@
 /* HelpdeskLayout.css */
+@import "../../styles/ModernTable.css";
 
 .helpdesk-header-section {
     padding: 24px 15px 0 15px;
@@ -147,85 +148,4 @@
     .helpdesk-summary-cards {
         grid-template-columns: 1fr;
     }
-}
-
-/* SHARED MODERN TABLE STYLES */
-.modern-table-row td {
-    padding: 16px 24px !important;
-    vertical-align: middle !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    font-size: 14px;
-    color: #1e293b;
-}
-
-/* SETUP TABLES SPECIFIC (Source/Reference) */
-.setup-table .modern-table-row td {
-    padding: 16px 35px !important;
-}
-
-.setup-table .modern-table-row td:first-child,
-.setup-table .modern-table-header th:first-child {
-    padding-left: 45px !important;
-}
-
-.setup-table .modern-table-row td:last-child,
-.setup-table .modern-table-header th:last-child {
-    padding-right: 45px !important;
-}
-
-.modern-table-row:hover {
-    background-color: #f8fafc !important;
-}
-
-.action-btns-wrapper {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-.action-btn-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    background: #f1f5f9;
-    color: #475569;
-}
-
-.btn-edit-circle {
-    background: #eff6ff;
-    color: #3b82f6;
-}
-
-.btn-edit-circle:hover {
-    background: #3b82f6;
-    color: #fff;
-}
-
-.btn-delete-circle {
-    background: #fef2f2;
-    color: #ef4444;
-}
-
-.btn-delete-circle:hover {
-    background: #ef4444;
-    color: #fff;
-}
-
-.modern-table-header th {
-    padding: 12px 24px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    color: #475569 !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    background: #f8fafc !important;
-}
-
-.setup-table .modern-table-header th {
-    padding: 12px 35px !important;
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import { Calendar, Phone, Eye, Check } from 'lucide-react';
 import Loader from '../../components/Loader';
 import SISLayout from './SISLayout';
 import { useSISCounts } from '../../context/SISCountContext';
@@ -288,7 +289,7 @@ const DisabledStudents = () => {
                                 <div className="table-responsive">
                                     <table className="table table-striped table-bordered table-hover example" style={{ margin: 0 }}>
                                         <thead>
-                                            <tr>
+                                            <tr className="modern-table-header">
                                                 {columns.map(col => visibleColumns.has(col.key) && (
                                                     <th key={col.key} style={col.width ? { width: col.width } : {}}>{col.label}</th>
                                                 ))}
@@ -297,25 +298,37 @@ const DisabledStudents = () => {
                                         </thead>
                                         <tbody>
                                             {currentStudents.map((student) => (
-                                                <tr key={student.id}>
+                                                <tr key={student.id} className="modern-table-row">
                                                     {columns.map(col => visibleColumns.has(col.key) && (
                                                         <td key={col.key}>
                                                             {col.key === 'name' ? (
                                                                 renderName(student[col.key], student.id)
                                                             ) : col.key === 'gender' ? (
                                                                 renderGender(student[col.key])
+                                                            ) : col.key === 'dob' ? (
+                                                                <div className="cell-icon-wrapper">
+                                                                    <Calendar size={14} className="cell-icon" />
+                                                                    <span>{student[col.key]}</span>
+                                                                </div>
+                                                            ) : col.key === 'mobile' ? (
+                                                                <div className="cell-icon-wrapper">
+                                                                    <Phone size={14} className="cell-icon" />
+                                                                    <span>{student[col.key]}</span>
+                                                                </div>
                                                             ) : (
                                                                 student[col.key]
                                                             )}
                                                         </td>
                                                     ))}
-                                                    <td className="text-right white-space-nowrap noExport">
-                                                        <Link to={`/student/view/${student.id}`} className="btn btn-default btn-xs" data-toggle="tooltip" title="View" style={{ marginRight: '4px' }}>
-                                                            <i className="fa fa-reorder"></i>
-                                                        </Link>
-                                                        <button className="btn btn-success btn-xs" data-toggle="tooltip" title="Enable Student" onClick={() => handleEnableStudent(student.id, student.name)}>
-                                                            <i className="fa fa-check"></i>
-                                                        </button>
+                                                    <td className="text-right noExport">
+                                                        <div className="action-btns-wrapper">
+                                                            <Link to={`/student/view/${student.id}`} className="action-btn-circle btn-view-circle" title="View">
+                                                                <Eye size={14} />
+                                                            </Link>
+                                                            <button className="action-btn-circle" style={{ background: '#16a34a', color: '#ffffff' }} title="Enable Student" onClick={() => handleEnableStudent(student.id, student.name)}>
+                                                                <Check size={14} />
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
