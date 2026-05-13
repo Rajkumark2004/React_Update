@@ -5,7 +5,7 @@ import LeaveModal from './LeaveModal';
 import AttendanceLayout from '../AttendanceLayout';
 import { buildExportData } from '../../../utils/tableExport';
 import PremiumTableToolbar from '../../../utils/PremiumTableToolbar';
-import toast from 'react-hot-toast';
+import { Calendar, Pencil, Trash2, Download } from 'lucide-react';
 import '../../../utils/include_files';
 
 const ApproveLeave = () => {
@@ -304,16 +304,16 @@ const ApproveLeave = () => {
                 <div className="table-responsive">
                     <table className="table table-hover" style={{ margin: 0 }}>
                         <thead>
-                            <tr style={{ background: '#f8fafc' }}>
-                                {visibleColumns.has('student_name') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Student Name</th>}
-                                {visibleColumns.has('class') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Class</th>}
-                                {visibleColumns.has('section') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Section</th>}
-                                {visibleColumns.has('apply_date') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Apply Date</th>}
-                                {visibleColumns.has('from_date') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>From Date</th>}
-                                {visibleColumns.has('to_date') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>To Date</th>}
-                                {visibleColumns.has('status') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Status</th>}
-                                {visibleColumns.has('approve_by') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Approve By</th>}
-                                <th className="text-right" style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Action</th>
+                            <tr className="modern-table-header">
+                                {visibleColumns.has('student_name') && <th>Student Name</th>}
+                                {visibleColumns.has('class') && <th>Class</th>}
+                                {visibleColumns.has('section') && <th>Section</th>}
+                                {visibleColumns.has('apply_date') && <th>Apply Date</th>}
+                                {visibleColumns.has('from_date') && <th>From Date</th>}
+                                {visibleColumns.has('to_date') && <th>To Date</th>}
+                                {visibleColumns.has('status') && <th>Status</th>}
+                                {visibleColumns.has('approve_by') && <th>Approve By</th>}
+                                <th className="text-right noExport">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -321,9 +321,9 @@ const ApproveLeave = () => {
                                 <tr><td colSpan={visibleColumns.size + 1} className="text-center p-4"><Loader /></td></tr>
                             ) : currentRecords.length > 0 ? (
                                 currentRecords.map((leave) => (
-                                    <tr key={leave.id}>
+                                    <tr key={leave.id} className="modern-table-row">
                                         {visibleColumns.has('student_name') && (
-                                            <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>
+                                            <td>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                     <div style={{ 
                                                         width: '32px', height: '32px', borderRadius: '50%', 
@@ -341,25 +341,32 @@ const ApproveLeave = () => {
                                                 </div>
                                             </td>
                                         )}
-                                        {visibleColumns.has('class') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{leave.class}</td>}
-                                        {visibleColumns.has('section') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{leave.section}</td>}
-                                        {visibleColumns.has('apply_date') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{formatDate(leave.apply_date)}</td>}
-                                        {visibleColumns.has('from_date') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{formatDate(leave.from_date)}</td>}
-                                        {visibleColumns.has('to_date') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{formatDate(leave.to_date)}</td>}
-                                        {visibleColumns.has('status') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{getStatusLabel(leave.status, leave.approve_date)}</td>}
-                                        {visibleColumns.has('approve_by') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{leave.staff_name} {leave.surname} {leave.staff_id ? `(${leave.staff_id})` : ''}</td>}
-                                        <td className="text-right" style={{ padding: '12px 24px', borderBottom: '1px solid #f1f5f9' }}>
-                                            <div className="btn-group">
+                                        {visibleColumns.has('class') && <td>{leave.class}</td>}
+                                        {visibleColumns.has('section') && <td>{leave.section}</td>}
+                                        {visibleColumns.has('apply_date') && (
+                                            <td>
+                                                <div className="cell-icon-wrapper">
+                                                    <Calendar size={14} className="cell-icon" />
+                                                    <span>{formatDate(leave.apply_date)}</span>
+                                                </div>
+                                            </td>
+                                        )}
+                                        {visibleColumns.has('from_date') && <td>{formatDate(leave.from_date)}</td>}
+                                        {visibleColumns.has('to_date') && <td>{formatDate(leave.to_date)}</td>}
+                                        {visibleColumns.has('status') && <td>{getStatusLabel(leave.status, leave.approve_date)}</td>}
+                                        {visibleColumns.has('approve_by') && <td>{leave.staff_name} {leave.surname} {leave.staff_id ? `(${leave.staff_id})` : ''}</td>}
+                                        <td className="text-right noExport">
+                                            <div className="action-btns-wrapper">
                                                 {leave.docs && (
-                                                    <a href={`https://newlayout.wisibles.com/admin/approve_leave/download/${leave.id}`} className="btn btn-default btn-xs" title="Download" target="_blank" rel="noopener noreferrer" style={{ marginRight: '4px', borderRadius: '4px' }}>
-                                                        <i className="fa fa-download"></i>
+                                                    <a href={`https://newlayout.wisibles.com/admin/approve_leave/download/${leave.id}`} className="action-btn-circle" title="Download" target="_blank" rel="noopener noreferrer">
+                                                        <Download size={14} />
                                                     </a>
                                                 )}
-                                                <button className="btn btn-default btn-xs" title="Edit" onClick={() => handleEdit(leave)} style={{ marginRight: '4px', borderRadius: '4px' }}>
-                                                    <i className="fa fa-pencil"></i>
+                                                <button className="action-btn-circle btn-edit-circle" title="Edit" onClick={() => handleEdit(leave)}>
+                                                    <Pencil size={14} />
                                                 </button>
-                                                <button className="btn btn-default btn-xs" title="Delete" onClick={() => handleDelete(leave.id, leave.class_id, leave.section_id)} style={{ borderRadius: '4px' }}>
-                                                    <i className="fa fa-trash"></i>
+                                                <button className="action-btn-circle btn-delete-circle" title="Delete" onClick={() => handleDelete(leave.id, leave.class_id, leave.section_id)}>
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </div>
                                         </td>

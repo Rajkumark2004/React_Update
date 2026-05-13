@@ -162,7 +162,7 @@ const LateEntries = () => {
                 <div className="table-responsive">
                     <table className="table table-hover" style={{ margin: 0 }}>
                         <thead>
-                            <tr style={{ background: '#f8fafc' }}>
+                            <tr className="modern-table-header">
                                 {visibleColumns.has('sno') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>S.No</th>}
                                 {visibleColumns.has('name') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Name</th>}
                                 {visibleColumns.has('admission_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Admission No</th>}
@@ -175,7 +175,7 @@ const LateEntries = () => {
                         <tbody>
                             {currentData.length > 0 ? (
                                 currentData.map((r, i) => (
-                                    <tr key={indexOfFirstItem + i}>
+                                    <tr key={indexOfFirstItem + i} className="modern-table-row">
                                         {visibleColumns.has('sno') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{indexOfFirstItem + i + 1}</td>}
                                         {visibleColumns.has('name') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.firstname} {r.lastname}</td>}
                                         {visibleColumns.has('admission_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.admission_no}</td>}
