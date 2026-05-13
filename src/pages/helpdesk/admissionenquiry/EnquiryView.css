@@ -437,3 +437,112 @@
     border-radius: 6px;
     padding: 8px 24px;
 }
+
+/* MODERN TABLE STYLES - ADMISSION ENQUIRY */
+
+/* Rows Styling */
+.enquiry-row td {
+    padding: 16px 20px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.enquiry-row:hover {
+    background-color: #f8fafc !important;
+}
+
+/* Avatar Styling */
+.enquiry-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Icons in Cells */
+.cell-icon-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+}
+
+.cell-icon {
+    color: #8b5cf6;
+    opacity: 0.8;
+}
+
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+}
+
+/* Action Buttons */
+.action-btns-wrapper {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.action-btn-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-phone {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.btn-phone:hover {
+    background: #7c3aed;
+    color: #fff;
+}
+
+.btn-edit {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.btn-edit:hover {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.btn-delete {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+.btn-delete:hover {
+    background: #ef4444;
+    color: #fff;
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { Pencil, Trash2, Users } from 'lucide-react';
 import Loader from '../../../components/Loader';
 import { api } from '../../../services/api';
 import { buildExportData } from '../../../utils/tableExport';
@@ -126,22 +127,17 @@ const ReferenceView = () => {
                 {/* Table Section */}
                 <div className="sis-list-body" style={{ padding: '0' }}>
                     <div className="table-responsive mailbox-messages overflow-visible">
-                        <table className="table table-hover" style={{ margin: 0 }}>
+                        <table className="table table-hover setup-table" style={{ margin: 0 }}>
                             <thead>
-                                <tr style={{ background: '#f8fafc' }}>
+                                <tr className="modern-table-header">
                                     {refColumns.map(col => refVisibleCols.has(col.key) && (
                                         <th key={col.key} style={{
-                                            padding: '12px 24px',
-                                            fontSize: '13px',
-                                            fontWeight: '600',
-                                            color: '#475569',
-                                            borderBottom: '1px solid #e2e8f0',
                                             ...(col.key === 'reference' ? { width: '30%' } : {})
                                         }}>
                                             {col.label}
                                         </th>
                                     ))}
-                                    <th className="text-right noExport" style={{ padding: '12px 24px', borderBottom: '1px solid #e2e8f0' }}>Action</th>
+                                    <th className="text-right noExport">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -157,19 +153,26 @@ const ReferenceView = () => {
                                     </tr>
                                 ) : (
                                     currentItems.map((value, idx) => (
-                                        <tr key={value.id || idx}>
+                                        <tr key={value.id || idx} className="modern-table-row">
                                             {refColumns.map(col => refVisibleCols.has(col.key) && (
-                                                <td key={col.key} style={{ padding: '16px 24px', fontSize: '14px', color: '#1e293b' }}>
-                                                    {value[col.key]}
+                                                <td key={col.key}>
+                                                    {col.key === 'reference' ? (
+                                                        <div className="cell-icon-wrapper">
+                                                            <Users size={14} className="cell-icon" />
+                                                            <span>{value[col.key]}</span>
+                                                        </div>
+                                                    ) : value[col.key]}
                                                 </td>
                                             ))}
-                                            <td className="text-right noExport" style={{ padding: '16px 24px' }}>
-                                                <button onClick={() => handleEdit(value)} className="btn btn-link btn-xs" title="Edit" style={{ color: '#475569', padding: '0 8px' }}>
-                                                    <i className="fa fa-pencil" style={{ fontSize: '16px' }}></i>
-                                                </button>
-                                                <button onClick={() => handleDelete(value.id)} className="btn btn-link btn-xs" title="Delete" style={{ color: '#475569', padding: '0 8px' }}>
-                                                    <i className="fa fa-remove" style={{ fontSize: '16px' }}></i>
-                                                </button>
+                                            <td className="text-right noExport">
+                                                <div className="action-btns-wrapper">
+                                                    <button onClick={() => handleEdit(value)} className="action-btn-circle btn-edit-circle" title="Edit">
+                                                        <Pencil size={16} />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(value.id)} className="action-btn-circle btn-delete-circle" title="Delete">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

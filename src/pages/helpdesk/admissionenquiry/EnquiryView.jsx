@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
+import { Phone, Calendar, Edit, Trash2, User, Leaf, Users, MoreHorizontal, ArrowUpRight, Search, Plus, MapPin, Pencil } from 'lucide-react';
 import Loader from '../../../components/Loader';
 import AddEnquiryModal from './AddEnquiryModal';
 import EditEnquiryModal from './EditEnquiryModal';
@@ -106,8 +107,37 @@ const EnquiryView = () => {
             const dateVal = isInvalid ? row.follow_up_date : row.next_date;
             return formatDate(dateVal);
         }
-        if (key === 'date' || key === 'followupdate') return formatDate(row[key]);
-        if (key === 'status') return (enquiryStatus && enquiryStatus[row[key]]) || row[key];
+        if (key === 'followupdate') {
+            return formatDate(row[key]);
+        }
+        if (key === 'date') {
+            return (
+                <div className="cell-icon-wrapper">
+                    <Calendar size={14} className="cell-icon" />
+                    <span>{formatDate(row[key])}</span>
+                </div>
+            );
+        }
+        if (key === 'contact') {
+            return (
+                <div className="cell-icon-wrapper">
+                    <Phone size={14} className="cell-icon" />
+                    <span>{row[key]}</span>
+                </div>
+            );
+        }
+        if (key === 'source') {
+            return row[key];
+        }
+        if (key === 'status') {
+            const statusLabel = (enquiryStatus && enquiryStatus[row[key]]) || row[key];
+            return (
+                <div className="status-badge">
+                    <div className="status-dot"></div>
+                    <span>{statusLabel}</span>
+                </div>
+            );
+        }
         return row[key];
     };
 
@@ -231,16 +261,14 @@ const EnquiryView = () => {
         const color = getAvatarColor(enquiry.name);
         const initials = enquiry.name ? enquiry.name.substring(0, 2).toUpperCase() : '??';
         return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                    width: '32px', height: '32px', borderRadius: '50%',
-                    backgroundColor: color.bg, color: color.text,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: '600', fontSize: '13px', flexShrink: 0
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div className="enquiry-avatar" style={{
+                    backgroundColor: color.bg, 
+                    color: color.text
                 }}>
                     {initials}
                 </div>
-                <Link to="#" onClick={() => handleFollowUp(enquiry)} style={{ color: '#1e293b', fontWeight: '500' }}>
+                <Link to="#" onClick={() => handleFollowUp(enquiry)} style={{ color: '#1e293b', fontWeight: '600', fontSize: '14px' }}>
                     {enquiry.name}
                 </Link>
             </div>
@@ -341,7 +369,7 @@ const EnquiryView = () => {
                         <div className="table-responsive" style={{ padding: '0' }}>
                             <table className="table table-hover" style={{ margin: 0 }}>
                                 <thead>
-                                    <tr style={{ background: '#f8fafc' }}>
+                                    <tr className="modern-table-header">
                                         {columns.map(col => visibleColumns.has(col.key) && (
                                             <th key={col.key} onClick={() => col.sortKey && handleSort(col.sortKey)} style={{
                                                 cursor: col.sortKey ? 'pointer' : 'default',
@@ -373,24 +401,26 @@ const EnquiryView = () => {
                                         </tr>
                                     ) : (
                                         currentEnquiries.map((enquiry, idx) => (
-                                            <tr key={enquiry.id || idx}>
+                                            <tr key={enquiry.id || idx} className="modern-table-row">
                                                 {columns.map(col => visibleColumns.has(col.key) && (
-                                                    <td key={col.key} style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b' }}>
+                                                    <td key={col.key}>
                                                         {col.key === 'name' ? (
                                                             renderEnquiryName(enquiry)
                                                         ) : formatCell(enquiry, col.key)}
                                                     </td>
                                                 ))}
-                                                <td className="text-right" style={{ padding: '12px 24px', whiteSpace: 'nowrap' }}>
-                                                    <button onClick={() => handleFollowUp(enquiry)} className="btn btn-default btn-xs" title="Follow Up" style={{ marginRight: '4px' }}>
-                                                        <i className="fa fa-phone"></i>
-                                                    </button>
-                                                    <button onClick={() => handleEdit(enquiry)} className="btn btn-default btn-xs" title="Edit" style={{ marginRight: '4px' }}>
-                                                        <i className="fa fa-pencil"></i>
-                                                    </button>
-                                                    <button onClick={() => handleDelete(enquiry.id)} className="btn btn-default btn-xs" title="Delete">
-                                                        <i className="fa fa-remove"></i>
-                                                    </button>
+                                                <td className="text-right">
+                                                    <div className="action-btns-wrapper">
+                                                        <button onClick={() => handleFollowUp(enquiry)} className="action-btn-circle btn-phone" title="Follow Up">
+                                                            <Phone size={14} />
+                                                        </button>
+                                                        <button onClick={() => handleEdit(enquiry)} className="action-btn-circle btn-edit-circle" title="Edit">
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button onClick={() => handleDelete(enquiry.id)} className="action-btn-circle btn-delete-circle" title="Delete">
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))
