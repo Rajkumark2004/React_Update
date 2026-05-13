@@ -1,20 +1,33 @@
+:root {
+    --premium-bg: #f8fafc;
+    --premium-card-bg: #ffffff;
+    --premium-primary: #9055e8;
+    --premium-student: #3b82f6;
+    --premium-staff: #f43f5e;
+    --premium-fee: #f59e0b;
+    --premium-text-main: #1e293b;
+    --premium-text-muted: #64748b;
+    --premium-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --premium-shadow-hover: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --premium-radius: 16px;
+}
+
 /* Welcome Card Styles */
 .welcome-card {
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    /* Subtle shadow */
-    padding: 25px;
+    background: linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%);
+    border-radius: var(--premium-radius);
+    box-shadow: var(--premium-shadow);
+    padding: 30px;
     position: relative;
     width: 100%;
-    min-height: 235px;
-    /* As requested */
+    min-height: 220px;
     display: flex;
     overflow: visible !important;
-    /* Allow illustration overlap */
-    margin-top: 45px;
-    /* Spacing for the overlap */
+    margin-top: 30px;
+    border: 1px solid rgba(144, 85, 232, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 
 .welcome-text-container {
     flex: 1;
@@ -96,6 +109,8 @@
         width: 100% !important;
         position: relative !important;
         display: block !important;
+        height: 220px !important;
+        margin-bottom: 0 !important;
     }
 
     .welcome-text {
@@ -179,10 +194,10 @@
 
 .welcome-image {
     position: absolute;
-    bottom: 0;
+    bottom: 15px;
     right: 0;
     height: 100%;
-    margin-right: 55px;
+    margin-right: 25px;
     /* Pull it slightly right */
     display: flex;
     align-items: flex-end;
@@ -192,7 +207,7 @@
 }
 
 .welcome-illustration {
-    height: 300px;
+    height: 240px;
     /* Increased by ~5% from 280px */
     width: auto;
     object-fit: contain;
@@ -896,4 +911,208 @@
 .more-icon img {
     width: 32px;
     height: 32px;
+}
+
+/* Premium Card Base */
+.card-premium {
+    background: var(--premium-card-bg) !important;
+    border-radius: var(--premium-radius) !important;
+    box-shadow: var(--premium-shadow) !important;
+    padding: 24px !important;
+    margin-bottom: 24px !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    display: block !important;
+}
+
+.card-premium:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: var(--premium-shadow-hover) !important;
+    border-color: rgba(144, 85, 232, 0.2) !important;
+}
+
+/* Progress Card Modern */
+.progress-card-new {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+.progress-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 16px !important;
+}
+
+.progress-title-area h4 {
+    margin: 0 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: var(--premium-text-muted) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.progress-title-area h3 {
+    margin: 4px 0 0 0 !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: var(--premium-text-main) !important;
+}
+
+.progress-icon-box {
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(144, 85, 232, 0.1) !important;
+    color: var(--premium-primary) !important;
+}
+
+.progress-bar-container {
+    margin-top: auto !important;
+    padding-top: 20px !important;
+}
+
+.progress-stats {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 13px !important;
+    color: var(--premium-text-muted) !important;
+    margin-bottom: 8px !important;
+}
+
+.custom-progress {
+    height: 8px !important;
+    background: #f1f5f9 !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+}
+
+.custom-progress-fill {
+    height: 100% !important;
+    border-radius: 4px !important;
+    transition: width 1s ease-out !important;
+}
+
+/* Info Box Modern */
+.info-box-premium {
+    display: flex !important;
+    align-items: center !important;
+    padding: 16px !important;
+    background: #f8fafc !important;
+    border-radius: 12px !important;
+    margin-bottom: 12px !important;
+    border: 1px solid transparent !important;
+    transition: all 0.2s ease !important;
+}
+
+.info-box-premium:hover {
+    background: #ffffff !important;
+    border-color: var(--premium-primary) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.info-icon-wrapper {
+    width: 40px !important;
+    height: 40px !important;
+    margin-right: 12px !important;
+    flex-shrink: 0 !important;
+}
+
+.info-content-wrapper {
+    flex: 1 !important;
+}
+
+.info-label {
+    display: block !important;
+    font-size: 12px !important;
+    color: var(--premium-text-muted) !important;
+    margin-bottom: 2px !important;
+}
+
+.info-value {
+    display: block !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: var(--premium-text-main) !important;
+}
+
+/* Admission Table Modern */
+.modern-table-container {
+    overflow-x: auto !important;
+}
+
+.modern-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+.modern-table th {
+    background: #f8fafc !important;
+    padding: 12px 16px !important;
+    text-align: left !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: var(--premium-text-muted) !important;
+    text-transform: uppercase !important;
+    border-bottom: 2px solid #f1f5f9 !important;
+}
+
+.modern-table td {
+    padding: 14px 16px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 14px !important;
+    color: var(--premium-text-main) !important;
+}
+
+.modern-table tr:last-child td {
+    border-bottom: none !important;
+}
+
+.modern-table tr:hover td {
+    background: #fcfcfd !important;
+}
+
+.badge-vacancies {
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    display: inline-block !important;
+}
+
+.badge-positive {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+}
+
+.badge-neutral {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+    .card-premium {
+        padding: 16px !important;
+    }
+}
+
+.btn-edit-square:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+
+.btn-edit-profile:hover {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Loader from '../../components/Loader';
-import { CircleUser, CheckCircle2, Clock, Banknote, ArrowRight } from 'lucide-react';
+import { CircleUser, CheckCircle2, Clock, Banknote, ArrowRight, Pencil, GraduationCap, ShieldCheck, IndianRupee, ChevronRight, ArrowUpRight } from 'lucide-react';
 import '../../utils/include_files.js';
 import api from '../../services/api';
 import './dashboard_test.css';
@@ -194,60 +194,87 @@ const DashboardTest = () => {
     // ========== SUB-COMPONENTS ==========
 
     // Progress Card Component
-    const ProgressCard = ({ title, date, progress, current, total, colorClass, expandLink = '#', linkState = {} }) => (
-        <div className="col-lg-4 col-md-4 col-sm-12">
-            <div className="topprograssstart">
-                <p className="text-blur">{date}</p>
-                <p className="font-16">
-                    {title}<br />
-                    <span className="font12">Today</span>
-                </p>
-                <div className="box-header with-border" style={{ padding: '10px 0' }}>
-                    <div className="progress-group">
-                        <div className="progress progress-minibar">
+    const ProgressCard = ({ title, date, progress, current, total, colorClass, icon: Icon, expandLink = '#', linkState = {} }) => {
+        const colorMap = {
+            blue: 'var(--premium-student)',
+            maroon: 'var(--premium-staff)',
+            orange: 'var(--premium-fee)'
+        };
+        const themeColor = colorMap[colorClass] || 'var(--premium-primary)';
+
+        return (
+            <div className="col-lg-4 col-md-4 col-sm-12">
+                <div className="card-premium progress-card-new">
+                    <div className="progress-header">
+                        <div className="progress-title-area">
+                            <h4>{title}</h4>
+                            <h3>{current} <small style={{ fontSize: '14px', color: '#64748b' }}>/ {total}</small></h3>
+                        </div>
+                        <div className="progress-icon-box" style={{ background: `${themeColor}15`, color: themeColor }}>
+                            {Icon && <Icon size={24} />}
+                        </div>
+                    </div>
+
+                    <div className="progress-bar-container">
+                        <div className="progress-stats">
+                            <span>Today's Progress</span>
+                            <span style={{ color: themeColor, fontWeight: '600' }}>{progress.toFixed(1)}%</span>
+                        </div>
+                        <div className="custom-progress">
                             <div
-                                className={`progress-bar progress-bar-${colorClass}`}
-                                style={{ width: `${progress}%` }}
+                                className="custom-progress-fill"
+                                style={{ width: `${progress}%`, background: themeColor }}
                             />
                         </div>
-                        <p className="mt5 clearfix">
-                            Progress
-                            <span className="pull-right">{progress.toFixed(2)}%</span>
-                        </p>
                     </div>
-                </div>
-                <Link style={{
-                    color: '#9854cb',
-                    border: '1px solid #9854cb',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: '5px'
-                }} to={expandLink} state={linkState} title="View Details">
-                    <ArrowRight size={14} />
-                </Link>
-                <div className="mt8">
-                    <span className={`pull-right text-${colorClass}-bg`}>
-                        {current}/{total}
-                    </span>
+
+                    <Link to={expandLink} state={linkState} className="btn-check-now" style={{
+                        marginTop: '20px',
+                        padding: '8px 16px',
+                        fontSize: '12px',
+                        marginLeft: 0,
+                        backgroundColor: `${themeColor}15`,
+                        color: themeColor,
+                        border: `1px solid ${themeColor}40`,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        borderRadius: '8px',
+                        fontWeight: '600'
+                    }}>
+                        View Details <ArrowRight size={14} />
+                    </Link>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Info Box Component
-    const InfoBox = ({ icon, label, value }) => (
-        <div className="info-box">
-            <a href="#">
-                <span className="back-none info-box-icon">{icon}</span>
-                <div className="info-box-content">
-                    <span className="info-box-text">{label}</span>
-                    <span className="info-box-number">Rs. {value}</span>
+    const InfoBox = ({ icon, label, value, colorClass = 'orange', onClick, borderColor = 'transparent' }) => (
+        <div 
+            className="info-box-premium" 
+            onClick={onClick}
+            style={{ 
+                cursor: onClick ? 'pointer' : 'default',
+                borderLeft: `4px solid ${borderColor}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+            }}
+        >
+            <div className="info-icon-wrapper">
+                {icon}
+            </div>
+            <div className="info-content-wrapper" style={{ flex: 1 }}>
+                <span className="info-label">{label}</span>
+                <span className="info-value">Rs. {value}</span>
+            </div>
+            {onClick && (
+                <div style={{ color: '#94a3b8', marginLeft: '10px' }}>
+                    <ChevronRight size={18} />
                 </div>
-            </a>
+            )}
         </div>
     );
 
@@ -310,35 +337,105 @@ const DashboardTest = () => {
                                 {/* Right Section - Fee Summary (Moved first for Mobile Flow) */}
                                 <div className="mt-10 col-lg-3 col-md-3 col-sm-12 col-lg-push-9 col-md-push-9">
                                     {/* User Profile Card */}
-                                    <div className="hide-on-mobile border-radius-20 div-user-infomain mt-15 box box-primary">
-                                        <div className="widget-user-2 mb0">
-                                            <div className="text-right admin-edit">
-                                                <Link to={`/admin/staff/edit/${userData.id}`} className="btn btn-default btn-xs">
-                                                    <i className="fa fa-pencil"></i>
-                                                </Link>
+                                    <div className="card-premium hide-on-mobile" style={{ 
+                                        marginTop: '15px', 
+                                        padding: '0', 
+                                        background: '#fff',
+                                        borderRadius: '16px',
+                                        boxShadow: '0 8px 25px rgba(0,0,0,0.04)',
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        border: '1px solid #f8fafc'
+                                    }}>
+                                        {/* Top Section */}
+                                        <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                            {/* Avatar Container - Rounded Square */}
+                                            <div style={{
+                                                width: '75px',
+                                                height: '75px',
+                                                borderRadius: '20px',
+                                                background: '#FFF9E5', // Pale yellow background from image
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                flexShrink: 0
+                                            }}>
+                                                <CircleUser size={50} color="#FFD700" strokeWidth={1.5} />
                                             </div>
-                                            <div className="widget-user-header overflow-hidden">
-                                                <div className="div-user-info">
-                                                    <h5 className="ml-0 widget-user-desc mb5">{userData.role}</h5>
-                                                    <h3 className="ml-0 widget-user-username">{userData.name}</h3>
-                                                    <h5 className="ml-0 mt-20 view-profile widget-user-desc ">
-                                                        <Link to={`/admin/staff/profile/${userData.id}`}>View Profile ✓</Link>
-                                                    </h5>
-                                                </div>
-                                                <div className="widget-user-image">
-                                                    <CircleUser size={80} color="#FFD700" strokeWidth={1} style={{ background: '#fff', borderRadius: '50%' }} />
-                                                </div>
+
+                                            {/* Text Section */}
+                                            <div style={{ flex: 1 }}>
+                                                <h5 style={{ margin: 0, fontSize: '14px', color: '#64748b', fontWeight: '400', fontFamily: 'Inter, sans-serif' }}>{userData.role}</h5>
+                                                <h3 style={{ margin: '2px 0 0 0', fontSize: '20px', fontWeight: '700', color: '#1e293b' }}>{userData.name}</h3>
                                             </div>
+
+                                            {/* Edit Button - Top Right rounded square */}
+                                            <Link to={`/admin/staff/edit/${userData.id}`} style={{ 
+                                                position: 'absolute',
+                                                top: '15px',
+                                                right: '15px',
+                                                width: '32px',
+                                                height: '32px',
+                                                borderRadius: '8px',
+                                                background: '#fff',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: '#334155',
+                                                border: '1.5px solid #f1f5f9',
+                                                boxShadow: '0 2px 5px rgba(0,0,0,0.02)',
+                                                transition: 'all 0.2s'
+                                            }} className="btn-edit-square">
+                                                <Pencil size={16} />
+                                            </Link>
+                                        </div>
+
+                                        {/* Divider Line */}
+                                        <div style={{ borderTop: '1px solid #f1f5f9', width: '100%' }}></div>
+
+                                        {/* Footer Section */}
+                                        <div style={{ padding: '14px 20px' }}>
+                                            <Link to={`/admin/staff/profile/${userData.id}`} style={{ 
+                                                fontSize: '15px', 
+                                                color: '#6366f1', // Vibrant purple-blue
+                                                fontWeight: '600', 
+                                                textDecoration: 'none',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}>
+                                                View Profile <ArrowUpRight size={18} />
+                                            </Link>
                                         </div>
                                     </div>
 
                                     {/* Fee Summary Card - Hidden for Teachers */}
                                     {!isTeacher && (
-                                        <div className="border-radius-20 box box-primary ptb-20">
-                                            <h4 className="fee-summary-title">Fee Summary</h4>
-                                            <InfoBox icon={<img src="/images/total_fee.png" alt="Total Fees" style={{ width: '45px' }} />} label="Total Students Fees" value={feeSummary.totalFees} />
-                                            <InfoBox icon={<img src="/images/total_paid_fees.png" alt="Paid Fees" style={{ width: '45px' }} />} label="Total Paid Fees" value={feeSummary.paidFees} />
-                                            <InfoBox icon={<img src="/images/total_balance_fee.png" alt="Balance Fees" style={{ width: '45px' }} />} label="Total Balance Fees" value={feeSummary.balanceFees} />
+                                        <div className="card-premium" style={{ padding: '20px' }}>
+                                            <h4 style={{ margin: '0 0 20px 0', fontSize: '16px', fontWeight: '600', color: '#1e293b', textAlign: 'center' }}>Fee Summary</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                <InfoBox 
+                                                    icon={<div className="info-icon-box" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><GraduationCap size={22} /></div>} 
+                                                    label="Total Students Fees" 
+                                                    value={feeSummary.totalFees} 
+                                                    borderColor="#3b82f6"
+                                                    onClick={() => navigate('/admin/reports/finance', { state: { activeReport: 'Daily Collection Report' } })}
+                                                />
+                                                <InfoBox 
+                                                    icon={<div className="info-icon-box" style={{ background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ShieldCheck size={22} /></div>} 
+                                                    label="Total Paid Fees" 
+                                                    value={feeSummary.paidFees} 
+                                                    borderColor="#22c55e"
+                                                    onClick={() => navigate('/admin/reports/finance', { state: { activeReport: 'Daily Collection Report' } })}
+                                                />
+                                                <InfoBox 
+                                                    icon={<div className="info-icon-box" style={{ background: 'rgba(244, 63, 94, 0.1)', color: '#f43f5e', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IndianRupee size={22} /></div>} 
+                                                    label="Total Balance Fees" 
+                                                    value={feeSummary.balanceFees} 
+                                                    borderColor="#f43f5e"
+                                                    onClick={() => navigate('/admin/reports/finance', { state: { activeReport: 'Balance Fees Report' } })}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -347,44 +444,25 @@ const DashboardTest = () => {
                                 <div className="col-lg-9 col-md-9 col-sm-12 col-lg-pull-3 col-md-pull-3">
 
 
-                                    {/* Search Bar (Desktop) - Added as requested */}
-                                    <div className="content-search-bar hide-mobile" style={{ position: 'relative', overflow: 'hidden' }}>
-                                        {!searchQuery && (
-                                            <div className="search-scroll-placeholder">
-                                                <span className="search-text-item">Search students by name</span>
-                                            </div>
-                                        )}
-                                        <input
-                                            type="text"
-                                            className="search-input-large"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            onKeyDown={handleSearchSubmit}
-                                            style={{ background: 'transparent', position: 'relative', zIndex: 1 }}
-                                        />
-                                        <i
-                                            className="fa fa-search search-icon-large"
-                                            style={{ cursor: 'pointer', zIndex: 2, position: 'relative' }}
-                                            onClick={handleSearchSubmit}
-                                        ></i>
-                                    </div>
-
                                     {/* Welcome Card */}
-                                    <div className="row">
+                                    <div className="row" style={{ marginBottom: '0' }}>
                                         <div className="col-lg-12">
-                                            <div className="welcome-card">
-                                                <div className="welcome-text">
-                                                    <h3>Hello {userData.name} <small style={{ color: '#9055e8', fontSize: '16px' }}>({userData.role})</small></h3>
-                                                    <p>
+                                            <div className="card-premium welcome-card" style={{ background: 'linear-gradient(135deg, #ffffff 0%, #f3e8ff 100%)', border: '1px solid rgba(144, 85, 232, 0.1)' }}>
+                                                <div className="welcome-text" style={{ marginLeft: 0, padding: '10px' }}>
+                                                    <h3 style={{ marginLeft: 0, fontSize: '28px', fontWeight: '700', color: '#1e293b' }}>Welcome back, {userData.name}! 👋</h3>
+                                                    <p style={{ marginLeft: 0, fontSize: '16px', color: '#64748b', margin: '10px 0 25px 0' }}>
                                                         Check your daily fee statements
                                                     </p>
-                                                    <Link to="/admin/reports/finance" state={{ activeReport: 'Daily Collection Report' }} className="btn-check-now">Check Now</Link>
+                                                    <Link to="/admin/reports/finance" state={{ activeReport: 'Daily Collection Report' }} className="btn-check-now" style={{ marginLeft: 0, padding: '12px 24px', borderRadius: '10px' }}>
+                                                        View Daily Collection
+                                                    </Link>
                                                 </div>
                                                 <div className="welcome-image">
                                                     <img
                                                         className="welcome-illustration"
                                                         src="/images/dash_illustration.png"
                                                         alt="Welcome illustration"
+                                                        style={{ height: '200px', marginBottom: '0' }}
                                                     />
                                                 </div>
                                             </div>
@@ -392,11 +470,11 @@ const DashboardTest = () => {
                                     </div>
 
                                     {/* Attendance Progress Cards */}
-                                    <div className="col-lg-12 col-md-12 col-sm-12" style={{ padding: 0, marginTop: 20 }}>
-                                        <div className="row">
+                                    <div className="col-lg-12 col-md-12 col-sm-12" style={{ padding: 0, marginTop: '0px' }}>
+                                        <div className="row" style={{ display: 'flex', flexWrap: 'wrap' }}>
                                             <ProgressCard
                                                 title="Student Attendance"
-                                                date={currentDate}
+                                                icon={CircleUser}
                                                 progress={attendanceData.studentProgress}
                                                 current={attendanceData.studentPresent}
                                                 total={attendanceData.totalStudents}
@@ -404,12 +482,11 @@ const DashboardTest = () => {
                                                 expandLink="/admin/reports/attendance"
                                                 linkState={{ activeReport: 'class_attendance' }}
                                             />
-                                            {/* Staff Attendance and Fee Collection - Hidden for Teachers */}
                                             {!isTeacher && (
                                                 <>
                                                     <ProgressCard
                                                         title="Staff Attendance"
-                                                        date={currentDate}
+                                                        icon={CheckCircle2}
                                                         progress={attendanceData.staffProgress}
                                                         current={attendanceData.staffPresent}
                                                         total={attendanceData.totalStaff}
@@ -419,7 +496,7 @@ const DashboardTest = () => {
                                                     />
                                                     <ProgressCard
                                                         title="Fee Collection"
-                                                        date={currentDate}
+                                                        icon={Banknote}
                                                         progress={attendanceData.feesProgress}
                                                         current={attendanceData.feesPaid}
                                                         total={attendanceData.totalFees}
@@ -433,31 +510,40 @@ const DashboardTest = () => {
 
                                     {/* Admission Intake Table - Hidden for Teachers */}
                                     {!isTeacher && (
-                                        <div className="col-lg-12 col-md-12 col-sm-12" style={{ padding: 0, marginTop: 20 }}>
-                                            <div className="border-radius-20 box box-primary" style={{ padding: 20 }}>
-                                                <h4 className="fee-summary-title">Admission Intake</h4>
-                                                <table className="table">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Class</th>
-                                                            <th>Section</th>
-                                                            <th>Intake</th>
-                                                            <th>Admitted</th>
-                                                            <th>Vacancies</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {vacancies.map((item, index) => (
-                                                            <tr key={index}>
-                                                                <td className="mailbox-name">{item.class}</td>
-                                                                <td className="mailbox-name">{item.section}</td>
-                                                                <td className="mailbox-name">{item.intake}</td>
-                                                                <td className="mailbox-name">{item.admitted}</td>
-                                                                <td className="mailbox-name">{item.vacancies}</td>
+                                        <div className="col-lg-12 col-md-12 col-sm-12" style={{ padding: 0, marginTop: '15px' }}>
+                                            <div className="card-premium">
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                                    <h4 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Admission Intake</h4>
+                                                    <span className="badge-vacancies badge-neutral">Session {sessionYear}</span>
+                                                </div>
+                                                <div className="modern-table-container">
+                                                    <table className="modern-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Class</th>
+                                                                <th>Section</th>
+                                                                <th>Intake</th>
+                                                                <th>Admitted</th>
+                                                                <th>Vacancies</th>
                                                             </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
+                                                        </thead>
+                                                        <tbody>
+                                                            {vacancies.map((item, index) => (
+                                                                <tr key={index}>
+                                                                    <td style={{ fontWeight: '500' }}>{item.class}</td>
+                                                                    <td>{item.section}</td>
+                                                                    <td>{item.intake}</td>
+                                                                    <td>{item.admitted}</td>
+                                                                    <td>
+                                                                        <span className={`badge-vacancies ${item.vacancies > 0 ? 'badge-positive' : 'badge-neutral'}`}>
+                                                                            {item.vacancies}
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -468,7 +554,7 @@ const DashboardTest = () => {
                 </div >
 
                 <Footer />
-                <div className="control-sidebar-bg"></div>
+             
             </div >
         </>
     );
