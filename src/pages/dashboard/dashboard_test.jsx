@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Loader from '../../components/Loader';
-import { CircleUser, CheckCircle2, Clock, Banknote, ArrowRight, Pencil, GraduationCap, ShieldCheck, IndianRupee, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { CircleUser, CheckCircle2, Clock, Banknote, ArrowRight, Pencil, GraduationCap, ShieldCheck, IndianRupee, ChevronRight, ArrowUpRight, MoreHorizontal } from 'lucide-react';
 import '../../utils/include_files.js';
 import api from '../../services/api';
 import './dashboard_test.css';
@@ -193,57 +193,47 @@ const DashboardTest = () => {
 
     // ========== SUB-COMPONENTS ==========
 
-    // Progress Card Component
-    const ProgressCard = ({ title, date, progress, current, total, colorClass, icon: Icon, expandLink = '#', linkState = {} }) => {
-        const colorMap = {
-            blue: 'var(--premium-student)',
-            maroon: 'var(--premium-staff)',
-            orange: 'var(--premium-fee)'
-        };
-        const themeColor = colorMap[colorClass] || 'var(--premium-primary)';
-
+    // Progress Card Component - Updated to Option 4 (Progress Circle)
+    const ProgressCard = ({ title, progress, current, total, colorClass, icon: Icon, expandLink = '#', linkState = {} }) => {
+        const themeColor = '#9055e8'; // Use consistent purple from reference
+        
         return (
             <div className="col-lg-4 col-md-4 col-sm-12">
-                <div className="card-premium progress-card-new">
-                    <div className="progress-header">
-                        <div className="progress-title-area">
-                            <h4>{title}</h4>
-                            <h3>{current} <small style={{ fontSize: '14px', color: '#64748b' }}>/ {total}</small></h3>
+                <div className="progress-card-v4">
+                    <div className="v4-header">
+                        <div className="v4-date">May 13, 2026</div>
+                    </div>
+                    <div className="v4-body">
+                        <div className="v4-circle-container">
+                            <svg className="v4-circle-svg" viewBox="0 0 100 100">
+                                <circle className="v4-circle-bg" cx="50" cy="50" r="40" />
+                                <circle 
+                                    className="v4-circle-bar" 
+                                    cx="50" 
+                                    cy="50" 
+                                    r="40" 
+                                    strokeDasharray="251.3" 
+                                    strokeDashoffset={251.3 - (251.3 * (progress || 0) / 100)} 
+                                />
+                            </svg>
+                            <div className="v4-circle-text">
+                                <span className="v4-percent">{progress.toFixed(2)}%</span>
+                                <span className="v4-label">Progress</span>
+                            </div>
                         </div>
-                        <div className="progress-icon-box" style={{ background: `${themeColor}15`, color: themeColor }}>
-                            {Icon && <Icon size={24} />}
+                        <div className="v4-info">
+                            <div className="v4-title">{title}</div>
+                            <div className="v4-subtitle">Today</div>
                         </div>
                     </div>
-
-                    <div className="progress-bar-container">
-                        <div className="progress-stats">
-                            <span>Today's Progress</span>
-                            <span style={{ color: themeColor, fontWeight: '600' }}>{progress.toFixed(1)}%</span>
-                        </div>
-                        <div className="custom-progress">
-                            <div
-                                className="custom-progress-fill"
-                                style={{ width: `${progress}%`, background: themeColor }}
-                            />
+                    <div className="v4-footer">
+                        <Link to={expandLink} state={linkState} className="v4-action-btn">
+                            <ArrowRight size={18} />
+                        </Link>
+                        <div className={`v4-badge ${colorClass === 'orange' ? 'orange' : ''}`}>
+                            {current}/{total}
                         </div>
                     </div>
-
-                    <Link to={expandLink} state={linkState} className="btn-check-now" style={{
-                        marginTop: '20px',
-                        padding: '8px 16px',
-                        fontSize: '12px',
-                        marginLeft: 0,
-                        backgroundColor: `${themeColor}15`,
-                        color: themeColor,
-                        border: `1px solid ${themeColor}40`,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        borderRadius: '8px',
-                        fontWeight: '600'
-                    }}>
-                        View Details <ArrowRight size={14} />
-                    </Link>
                 </div>
             </div>
         );
@@ -283,6 +273,36 @@ const DashboardTest = () => {
         <>
             {/* Custom Styles */}
             <style>{`
+                .profile-card-v2 {
+                    background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%) !important;
+                    padding: 0 !important;
+                    border-radius: 20px !important;
+                    border: none !important;
+                    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3) !important;
+                    color: #fff !important;
+                }
+                .profile-card-v2 .avatar-white-bg {
+                    background: #fff !important;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+                }
+                .profile-card-v2 .edit-btn-v2 {
+                    background: #fff !important;
+                    color: #7c3aed !important;
+                    border: none !important;
+                }
+                .profile-card-v2 .divider-v2 {
+                    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+                }
+                .profile-card-v2 .role-text {
+                    color: rgba(255, 255, 255, 0.9) !important;
+                }
+                .profile-card-v2 .name-text {
+                    color: #fff !important;
+                }
+                .profile-card-v2 .footer-link-v2 {
+                    color: #fff !important;
+                }
+
                 .footer-menu {
                     background-color: #fff;
                     position: fixed;
@@ -328,7 +348,7 @@ const DashboardTest = () => {
 
                 {/* ==================== MAIN CONTENT ==================== */}
                 <div className="content-wrapper">
-                    <section className="content">
+                    <section className="content" style={{ paddingTop: '0' }}>
                         {loading ? (
                             <Loader type="dashboard" />
                         ) : (
@@ -337,74 +357,59 @@ const DashboardTest = () => {
                                 {/* Right Section - Fee Summary (Moved first for Mobile Flow) */}
                                 <div className="mt-10 col-lg-3 col-md-3 col-sm-12 col-lg-push-9 col-md-push-9">
                                     {/* User Profile Card */}
-                                    <div className="card-premium hide-on-mobile" style={{ 
-                                        marginTop: '15px', 
-                                        padding: '0', 
-                                        background: '#fff',
-                                        borderRadius: '16px',
-                                        boxShadow: '0 8px 25px rgba(0,0,0,0.04)',
-                                        position: 'relative',
-                                        overflow: 'hidden',
-                                        border: '1px solid #f8fafc'
-                                    }}>
+                                    <div className="card-premium hide-on-mobile profile-card-v2" style={{ marginTop: '7px' }}>
                                         {/* Top Section */}
-                                        <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                            {/* Avatar Container - Rounded Square */}
-                                            <div style={{
-                                                width: '75px',
-                                                height: '75px',
-                                                borderRadius: '20px',
-                                                background: '#FFF9E5', // Pale yellow background from image
+                                        <div style={{ padding: '38px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                            {/* Avatar Container - Circular */}
+                                            <div className="avatar-white-bg" style={{
+                                                width: '70px',
+                                                height: '70px',
+                                                borderRadius: '50%',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 flexShrink: 0
                                             }}>
-                                                <CircleUser size={50} color="#FFD700" strokeWidth={1.5} />
+                                                <CircleUser size={45} color="#7c3aed" strokeWidth={1.5} />
                                             </div>
 
                                             {/* Text Section */}
                                             <div style={{ flex: 1 }}>
-                                                <h5 style={{ margin: 0, fontSize: '14px', color: '#64748b', fontWeight: '400', fontFamily: 'Inter, sans-serif' }}>{userData.role}</h5>
-                                                <h3 style={{ margin: '2px 0 0 0', fontSize: '20px', fontWeight: '700', color: '#1e293b' }}>{userData.name}</h3>
+                                                <h5 className="role-text" style={{ margin: 0, fontSize: '13px', fontWeight: '400', fontFamily: 'Inter, sans-serif' }}>{userData.role}</h5>
+                                                <h3 className="name-text" style={{ margin: '2px 0 0 0', fontSize: '20px', fontWeight: '700' }}>{userData.name}</h3>
                                             </div>
 
                                             {/* Edit Button - Top Right rounded square */}
-                                            <Link to={`/admin/staff/edit/${userData.id}`} style={{ 
+                                            <Link to={`/admin/staff/edit/${userData.id}`} className="edit-btn-v2" style={{ 
                                                 position: 'absolute',
                                                 top: '15px',
                                                 right: '15px',
                                                 width: '32px',
                                                 height: '32px',
                                                 borderRadius: '8px',
-                                                background: '#fff',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                color: '#334155',
-                                                border: '1.5px solid #f1f5f9',
-                                                boxShadow: '0 2px 5px rgba(0,0,0,0.02)',
                                                 transition: 'all 0.2s'
-                                            }} className="btn-edit-square">
+                                            }}>
                                                 <Pencil size={16} />
                                             </Link>
                                         </div>
 
                                         {/* Divider Line */}
-                                        <div style={{ borderTop: '1px solid #f1f5f9', width: '100%' }}></div>
+                                        <div className="divider-v2" style={{ width: '100%' }}></div>
 
                                         {/* Footer Section */}
                                         <div style={{ padding: '14px 20px' }}>
-                                            <Link to={`/admin/staff/profile/${userData.id}`} style={{ 
-                                                fontSize: '15px', 
-                                                color: '#6366f1', // Vibrant purple-blue
+                                            <Link to={`/admin/staff/profile/${userData.id}`} className="footer-link-v2" style={{ 
+                                                fontSize: '14px', 
                                                 fontWeight: '600', 
                                                 textDecoration: 'none',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '8px'
                                             }}>
-                                                View Profile <ArrowUpRight size={18} />
+                                                View Profile <ArrowUpRight size={16} />
                                             </Link>
                                         </div>
                                     </div>
@@ -510,7 +515,7 @@ const DashboardTest = () => {
 
                                     {/* Admission Intake Table - Hidden for Teachers */}
                                     {!isTeacher && (
-                                        <div className="col-lg-12 col-md-12 col-sm-12" style={{ padding: 0, marginTop: '15px' }}>
+                                        <div className="col-lg-12 col-md-12 col-sm-12" style={{ padding: 0, marginTop: '5px' }}>
                                             <div className="card-premium">
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                                     <h4 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Admission Intake</h4>
