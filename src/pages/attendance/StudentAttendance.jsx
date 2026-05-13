@@ -400,7 +400,7 @@ const StudentAttendance = () => {
                     <div className="table-responsive">
                         <table className="table table-hover" style={{ margin: 0 }}>
                             <thead>
-                                <tr style={{ background: '#f8fafc' }}>
+                                <tr className="modern-table-header">
                                     {visibleColumns.has('select') && (
                                         <th style={{ padding: '12px 24px', borderBottom: '1px solid #e2e8f0' }}>
                                             <input
@@ -420,7 +420,7 @@ const StudentAttendance = () => {
                             </thead>
                             <tbody>
                                 {currentRecords.map((student, index) => (
-                                    <tr key={student.student_session_id}>
+                                    <tr key={student.student_session_id} className="modern-table-row">
                                         {visibleColumns.has('select') && (
                                             <td style={{ padding: '12px 24px', borderBottom: '1px solid #f1f5f9' }}>
                                                 <input

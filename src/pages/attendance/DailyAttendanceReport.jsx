@@ -190,7 +190,7 @@ const DailyAttendanceReport = () => {
                     <div className="table-responsive">
                         <table className="table table-hover" style={{ margin: 0 }}>
                             <thead>
-                                <tr style={{ background: '#f8fafc' }}>
+                                <tr className="modern-table-header">
                                     {visibleColumns.has('class_section') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Class (Section)</th>}
                                     {visibleColumns.has('total_present') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Total Present</th>}
                                     {visibleColumns.has('total_absent') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Total Absent</th>}
@@ -202,7 +202,7 @@ const DailyAttendanceReport = () => {
                                 {currentData.length > 0 ? (
                                     <>
                                         {currentData.map((value, index) => (
-                                            <tr key={index}>
+                                            <tr key={index} className="modern-table-row">
                                                 {visibleColumns.has('class_section') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{getClassSection(value)}</td>}
                                                 {visibleColumns.has('total_present') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{value.total_present}</td>}
                                                 {visibleColumns.has('total_absent') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{value.total_absent}</td>}

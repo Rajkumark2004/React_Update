@@ -1,0 +1,105 @@
+.homework-header-section {
+    background: linear-gradient(135deg, #7c4dff 0%, #448aff 100%);
+    padding: 30px 30px 60px 30px;
+    color: white;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.homework-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.homework-titles h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.homework-titles p {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.homework-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+    max-width: 1400px;
+    margin: 25px auto 0;
+    position: absolute;
+    left: 30px;
+    right: 30px;
+    bottom: -40px;
+    z-index: 10;
+}
+
+.homework-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-decoration: none !important;
+    color: #1e293b !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.homework-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.homework-card.active {
+    border-color: #7c4dff;
+    background-color: #f5f3ff;
+}
+
+.homework-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.homework-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.homework-card-icon {
+    font-size: 18px;
+}
+
+.homework-card-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.homework-card-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+    .homework-header-section {
+        padding: 20px 15px 100px 15px;
+    }
+    
+    .homework-summary-cards {
+        position: static;
+        margin-top: 20px;
+        grid-template-columns: 1fr;
+    }
+}

@@ -28,7 +28,8 @@ import {
     Award,
     Wallet,
     Building,
-    BarChart3
+    BarChart3,
+    ArrowRight
 } from 'lucide-react';
 import { useSession } from '../../context/SessionContext';
 
@@ -181,65 +182,67 @@ export default function Dashboard() {
                                 <div className="dashboard-row" style={{ gap: '15px' }}>
                                     {/* STUDENT ATTENDANCE */}
                                     <div className="stat-card">
-                                        <div className="stat-header">
-                                            <div className="stat-date">Jan 9, 2026</div>
-                                            <div className="stat-title">Student Attendance</div>
-                                            <div className="stat-subtitle">Today</div>
+                                        <div className="stat-icon-container">
+                                            <GraduationCap size={20} className="purple-icon" />
                                         </div>
-                                        <div className="progress-container">
-                                            <div className="progress-bar" style={{ width: '0%', background: '#d32f2f' }}></div>
+                                        <div className="stat-header">
+                                            <div className="stat-title">Student Attendance</div>
+                                            <div className="stat-subtitle">May 11, 2026</div>
                                         </div>
                                         <div className="progress-text">
                                             <span>Progress</span>
                                             <span>0.00%</span>
                                         </div>
-                                        <div className="stat-avatars">
-                                            <div className="stat-avatar"></div>
-                                            <div className="stat-avatar"></div>
-                                            <div className="icon-circle-add"><Plus size={14} /></div>
-                                            <div className="stat-badge-count">0/54</div>
+                                        <div className="progress-container">
+                                            <div className="progress-bar" style={{ width: '0%', background: '#e0d4fc' }}></div>
+                                        </div>
+                                        <div className="stat-bottom">
+                                            <div className="icon-circle-arrow"><ArrowRight size={14} /></div>
+                                            <div className="stat-badge-count">0/528</div>
                                         </div>
                                     </div>
 
                                     {/* STAFF ATTENDANCE */}
                                     <div className="stat-card">
+                                        <div className="stat-icon-container">
+                                            <Building size={20} className="purple-icon" />
+                                        </div>
                                         <div className="stat-header">
-                                            <div className="stat-date">Jan 9, 2026</div>
                                             <div className="stat-title">Staff Attendance</div>
                                             <div className="stat-subtitle">Today</div>
-                                        </div>
-                                        <div className="progress-container">
-                                            <div className="progress-bar" style={{ width: '0%', background: '#1976d2' }}></div>
                                         </div>
                                         <div className="progress-text">
                                             <span>Progress</span>
                                             <span>0.00%</span>
                                         </div>
-                                        <div className="stat-avatars">
-                                            <div className="stat-avatar"></div>
-                                            <div className="icon-circle-add" style={{ background: '#1976d2' }}><Plus size={14} /></div>
-                                            <div className="stat-badge-count blue">0/11</div>
+                                        <div className="progress-container">
+                                            <div className="progress-bar" style={{ width: '0%', background: '#e0d4fc' }}></div>
+                                        </div>
+                                        <div className="stat-bottom">
+                                            <div className="icon-circle-arrow"><ArrowRight size={14} /></div>
+                                            <div className="stat-badge-count">0/40</div>
                                         </div>
                                     </div>
 
                                     {/* FEE COLLECTION */}
                                     <div className="stat-card">
+                                        <div className="stat-icon-container">
+                                            <CreditCard size={20} className="purple-icon" />
+                                        </div>
                                         <div className="stat-header">
-                                            <div className="stat-date">Jan 9, 2026</div>
                                             <div className="stat-title">Fee Collection</div>
                                             <div className="stat-subtitle">Today</div>
                                         </div>
-                                        <div className="progress-container">
-                                            <div className="progress-bar" style={{ width: '10%', background: '#ff9800' }}></div>
-                                        </div>
                                         <div className="progress-text">
                                             <span>Progress</span>
-                                            <span>9.72%</span>
+                                            <span>0.00%</span>
                                         </div>
-                                        <div className="stat-avatars">
-                                            <div className="stat-avatar"></div>
-                                            <div className="icon-circle-add" style={{ background: '#ff9800' }}><Plus size={14} /></div>
-                                            <div className="stat-badge-count orange">7/72</div>
+                                        <div className="progress-container">
+                                            <div className="progress-bar" style={{ width: '0%', background: '#e0d4fc' }}></div>
+                                        </div>
+                                        <div className="stat-bottom">
+                                            <div className="icon-circle-arrow"><ArrowRight size={14} /></div>
+                                            <div className="stat-badge-count orange">0/0</div>
                                         </div>
                                     </div>
 
@@ -300,32 +303,32 @@ export default function Dashboard() {
                                     <h3 className="card-title" style={{ fontSize: '16px', marginBottom: '20px' }}>Fee Summary</h3>
 
                                     <div className="fee-summary-item">
-                                        <div className="fee-icon-box purple">
-                                            <GraduationCap size={24} />
+                                        <div className="fee-icon-box outline-purple">
+                                            <GraduationCap size={24} strokeWidth={1.5} />
                                         </div>
                                         <div className="fee-text">
                                             <span className="fee-label">TOTAL STUDENTS FEES</span>
-                                            <span className="fee-amount">Rs. 252,200.00</span>
+                                            <span className="fee-amount">Rs. 2,702,270</span>
                                         </div>
                                     </div>
 
                                     <div className="fee-summary-item">
-                                        <div className="fee-icon-box pink">
-                                            <CheckSquare size={24} />
+                                        <div className="fee-icon-box outline-purple">
+                                            <Award size={24} strokeWidth={1.5} />
                                         </div>
                                         <div className="fee-text">
                                             <span className="fee-label">TOTAL PAID FEES</span>
-                                            <span className="fee-amount">Rs. 32,100.00</span>
+                                            <span className="fee-amount">Rs. 1,707,524</span>
                                         </div>
                                     </div>
 
                                     <div className="fee-summary-item">
-                                        <div className="fee-icon-box green">
-                                            <CreditCard size={24} />
+                                        <div className="fee-icon-box outline-purple">
+                                            <IndianRupee size={24} strokeWidth={1.5} />
                                         </div>
                                         <div className="fee-text">
                                             <span className="fee-label">TOTAL BALANCE FEES</span>
-                                            <span className="fee-amount">Rs. 220,100.00</span>
+                                            <span className="fee-amount">Rs. 994,746</span>
                                         </div>
                                     </div>
 

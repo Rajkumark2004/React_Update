@@ -1,0 +1,133 @@
+/* MODERN TABLE SHARED STYLES */
+
+.modern-table-row td {
+    padding: 16px 24px !important;
+    vertical-align: middle !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 14px;
+    color: #1e293b;
+}
+
+.modern-table-row:hover {
+    background-color: #f8fafc !important;
+}
+
+.modern-table-header th {
+    padding: 12px 24px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+}
+
+/* SETUP TABLES SPECIFIC (Source/Reference etc) */
+.setup-table .modern-table-row td {
+    padding: 16px 35px !important;
+}
+
+.setup-table .modern-table-row td:first-child,
+.setup-table .modern-table-header th:first-child {
+    padding-left: 45px !important;
+}
+
+.setup-table .modern-table-row td:last-child,
+.setup-table .modern-table-header th:last-child {
+    padding-right: 45px !important;
+}
+
+.setup-table .modern-table-header th {
+    padding: 12px 35px !important;
+}
+
+/* Action Buttons */
+.action-btns-wrapper {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.action-btn-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.action-btn-circle:hover {
+    background: #e2e8f0;
+}
+
+.btn-phone-circle {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.btn-phone-circle:hover {
+    background: #7c3aed;
+    color: #fff;
+}
+
+.btn-edit-circle {
+    background: #eff6ff;
+    color: #3b82f6;
+}
+
+.btn-edit-circle:hover {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.btn-delete-circle {
+    background: #fef2f2;
+    color: #ef4444;
+}
+
+.btn-delete-circle:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+.btn-view-circle {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.btn-view-circle:hover {
+    background: #16a34a;
+    color: #fff;
+}
+
+/* Icons in Cells */
+.cell-icon-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+}
+
+.cell-icon {
+    color: #8b5cf6;
+    opacity: 0.8;
+}
+
+/* Avatars */
+.enquiry-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}

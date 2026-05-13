@@ -281,7 +281,7 @@ const AttendanceReport = () => {
                     <div className="table-responsive">
                         <table className="table table-hover" style={{ margin: 0 }}>
                             <thead>
-                                <tr style={{ background: '#f8fafc' }}>
+                                <tr className="modern-table-header">
                                     {visibleColumns.has('sno') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>S.NO</th>}
                                     {visibleColumns.has('admission_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Admission No</th>}
                                     {visibleColumns.has('roll_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Roll Number</th>}
@@ -295,7 +295,7 @@ const AttendanceReport = () => {
                                     const attLabel = student.att_type || 'Unknown';
                                     const attClass = getClassForType(attLabel);
                                     return (
-                                        <tr key={index}>
+                                        <tr key={index} className="modern-table-row">
                                             {visibleColumns.has('sno') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{indexOfFirstItem + index + 1}</td>}
                                             {visibleColumns.has('admission_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{student.admission_no}</td>}
                                             {visibleColumns.has('roll_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{student.roll_no}</td>}
