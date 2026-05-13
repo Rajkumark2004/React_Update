@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Header from '../../components/Header';
-import Sidebar from '../../components/Sidebar';
-import Footer from '../../components/Footer';
+import React, { useState, useEffect } from 'react';
 import Loader from '../../components/Loader';
-import AttendanceSidebar from '../../components/AttendanceSidebar';
 import { api } from '../../services/api';
 import { buildExportData } from '../../utils/tableExport';
-import TableToolbar from '../../utils/TableToolbar';
-import Pagination from '../../utils/Pagination';
+import PremiumTableToolbar from '../../utils/PremiumTableToolbar';
+import AttendanceLayout from './AttendanceLayout';
+import toast from 'react-hot-toast';
 
 const AttendanceReport = () => {
     const [loading, setLoading] = useState(false);
@@ -97,14 +94,38 @@ const AttendanceReport = () => {
         fetchClasses();
     }, []);
 
+    const getInitials = (name) => {
+        if (!name) return '';
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
+
+    const getAvatarColor = (name) => {
+        const colors = [
+            { bg: '#e0f2fe', text: '#0284c7' },
+            { bg: '#f3e8ff', text: '#9333ea' },
+            { bg: '#dcfce7', text: '#16a34a' },
+            { bg: '#fef3c7', text: '#d97706' },
+            { bg: '#ffe4e6', text: '#e11d48' },
+        ];
+        let hash = 0;
+        if (name) {
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+        }
+        return colors[Math.abs(hash) % colors.length];
+    };
+
     const fetchClasses = async () => {
         try {
             // Use getStudentCreate which returns the classlist reliably
             const response = await api.getStudentCreate();
             if (response && response.status === 'success' && response.data && response.data.classlist) {
                 setClassList(response.data.classlist);
-            } else {
-                setClassList([]);
             }
         } catch (error) {
             console.error('Error fetching classes:', error);
@@ -125,10 +146,8 @@ const AttendanceReport = () => {
                     setSectionList(response.data);
                 } else if (Array.isArray(response)) {
                     setSectionList(response);
-                } else if (response && response.sections) {
-                    setSectionList(response.sections);
                 } else {
-                    setSectionList(response.data || []);
+                    setSectionList(response.data || response.sections || []);
                 }
             } catch (error) {
                 console.error('Error fetching sections:', error);
@@ -137,7 +156,7 @@ const AttendanceReport = () => {
     };
 
     const handleSearch = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setStudentList([]);
         setErrors({});
 
@@ -159,11 +178,7 @@ const AttendanceReport = () => {
 
             if (data.status && data.students) {
                 setStudentList(data.students);
-                if (data.students.length === 0) {
-                    toast.error('No attendance records found');
-                } else {
-                    toast.success('Attendance records loaded');
-                }
+                toast.success('Attendance records loaded');
             } else {
                 toast.error(data.message || 'Attendance not submitted for this class');
             }
@@ -175,171 +190,177 @@ const AttendanceReport = () => {
     };
 
     return (
-        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Header />
-            <Sidebar />
-            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                <section className="content-header">
-                    <h1>
-                        <i className="fa fa-calendar-check-o"></i> Attendance <small>by date</small>
-                    </h1>
-                </section>
-                <section className="content">
-                    {initialLoading ? (
-                        <Loader />
-                    ) : (
-                        <div className="row">
-                            <div className="col-md-12">
-                                <div className="box box-primary">
-                                    <div className="box-header with-border">
-                                        <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
-                                        <div className="btn-group pull-right">
-                                            <button onClick={() => window.history.back()} className="btn btn-primary btn-xs">
-                                                <i className="fa fa-arrow-left"></i> Back
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <form onSubmit={handleSearch}>
-                                        <div className="box-body">
-                                            <div className="row">
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Class <small className="req"> *</small></label>
-                                                        <select
-                                                            className="form-control"
-                                                            value={formData.class_id}
-                                                            onChange={handleClassChange}
-                                                        >
-                                                            <option value="">Select</option>
-                                                            {classList.map(cls => (
-                                                                <option key={cls.id} value={cls.id}>{cls.class}</option>
-                                                            ))}
-                                                        </select>
-                                                        {errors.class_id && <span className="text-danger">{errors.class_id}</span>}
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Section <small className="req"> *</small></label>
-                                                        <select
-                                                            className="form-control"
-                                                            value={formData.section_id}
-                                                            onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
-                                                        >
-                                                            <option value="">Select</option>
-                                                            {sectionList.map(sec => (
-                                                                <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
-                                                            ))}
-                                                        </select>
-                                                        {errors.section_id && <span className="text-danger">{errors.section_id}</span>}
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Attendance Date <small className="req"> *</small></label>
-                                                        <div className="input-group" style={{ position: 'relative', width: '100%', borderBottom: '1px solid #ccc' }}>
-                                                            <input
-                                                                type="date"
-                                                                className="form-control"
-                                                                value={formData.date}
-                                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                                                max={new Date().toISOString().split('T')[0]}
-                                                                style={{ width: '100%', border: 'none', background: 'transparent', boxShadow: 'none', paddingLeft: 0, paddingBottom: '4px' }}
-                                                            />
-                                                        </div>
-                                                        {errors.date && <span className="text-danger">{errors.date}</span>}
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-12">
-                                                    <div className="form-group">
-                                                        <button type="submit" className="btn btn-primary btn-sm pull-right checkbox-toggle">
-                                                            <i className="fa fa-search"></i> Search
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </form>
-
-                                    {studentList.length > 0 && (
-                                        <div className="">
-                                            <div className="box-header ptbnull"></div>
-                                            <div className="box-header with-border">
-                                                <h3 className="box-title"><i className="fa fa-users"></i> Attendance List</h3>
-                                            </div>
-                                            <div className="box-body">
-                                                <div style={{ padding: '8px 10px', borderBottom: '1px solid #f4f4f4' }}>
-                                                    <TableToolbar
-                                                        searchTerm={searchTerm}
-                                                        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                                                        recordsPerPage={recordsPerPage}
-                                                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
-                                                        columns={columns}
-                                                        visibleColumns={visibleColumns}
-                                                        onToggleColumn={handleToggleColumn}
-                                                        getExportData={getExportData}
-                                                        exportFileName="attendance_report"
-                                                        exportTitle="Attendance Report"
-                                                    />
-                                                </div>
-
-                                                <div className="mailbox-controls">
-                                                    <div className="pull-right"></div>
-                                                </div>
-                                                <div className="download_label">Attendance List</div>
-                                                <div className="table-responsive">
-                                                    <table className="table table-hover table-striped example">
-                                                        <thead>
-                                                            <tr>
-                                                                {visibleColumns.has('sno') && <th>S.NO</th>}
-                                                                {visibleColumns.has('admission_no') && <th>Admission No</th>}
-                                                                {visibleColumns.has('roll_no') && <th>Roll Number</th>}
-                                                                {visibleColumns.has('name') && <th>Name</th>}
-                                                                {visibleColumns.has('attendance') && <th>Attendance</th>}
-                                                                {visibleColumns.has('note') && <th>Note</th>}
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {currentRecords.map((student, index) => {
-                                                                const attLabel = student.att_type || 'Unknown';
-                                                                const attClass = getClassForType(attLabel);
-                                                                return (
-                                                                    <tr key={index}>
-                                                                        {visibleColumns.has('sno') && <td>{indexOfFirstItem + index + 1}</td>}
-                                                                        {visibleColumns.has('admission_no') && <td>{student.admission_no}</td>}
-                                                                        {visibleColumns.has('roll_no') && <td>{student.roll_no}</td>}
-                                                                        {visibleColumns.has('name') && <td>{student.firstname} {student.lastname}</td>}
-                                                                        {visibleColumns.has('attendance') && <td>
-                                                                            <small className={attClass}>
-                                                                                {attLabel}
-                                                                            </small>
-                                                                        </td>}
-                                                                        {visibleColumns.has('note') && <td>{student.remark}</td>}
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                <div className="pt15 pb15">
-                                                    <Pagination 
-                                                        totalItems={totalItems} 
-                                                        itemsPerPage={recordsPerPage} 
-                                                        currentPage={currentPage}
-                                                        onPageChange={(page) => setCurrentPage(page)}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+        <AttendanceLayout activeTab="date">
+            <div className="sis-search-bar-container" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                <div className="sis-search-bar-header">
+                    <h3 className="sis-search-title" style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '600', color: '#1e293b' }}>Select Criteria</h3>
+                </div>
+                <form onSubmit={handleSearch}>
+                    <div className="sis-filter-row" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Class <span className="req">*</span></label>
+                            <select
+                                className="form-control sis-filter-select"
+                                value={formData.class_id}
+                                onChange={handleClassChange}
+                                style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                            >
+                                <option value="">Select</option>
+                                {classList.map(cls => (
+                                    <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                ))}
+                            </select>
+                            {errors.class_id && <span className="text-danger" style={{ fontSize: '11px' }}>{errors.class_id}</span>}
                         </div>
-                    )}
-                </section>
+                        <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Section <span className="req">*</span></label>
+                            <select
+                                className="form-control sis-filter-select"
+                                value={formData.section_id}
+                                onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
+                                style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                            >
+                                <option value="">Select</option>
+                                {sectionList.map(sec => (
+                                    <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
+                                ))}
+                            </select>
+                            {errors.section_id && <span className="text-danger" style={{ fontSize: '11px' }}>{errors.section_id}</span>}
+                        </div>
+                        <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Attendance Date <span className="req">*</span></label>
+                            <input
+                                type="date"
+                                className="form-control sis-filter-select"
+                                value={formData.date}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                max={new Date().toISOString().split('T')[0]}
+                                style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                            />
+                            {errors.date && <span className="text-danger" style={{ fontSize: '11px' }}>{errors.date}</span>}
+                        </div>
+                        <div className="sis-filter-col" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                            <button type="submit" className="btn btn-primary sis-apply-btn" disabled={loading} style={{ height: '40px', padding: '0 24px', borderRadius: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <i className={`fa ${loading ? 'fa-spinner fa-spin' : 'fa-search'}`}></i> {loading ? 'Searching...' : 'Search'}
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
-            <Footer />
-        </div>
+
+            {studentList.length > 0 && (
+                <div className="sis-list-container" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                    <div className="sis-list-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Attendance List ({totalItems})</h3>
+                    </div>
+
+                    <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
+                    <div style={{ position: 'relative', width: '300px' }}>
+                        <i className="fa fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}></i>
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="form-control"
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            style={{ paddingLeft: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                        />
+                    </div>
+                    <PremiumTableToolbar
+                        columns={columns}
+                        visibleColumns={visibleColumns}
+                        onToggleColumn={handleToggleColumn}
+                        getExportData={getExportData}
+                        exportFileName="attendance_report"
+                        exportTitle="Attendance Report"
+                        recordsPerPage={recordsPerPage}
+                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                    />
+                </div>
+
+                    <div className="table-responsive">
+                        <table className="table table-hover" style={{ margin: 0 }}>
+                            <thead>
+                                <tr style={{ background: '#f8fafc' }}>
+                                    {visibleColumns.has('sno') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>S.NO</th>}
+                                    {visibleColumns.has('admission_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Admission No</th>}
+                                    {visibleColumns.has('roll_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Roll Number</th>}
+                                    {visibleColumns.has('name') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Name</th>}
+                                    {visibleColumns.has('attendance') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Attendance</th>}
+                                    {visibleColumns.has('note') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Note</th>}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentRecords.map((student, index) => {
+                                    const attLabel = student.att_type || 'Unknown';
+                                    const attClass = getClassForType(attLabel);
+                                    return (
+                                        <tr key={index}>
+                                            {visibleColumns.has('sno') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{indexOfFirstItem + index + 1}</td>}
+                                            {visibleColumns.has('admission_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{student.admission_no}</td>}
+                                            {visibleColumns.has('roll_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{student.roll_no}</td>}
+                                            {visibleColumns.has('name') && (
+                                                <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{ 
+                                                            width: '32px', height: '32px', borderRadius: '50%', 
+                                                            backgroundColor: getAvatarColor(`${student.firstname} ${student.lastname}`).bg, 
+                                                            color: getAvatarColor(`${student.firstname} ${student.lastname}`).text,
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            fontWeight: '600', fontSize: '13px', flexShrink: 0
+                                                        }}>
+                                                            {getInitials(`${student.firstname} ${student.lastname}`)}
+                                                        </div>
+                                                        <div style={{ fontWeight: '500' }}>{student.firstname} {student.lastname}</div>
+                                                    </div>
+                                                </td>
+                                            )}
+                                            {visibleColumns.has('attendance') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>
+                                                <span className={attClass} style={{ borderRadius: '4px', padding: '2px 8px' }}>
+                                                    {attLabel}
+                                                </span>
+                                            </td>}
+                                            {visibleColumns.has('note') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{student.remark}</td>}
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                    {!initialLoading && totalItems > 0 && (
+                    <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
+                        <div style={{ color: '#64748b', fontSize: '14px' }}>
+                            Showing {(currentPage - 1) * safeRecordsPerPage + 1} to {Math.min(currentPage * safeRecordsPerPage, totalItems)} of {totalItems} entries
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button 
+                                className="btn btn-default btn-sm" 
+                                disabled={currentPage === 1} 
+                                onClick={() => setCurrentPage(prev => prev - 1)} 
+                                style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage === 1 ? '#cbd5e1' : '#475569' }}
+                            >
+                                <i className="fa fa-angle-left"></i>
+                            </button>
+                            <button 
+                                className="btn btn-sm" 
+                                style={{ borderRadius: '6px', background: '#7c3aed', color: '#ffffff', minWidth: '32px', fontWeight: '600' }}
+                            >
+                                {currentPage}
+                            </button>
+                            <button 
+                                className="btn btn-default btn-sm" 
+                                disabled={currentPage >= totalPages} 
+                                onClick={() => setCurrentPage(prev => prev + 1)} 
+                                style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage >= totalPages ? '#cbd5e1' : '#475569' }}
+                            >
+                                <i className="fa fa-angle-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                )}
+                </div>
+            )}
+        </AttendanceLayout>
     );
 };
 

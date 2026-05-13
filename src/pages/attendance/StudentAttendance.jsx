@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import Header from '../../components/Header';
-import Sidebar from '../../components/Sidebar';
-import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
-import AttendanceSidebar from '../../components/AttendanceSidebar';
 import { api } from '../../services/api';
 import '../../utils/include_files';
 import toast from 'react-hot-toast';
-import Pagination from '../../utils/Pagination';
+import AttendanceLayout from './AttendanceLayout';
+import PremiumTableToolbar from '../../utils/PremiumTableToolbar';
+import { buildExportData } from '../../utils/tableExport';
+
 const StudentAttendance = () => {
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -17,7 +16,7 @@ const StudentAttendance = () => {
     const [formData, setFormData] = useState({
         class_id: '',
         section_id: '',
-        date: new Date().toISOString().split('T')[0] // Default to current date YYYY-MM-DD for HTML5
+        date: new Date().toISOString().split('T')[0]
     });
     const [attendanceState, setAttendanceState] = useState({});
     const [errors, setErrors] = useState({});
@@ -26,20 +25,22 @@ const StudentAttendance = () => {
     const [holidayId, setHolidayId] = useState(5);
     const [presentId, setPresentId] = useState(1);
     const [selectedStudents, setSelectedStudents] = useState([]);
-    const [isAttendanceMarked, setIsAttendanceMarked] = useState(false);
 
-    // Pagination states
+    // Table state
     const [currentPage, setCurrentPage] = useState(1);
     const [recordsPerPage, setRecordsPerPage] = useState(100);
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const isMobile = windowWidth < 768;
+    const columns = [
+        { key: 'select', label: 'Select' },
+        { key: 'sno', label: 'S.No' },
+        { key: 'admission_no', label: 'Admission No' },
+        { key: 'roll_no', label: 'Roll Number' },
+        { key: 'name', label: 'Name' },
+        { key: 'attendance', label: 'Attendance' },
+        { key: 'note', label: 'Note' }
+    ];
+    const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
     useEffect(() => {
         fetchClasses();
@@ -50,12 +51,9 @@ const StudentAttendance = () => {
             const response = await api.getStudentCreate();
             if (response && response.status === 'success' && response.data && response.data.classlist) {
                 setClassList(response.data.classlist);
-            } else {
-                setClassList([]);
             }
         } catch (error) {
             console.error('Error fetching classes:', error);
-            // Fallback for resiliency if needed, or just log
         } finally {
             setInitialLoading(false);
         }
@@ -65,27 +63,15 @@ const StudentAttendance = () => {
         const classId = e.target.value;
         setFormData(prev => ({ ...prev, class_id: classId, section_id: '' }));
         setSectionList([]);
-
         if (classId) {
             try {
                 const response = await api.getSectionsByClass(classId);
-                // Assuming response structure { status: "success", data: [...] } or direct array
                 if (response && response.status === 'success' && response.data) {
-                    // Check if data is array or object mapping
-                    // The getByClass API often returns map { section_id: section_name } or array of objects
-                    // Adjust based on typical response. If array of objects:
                     setSectionList(response.data);
                 } else if (Array.isArray(response)) {
                     setSectionList(response);
-                } else if (response && response.sections) {
-                    setSectionList(response.sections);
                 } else {
-                    // If it is simple key-value pair, map it
-                    // But usually getByClass returns array of objects like [{section_id, section, ...}]
-                    // Let's assume standard array for now or check response type in usage
-                    console.log("Sections response", response);
-                    // Safe fallback if it returns directly the list
-                    setSectionList(response.data || []);
+                    setSectionList(response.data || response.sections || []);
                 }
             } catch (error) {
                 console.error('Error fetching sections:', error);
@@ -94,9 +80,8 @@ const StudentAttendance = () => {
     };
 
     const handleSearch = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setErrors({});
-
         let newErrors = {};
         if (!formData.class_id) newErrors.class_id = "The Class field is required";
         if (!formData.section_id) newErrors.section_id = "The Section field is required";
@@ -109,10 +94,8 @@ const StudentAttendance = () => {
 
         setLoading(true);
         try {
-            // Ensure date is in DD-MM-YYYY format for the API
             const formattedDate = formData.date ? formData.date.split('-').reverse().join('-') : '';
             const data = await api.searchAttendance(formData.class_id, formData.section_id, formattedDate);
-            console.log('StudentAttendance Search Result:', data);
 
             if (data.status && data.students) {
                 let dynamicHolidayId = holidayId;
@@ -123,25 +106,19 @@ const StudentAttendance = () => {
                     setAttendanceTypes(data.attendencetypeslist);
                     const hType = data.attendencetypeslist.find(t => t.type.toLowerCase() === 'holiday');
                     if (hType) dynamicHolidayId = parseInt(hType.attendence_type_id);
-
                     const pType = data.attendencetypeslist.find(t => t.type.toLowerCase() === 'present');
                     if (pType) dynamicPresentId = parseInt(pType.attendence_type_id);
-
                     setHolidayId(dynamicHolidayId);
                     setPresentId(dynamicPresentId);
                 }
 
-                // Check first student for holiday status as per PHP logic (if one is holiday, all are usually holiday for that section/date)
                 if (data.students.length > 0 && data.students[0].attendence_type_id == dynamicHolidayId) {
                     isHolidayFound = true;
                 }
 
-                // Initialize attendance state
                 const initialAttendance = {};
                 data.students.forEach(student => {
                     initialAttendance[student.student_session_id] = {
-                        // API returns "attendence_type_id": null if not set, or a value.
-                        // If null, default to Present.
                         attendance_type_id: student.attendence_type_id || dynamicPresentId,
                         remark: student.remark || ''
                     };
@@ -149,16 +126,9 @@ const StudentAttendance = () => {
                 setAttendanceState(initialAttendance);
                 setStudentList(data.students);
                 setIsHoliday(isHolidayFound);
-                setSelectedStudents([]); // Reset selection on new search
-
-                // Check if any student already has attendance ID
-                const alreadyMarked = data.students.some(student => student.attendence_id && student.attendence_id !== "0");
-                setIsAttendanceMarked(alreadyMarked);
-                if (data.students.length === 0) {
-                    toast.error('No attendance records found');
-                } else {
-                    toast.success('Attendance records loaded');
-                }
+                setSelectedStudents([]);
+                setCurrentPage(1);
+                toast.success('Attendance records loaded');
             } else {
                 setStudentList([]);
                 toast.error(data.message || 'Attendance not submitted for this class');
@@ -173,55 +143,63 @@ const StudentAttendance = () => {
     const handleAttendanceChange = (studentSessionId, typeId) => {
         setAttendanceState(prev => ({
             ...prev,
-            [studentSessionId]: {
-                ...prev[studentSessionId],
-                attendance_type_id: typeId
-            }
+            [studentSessionId]: { ...prev[studentSessionId], attendance_type_id: typeId }
         }));
+    };
+
+    const getInitials = (name) => {
+        if (!name) return '';
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    };
+
+    const getAvatarColor = (name) => {
+        const colors = [
+            { bg: '#e0f2fe', text: '#0284c7' },
+            { bg: '#f3e8ff', text: '#9333ea' },
+            { bg: '#dcfce7', text: '#16a34a' },
+            { bg: '#fef3c7', text: '#d97706' },
+            { bg: '#ffe4e6', text: '#e11d48' },
+        ];
+        let hash = 0;
+        if (name) {
+            for (let i = 0; i < name.length; i++) {
+                hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            }
+        }
+        return colors[Math.abs(hash) % colors.length];
     };
 
     const handleRemarkChange = (studentSessionId, remark) => {
         setAttendanceState(prev => ({
             ...prev,
-            [studentSessionId]: {
-                ...prev[studentSessionId],
-                remark: remark
-            }
+            [studentSessionId]: { ...prev[studentSessionId], remark: remark }
         }));
     };
 
-    const toggleHoliday = () => {
-        const newStatus = !isHoliday;
-        setIsHoliday(newStatus);
-
-        // If Holiday is checked (5), update all. Else restore defaults (1 - Present)?
-        // PHP logic: If holiday checked, radio buttons disabled.
-        // We will mimic this: disable radios and conceptually set type to 5 (Holiday) on submit.
-    };
+    const toggleHoliday = () => setIsHoliday(!isHoliday);
 
     const handleSelectAll = (e) => {
-        if (e.target.checked) {
-            setSelectedStudents(studentList.map(s => s.student_session_id));
-        } else {
-            setSelectedStudents([]);
-        }
+        if (e.target.checked) setSelectedStudents(studentList.map(s => s.student_session_id));
+        else setSelectedStudents([]);
     };
 
     const handleSelectStudent = (studentSessionId, checked) => {
-        if (checked) {
-            setSelectedStudents(prev => [...prev, studentSessionId]);
-        } else {
-            setSelectedStudents(prev => prev.filter(id => id !== studentSessionId));
-        }
+        if (checked) setSelectedStudents(prev => [...prev, studentSessionId]);
+        else setSelectedStudents(prev => prev.filter(id => id !== studentSessionId));
     };
 
     const handleSave = async () => {
+        if (selectedStudents.length === 0) {
+            toast.error('Please select at least one student');
+            return;
+        }
         setLoading(true);
         try {
-            // Format date as DD-MM-YYYY for the API
             const formattedDate = formData.date ? formData.date.split('-').reverse().join('-') : '';
-
-            // Build the students array with correct format only for selected students
             const students = studentList
                 .filter(student => selectedStudents.includes(student.student_session_id))
                 .map(student => {
@@ -234,24 +212,11 @@ const StudentAttendance = () => {
                     };
                 });
 
-            if (students.length === 0) {
-                toast.error('Please select at least one student');
-                setLoading(false);
-                return;
-            }
-
-            const attendanceData = {
-                date: formattedDate,
-                students: students,
-                attendance_id: students.map(s => s.attendance_id)
-            };
-
-            console.log('Saving attendance:', attendanceData);
+            const attendanceData = { date: formattedDate, students, attendance_id: students.map(s => s.attendance_id) };
             const response = await api.saveAttendance(attendanceData);
-
             if (response.status) {
                 toast.success(response.message || 'Attendance saved successfully');
-                setStudentList([]); // Close the table after successful save
+                handleSearch();
             } else {
                 toast.error(response.message || 'Failed to save attendance');
             }
@@ -263,11 +228,9 @@ const StudentAttendance = () => {
     };
 
     const handleDelete = async () => {
-        // Collect attendance_ids of selected students
         const attendanceIds = selectedStudents
             .map(sessionId => {
                 const student = studentList.find(s => s.student_session_id === sessionId);
-                // Extract attendence_id if correctly defined
                 return student && student.attendence_id && student.attendence_id !== "0" ? parseInt(student.attendence_id) : null;
             })
             .filter(id => id !== null);
@@ -276,253 +239,297 @@ const StudentAttendance = () => {
             toast.error('No saved attendance found for the selected students to delete.');
             return;
         }
-
-        if (!window.confirm('Are you sure you want to delete attendance for the selected students?')) {
-            return;
-        }
+        if (!window.confirm('Are you sure you want to delete attendance for the selected students?')) return;
 
         setLoading(true);
         try {
-            const payload = {
-                data: attendanceIds.map(id => ({
-                    attendence_ids: [id]
-                }))
-            };
-
+            const payload = { data: attendanceIds.map(id => ({ attendence_ids: [id] })) };
             const response = await api.deleteBulkAttendance(payload);
             if (response && response.status) {
                 toast.success('Attendance deleted successfully');
-                // Re-fetch search to update the UI
-                const e = { preventDefault: () => { } };
-                handleSearch(e);
+                handleSearch();
             } else {
                 toast.error(response.message || 'Failed to delete attendance');
             }
         } catch (error) {
-            console.error('Delete attendance error:', error);
             toast.error('Failed to delete attendance');
         } finally {
             setLoading(false);
         }
     };
 
-    // Calculate Pagination
-    const totalItems = studentList.length;
+    const filteredList = studentList.filter(student => {
+        const term = searchTerm.toLowerCase();
+        return (
+            (student.admission_no || '').toLowerCase().includes(term) ||
+            (student.roll_no || '').toLowerCase().includes(term) ||
+            (`${student.firstname || ''} ${student.lastname || ''}`).toLowerCase().includes(term)
+        );
+    });
+
+    const totalItems = filteredList.length;
     const safeRecordsPerPage = recordsPerPage === -1 ? totalItems || 1 : recordsPerPage;
     const totalPages = Math.ceil(totalItems / safeRecordsPerPage);
     const indexOfLastItem = currentPage * safeRecordsPerPage;
     const indexOfFirstItem = indexOfLastItem - safeRecordsPerPage;
-    const currentRecords = studentList.slice(indexOfFirstItem, indexOfLastItem);
+    const currentRecords = filteredList.slice(indexOfFirstItem, indexOfLastItem);
 
+    const formatCell = (row, key) => {
+        switch (key) {
+            case 'sno': return studentList.indexOf(row) + 1;
+            case 'name': return `${row.firstname} ${row.lastname}`;
+            case 'attendance': return attendanceTypes.find(t => parseInt(t.attendence_type_id) === parseInt(attendanceState[row.student_session_id]?.attendance_type_id))?.type || 'N/A';
+            case 'note': return attendanceState[row.student_session_id]?.remark || '';
+            default: return row[key] || '';
+        }
+    };
 
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredList, formatCell);
 
     return (
-        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Header />
-            <Sidebar />
-            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                <section className="content-header">
-                    <h1>
-                        <i className="fa fa-calendar-check-o"></i> Attendance <small>by date</small>
-                    </h1>
-                </section>
-                <section className="content">
-                    {initialLoading ? (
-                        <Loader />
-                    ) : (
-                        <div className="row">
-                            <div className="col-md-2">
-                                <AttendanceSidebar />
-                            </div>
-                            <div className="col-md-10">
-                                <div className="box box-primary">
-                                    <div className="box-header with-border">
-                                        <h3 className="box-title"><i className="fa fa-search"></i> Select Criteria</h3>
-                                    </div>
-                                    <form onSubmit={handleSearch}>
-                                        <div className="box-body">
-                                            <div className="row">
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Class <small className="req"> *</small></label>
-                                                        <select
-                                                            className="form-control"
-                                                            value={formData.class_id}
-                                                            onChange={handleClassChange}
-                                                        >
-                                                            <option value="">Select</option>
-                                                            {classList.map(cls => (
-                                                                <option key={cls.id} value={cls.id}>{cls.class}</option>
-                                                            ))}
-                                                        </select>
-                                                        {errors.class_id && <span className="text-danger">{errors.class_id}</span>}
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Section <small className="req"> *</small></label>
-                                                        <select
-                                                            className="form-control"
-                                                            value={formData.section_id}
-                                                            onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
-                                                        >
-                                                            <option value="">Select</option>
-                                                            {sectionList.map(sec => (
-                                                                <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
-                                                            ))}
-                                                        </select>
-                                                        {errors.section_id && <span className="text-danger">{errors.section_id}</span>}
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Attendance Date <small className="req"> *</small></label>
-                                                        <div className="input-group" style={{ position: 'relative', width: '100%', borderBottom: '1px solid #ccc' }}>
-                                                            <input
-                                                                type="date"
-                                                                className="form-control"
-                                                                value={formData.date}
-                                                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                                                max={new Date().toISOString().split('T')[0]}
-                                                                style={{ width: '100%', border: 'none', background: 'transparent', boxShadow: 'none', paddingLeft: 0, paddingBottom: '4px' }}
-                                                            />
-                                                        </div>
-                                                        {errors.date && <span className="text-danger">{errors.date}</span>}
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-12">
-                                                    <div className="form-group">
-                                                        <button type="submit" className="btn btn-primary btn-sm pull-right checkbox-toggle">
-                                                            <i className="fa fa-search"></i> Search
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </form>
+        <AttendanceLayout activeTab="student">
+            <div className="sis-search-bar-container" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                <div className="sis-search-bar-header">
+                    <h3 className="sis-search-title" style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: '600', color: '#1e293b' }}>Select Criteria</h3>
+                </div>
+                <form onSubmit={handleSearch}>
+                    <div className="sis-filter-row" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                        <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Class <span className="req">*</span></label>
+                            <select
+                                className="form-control sis-filter-select"
+                                value={formData.class_id}
+                                onChange={handleClassChange}
+                                style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                            >
+                                <option value="">Select</option>
+                                {classList.map(cls => (
+                                    <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                ))}
+                            </select>
+                            {errors.class_id && <span className="text-danger" style={{ fontSize: '11px' }}>{errors.class_id}</span>}
+                        </div>
+                        <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Section <span className="req">*</span></label>
+                            <select
+                                className="form-control sis-filter-select"
+                                value={formData.section_id}
+                                onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
+                                style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                            >
+                                <option value="">Select</option>
+                                {sectionList.map(sec => (
+                                    <option key={sec.section_id} value={sec.section_id}>{sec.section}</option>
+                                ))}
+                            </select>
+                            {errors.section_id && <span className="text-danger" style={{ fontSize: '11px' }}>{errors.section_id}</span>}
+                        </div>
+                        <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Attendance Date <span className="req">*</span></label>
+                            <input
+                                type="date"
+                                className="form-control sis-filter-select"
+                                value={formData.date}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                max={new Date().toISOString().split('T')[0]}
+                                style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                            />
+                            {errors.date && <span className="text-danger" style={{ fontSize: '11px' }}>{errors.date}</span>}
+                        </div>
+                        <div className="sis-filter-col" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                            <button type="submit" className="btn btn-primary sis-apply-btn" disabled={loading} style={{ height: '40px', padding: '0 24px', borderRadius: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <i className={`fa ${loading ? 'fa-spinner fa-spin' : 'fa-search'}`}></i> {loading ? 'Searching...' : 'Search'}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
-                                    {studentList.length > 0 && (
-                                        <>
-                                            {isAttendanceMarked && (
-                                                <div style={{ padding: "10px 10px 0px 10px" }}>
-                                                    <div className="alert alert-success alert-dismissible">
-                                                        Attendance Already Submitted You Can Edit Record
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <div className="box-header with-border">
-                                                <h3 className="box-title"><i className="fa fa-users"></i> Student List</h3>
-                                            </div>
-                                            <div className="box-body">
-                                                <div className="mailbox-controls" style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-                                                    <span className="button-checkbox">
-                                                        <button
-                                                            type="button"
-                                                            className={`btn btn-sm ${isHoliday ? 'btn-primary active' : 'btn-primary'}`}
-                                                            onClick={toggleHoliday}
-                                                        >
-                                                            <i className={`state-icon glyphicon ${isHoliday ? 'glyphicon-check' : 'glyphicon-unchecked'}`}></i> Mark as Holiday
-                                                        </button>
-                                                    </span>
-                                                    <div style={{ display: 'flex', gap: '5px' }}>
-                                                        <button type="button" onClick={handleDelete} className="btn btn-primary btn-sm checkbox-toggle">
-                                                            <i className="fa fa-trash"></i> Delete
-                                                        </button>
-                                                        <button type="button" onClick={handleSave} className="btn btn-primary btn-sm checkbox-toggle">
-                                                            <i className="fa fa-save"></i> Save Attendance
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div className="table-responsive ptt10">
-                                                    <table className="table table-hover table-striped example">
-                                                        <thead>
-                                                            <tr>
-                                                                <th width="5%">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={studentList.length > 0 && selectedStudents.length === studentList.length}
-                                                                        onChange={handleSelectAll}
-                                                                    />
-                                                                </th>
-                                                                <th width="5%">S.No</th>
-                                                                <th width="15%">Admission No</th>
-                                                                <th width="12%">Roll Number</th>
-                                                                <th width="20%">Name</th>
-                                                                <th width="28%">Attendance</th>
-                                                                <th width="15%" style={{ textAlign: 'left' }}>Note</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {currentRecords.map((student, index) => (
-                                                                <tr key={student.student_session_id}>
-                                                                    <td>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={selectedStudents.includes(student.student_session_id)}
-                                                                            onChange={(e) => handleSelectStudent(student.student_session_id, e.target.checked)}
-                                                                        />
-                                                                    </td>
-                                                                    <td>{indexOfFirstItem + index + 1}</td>
-                                                                    <td>{student.admission_no}</td>
-                                                                    <td>{student.roll_no}</td>
-                                                                    <td style={{ wordBreak: 'break-word' }}>{student.firstname} {student.lastname}</td>
-                                                                    <td>
-                                                                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
-                                                                            {!isHoliday && attendanceTypes.filter(type => type.type.toLowerCase() !== 'holiday').map(type => (
-                                                                                <div key={type.attendence_type_id} className="radio radio-info radio-inline" style={{ display: 'inline-flex', alignItems: 'center', margin: '0 10px 0 0' }}>
-                                                                                    <input
-                                                                                        type="radio"
-                                                                                        id={`attendencetype${student.student_session_id}-${type.attendence_type_id}`}
-                                                                                        name={`attendencetype${student.student_session_id}`}
-                                                                                        value={type.attendence_type_id}
-                                                                                        checked={attendanceState[student.student_session_id]?.attendance_type_id == type.attendence_type_id}
-                                                                                        onChange={() => handleAttendanceChange(student.student_session_id, type.attendence_type_id)}
-                                                                                    />
-                                                                                    <label htmlFor={`attendencetype${student.student_session_id}-${type.attendence_type_id}`}>
-                                                                                        {type.type}
-                                                                                    </label>
-                                                                                </div>
-                                                                            ))}
-                                                                            {isHoliday && <span className="text-danger">Holiday</span>}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td style={{ verticalAlign: 'middle' }}>
-                                                                        <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-                                                                            <input
-                                                                                type="text"
-                                                                                className="form-control"
-                                                                                style={{ width: '100%', minWidth: '80px', height: '28px', padding: '2px 5px', fontSize: '12px', border: '1px solid #777' }}
-                                                                                value={attendanceState[student.student_session_id]?.remark || ''}
-                                                                                onChange={(e) => handleRemarkChange(student.student_session_id, e.target.value)}
-                                                                                disabled={isHoliday}
-                                                                            />
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                <div className="pt15 pb15">
-                                                    <Pagination 
-                                                        totalItems={totalItems} 
-                                                        itemsPerPage={recordsPerPage} 
-                                                        currentPage={currentPage}
-                                                        onPageChange={(page) => setCurrentPage(page)}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </>
+            {initialLoading ? (
+                <div className="text-center p-5"><Loader /></div>
+            ) : studentList.length > 0 ? (
+                <div className="sis-list-container" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                    <div className="sis-list-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Attendance Marking</h3>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button
+                                type="button"
+                                className={`btn ${isHoliday ? 'btn-primary' : 'btn-default'}`}
+                                onClick={toggleHoliday}
+                                style={{ borderRadius: '8px', fontWeight: '600', border: '1px solid #e2e8f0' }}
+                            >
+                                <i className={`fa ${isHoliday ? 'fa-check-square-o' : 'fa-square-o'}`}></i> Mark as Holiday
+                            </button>
+                            <button type="button" onClick={handleDelete} className="btn btn-danger" style={{ borderRadius: '8px', fontWeight: '600' }}>
+                                <i className="fa fa-trash"></i> Delete
+                            </button>
+                            <button type="button" onClick={handleSave} className="btn btn-primary" style={{ borderRadius: '8px', fontWeight: '600', padding: '0 24px' }}>
+                                <i className="fa fa-save"></i> Save Attendance
+                            </button>
+                        </div>
+                    </div>
+
+                <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
+                    <div style={{ position: 'relative', width: '300px' }}>
+                        <i className="fa fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}></i>
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="form-control"
+                            value={searchTerm}
+                            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                            style={{ paddingLeft: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                        />
+                    </div>
+                    <PremiumTableToolbar
+                        columns={columns}
+                        visibleColumns={visibleColumns}
+                        onToggleColumn={(key) => setVisibleColumns(prev => {
+                            const next = new Set(prev);
+                            if (next.has(key)) next.delete(key); else next.add(key);
+                            return next;
+                        })}
+                        getExportData={getExportData}
+                        exportFileName="student_attendance"
+                        exportTitle="Student Attendance"
+                        recordsPerPage={recordsPerPage}
+                        onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                    />
+                </div>
+
+                    <div className="table-responsive">
+                        <table className="table table-hover" style={{ margin: 0 }}>
+                            <thead>
+                                <tr style={{ background: '#f8fafc' }}>
+                                    {visibleColumns.has('select') && (
+                                        <th style={{ padding: '12px 24px', borderBottom: '1px solid #e2e8f0' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={studentList.length > 0 && selectedStudents.length === studentList.length}
+                                                onChange={handleSelectAll}
+                                            />
+                                        </th>
                                     )}
-                                </div>
+                                    {visibleColumns.has('sno') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>S.No</th>}
+                                    {visibleColumns.has('admission_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Admission No</th>}
+                                    {visibleColumns.has('roll_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Roll No</th>}
+                                    {visibleColumns.has('name') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Name</th>}
+                                    {visibleColumns.has('attendance') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Attendance</th>}
+                                    {visibleColumns.has('note') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Note</th>}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {currentRecords.map((student, index) => (
+                                    <tr key={student.student_session_id}>
+                                        {visibleColumns.has('select') && (
+                                            <td style={{ padding: '12px 24px', borderBottom: '1px solid #f1f5f9' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedStudents.includes(student.student_session_id)}
+                                                    onChange={(e) => handleSelectStudent(student.student_session_id, e.target.checked)}
+                                                />
+                                            </td>
+                                        )}
+                                        {visibleColumns.has('sno') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{indexOfFirstItem + index + 1}</td>}
+                                        {visibleColumns.has('admission_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{student.admission_no}</td>}
+                                        {visibleColumns.has('roll_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{student.roll_no}</td>}
+                                        {visibleColumns.has('name') && (
+                                            <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                    <div style={{ 
+                                                        width: '32px', height: '32px', borderRadius: '50%', 
+                                                        backgroundColor: getAvatarColor(`${student.firstname} ${student.lastname}`).bg, 
+                                                        color: getAvatarColor(`${student.firstname} ${student.lastname}`).text,
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        fontWeight: '600', fontSize: '13px', flexShrink: 0
+                                                    }}>
+                                                        {getInitials(`${student.firstname} ${student.lastname}`)}
+                                                    </div>
+                                                    <div style={{ fontWeight: '500' }}>{student.firstname} {student.lastname}</div>
+                                                </div>
+                                            </td>
+                                        )}
+                                        {visibleColumns.has('attendance') && (
+                                            <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                                                    {!isHoliday && attendanceTypes.filter(type => type.type.toLowerCase() !== 'holiday').map(type => (
+                                                        <label key={type.attendence_type_id} style={{ fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', margin: 0 }}>
+                                                            <input
+                                                                type="radio"
+                                                                name={`attendencetype${student.student_session_id}`}
+                                                                value={type.attendence_type_id}
+                                                                checked={attendanceState[student.student_session_id]?.attendance_type_id == type.attendence_type_id}
+                                                                onChange={() => handleAttendanceChange(student.student_session_id, type.attendence_type_id)}
+                                                            />
+                                                            {type.type}
+                                                        </label>
+                                                    ))}
+                                                    {isHoliday && <span className="label label-danger" style={{ borderRadius: '4px' }}><i className="fa fa-sun-o"></i> Holiday</span>}
+                                                </div>
+                                            </td>
+                                        )}
+                                        {visibleColumns.has('note') && (
+                                            <td style={{ padding: '12px 24px', borderBottom: '1px solid #f1f5f9' }}>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    style={{ height: '32px', fontSize: '13px', borderRadius: '6px' }}
+                                                    value={attendanceState[student.student_session_id]?.remark || ''}
+                                                    onChange={(e) => handleRemarkChange(student.student_session_id, e.target.value)}
+                                                    disabled={isHoliday}
+                                                    placeholder="Add remark..."
+                                                />
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {!initialLoading && totalItems > 0 && (
+                        <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
+                            <div style={{ color: '#64748b', fontSize: '14px' }}>
+                                Showing {(currentPage - 1) * safeRecordsPerPage + 1} to {Math.min(currentPage * safeRecordsPerPage, totalItems)} of {totalItems} entries
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button 
+                                    className="btn btn-default btn-sm" 
+                                    disabled={currentPage === 1} 
+                                    onClick={() => setCurrentPage(prev => prev - 1)} 
+                                    style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage === 1 ? '#cbd5e1' : '#475569' }}
+                                >
+                                    <i className="fa fa-angle-left"></i>
+                                </button>
+                                <button 
+                                    className="btn btn-sm" 
+                                    style={{ borderRadius: '6px', background: '#7c3aed', color: '#ffffff', minWidth: '32px', fontWeight: '600' }}
+                                >
+                                    {currentPage}
+                                </button>
+                                <button 
+                                    className="btn btn-default btn-sm" 
+                                    disabled={currentPage >= totalPages} 
+                                    onClick={() => setCurrentPage(prev => prev + 1)} 
+                                    style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage >= totalPages ? '#cbd5e1' : '#475569' }}
+                                >
+                                    <i className="fa fa-angle-right"></i>
+                                </button>
                             </div>
                         </div>
                     )}
-                </section>
-            </div>
-            <Footer />
-        </div>
+                </div>
+            ) : (
+                !initialLoading && (
+                    <div className="sis-list-container" style={{ padding: '48px', textAlign: 'center', background: '#fff', borderRadius: '12px', color: '#64748b', border: '1px solid #e2e8f0' }}>
+                        <i className="fa fa-info-circle" style={{ fontSize: '24px', marginBottom: '12px' }}></i>
+                        <p>No student records found. Select criteria and click search.</p>
+                    </div>
+                )
+            )}
+        </AttendanceLayout>
     );
 };
 
 export default StudentAttendance;
+
+

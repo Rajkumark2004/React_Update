@@ -4,6 +4,8 @@ import { PermissionProvider } from './context/PermissionContext';
 import DashboardTest from './pages/dashboard/dashboard_test';
 import { SISCountProvider } from './context/SISCountContext';
 import { HelpdeskCountProvider } from './context/HelpdeskCountContext';
+import { AttendanceCountProvider } from './context/AttendanceCountContext';
+import LateEntries from './pages/attendance/LateEntries';
 
 import LoginPage from './pages/auth/LoginPage';
 import ForgotPassword from './pages/auth/ForgotPassword';
@@ -245,6 +247,7 @@ function App() {
           />
           <SISCountProvider>
           <HelpdeskCountProvider>
+          <AttendanceCountProvider>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<LoginPage />} />
@@ -566,6 +569,14 @@ function App() {
               }
             />
             <Route
+              path="/late-entries"
+              element={
+                <ProtectedRoute>
+                  <LateEntries />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/leaverequest"
               element={
                 <ProtectedRoute>
@@ -878,6 +889,7 @@ function App() {
             <Route path="/admin/reports/subject_lesson_plan" element={<ProtectedRoute><SubjectLessonPlanReport /></ProtectedRoute>} />
             <Route path="/admin/reports/user_log" element={<ProtectedRoute><UserLog /></ProtectedRoute>} />
           </Routes>
+          </AttendanceCountProvider>
           </HelpdeskCountProvider>
           </SISCountProvider>
         </BrowserRouter>

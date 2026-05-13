@@ -886,628 +886,403 @@ const AttendanceReport = () => {
     const days = (activeReport === 'class_attendance' || activeReport === 'staff_report') && reportData ? getDaysArray(reportData.month, reportData.year) : [];
 
     return (
-        <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            <Header />
-            <Sidebar />
+        <AttendanceLayout activeTab="reports">
+            <div className="sis-search-bar-container" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                <div className="sis-search-bar-header" style={{ marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '16px' }}>
+                    <h3 className="sis-search-title" style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1e293b' }}>Attendance Reports</h3>
+                </div>
 
-            <style>{`
-                .content-wrapper { background: #f4f4f4; padding: 0px; margin-top: 0px; }
-                
-                .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-                .page-header h3 { margin: 0; font-size: 16px; font-weight: 400; color: #333; }
+                <div className="report-tabs-wrapper" style={{ marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {[
+                            { id: 'class_attendance', label: 'Attendance Report', icon: 'fa-file-text-o' },
+                            { id: 'type_report', label: 'Student Attendance Type Report', icon: 'fa-file-text-o' },
+                            { id: 'daily_report', label: 'Daily Attendance Report', icon: 'fa-file-text-o' },
+                            { id: 'staff_report', label: 'Staff Attendance Report', icon: 'fa-file-text-o' },
+                            { id: 'late_report', label: 'Late Entries Report', icon: 'fa-file-text-o' }
+                        ].map(report => (
+                            <button
+                                key={report.id}
+                                onClick={() => handleReportClick(report.id)}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid ' + (activeReport === report.id ? '#3b82f6' : '#e2e8f0'),
+                                    background: activeReport === report.id ? '#eff6ff' : '#fff',
+                                    color: activeReport === report.id ? '#1d4ed8' : '#64748b',
+                                    fontWeight: '500',
+                                    fontSize: '14px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <i className={`fa ${report.icon}`}></i> {report.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
-                .bg-sunday { background: #f2dede !important; color: #a94442; }
-                .label-success { background-color: #5cb85c; }
-                .label-danger { background-color: #d9534f; }
-                
-                .attendance-table th, .attendance-table td {
-                    padding: 8px 6px !important;
-                    text-align: center;
-                    font-size: 13px;
-                    vertical-align: middle !important;
-                    border: 1px solid #eee !important;
-                }
-                .attendance-table th { background: #fafafa; white-space: nowrap; font-weight: 600; color: #333; }
-                
-                .minimal-table { border: none !important; }
-                .minimal-table th, .minimal-table td { border-left: none !important; border-right: none !important; border-top: none !important; border-bottom: 1px solid #eee !important; background: transparent !important; }
-                .minimal-table th { font-weight: 600; color: #666; border-bottom: 2px solid #eee !important; }
-
-                .lateday-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-                .lateday { font-size: 12px; color: #444; }
-                .lateday b { margin-left: 12px; font-weight: 600; }
-                .btn-purple { background-color: #9429b8; border-color: #9429b8; color: #fff !important; padding: 2px 12px; border-radius: 20px; font-size: 11px; }
-                .btn-purple:hover { background-color: #7b2199; border-color: #7b2199; color: #fff !important; }
-                .box-title { font-size: 18px; font-weight: 400; vertical-align: middle; }
-                
-                /* Horizontal report listing styles */
-                .reportlists { 
-                    display: grid; 
-                    grid-template-columns: repeat(3, 1fr); 
-                    gap: 8px; 
-                    background: transparent; 
-                    border: none; 
-                    margin-bottom: 15px; 
-                }
-                .reportlists li { background: #fff; list-style: none; border: none; margin: 0; }
-                .reportlists li a { 
-                    color: #333; 
-                    text-decoration: none; 
-                    display: flex; 
-                    align-items: center; 
-                    padding: 8px 10px; 
-                    font-size: 13px; 
-                    transition: all 0.2s; 
-                    border: none;
-                    cursor: pointer;
-                    background: #fff;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-                .reportlists li a i { margin-right: 8px; color: #666; font-size: 14px; }
-                .reportlists li a:hover {
-                    background: #f5f5f5;
-                    color: #000;
-                }
-                .reportlists li a.active { 
-                    background-color: #e2f0ff !important; 
-                    color: #000; 
-                    font-weight: 500; 
-                }
-                .select-criteria-header { 
-                    font-size: 17px; 
-                    font-weight: 500; 
-                    padding: 10px 0; 
-                    border-bottom: 1px solid #eee; 
-                    margin-bottom: 10px; 
-                    color: #333; 
-                    border-top: 1px solid #eee; 
-                    margin-top: 15px; 
-                }
-                .form-group label {
-                    font-weight: 500;
-                    font-size: 13px;
-                }
-                .req { color: red; }
-
-                /* Standardized Form styles */
-                .form-control {
-                    width: 100%;
-                    border: none !important;
-                    border-bottom: 1px solid #d2d6de !important;
-                    border-radius: 0;
-                    box-shadow: none !important;
-                    background: transparent;
-                    padding-left: 0 !important;
-                    padding-right: 0 !important;
-                    height: 28px;
-                    font-size: 12.5px;
-                }
-                .form-control:focus { border-bottom: 1px solid #3c8dbc !important; outline: none !important; }
-                
-                 .dt-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; font-size: 11px; color: #777; border-top: 1px solid #eee; padding-top: 8px; }
-                .dt-pagination { display: flex; list-style: none; padding: 0; margin: 0; }
-                .dt-pagination li { border: 1px solid #eee; padding: 2px 8px; cursor: pointer; background: #fff; margin-left: -1px; font-size: 10px; }
-                .dt-pagination li.active { border-color: #eee; color: #333; font-weight: bold; }
-
-                /* Mobile responsive styles */
-                @media (max-width: 767px) {
-                    .reportlists { grid-template-columns: 1fr !important; gap: 4px; }
-                    .reportlists li a { font-size: 12px; padding: 10px 12px; white-space: normal; }
-                    .row { flex-direction: column !important; }
-                    .row > [class*="col-"] { width: 100% !important; flex: 1 1 100% !important; }
-                    .select-criteria-header { font-size: 15px; text-align: center; }
-                    .attendance-table th, .attendance-table td { font-size: 11px; padding: 4px 3px !important; }
-                    .page-header h3, .box-title { font-size: 14px; }
-                }
-            `}</style>
-
-            <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)' }}>
-                <section className="content">
-                    <div className="box box-primary">
-                        <div className="box-header with-border">
-                            <h3 className="box-title">Attendance Report</h3>
-                            <div className="box-tools pull-right">
-                                <button className="btn btn-primary btn-sm" onClick={() => navigate(-1)}><i className="fa fa-arrow-left"></i> Back</button>
-                            </div>
-                        </div>
-                        <div className="box-body">
-
-                            <ul className="reportlists">
-                                <li><a className={activeReport === 'class_attendance' ? "active" : ""} onClick={(e) => { e.preventDefault(); handleReportClick('class_attendance'); }}><i className="fa fa-file-text-o"></i> Attendance Report</a></li>
-                                <li><a className={activeReport === 'type_report' ? "active" : ""} onClick={(e) => { e.preventDefault(); handleReportClick('type_report'); }}><i className="fa fa-file-text-o"></i> Student Attendance Type Report</a></li>
-                                <li><a className={activeReport === 'daily_report' ? "active" : ""} onClick={(e) => { e.preventDefault(); handleReportClick('daily_report'); }}><i className="fa fa-file-text-o"></i> Daily Attendance Report</a></li>
-                                <li><a className={activeReport === 'staff_report' ? "active" : ""} onClick={(e) => { e.preventDefault(); handleReportClick('staff_report'); }}><i className="fa fa-file-text-o"></i> Staff Attendance Report</a></li>
-                                <li><a className={activeReport === 'late_report' ? "active" : ""} onClick={(e) => { e.preventDefault(); handleReportClick('late_report'); }}><i className="fa fa-file-text-o"></i> Late Entries Report</a></li>
-                            </ul>
-
-                            <div style={{ padding: '0 5px' }}>
-                                <div className="select-criteria-header"><i className="fa fa-search"></i> Select Criteria</div>
-                                <form onSubmit={handleSearch}>
-                                    <div className="row">
-                                        {(activeReport === 'class_attendance' || activeReport === 'staff_report') && (
-                                            <>
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Month <span className="req">*</span></label>
-                                                        <select className="form-control" value={month} onChange={(e) => setMonth(e.target.value)} required>
-                                                            <option value="">Select</option>
-                                                            {monthList.map(m => <option key={m} value={m}>{m}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-4">
-                                                    <div className="form-group">
-                                                        <label>Year <span className="req">*</span></label>
-                                                        <select className="form-control" value={year} onChange={(e) => setYear(e.target.value)} required>
-                                                            <option value="">Select</option>
-                                                            {yearList.map(y => <option key={y} value={y}>{y}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                {activeReport === 'class_attendance' && (
-                                                    <>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Class <span className="req">*</span></label>
-                                                                <select className="form-control" value={classId} onChange={handleClassChange} required>
-                                                                    <option value="">Select</option>
-                                                                    {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-4">
-                                                            <div className="form-group">
-                                                                <label>Section <span className="req">*</span></label>
-                                                                <select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)} required>
-                                                                    <option value="">Select</option>
-                                                                    {sectionList.map(s => <option key={s.id} value={s.section_id}>{s.section}</option>)}
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {activeReport === 'staff_report' && (
-                                                    <div className="col-md-4">
-                                                        <div className="form-group">
-                                                            <label>Role <span className="req">*</span></label>
-                                                            <select className="form-control" value={role} onChange={(e) => setRole(e.target.value)} required>
-                                                                <option value="">Select</option>
-                                                                {roleList.map(r => <option key={r.id} value={r.id}>{r.type}</option>)}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </>
-                                        )}
-                                        {activeReport === 'type_report' && (
-                                            <>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Search Type</label>
-                                                        <select className="form-control" value={searchType} onChange={(e) => setSearchType(e.target.value)}>
-                                                            {Object.entries(searchTypeList).map(([key, value]) => (
-                                                                <option key={key} value={key}>{value}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Attendance Type <span className="req">*</span></label>
-                                                        <select className="form-control" value={attendanceType} onChange={(e) => setAttendanceType(e.target.value)} required>
-                                                            <option value="">Select</option>
-                                                            {attendanceTypesList.map(t => <option key={t.id} value={t.id}>{t.type}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Class <span className="req">*</span></label>
-                                                        <select className="form-control" value={classId} onChange={handleClassChange} required>
-                                                            <option value="">Select</option>
-                                                            {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Section</label>
-                                                        <select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
-                                                            <option value="">Select</option>
-                                                            {sectionList.map(s => <option key={s.id} value={s.section_id}>{s.section}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                {searchType === 'period' && (
-                                                    <>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Date From <span className="req">*</span></label>
-                                                                <input type="date" className="form-control" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-                                                            </div>
-                                                        </div>
-                                                        <div className="col-md-3">
-                                                            <div className="form-group">
-                                                                <label>Date To <span className="req">*</span></label>
-                                                                <input type="date" className="form-control" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-                                                            </div>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
-                                        {activeReport === 'daily_report' && (
-                                            <div className="col-md-4">
-                                                <div className="form-group">
-                                                    <label>Date <span className="req">*</span></label>
-                                                    <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} required />
-                                                </div>
-                                            </div>
-                                        )}
-                                        {activeReport === 'late_report' && (
-                                            <>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Date From <span className="req">*</span></label>
-                                                        <input type="date" className="form-control" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} required />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Date To <span className="req">*</span></label>
-                                                        <input type="date" className="form-control" value={dateTo} onChange={(e) => setDateTo(e.target.value)} required />
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-2">
-                                                    <div className="form-group">
-                                                        <label>Class</label>
-                                                        <select className="form-control" value={classId} onChange={handleClassChange}>
-                                                            <option value="">Select</option>
-                                                            {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Section</label>
-                                                        <select className="form-control" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
-                                                            <option value="">Select</option>
-                                                            {sectionList.map(s => <option key={s.id} value={s.section_id}>{s.section}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <div className="form-group">
-                                                        <label>Student</label>
-                                                        <select className="form-control" value={studentId} onChange={(e) => setStudentId(e.target.value)}>
-                                                            <option value="">Select</option>
-                                                            {studentList.map(s => <option key={s.id} value={s.id}>{s.firstname} {s.lastname}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                        <div className="col-sm-12" style={{ textAlign: 'right', marginTop: '10px' }}>
-                                            <button type="submit" className="btn btn-purple btn-sm"><i className="fa fa-search"></i> Search</button>
-                                        </div>
+                <div className="sis-advanced-filters" style={{ borderTop: '1px solid #f1f5f9', paddingTop: '24px' }}>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '600', color: '#475569' }}>
+                        <i className="fa fa-search" style={{ marginRight: '8px' }}></i> Select Criteria
+                    </h4>
+                    <form onSubmit={handleSearch}>
+                        <div className="sis-filter-row" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                            {(activeReport === 'class_attendance' || activeReport === 'staff_report') && (
+                                <>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '180px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Month <span className="req">*</span></label>
+                                        <select className="form-control sis-filter-select" value={month} onChange={(e) => setMonth(e.target.value)} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            <option value="">Select</option>
+                                            {monthList.map(m => <option key={m} value={m}>{m}</option>)}
+                                        </select>
                                     </div>
-                                </form>
-                            </div>
-
-                            {loading && <div className="box-body text-center">Loading...</div>}
-
-                            {searched && reportData && (
-                                <div className="box-body">
-                                    <div className="box-header ptbnull" style={{ paddingLeft: 0 }}>
-                                        <h3 className="box-title titlefix">
-                                            <i className={`fa ${activeReport === 'staff_report' ? 'fa-sitemap' :
-                                                activeReport === 'late_report' ? 'fa-calendar-times-o' :
-                                                    'fa-users'
-                                                }`}></i> {
-                                                activeReport === 'class_attendance' ? 'Student Attendance Report' :
-                                                    activeReport === 'type_report' ? 'Student Attendance Type Report' :
-                                                        activeReport === 'daily_report' ? 'Daily Attendance Report' :
-                                                            activeReport === 'staff_report' ? 'Staff Attendance Report' :
-                                                                'Late Entries Report'
-                                            }
-                                        </h3>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '180px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Year <span className="req">*</span></label>
+                                        <select className="form-control sis-filter-select" value={year} onChange={(e) => setYear(e.target.value)} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            <option value="">Select</option>
+                                            {yearList.map(y => <option key={y} value={y}>{y}</option>)}
+                                        </select>
                                     </div>
-
                                     {activeReport === 'class_attendance' && (
-                                        <div className="table-responsive" style={{ marginTop: '10px' }}>
-                                            <TableToolbar
-                                                searchTerm={searchTerm}
-                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                                                recordsPerPage={itemsPerPage}
-                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-                                                columns={getColumnsForReport()}
-                                                visibleColumns={visibleColumns}
-                                                onToggleColumn={toggleColumn}
-                                                getExportData={getExportData}
-                                                exportFileName="Class_Attendance"
-                                                exportTitle={getExportTitle()}
-                                            />
-
-                                            <table className="table table-striped table-bordered table-hover attendance-table">
-                                                <thead>
-                                                    <tr>
-                                                        {visibleColumns.has('student_name') && <th rowSpan="2" style={{ textAlign: 'left' }}>Student Name</th>}
-                                                        {visibleColumns.has('percentage') && <th rowSpan="2">(%)</th>}
-                                                        {(visibleColumns.has('P') || visibleColumns.has('L') || visibleColumns.has('A') || visibleColumns.has('F') || visibleColumns.has('H')) && (
-                                                            <th colSpan={['P', 'L', 'A', 'F', 'H'].filter(k => visibleColumns.has(k)).length}>Total</th>
-                                                        )}
-                                                        {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
-                                                            <th key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>
-                                                        ))}
-                                                    </tr>
-                                                    <tr>
-                                                        {visibleColumns.has('P') && <th>P</th>}
-                                                        {visibleColumns.has('L') && <th>L</th>}
-                                                        {visibleColumns.has('A') && <th>A</th>}
-                                                        {visibleColumns.has('F') && <th>F</th>}
-                                                        {visibleColumns.has('H') && <th>H</th>}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {currentData.map(s => (
-                                                        <tr key={s.id}>
-                                                            {visibleColumns.has('student_name') && <td style={{ textAlign: 'left' }}>{s.name} (Adm: {s.admission_no})</td>}
-                                                            {visibleColumns.has('percentage') && <td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td>}
-                                                            {visibleColumns.has('P') && <td>{s.counts.P}</td>}
-                                                            {visibleColumns.has('L') && <td>{s.counts.L}</td>}
-                                                            {visibleColumns.has('A') && <td>{s.counts.A}</td>}
-                                                            {visibleColumns.has('F') && <td>{s.counts.F}</td>}
-                                                            {visibleColumns.has('H') && <td>{s.counts.H}</td>}
-                                                            {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
-                                                                <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""} dangerouslySetInnerHTML={{ __html: s.daily[d.getDate()] || '-' }}></td>
-                                                            ))}
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-
-                                            <div className="pt15 pb15 no-print">
-                                                <Pagination
-                                                    totalItems={filteredData.length}
-                                                    itemsPerPage={itemsPerPage}
-                                                    currentPage={currentPage}
-                                                    onPageChange={(page) => setCurrentPage(page)}
-                                                />
+                                        <>
+                                            <div className="sis-filter-col" style={{ flex: '1', minWidth: '180px' }}>
+                                                <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Class <span className="req">*</span></label>
+                                                <select className="form-control sis-filter-select" value={classId} onChange={handleClassChange} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                                    <option value="">Select</option>
+                                                    {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
+                                                </select>
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {activeReport === 'type_report' && (
-                                        <div className="table-responsive">
-                                            <TableToolbar
-                                                searchTerm={searchTerm}
-                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                                                recordsPerPage={itemsPerPage}
-                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-                                                columns={getColumnsForReport()}
-                                                visibleColumns={visibleColumns}
-                                                onToggleColumn={toggleColumn}
-                                                getExportData={getExportData}
-                                                exportFileName="Type_Report"
-                                                exportTitle={getExportTitle()}
-                                            />
-                                            <table className="table table-hover attendance-table minimal-table">
-                                                <thead>
-                                                    <tr>
-                                                        {visibleColumns.has('admission_no') && <th>Admission No</th>}
-                                                        {visibleColumns.has('student_name') && <th>Student Name</th>}
-                                                        {visibleColumns.has('class_section') && <th>Class (Section)</th>}
-                                                        {visibleColumns.has('father_name') && <th>Father Name</th>}
-                                                        {visibleColumns.has('dob') && <th>Date Of Birth</th>}
-                                                        {visibleColumns.has('adm_date') && <th>Adm Date</th>}
-                                                        {visibleColumns.has('gender') && <th>Gender</th>}
-                                                        {visibleColumns.has('mobile') && <th>Mobile</th>}
-                                                        {visibleColumns.has('count') && <th>Count</th>}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>{currentData.map(s => (
-                                                    <tr key={s.id}>
-                                                        {visibleColumns.has('admission_no') && <td>{s.admission_no}</td>}
-                                                        {visibleColumns.has('student_name') && <td>{s.name}</td>}
-                                                        {visibleColumns.has('class_section') && <td>{s.class} ({s.section})</td>}
-                                                        {visibleColumns.has('father_name') && <td>{s.father_name}</td>}
-                                                        {visibleColumns.has('dob') && <td>{s.dob}</td>}
-                                                        {visibleColumns.has('adm_date') && <td>{s.admission_date}</td>}
-                                                        {visibleColumns.has('gender') && <td>{s.gender}</td>}
-                                                        {visibleColumns.has('mobile') && <td>{s.mobile}</td>}
-                                                        {visibleColumns.has('count') && <td>{s.count}</td>}
-                                                    </tr>
-                                                ))}</tbody>
-                                            </table>
-                                            <div className="pt15 pb15 no-print">
-                                                <Pagination
-                                                    totalItems={filteredData.length}
-                                                    itemsPerPage={itemsPerPage}
-                                                    currentPage={currentPage}
-                                                    onPageChange={(page) => setCurrentPage(page)}
-                                                />
+                                            <div className="sis-filter-col" style={{ flex: '1', minWidth: '180px' }}>
+                                                <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Section <span className="req">*</span></label>
+                                                <select className="form-control sis-filter-select" value={sectionId} onChange={(e) => setSectionId(e.target.value)} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                                    <option value="">Select</option>
+                                                    {sectionList.map(s => <option key={s.id} value={s.section_id}>{s.section}</option>)}
+                                                </select>
                                             </div>
-                                        </div>
+                                        </>
                                     )}
-
-                                    {activeReport === 'daily_report' && (
-                                        <div className="table-responsive">
-                                            <TableToolbar
-                                                searchTerm={searchTerm}
-                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                                                recordsPerPage={itemsPerPage}
-                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-                                                columns={getColumnsForReport()}
-                                                visibleColumns={visibleColumns}
-                                                onToggleColumn={toggleColumn}
-                                                getExportData={getExportData}
-                                                exportFileName="Daily_Attendance"
-                                                exportTitle={getExportTitle()}
-                                            />
-                                            <table className="table table-hover attendance-table minimal-table">
-                                                <thead>
-                                                    <tr>
-                                                        {visibleColumns.has('class_section') && <th>Class (Section)</th>}
-                                                        {visibleColumns.has('total_present') && <th>Total Present</th>}
-                                                        {visibleColumns.has('total_absent') && <th>Total Absent</th>}
-                                                        {visibleColumns.has('present_percent') && <th>Present %</th>}
-                                                        {visibleColumns.has('absent_percent') && <th>Absent %</th>}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {currentData.map((r, i) => (
-                                                        <tr key={r.id || indexOfFirstItem + i}>
-                                                            {visibleColumns.has('class_section') && <td>{r.class_section || r.class_name || '-'}</td>}
-                                                            {visibleColumns.has('total_present') && <td>{r.total_present}</td>}
-                                                            {visibleColumns.has('total_absent') && <td>{r.total_absent}</td>}
-                                                            {visibleColumns.has('present_percent') && <td>{r.present_percent}</td>}
-                                                            {visibleColumns.has('absent_percent') && <td>{r.absent_persent || r.absent_percent}</td>}
-                                                        </tr>
-                                                    ))
-                                                    }
-                                                    {reportData.totals && (
-                                                        <tr style={{ fontWeight: 'bold' }}>
-                                                            <td>Total</td>
-                                                            <td>{reportData.totals.present}</td>
-                                                            <td>{reportData.totals.absent}</td>
-                                                            <td>{reportData.totals.present_percent}</td>
-                                                            <td>{reportData.totals.absent_percent}</td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                            <div className="pt15 pb15 no-print">
-                                                <Pagination
-                                                    totalItems={filteredData.length}
-                                                    itemsPerPage={itemsPerPage}
-                                                    currentPage={currentPage}
-                                                    onPageChange={(page) => setCurrentPage(page)}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
                                     {activeReport === 'staff_report' && (
-                                        <div className="table-responsive">
-                                            <TableToolbar
-                                                searchTerm={searchTerm}
-                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                                                recordsPerPage={itemsPerPage}
-                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-                                                columns={getColumnsForReport()}
-                                                visibleColumns={visibleColumns}
-                                                onToggleColumn={toggleColumn}
-                                                getExportData={getExportData}
-                                                exportFileName="Staff_Attendance"
-                                                exportTitle={getExportTitle()}
-                                            />
-                                            <table className="table table-striped table-bordered table-hover attendance-table">
-                                                <thead>
-                                                    <tr>
-                                                        {visibleColumns.has('staff_name') && <th rowSpan="2" style={{ textAlign: 'left' }}>Staff Name</th>}
-                                                        {visibleColumns.has('percentage') && <th rowSpan="2">(%)</th>}
-                                                        {(visibleColumns.has('P') || visibleColumns.has('L') || visibleColumns.has('A') || visibleColumns.has('H') || visibleColumns.has('F')) && (
-                                                            <th colSpan={['P', 'L', 'A', 'H', 'F'].filter(k => visibleColumns.has(k)).length}>Total</th>
-                                                        )}
-                                                        {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
-                                                            <th key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>
-                                                        ))}
-                                                    </tr>
-                                                    <tr>
-                                                        {visibleColumns.has('P') && <th>P</th>}
-                                                        {visibleColumns.has('L') && <th>L</th>}
-                                                        {visibleColumns.has('A') && <th>A</th>}
-                                                        {visibleColumns.has('H') && <th>H</th>}
-                                                        {visibleColumns.has('F') && <th>F</th>}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {currentData.map(s => (
-                                                        <tr key={s.id}>
-                                                            {visibleColumns.has('staff_name') && <td style={{ textAlign: 'left' }}>{s.name} (ID: {s.employee_id})</td>}
-                                                            {visibleColumns.has('percentage') && <td><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`}>{s.percentage}</span></td>}
-                                                            {visibleColumns.has('P') && <td>{s.counts.P}</td>}
-                                                            {visibleColumns.has('L') && <td>{s.counts.L}</td>}
-                                                            {visibleColumns.has('A') && <td>{s.counts.A}</td>}
-                                                            {visibleColumns.has('H') && <td>{s.counts.H}</td>}
-                                                            {visibleColumns.has('F') && <td>{s.counts.F}</td>}
-                                                            {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
-                                                                <td key={d.getTime()} className={d.getDay() === 0 ? "bg-sunday" : ""}>{s.daily[d.getDate()] || '-'}</td>
-                                                            ))}
-                                                        </tr>
-                                                    ))
-                                                    }
-                                                </tbody>
-                                            </table>
-                                            <div className="pt15 pb15 no-print">
-                                                <Pagination
-                                                    totalItems={filteredData.length}
-                                                    itemsPerPage={itemsPerPage}
-                                                    currentPage={currentPage}
-                                                    onPageChange={(page) => setCurrentPage(page)}
-                                                />
-                                            </div>
+                                        <div className="sis-filter-col" style={{ flex: '1', minWidth: '180px' }}>
+                                            <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Role <span className="req">*</span></label>
+                                            <select className="form-control sis-filter-select" value={role} onChange={(e) => setRole(e.target.value)} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                                <option value="">Select</option>
+                                                {roleList.map(r => <option key={r.id} value={r.id}>{r.type}</option>)}
+                                            </select>
                                         </div>
                                     )}
-
-                                    {activeReport === 'late_report' && (
-                                        <div className="table-responsive">
-                                            <TableToolbar
-                                                searchTerm={searchTerm}
-                                                onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
-                                                recordsPerPage={itemsPerPage}
-                                                onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-                                                columns={getColumnsForReport()}
-                                                visibleColumns={visibleColumns}
-                                                onToggleColumn={toggleColumn}
-                                                getExportData={getExportData}
-                                                exportFileName="Late_Entries"
-                                                exportTitle={getExportTitle()}
-                                            />
-                                            <table className="table table-hover attendance-table minimal-table">
-                                                <thead>
-                                                    <tr>
-                                                        {visibleColumns.has('s_no') && <th>S.No</th>}
-                                                        {visibleColumns.has('name') && <th>Name</th>}
-                                                        {visibleColumns.has('admission_no') && <th>Admission No</th>}
-                                                        {visibleColumns.has('class_section') && <th>Class (Section)</th>}
-                                                        {visibleColumns.has('date') && <th>Date</th>}
-                                                        {visibleColumns.has('time') && <th>Time</th>}
-                                                        {visibleColumns.has('roll_no') && <th>Roll No</th>}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>{currentData.map((r, i) => (
-                                                    <tr key={r.id || indexOfFirstItem + i}>
-                                                        {visibleColumns.has('s_no') && <td>{indexOfFirstItem + i + 1}</td>}
-                                                        {visibleColumns.has('name') && <td>{r.firstname} {r.lastname}</td>}
-                                                        {visibleColumns.has('admission_no') && <td>{r.admission_no}</td>}
-                                                        {visibleColumns.has('class_section') && <td>{r.class} ({r.section})</td>}
-                                                        {visibleColumns.has('date') && <td>{r.date}</td>}
-                                                        {visibleColumns.has('time') && <td>{r.time}</td>}
-                                                        {visibleColumns.has('roll_no') && <td>{r.roll_no}</td>}
-                                                    </tr>
-                                                ))}</tbody>
-                                            </table>
-                                            <div className="pt15 pb15 no-print">
-                                                <Pagination
-                                                    totalItems={filteredData.length}
-                                                    itemsPerPage={itemsPerPage}
-                                                    currentPage={currentPage}
-                                                    onPageChange={(page) => setCurrentPage(page)}
-                                                />
+                                </>
+                            )}
+                            {activeReport === 'type_report' && (
+                                <>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '160px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Search Type</label>
+                                        <select className="form-control sis-filter-select" value={searchType} onChange={(e) => setSearchType(e.target.value)} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            {Object.entries(searchTypeList).map(([key, value]) => (
+                                                <option key={key} value={key}>{value}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '160px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Attendance Type <span className="req">*</span></label>
+                                        <select className="form-control sis-filter-select" value={attendanceType} onChange={(e) => setAttendanceType(e.target.value)} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            <option value="">Select</option>
+                                            {attendanceTypesList.map(t => <option key={t.id} value={t.id}>{t.type}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '160px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Class <span className="req">*</span></label>
+                                        <select className="form-control sis-filter-select" value={classId} onChange={handleClassChange} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            <option value="">Select</option>
+                                            {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '160px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Section</label>
+                                        <select className="form-control sis-filter-select" value={sectionId} onChange={(e) => setSectionId(e.target.value)} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            <option value="">Select</option>
+                                            {sectionList.map(s => <option key={s.id} value={s.section_id}>{s.section}</option>)}
+                                        </select>
+                                    </div>
+                                    {searchType === 'period' && (
+                                        <>
+                                            <div className="sis-filter-col" style={{ flex: '1', minWidth: '160px' }}>
+                                                <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Date From <span className="req">*</span></label>
+                                                <input type="date" className="form-control sis-filter-select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }} />
                                             </div>
-                                        </div>
+                                            <div className="sis-filter-col" style={{ flex: '1', minWidth: '160px' }}>
+                                                <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Date To <span className="req">*</span></label>
+                                                <input type="date" className="form-control sis-filter-select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }} />
+                                            </div>
+                                        </>
                                     )}
+                                </>
+                            )}
+                            {activeReport === 'daily_report' && (
+                                <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
+                                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Date <span className="req">*</span></label>
+                                    <input type="date" className="form-control sis-filter-select" value={date} onChange={(e) => setDate(e.target.value)} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }} />
                                 </div>
                             )}
+                            {activeReport === 'late_report' && (
+                                <>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '140px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Date From <span className="req">*</span></label>
+                                        <input type="date" className="form-control sis-filter-select" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }} />
+                                    </div>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '140px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Date To <span className="req">*</span></label>
+                                        <input type="date" className="form-control sis-filter-select" value={dateTo} onChange={(e) => setDateTo(e.target.value)} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }} />
+                                    </div>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '140px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Class</label>
+                                        <select className="form-control sis-filter-select" value={classId} onChange={handleClassChange} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            <option value="">Select</option>
+                                            {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '140px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Section</label>
+                                        <select className="form-control sis-filter-select" value={sectionId} onChange={(e) => setSectionId(e.target.value)} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            <option value="">Select</option>
+                                            {sectionList.map(s => <option key={s.id} value={s.section_id}>{s.section}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="sis-filter-col" style={{ flex: '1', minWidth: '140px' }}>
+                                        <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Student</label>
+                                        <select className="form-control sis-filter-select" value={studentId} onChange={(e) => setStudentId(e.target.value)} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                            <option value="">Select</option>
+                                            {studentList.map(s => <option key={s.id} value={s.id}>{s.firstname} {s.lastname}</option>)}
+                                        </select>
+                                    </div>
+                                </>
+                            )}
+                            <div className="sis-filter-col" style={{ display: 'flex', alignItems: 'flex-end' }}>
+                                <button type="submit" className="btn btn-primary sis-apply-btn" disabled={loading} style={{ height: '40px', padding: '0 24px', borderRadius: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className={`fa ${loading ? 'fa-spinner fa-spin' : 'fa-search'}`}></i> {loading ? 'Searching...' : 'Search'}
+                                </button>
+                            </div>
                         </div>
+                    </form>
+                </div>
+            </div>
+
+            {loading && <div className="sis-list-container text-center p-5"><Loader /></div>}
+
+            {searched && reportData && (
+                <div className="sis-list-container" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                    <div className="sis-list-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>
+                            {activeReport === 'class_attendance' ? 'Student Attendance Report' :
+                                activeReport === 'type_report' ? 'Student Attendance Type Report' :
+                                    activeReport === 'daily_report' ? 'Daily Attendance Report' :
+                                        activeReport === 'staff_report' ? 'Staff Attendance Report' :
+                                            'Late Entries Report'}
+                        </h3>
                     </div>
-                </section>
-            </div >
-            <Footer />
-        </div >
+
+                    <div style={{ padding: '16px 24px' }}>
+                        <TableToolbar
+                            searchTerm={searchTerm}
+                            onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+                            recordsPerPage={itemsPerPage}
+                            onRecordsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                            columns={getColumnsForReport()}
+                            visibleColumns={visibleColumns}
+                            onToggleColumn={toggleColumn}
+                            getExportData={getExportData}
+                            exportFileName={activeReport}
+                            exportTitle={getExportTitle()}
+                        />
+                    </div>
+
+                    <div className="table-responsive">
+                        {activeReport === 'class_attendance' && (
+                            <table className="table table-striped table-bordered table-hover attendance-table" style={{ margin: 0 }}>
+                                <thead style={{ background: '#f8fafc' }}>
+                                    <tr>
+                                        {visibleColumns.has('student_name') && <th rowSpan="2" style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Student Name</th>}
+                                        {visibleColumns.has('percentage') && <th rowSpan="2" style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>(%)</th>}
+                                        {(visibleColumns.has('P') || visibleColumns.has('L') || visibleColumns.has('A') || visibleColumns.has('F') || visibleColumns.has('H')) && (
+                                            <th colSpan={['P', 'L', 'A', 'F', 'H'].filter(k => visibleColumns.has(k)).length} style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Total</th>
+                                        )}
+                                        {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
+                                            <th key={d.getTime()} style={{ padding: '12px 8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0', background: d.getDay() === 0 ? '#fee2e2' : '' }}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>
+                                        ))}
+                                    </tr>
+                                    <tr style={{ background: '#f8fafc' }}>
+                                        {visibleColumns.has('P') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>P</th>}
+                                        {visibleColumns.has('L') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>L</th>}
+                                        {visibleColumns.has('A') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>A</th>}
+                                        {visibleColumns.has('F') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>F</th>}
+                                        {visibleColumns.has('H') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>H</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentData.map(s => (
+                                        <tr key={s.id}>
+                                            {visibleColumns.has('student_name') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>{s.name} (Adm: {s.admission_no})</td>}
+                                            {visibleColumns.has('percentage') && <td style={{ padding: '12px 24px', borderBottom: '1px solid #f1f5f9' }}><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`} style={{ borderRadius: '4px', padding: '2px 8px' }}>{s.percentage}</span></td>}
+                                            {visibleColumns.has('P') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.P}</td>}
+                                            {visibleColumns.has('L') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.L}</td>}
+                                            {visibleColumns.has('A') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.A}</td>}
+                                            {visibleColumns.has('F') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.F}</td>}
+                                            {visibleColumns.has('H') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.H}</td>}
+                                            {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
+                                                <td key={d.getTime()} style={{ padding: '12px 8px', fontSize: '12px', borderBottom: '1px solid #f1f5f9', background: d.getDay() === 0 ? '#fff1f2' : '' }} dangerouslySetInnerHTML={{ __html: s.daily[d.getDate()] || '-' }}></td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+
+                        {activeReport === 'type_report' && (
+                            <table className="table table-hover" style={{ margin: 0 }}>
+                                <thead style={{ background: '#f8fafc' }}>
+                                    <tr>
+                                        {visibleColumns.has('admission_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Admission No</th>}
+                                        {visibleColumns.has('student_name') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Student Name</th>}
+                                        {visibleColumns.has('class_section') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Class (Section)</th>}
+                                        {visibleColumns.has('father_name') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Father Name</th>}
+                                        {visibleColumns.has('dob') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Date Of Birth</th>}
+                                        {visibleColumns.has('adm_date') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Adm Date</th>}
+                                        {visibleColumns.has('gender') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Gender</th>}
+                                        {visibleColumns.has('mobile') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Mobile</th>}
+                                        {visibleColumns.has('count') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Count</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>{currentData.map(s => (
+                                    <tr key={s.id}>
+                                        {visibleColumns.has('admission_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.admission_no}</td>}
+                                        {visibleColumns.has('student_name') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.name}</td>}
+                                        {visibleColumns.has('class_section') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.class} ({s.section})</td>}
+                                        {visibleColumns.has('father_name') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.father_name}</td>}
+                                        {visibleColumns.has('dob') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.dob}</td>}
+                                        {visibleColumns.has('adm_date') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.admission_date}</td>}
+                                        {visibleColumns.has('gender') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.gender}</td>}
+                                        {visibleColumns.has('mobile') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.mobile}</td>}
+                                        {visibleColumns.has('count') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{s.count}</td>}
+                                    </tr>
+                                ))}</tbody>
+                            </table>
+                        )}
+
+                        {activeReport === 'daily_report' && (
+                            <table className="table table-hover" style={{ margin: 0 }}>
+                                <thead style={{ background: '#f8fafc' }}>
+                                    <tr>
+                                        {visibleColumns.has('class_section') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Class (Section)</th>}
+                                        {visibleColumns.has('total_present') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Total Present</th>}
+                                        {visibleColumns.has('total_absent') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Total Absent</th>}
+                                        {visibleColumns.has('present_percent') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Present %</th>}
+                                        {visibleColumns.has('absent_percent') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Absent %</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentData.map((r, i) => (
+                                        <tr key={r.id || indexOfFirstItem + i}>
+                                            {visibleColumns.has('class_section') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.class_section || r.class_name || '-'}</td>}
+                                            {visibleColumns.has('total_present') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.total_present}</td>}
+                                            {visibleColumns.has('total_absent') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.total_absent}</td>}
+                                            {visibleColumns.has('present_percent') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.present_percent}</td>}
+                                            {visibleColumns.has('absent_percent') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.absent_persent || r.absent_percent}</td>}
+                                        </tr>
+                                    ))}
+                                    {reportData.totals && (
+                                        <tr style={{ fontWeight: 'bold', background: '#f8fafc' }}>
+                                            <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b' }}>Total</td>
+                                            <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b' }}>{reportData.totals.present}</td>
+                                            <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b' }}>{reportData.totals.absent}</td>
+                                            <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b' }}>{reportData.totals.present_percent}</td>
+                                            <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b' }}>{reportData.totals.absent_percent}</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+
+                        {activeReport === 'staff_report' && (
+                            <table className="table table-striped table-bordered table-hover attendance-table" style={{ margin: 0 }}>
+                                <thead style={{ background: '#f8fafc' }}>
+                                    <tr>
+                                        {visibleColumns.has('staff_name') && <th rowSpan="2" style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>Staff Name</th>}
+                                        {visibleColumns.has('percentage') && <th rowSpan="2" style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>(%)</th>}
+                                        {(visibleColumns.has('P') || visibleColumns.has('L') || visibleColumns.has('A') || visibleColumns.has('H') || visibleColumns.has('F')) && (
+                                            <th colSpan={['P', 'L', 'A', 'H', 'F'].filter(k => visibleColumns.has(k)).length} style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Total</th>
+                                        )}
+                                        {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
+                                            <th key={d.getTime()} style={{ padding: '12px 8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0', background: d.getDay() === 0 ? '#fee2e2' : '' }}>{d.getDate()}<br />{d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0)}</th>
+                                        ))}
+                                    </tr>
+                                    <tr style={{ background: '#f8fafc' }}>
+                                        {visibleColumns.has('P') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>P</th>}
+                                        {visibleColumns.has('L') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>L</th>}
+                                        {visibleColumns.has('A') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>A</th>}
+                                        {visibleColumns.has('H') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>H</th>}
+                                        {visibleColumns.has('F') && <th style={{ padding: '8px', fontSize: '12px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>F</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentData.map(s => (
+                                        <tr key={s.id}>
+                                            {visibleColumns.has('staff_name') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>{s.name} (ID: {s.employee_id})</td>}
+                                            {visibleColumns.has('percentage') && <td style={{ padding: '12px 24px', borderBottom: '1px solid #f1f5f9' }}><span className={`label ${s.percentage > 75 ? 'label-success' : 'label-danger'}`} style={{ borderRadius: '4px', padding: '2px 8px' }}>{s.percentage}</span></td>}
+                                            {visibleColumns.has('P') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.P}</td>}
+                                            {visibleColumns.has('L') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.L}</td>}
+                                            {visibleColumns.has('A') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.A}</td>}
+                                            {visibleColumns.has('H') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.H}</td>}
+                                            {visibleColumns.has('F') && <td style={{ padding: '12px 8px', borderBottom: '1px solid #f1f5f9' }}>{s.counts.F}</td>}
+                                            {days.filter(d => visibleColumns.has(`day_${d.getDate()}`)).map(d => (
+                                                <td key={d.getTime()} style={{ padding: '12px 8px', fontSize: '12px', borderBottom: '1px solid #f1f5f9', background: d.getDay() === 0 ? '#fff1f2' : '' }}>{s.daily[d.getDate()] || '-'}</td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+
+                        {activeReport === 'late_report' && (
+                            <table className="table table-hover" style={{ margin: 0 }}>
+                                <thead style={{ background: '#f8fafc' }}>
+                                    <tr>
+                                        {visibleColumns.has('s_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>S.No</th>}
+                                        {visibleColumns.has('name') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Name</th>}
+                                        {visibleColumns.has('admission_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Admission No</th>}
+                                        {visibleColumns.has('class_section') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Class (Section)</th>}
+                                        {visibleColumns.has('date') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Date</th>}
+                                        {visibleColumns.has('time') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Time</th>}
+                                        {visibleColumns.has('roll_no') && <th style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>Roll No</th>}
+                                    </tr>
+                                </thead>
+                                <tbody>{currentData.map((r, i) => (
+                                    <tr key={r.id || indexOfFirstItem + i}>
+                                        {visibleColumns.has('s_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{indexOfFirstItem + i + 1}</td>}
+                                        {visibleColumns.has('name') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.firstname} {r.lastname}</td>}
+                                        {visibleColumns.has('admission_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.admission_no}</td>}
+                                        {visibleColumns.has('class_section') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.class} ({r.section})</td>}
+                                        {visibleColumns.has('date') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.date}</td>}
+                                        {visibleColumns.has('time') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.time}</td>}
+                                        {visibleColumns.has('roll_no') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#1e293b', borderBottom: '1px solid #f1f5f9' }}>{r.roll_no}</td>}
+                                    </tr>
+                                ))}</tbody>
+                            </table>
+                        )}
+                    </div>
+                    <div style={{ padding: '20px 24px', borderTop: '1px solid #f1f5f9' }}>
+                        <Pagination
+                            totalItems={filteredData.length}
+                            itemsPerPage={itemsPerPage}
+                            currentPage={currentPage}
+                            onPageChange={(page) => setCurrentPage(page)}
+                        />
+                    </div>
+                </div>
+            )}
+        </AttendanceLayout>
     );
 };
 
