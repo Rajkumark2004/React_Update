@@ -1,54 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Sidebar from '../../components/Sidebar';
 import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
+import '../../utils/include_files';
 import { api } from '../../services/api';
+// FileUpload removed in favor of Dropify as per user request
 import { buildExportData } from '../../utils/tableExport';
 import PremiumTableToolbar from '../../utils/PremiumTableToolbar';
+import Pagination from '../../utils/Pagination';
 import toast from 'react-hot-toast';
-import './HomeworkLayout.css';
-import '../../utils/include_files';
+import './Homework.css';
 
 const StudentDiaryList = () => {
     const navigate = useNavigate();
 
-    // Data states
-    const [diaryList, setDiaryList] = useState([]);
-    const [classList, setClassList] = useState([]);
-    const [sectionList, setSectionList] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [initialLoading, setInitialLoading] = useState(true);
-
-    // Search and Filter states
-    const [topSearchText, setTopSearchText] = useState('');
-    const [appliedTopSearch, setAppliedTopSearch] = useState('');
-    const [showFilters, setShowFilters] = useState(false);
-    const [filterForm, setFilterForm] = useState({
-        class_id: '',
-        section_id: ''
+    // Static counts for UI
+    const [counts] = useState({
+        activeAssignments: 24,
+        dueToday: 8,
+        submissions: 156,
+        pendingReviews: 12
     });
-    const [validationErrors, setValidationErrors] = useState({});
 
-    // Pagination and Table states
-    const [currentPage, setCurrentPage] = useState(1);
-    const [recordsPerPage, setRecordsPerPage] = useState(100);
+    // Column Visibility State
     const columns = [
-        { key: 'class', label: 'Class', sortKey: 'class' },
-        { key: 'section', label: 'Section', sortKey: 'section' },
-        { key: 'date', label: 'Date', sortKey: 'date' },
-        { key: 'assigned_by', label: 'Created By', sortKey: 'assigned_by' }
+        { key: 'class', label: 'Class' },
+        { key: 'section', label: 'Section' },
+        { key: 'date', label: 'Date' },
+        { key: 'assigned_by', label: 'Created By' }
     ];
     const [visibleColumns, setVisibleColumns] = useState(new Set(columns.map(c => c.key)));
 
-    // Modal states
-    const [showAddModal, setShowAddModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [showEvaluateModal, setShowEvaluateModal] = useState(false);
-    const [selectedEntry, setSelectedEntry] = useState(null);
+    const handleToggleColumn = (columnKey) => {
+        setVisibleColumns(prev => {
+            const next = new Set(prev);
+            if (next.has(columnKey)) { next.delete(columnKey); } else { next.add(columnKey); }
+            return next;
+        });
+    };
 
-    // Form states for modals
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const getExportData = () => buildExportData(columns, visibleColumns, filteredDiaryList, (row, key) => row[key] || '');
+
+    // Search form state
+    const [formData, setFormData] = useState({
+        class_id: '',
+        section_id: '',
+        subject_group_id: '',
+        subject_id: ''
+    });
+
+    // Dropdown options
+    const [classes, setClasses] = useState([]);
+    const [sections, setSections] = useState([]);
+
+    // Hidden fields support state (even if display:none in PHP, we need logic if enabled later or just to match)
+    const [subjectGroups, setSubjectGroups] = useState([]);
+    const [subjects, setSubjects] = useState([]);
+
+    // Table data
+    const [diaryList, setDiaryList] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(true);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [recordsPerPage, setRecordsPerPage] = useState(100);
+
+    const filteredDiaryList = diaryList.filter(item => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return (
+            (item.class || '').toLowerCase().includes(term) ||
+            (item.section || '').toLowerCase().includes(term) ||
+            (item.date || '').toLowerCase().includes(term) ||
+            (item.assigned_by || '').toLowerCase().includes(term)
+        );
+    });
+
+    const indexOfLastRecord = currentPage * recordsPerPage;
+    const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+    const currentRecords = filteredDiaryList.slice(indexOfFirstRecord, indexOfLastRecord);
+
+    const [errors, setErrors] = useState({});
+
+    // Modal states
+    const [addModalOpen, setAddModalOpen] = useState(false);
+    const [evaluateModalOpen, setEvaluateModalOpen] = useState(false);
+    const [evaluateData, setEvaluateData] = useState(null);
+    const [docsModalOpen, setDocsModalOpen] = useState(false);
+
+    // Add Modal Form Data
     const [addFormData, setAddFormData] = useState({
         class_id: '',
         section_id: '',
@@ -56,6 +101,10 @@ const StudentDiaryList = () => {
         description: '',
         file: null
     });
+    const [addErrors, setAddErrors] = useState({});
+
+    // Edit Modal Form Data
+    const [editModalOpen, setEditModalOpen] = useState(false);
     const [editFormData, setEditFormData] = useState({
         id: '',
         class_id: '',
@@ -66,108 +115,161 @@ const StudentDiaryList = () => {
         existing_file: ''
     });
 
-    // Fetch initial data
+    // Fetch classes on mount
     useEffect(() => {
-        const loadInitialData = async () => {
+        const fetchClasses = async () => {
             try {
                 setInitialLoading(true);
-                const classRes = await api.getClasses();
-                if (classRes && classRes.status === 'success' && classRes.classsectionlist) {
-                    setClassList([...classRes.classsectionlist].reverse());
+                const response = await api.getClasses();
+                if (response && response.status === 'success' && response.classsectionlist) {
+                    setClasses([...response.classsectionlist].reverse());
                 }
-                await fetchDiaryList();
-            } catch (err) {
-                console.error("Initialization error:", err);
+            } catch (error) {
+                console.error("Failed to fetch classes", error);
             } finally {
                 setInitialLoading(false);
             }
         };
-        loadInitialData();
+        fetchClasses();
     }, []);
 
-    const fetchDiaryList = async (filters = null) => {
+    // Initialize Dropify for Modals
+    useEffect(() => {
+        if (addModalOpen || editModalOpen) {
+            const timer = setTimeout(() => {
+                try {
+                    const $ = window.jQuery;
+                    if ($ && $.fn && typeof $.fn.dropify === 'function') {
+                        $('.dropify').dropify();
+                    }
+                } catch (error) {
+                    console.error('Dropify initialization error:', error);
+                }
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [addModalOpen, editModalOpen]);
+
+    const fetchSections = async (classId) => {
         try {
-            setLoading(true);
-            const response = await api.getStudentDiaryList(filters || {});
+            const response = await api.getSectionsByClass(classId);
+            if (response && response.data) {
+                setSections(response.data);
+            } else if (response && Array.isArray(response)) {
+                setSections(response);
+            }
+        } catch (error) {
+            console.error("Failed to fetch sections", error);
+        }
+    }
+
+    // Handle search form input change
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+
+        if (name === 'class_id') {
+            setSections([]);
+            setFormData(prev => ({ ...prev, section_id: '' }));
+            setErrors(prev => ({ ...prev, class_id: '' }));
+            if (value) {
+                fetchSections(value);
+            }
+        }
+    };
+
+    // Handle Add Modal Input Change
+    const handleAddInputChange = (e) => {
+        const { name, value, files } = e.target;
+        if (name === 'userfile') {
+            setAddFormData(prev => ({
+                ...prev,
+                file: files[0]
+            }));
+        } else {
+            setAddFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+            setAddErrors(prev => ({ ...prev, [name]: '' }));
+        }
+
+        if (name === 'class_id') {
+            // Logic to populate sections for modal
+            setAddFormData(prev => ({ ...prev, section_id: '' }));
+            setAddErrors(prev => ({ ...prev, class_id: '', section_id: '' }));
+            if (value) {
+                fetchSections(value);
+            }
+        }
+    };
+
+    // Handle Edit Modal Input Change
+    const handleEditInputChange = (e) => {
+        const { name, value, files } = e.target;
+        if (name === 'userfile') {
+            setEditFormData(prev => ({
+                ...prev,
+                file: files[0]
+            }));
+        } else {
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+
+        if (name === 'class_id') {
+            setEditFormData(prev => ({ ...prev, section_id: '' }));
+            if (value) fetchSections(value);
+        }
+    };
+
+    // Handle Search Submit
+    const handleSearch = async (e) => {
+        e.preventDefault();
+
+        let formErrors = {};
+        if (!formData.class_id) {
+            formErrors.class_id = "The Class field is required";
+        }
+        setErrors(formErrors);
+
+        if (Object.keys(formErrors).length > 0) {
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const params = {
+                class_id: formData.class_id,
+                section_id: formData.section_id,
+                subject_group_id: formData.subject_group_id,
+                subject_id: formData.subject_id
+            };
+
+            const response = await api.getStudentDiaryList(params);
+
             if (response && response.status && response.data) {
                 setDiaryList(response.data);
+                setCurrentPage(1); // Reset page on new search
             } else {
                 setDiaryList([]);
             }
         } catch (error) {
-            console.error("Fetch error:", error);
+            console.error("Failed to fetch diary list:", error);
             setDiaryList([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleClassChange = async (e, mode = 'filter') => {
-        const classId = e.target.value;
-        if (mode === 'filter') {
-            setFilterForm(prev => ({ ...prev, class_id: classId, section_id: '' }));
-        } else if (mode === 'add') {
-            setAddFormData(prev => ({ ...prev, class_id: classId, section_id: '' }));
-        } else if (mode === 'edit') {
-            setEditFormData(prev => ({ ...prev, class_id: classId, section_id: '' }));
-        }
-
-        if (classId) {
-            try {
-                const res = await api.getSectionsByClass(classId);
-                setSectionList(res.data || res || []);
-            } catch (error) {
-                setSectionList([]);
-            }
-        } else {
-            setSectionList([]);
-        }
-    };
-
-    const handleSearchSubmit = (e) => {
-        e.preventDefault();
-        setAppliedTopSearch(topSearchText);
-        setCurrentPage(1);
-    };
-
-    const handleApplyFilters = async (e) => {
-        e.preventDefault();
-        if (!filterForm.class_id) {
-            setValidationErrors({ class_id: 'Required' });
-            return;
-        }
-        setValidationErrors({});
-        await fetchDiaryList(filterForm);
-        setCurrentPage(1);
-    };
-
-    const handleToggleColumn = (key) => {
-        setVisibleColumns(prev => {
-            const next = new Set(prev);
-            if (next.has(key)) next.delete(key);
-            else next.add(key);
-            return next;
-        });
-    };
-
-    const getExportData = () => buildExportData(columns, visibleColumns, finalFilteredList, (row, key) => row[key] || '');
-
-    const finalFilteredList = diaryList.filter(item => {
-        const searchStr = (appliedTopSearch).toLowerCase();
-        if (!searchStr) return true;
-        return (
-            (item.class || '').toLowerCase().includes(searchStr) ||
-            (item.section || '').toLowerCase().includes(searchStr) ||
-            (item.assigned_by || '').toLowerCase().includes(searchStr) ||
-            (item.date || '').toLowerCase().includes(searchStr)
-        );
-    });
-
-    const currentRecords = finalFilteredList.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage);
-    const totalPages = Math.ceil(finalFilteredList.length / recordsPerPage);
-
-    // Modal Action Handlers
-    const handleAddClick = () => {
+    // Handlers for Modals
+    const openAddModal = () => {
         setAddFormData({
             class_id: '',
             section_id: '',
@@ -175,465 +277,772 @@ const StudentDiaryList = () => {
             description: '',
             file: null
         });
-        setSectionList([]);
-        setShowAddModal(true);
+        setAddModalOpen(true);
     };
 
-    const handleEditClick = async (item) => {
-        setSelectedEntry(item);
-        setEditFormData({
-            id: item.id,
-            class_id: item.class_id || '',
-            section_id: item.section_id || '',
-            date: item.date || '',
-            description: item.description || '',
-            file: null,
-            existing_file: item.document || ''
-        });
-        if (item.class_id) {
-            const res = await api.getSectionsByClass(item.class_id);
-            setSectionList(res.data || res || []);
-        }
-        setShowEditModal(true);
+    const closeAddModal = () => {
+        setAddModalOpen(false);
     };
 
-    const handleEvaluateClick = (item) => {
-        setSelectedEntry(item);
-        setShowEvaluateModal(true);
-    };
-
-    const handleDeleteClick = async (id) => {
-        if (window.confirm('Are you sure you want to delete this record?')) {
-            try {
-                await api.deleteStudentDiary(id);
-                toast.success('Record deleted');
-                fetchDiaryList();
-            } catch (error) {
-                toast.error('Failed to delete');
-            }
-        }
-    };
-
-    // Modal Submits
     const handleAddSubmit = async (e) => {
         e.preventDefault();
+
+        let newAddErrors = {};
+        if (!addFormData.class_id) {
+            newAddErrors.class_id = "The Class field is required";
+        }
+        if (!addFormData.section_id) {
+            newAddErrors.section_id = "The Section field is required";
+        }
+        if (!addFormData.date) {
+            newAddErrors.date = "The Date field is required";
+        }
+        if (!addFormData.description) {
+            newAddErrors.description = "The Description field is required";
+        }
+        setAddErrors(newAddErrors);
+
+        if (Object.keys(newAddErrors).length > 0) {
+            return;
+        }
+
         try {
             const submitData = new FormData();
-            Object.keys(addFormData).forEach(key => {
-                if (key === 'file' && addFormData[key]) submitData.append('userfile', addFormData[key]);
-                else if (key !== 'file') submitData.append(key, addFormData[key]);
-            });
-            submitData.append('assigned_by', 'Admin'); 
+            submitData.append('class_id', addFormData.class_id);
+            submitData.append('section_id', addFormData.section_id);
+            // Format date to DD-MM-YYYY as expected by API (Postman body: 20-01-2026)
+            const dateObj = new Date(addFormData.date);
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+            const year = dateObj.getFullYear();
+            const formattedDate = `${day}-${month}-${year}`;
+
+            submitData.append('date', formattedDate);
+            submitData.append('description', addFormData.description);
+            // assigned_by is required. Using dynamic value from session if available.
+            const storedUser = localStorage.getItem('user');
+            let assignedBy = '';
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    const name = user.username || user.name;
+                    const employeeId = user.staff_id || user.employee_id || user.id;
+                    assignedBy = `${name} (${employeeId})`;
+                } catch (e) {
+                    console.error("Error parsing user for assigned_by:", e);
+                }
+            }
+            submitData.append('assigned_by', assignedBy);
+
+            if (addFormData.file) {
+                submitData.append('userfile', addFormData.file);
+            }
+
             await api.createStudentDiary(submitData);
-            toast.success('Diary entry added');
-            setShowAddModal(false);
-            fetchDiaryList();
+
+            alert('Student diary saved successfully');
+            // Clear Dropify
+            try {
+                const $ = window.jQuery;
+                $('.dropify').each(function () {
+                    const dr = $(this).data('dropify');
+                    if (dr) {
+                        dr.resetPreview();
+                        dr.clearElement();
+                    }
+                });
+            } catch (e) { }
+            closeAddModal();
+            // Refresh list if search criteria matches
+            if (formData.class_id && formData.section_id) {
+                handleSearch(e);
+            }
         } catch (error) {
-            toast.error('Failed to save');
+            console.error("Failed to create student diary:", error);
+            alert('Failed to save student diary. Please try again.');
+        }
+    };
+
+
+
+    const handleEdit = async (id) => {
+        try {
+            const response = await api.getStudentDiary(id);
+            if (response && response.status && response.data) {
+                const data = response.data;
+                setEditFormData({
+                    id: data.id,
+                    class_id: data.class_id,
+                    section_id: data.section_id,
+                    date: data.date, // Assuming YYYY-MM-DD from API
+                    description: data.description,
+                    file: null,
+                    existing_file: data.document
+                });
+
+                // Ensure sections are loaded for the selected class
+                if (data.class_id) {
+                    await fetchSections(data.class_id);
+                }
+
+                setEditModalOpen(true);
+            } else {
+                alert('Failed to fetch diary details');
+            }
+        } catch (error) {
+            console.error("Failed to fetch diary details:", error);
+            alert('Error fetching details');
         }
     };
 
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            const submitData = new FormData();
-            submitData.append('id', editFormData.id);
-            submitData.append('class_id', editFormData.class_id);
-            submitData.append('section_id', editFormData.section_id);
-            submitData.append('date', editFormData.date);
-            submitData.append('description', editFormData.description);
-            submitData.append('assigned_by', 'Admin');
-            if (editFormData.file) submitData.append('userfile', editFormData.file);
+            // assigned_by is required for edit as well
+            const storedUser = localStorage.getItem('user');
+            let assignedBy = '';
+            if (storedUser) {
+                try {
+                    const user = JSON.parse(storedUser);
+                    const name = user.username || user.name || 'Admin';
+                    const employeeId = user.staff_id || user.employee_id || user.id || '';
+                    assignedBy = `${name} (${employeeId})`;
+                } catch (e) {
+                    console.error("Error parsing user for assigned_by:", e);
+                }
+            }
 
-            await api.updateStudentDiary(submitData);
-            toast.success('Diary entry updated');
-            setShowEditModal(false);
-            fetchDiaryList();
+            // Match the body carefully as requested by user
+            // User Postman body has: id, class_id, section_id, date, description, assigned_by
+            // Check if file is selected
+            if (editFormData.file) {
+                const submitData = new FormData();
+                submitData.append('id', editFormData.id);
+                submitData.append('class_id', editFormData.class_id);
+                submitData.append('section_id', editFormData.section_id);
+                submitData.append('date', editFormData.date); // Standard HTML5 date is YYYY-MM-DD
+                submitData.append('description', editFormData.description);
+                submitData.append('assigned_by', assignedBy);
+                submitData.append('userfile', editFormData.file);
+
+                await api.updateStudentDiary(submitData);
+            } else {
+                // If no file, send exact JSON body as shown in user's Postman example
+                const jsonBody = {
+                    id: editFormData.id,
+                    class_id: editFormData.class_id,
+                    section_id: editFormData.section_id,
+                    date: editFormData.date, // format: 2026-01-20
+                    description: editFormData.description,
+                    assigned_by: assignedBy
+                };
+                await api.updateStudentDiary(jsonBody);
+            }
+
+            alert('Student diary updated successfully');
+            // Clear Dropify
+            try {
+                const $ = window.jQuery;
+                $('.dropify').each(function () {
+                    const dr = $(this).data('dropify');
+                    if (dr) {
+                        dr.resetPreview();
+                        dr.clearElement();
+                    }
+                });
+            } catch (e) { }
+            setEditModalOpen(false);
+            if (formData.class_id && formData.section_id) {
+                handleSearch(e);
+            }
         } catch (error) {
-            toast.error('Failed to update');
+            console.error("Failed to update student diary:", error);
+            alert('Failed to update student diary');
         }
     };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this record?')) {
+            try {
+                const response = await api.deleteStudentDiary(id);
+                if (response && response.status) {
+                    alert('Student diary deleted successfully');
+                    // Refresh list if search criteria matches
+                    if (formData.class_id && formData.section_id) {
+                        // Passing a dummy event or just calling the logic directly
+                        const dummyEvent = { preventDefault: () => { } };
+                        handleSearch(dummyEvent);
+                    }
+                } else {
+                    alert(response.message || 'Failed to delete dairy record');
+                }
+            } catch (error) {
+                console.error("Failed to delete diary record:", error);
+                alert('An error occurred while deleting the record');
+            }
+        }
+    };
+
+    const handleEvaluate = async (id) => {
+        try {
+            const response = await api.getStudentDiary(id);
+            if (response && response.status && response.data) {
+                const data = response.data;
+                // Find class/section names from the diaryList or classes array
+                const diaryItem = diaryList.find(d => String(d.id) === String(id));
+                setEvaluateData({
+                    ...data,
+                    class_name: diaryItem?.class || data.class || '',
+                    section_name: diaryItem?.section || data.section || '',
+                    assigned_by: diaryItem?.assigned_by || data.assigned_by || ''
+                });
+                setEvaluateModalOpen(true);
+            } else {
+                toast.error('Failed to fetch diary details');
+            }
+        } catch (error) {
+            console.error('Failed to fetch diary for evaluation:', error);
+            toast.error('Error fetching diary details');
+        }
+    };
+
+    const handleBack = () => {
+        navigate(-1);
+    }
 
     return (
         <div className="wrapper theme-white-skin" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Header />
             <Sidebar />
             <div className="content-wrapper" style={{ flex: 1, minHeight: 'calc(100vh - 60px)', backgroundColor: '#f8fafc' }}>
-                
-                {/* Premium Module Header */}
                 <section className="homework-header-section">
                     <div className="homework-header-content">
                         <div className="homework-titles">
                             <h1>Student Diary</h1>
-                            <p>Manage and track student classwise assessments and diary records</p>
-                        </div>
-                        <div className="homework-actions">
-                            <button onClick={handleAddClick} className="btn btn-primary" style={{ borderRadius: '8px', padding: '10px 24px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#fff', color: '#7c4dff', border: 'none' }}>
-                                <i className="fa fa-plus"></i> Add Diary Entry
-                            </button>
+                            <p>Manage and track class-wise assignments and daily tasks</p>
                         </div>
                     </div>
 
                     <div className="homework-summary-cards">
-                        <div className="homework-card active">
+                        <div className="homework-card" style={{ border: '1px solid #3b82f6' }}>
                             <div className="homework-card-header">
-                                <span className="homework-card-title">Diary Entries</span>
-                                <i className="fa fa-book homework-card-icon" style={{ color: '#7c4dff' }}></i>
+                                <span className="homework-card-title">Active Assignments</span>
+                                <i className="fa fa-book homework-card-icon" style={{ color: '#3b82f6' }}></i>
                             </div>
-                            <div className="homework-card-value">{diaryList.length}</div>
-                            <div className="homework-card-subtitle">Total records in system</div>
+                            <div className="homework-card-value">{counts.activeAssignments}</div>
+                            <div className="homework-card-subtitle">Current open assignments</div>
                         </div>
-                        <div className="homework-card">
+
+                        <div className="homework-card" style={{ border: '1px solid #3b82f6' }}>
                             <div className="homework-card-header">
-                                <span className="homework-card-title">Daily Assignment</span>
-                                <i className="fa fa-tasks homework-card-icon" style={{ color: '#448aff' }}></i>
+                                <span className="homework-card-title">Due Today</span>
+                                <i className="fa fa-clock-o homework-card-icon" style={{ color: '#f59e0b' }}></i>
                             </div>
-                            <div className="homework-card-value">View</div>
-                            <div className="homework-card-subtitle">Manage daily tasks</div>
+                            <div className="homework-card-value">{counts.dueToday}</div>
+                            <div className="homework-card-subtitle">Assignments ending today</div>
                         </div>
-                        <div className="homework-card">
+
+                        <div className="homework-card" style={{ border: '1px solid #3b82f6' }}>
                             <div className="homework-card-header">
-                                <span className="homework-card-title">Classwise Homework</span>
-                                <i className="fa fa-graduation-cap homework-card-icon" style={{ color: '#10b981' }}></i>
+                                <span className="homework-card-title">Submissions</span>
+                                <i className="fa fa-check-circle homework-card-icon" style={{ color: '#10b981' }}></i>
                             </div>
-                            <div className="homework-card-value">List</div>
-                            <div className="homework-card-subtitle">Track academic progress</div>
+                            <div className="homework-card-value">{counts.submissions}</div>
+                            <div className="homework-card-subtitle">Total received</div>
+                        </div>
+
+                        <div className="homework-card" style={{ border: '1px solid #3b82f6' }}>
+                            <div className="homework-card-header">
+                                <span className="homework-card-title">Pending Reviews</span>
+                                <i className="fa fa-exclamation-circle homework-card-icon" style={{ color: '#ef4444' }}></i>
+                            </div>
+                            <div className="homework-card-value">{counts.pendingReviews}</div>
+                            <div className="homework-card-subtitle">Awaiting evaluation</div>
                         </div>
                     </div>
                 </section>
-
-                <section className="content" style={{ marginTop: '50px', padding: '20px' }}>
+                <section className="content">
                     <div className="row">
                         <div className="col-md-12">
-                            
-                            {/* Premium Search & Filter Bar */}
-                            <div className="sis-search-bar-container" style={{ marginBottom: '24px' }}>
-                                <div className="sis-search-bar-header">
-                                    <h3 className="sis-search-title">Search & Filters</h3>
-                                </div>
-                                <form onSubmit={handleSearchSubmit} className="sis-search-form">
-                                    <div className="sis-search-main-input-wrapper">
-                                        <i className="fa fa-search sis-search-icon"></i>
-                                        <input
-                                            type="text"
-                                            className="sis-search-input"
-                                            placeholder="Search by class, section, creator, or date..."
-                                            value={topSearchText}
-                                            onChange={(e) => setTopSearchText(e.target.value)}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="btn btn-default sis-filter-toggle-btn"
-                                            onClick={() => setShowFilters(!showFilters)}
-                                            style={{ marginRight: '8px' }}
-                                        >
-                                            <i className="fa fa-filter"></i> Filters
-                                        </button>
-                                        <button type="submit" className="btn btn-primary" style={{ marginRight: '4px' }}>
-                                            Search
-                                        </button>
-                                    </div>
+                            {initialLoading ? (
+                                <Loader />
+                            ) : (
+                                <>
+                                    <div className="sis-search-bar-container" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                                        <div className="sis-search-bar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                            <h3 className="sis-search-title" style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1e293b' }}>Select Criteria</h3>
 
-                                    {showFilters && (
-                                        <div className="sis-advanced-filters">
-                                            <div className="sis-filter-row" style={{ flexWrap: 'wrap', gap: '16px' }}>
+                                        </div>
+                                        <form className="assign_teacher_form" onSubmit={handleSearch}>
+                                            <div className="sis-filter-row" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                                                 <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
-                                                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '4px' }}>Class</label>
-                                                    <select name="class_id" className="sis-filter-select" value={filterForm.class_id} onChange={(e) => handleClassChange(e, 'filter')}>
-                                                        <option value="">Select Class</option>
-                                                        {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
+                                                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Class <small className="req"> *</small></label>
+                                                    <select
+                                                        autoFocus=""
+                                                        id="searchclassid"
+                                                        name="class_id"
+                                                        className="form-control sis-filter-select"
+                                                        value={formData.class_id}
+                                                        onChange={handleInputChange}
+                                                        style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                                                    >
+                                                        <option value="">Select</option>
+                                                        {classes.map(cls => (
+                                                            <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                        ))}
                                                     </select>
+                                                    {errors.class_id && <span className="text-danger" id="error_class_id" style={{ fontSize: '12px', marginTop: '4px', display: 'block' }}>{errors.class_id}</span>}
                                                 </div>
                                                 <div className="sis-filter-col" style={{ flex: '1', minWidth: '200px' }}>
-                                                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '4px' }}>Section</label>
-                                                    <select name="section_id" className="sis-filter-select" value={filterForm.section_id} onChange={(e) => setFilterForm(p => ({ ...p, section_id: e.target.value }))} disabled={!filterForm.class_id}>
-                                                        <option value="">Select Section</option>
-                                                        {sectionList.map(s => <option key={s.section_id || s.id} value={s.section_id}>{s.section}</option>)}
+                                                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Section</label>
+                                                    <select
+                                                        id="secid"
+                                                        name="section_id"
+                                                        className="form-control sis-filter-select"
+                                                        value={formData.section_id}
+                                                        onChange={handleInputChange}
+                                                        style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                                                    >
+                                                        <option value="">Select</option>
+                                                        {sections.map(sec => (
+                                                            <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
-                                                <div className="sis-filter-col" style={{ display: 'flex', alignItems: 'flex-end', flex: '0 0 auto' }}>
-                                                    <button onClick={handleApplyFilters} className="btn btn-primary sis-apply-btn" disabled={loading} style={{ height: '40px', width: '100px' }}>
-                                                        {loading ? <i className="fa fa-spinner fa-spin"></i> : 'Apply'}
+                                                {/* Hidden fields as per PHP */}
+                                                <div className="sis-filter-col" style={{ display: 'none' }}>
+                                                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Subject Group</label>
+                                                    <select id="subject_group_id" name="subject_group_id" className="form-control" style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                                        <option value="">Select</option>
+                                                    </select>
+                                                </div>
+                                                <div className="sis-filter-col" style={{ display: 'none' }}>
+                                                    <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', display: 'block', marginBottom: '8px' }}>Subject</label>
+                                                    <select id="subid" name="subject_id" className="form-control" style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}>
+                                                        <option value="">Select</option>
+                                                    </select>
+                                                </div>
+                                                <div className="sis-filter-col" style={{ display: 'flex', alignItems: 'flex-end', paddingTop: errors.class_id ? '0' : '28px' }}>
+                                                    <button type="submit" id="search_filter" name="search" value="search_filter" className="btn btn-primary" style={{ height: '40px', padding: '0 24px', borderRadius: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <i className="fa fa-search"></i> Search
                                                     </button>
                                                 </div>
                                             </div>
-                                            {validationErrors.class_id && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '8px' }}>Class is required for filtering.</div>}
+                                        </form>
+                                    </div>
+                                    <div className="sis-list-container" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                                        <div className="sis-list-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Class wise assessment List</h3>
+                                            <button onClick={openAddModal} type="button" className="btn btn-primary" style={{ borderRadius: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <i className="fa fa-plus"></i> Create Assignment
+                                            </button>
                                         </div>
-                                    )}
-                                </form>
-                            </div>
-
-                            {/* Premium Listing Container */}
-                            <div className="sis-list-container" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
-                                <div className="sis-list-header" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
-                                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Diary Records ({finalFilteredList.length})</h3>
-                                    <PremiumTableToolbar
-                                        columns={columns}
-                                        visibleColumns={visibleColumns}
-                                        onToggleColumn={handleToggleColumn}
-                                        getExportData={getExportData}
-                                        exportFileName="Student_Diary_Report"
-                                        exportTitle="Student Diary Records"
-                                        recordsPerPage={recordsPerPage}
-                                        onRecordsPerPageChange={(num) => { setRecordsPerPage(num); setCurrentPage(1); }}
-                                    />
-                                </div>
-
-                                <div className="sis-list-body" style={{ padding: '0' }}>
-                                    <div className="table-responsive">
-                                        <table className="table table-hover sis-listing-table" style={{ margin: 0 }}>
-                                            <thead>
-                                                <tr style={{ background: '#f8fafc' }}>
-                                                    {columns.map(col => visibleColumns.has(col.key) && (
-                                                        <th key={col.key} style={{ padding: '12px 24px', fontSize: '13px', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0' }}>
-                                                            {col.label}
-                                                        </th>
-                                                    ))}
-                                                    <th className="text-right noExport" style={{ padding: '12px 24px', borderBottom: '1px solid #e2e8f0', width: '150px' }}>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {loading || initialLoading ? (
-                                                    <tr>
-                                                        <td colSpan={visibleColumns.size + 1} className="text-center p-5">
-                                                            <Loader type="table" rows={5} />
-                                                        </td>
+                                        <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' }}>
+                                            <div style={{ position: 'relative', width: '300px' }}>
+                                                <i className="fa fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}></i>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search..."
+                                                    className="form-control"
+                                                    value={searchTerm}
+                                                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                                    style={{ paddingLeft: '36px', borderRadius: '8px', border: '1px solid #e2e8f0', height: '40px' }}
+                                                />
+                                            </div>
+                                            <PremiumTableToolbar
+                                                columns={columns}
+                                                visibleColumns={visibleColumns}
+                                                onToggleColumn={handleToggleColumn}
+                                                getExportData={getExportData}
+                                                exportFileName="Student_Diary_List"
+                                                exportTitle="Student Diary List"
+                                                recordsPerPage={recordsPerPage}
+                                                onRecordsPerPageChange={(val) => { setRecordsPerPage(val); setCurrentPage(1); }}
+                                            />
+                                        </div>
+                                        <div className="table-responsive">
+                                            <table className="table table-hover studentdairy-list" style={{ margin: 0 }}>
+                                                <thead>
+                                                    <tr className="modern-table-header">
+                                                        {visibleColumns.has('class') && <th>Class</th>}
+                                                        {visibleColumns.has('section') && <th>Section</th>}
+                                                        {visibleColumns.has('date') && <th>Date</th>}
+                                                        {visibleColumns.has('assigned_by') && <th>Created By</th>}
+                                                        <th className="text-right noExport" style={{ minWidth: '120px' }}>Action</th>
                                                     </tr>
-                                                ) : currentRecords.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan={visibleColumns.size + 1} className="text-center p-5">
-                                                            <div className="sis-empty-state" style={{ padding: '40px 0' }}>
-                                                                <img src="/images/addnewitem.svg" alt="No Data" style={{ width: '150px', marginBottom: '16px', opacity: 0.6 }} />
-                                                                <p style={{ color: '#64748b', fontSize: '15px' }}>No diary entries found matching your search.</p>
-                                                                <button onClick={handleAddClick} className="btn btn-link text-primary" style={{ fontWeight: '600' }}>Add your first entry</button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    currentRecords.map((item, idx) => (
-                                                        <tr key={item.id || idx}>
-                                                            {visibleColumns.has('class') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#334155' }}>{item.class}</td>}
-                                                            {visibleColumns.has('section') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#334155' }}>{item.section}</td>}
-                                                            {visibleColumns.has('date') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#334155' }}>{item.date}</td>}
-                                                            {visibleColumns.has('assigned_by') && <td style={{ padding: '12px 24px', fontSize: '14px', color: '#334155' }}>{item.assigned_by}</td>}
-                                                            <td className="text-right white-space-nowrap noExport" style={{ padding: '12px 24px' }}>
-                                                                <button onClick={() => handleEvaluateClick(item)} className="btn btn-default btn-xs" title="Evaluate" style={{ marginRight: '6px', borderRadius: '6px', width: '32px', height: '32px' }}>
-                                                                    <i className="fa fa-reorder"></i>
-                                                                </button>
-                                                                <button onClick={() => handleEditClick(item)} className="btn btn-default btn-xs" title="Edit" style={{ marginRight: '6px', borderRadius: '6px', width: '32px', height: '32px' }}>
-                                                                    <i className="fa fa-pencil"></i>
-                                                                </button>
-                                                                <button onClick={() => handleDeleteClick(item.id)} className="btn btn-default btn-xs" title="Delete" style={{ borderRadius: '6px', width: '32px', height: '32px' }}>
-                                                                    <i className="fa fa-remove"></i>
-                                                                </button>
+                                                </thead>
+                                                <tbody>
+                                                    {diaryList.length === 0 ? (
+                                                        <tr>
+                                                            <td colSpan="5">
+                                                                <div className="text-center" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px', minHeight: '200px' }}>
+                                                                    <div style={{ color: 'red', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>No data available in table</div>
+                                                                    <img src="/images/addnewitem.svg" alt="No Data" style={{ marginBottom: 0, width: '150px' }} />
+                                                                    <div style={{ color: 'green', fontFamily: 'Roboto-Bold', fontSize: '10px' }}>&lt;- Add new record or search with different criteria</div>
+                                                                </div>
                                                             </td>
                                                         </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {/* Premium Pagination Footer */}
-                                {!loading && finalFilteredList.length > 0 && (
-                                    <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', background: '#fafafa', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
-                                        <div style={{ color: '#64748b', fontSize: '14px' }}>
-                                            Showing {(currentPage - 1) * recordsPerPage + 1} to {Math.min(currentPage * recordsPerPage, finalFilteredList.length)} of {finalFilteredList.length} entries
+                                                    ) : (
+                                                        currentRecords.map(item => (
+                                                            <tr key={item.id} className="modern-table-row">
+                                                                {visibleColumns.has('class') && <td>{item.class}</td>}
+                                                                {visibleColumns.has('section') && <td>{item.section}</td>}
+                                                                {visibleColumns.has('date') && (
+                                                                    <td>
+                                                                        <div className="cell-icon-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                            <i className="fa fa-calendar" style={{ color: '#94a3b8' }}></i>
+                                                                            <span>{item.date}</span>
+                                                                        </div>
+                                                                    </td>
+                                                                )}
+                                                                {visibleColumns.has('assigned_by') && <td>{item.assigned_by}</td>}
+                                                                <td className="text-right">
+                                                                    <div className="action-btns-wrapper">
+                                                                        <button className="action-btn-circle btn-view-circle" title="Evaluation" onClick={() => handleEvaluate(item.id)}>
+                                                                            <i className="fa fa-reorder"></i>
+                                                                        </button>
+                                                                        <button className="action-btn-circle btn-edit-circle" title="Edit" onClick={() => handleEdit(item.id)}>
+                                                                            <i className="fa fa-pencil"></i>
+                                                                        </button>
+                                                                        <button className="action-btn-circle btn-delete-circle" title="Delete" onClick={() => handleDelete(item.id)}>
+                                                                            <i className="fa fa-remove"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
                                         </div>
-                                        <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button className="btn btn-default btn-sm" disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff' }}>
-                                                <i className="fa fa-angle-left"></i>
-                                            </button>
-                                            <button className="btn btn-sm" style={{ borderRadius: '8px', background: '#7c4dff', color: '#fff', minWidth: '36px', fontWeight: '600' }}>
-                                                {currentPage}
-                                            </button>
-                                            <button className="btn btn-default btn-sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => prev + 1)} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff' }}>
-                                                <i className="fa fa-angle-right"></i>
-                                            </button>
+                                        <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9' }}>
+                                            <div style={{ color: '#64748b', fontSize: '14px' }}>
+                                                Showing {filteredDiaryList.length === 0 ? 0 : (currentPage - 1) * recordsPerPage + 1} to {Math.min(currentPage * recordsPerPage, filteredDiaryList.length)} of {filteredDiaryList.length} entries
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button
+                                                    className="btn btn-default btn-sm"
+                                                    disabled={currentPage === 1}
+                                                    onClick={() => setCurrentPage(prev => prev - 1)}
+                                                    style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage === 1 ? '#cbd5e1' : '#475569' }}
+                                                >
+                                                    <i className="fa fa-angle-left"></i>
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm"
+                                                    style={{ borderRadius: '6px', background: '#7c3aed', color: '#ffffff', minWidth: '32px', fontWeight: '600' }}
+                                                >
+                                                    {currentPage}
+                                                </button>
+                                                <button
+                                                    className="btn btn-default btn-sm"
+                                                    disabled={currentPage >= Math.ceil(filteredDiaryList.length / recordsPerPage) || Math.ceil(filteredDiaryList.length / recordsPerPage) === 0}
+                                                    onClick={() => setCurrentPage(prev => prev + 1)}
+                                                    style={{ borderRadius: '6px', border: '1px solid #e2e8f0', background: '#ffffff', color: currentPage >= Math.ceil(filteredDiaryList.length / recordsPerPage) || Math.ceil(filteredDiaryList.length / recordsPerPage) === 0 ? '#cbd5e1' : '#475569' }}
+                                                >
+                                                    <i className="fa fa-angle-right"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                )}
-                            </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </section>
             </div>
 
-            {/* Premium Add Modal */}
-            {showAddModal && (
-                <div className="modal fade in" style={{ display: 'block', zIndex: 1050 }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content" style={{ borderRadius: '12px', overflow: 'hidden', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-                            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #7c4dff 0%, #448aff 100%)', color: '#fff', padding: '20px 24px' }}>
-                                <button type="button" className="close" onClick={() => setShowAddModal(false)} style={{ color: '#fff', opacity: 1 }}>&times;</button>
-                                <h4 className="modal-title" style={{ fontWeight: '700', fontSize: '18px' }}>Add Student Diary Entry</h4>
-                            </div>
-                            <form onSubmit={handleAddSubmit}>
-                                <div className="modal-body" style={{ padding: '24px' }}>
-                                    <div className="row">
-                                        <div className="col-md-4">
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Class <small className="text-danger">*</small></label>
-                                                <select className="form-control" name="class_id" value={addFormData.class_id} onChange={(e) => handleClassChange(e, 'add')} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '42px' }}>
-                                                    <option value="">Select Class</option>
-                                                    {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Section <small className="text-danger">*</small></label>
-                                                <select className="form-control" name="section_id" value={addFormData.section_id} onChange={(e) => setAddFormData(p => ({ ...p, section_id: e.target.value }))} required disabled={!addFormData.class_id} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '42px' }}>
-                                                    <option value="">Select Section</option>
-                                                    {sectionList.map(s => <option key={s.section_id || s.id} value={s.section_id}>{s.section}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Date <small className="text-danger">*</small></label>
-                                                <input type="date" className="form-control" name="date" value={addFormData.date} onChange={(e) => setAddFormData(p => ({ ...p, date: e.target.value }))} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '42px' }} />
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12" style={{ marginTop: '16px' }}>
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Description <small className="text-danger">*</small></label>
-                                                <textarea className="form-control" name="description" value={addFormData.description} onChange={(e) => setAddFormData(p => ({ ...p, description: e.target.value }))} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', minHeight: '120px' }}></textarea>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12" style={{ marginTop: '16px' }}>
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Attach Document</label>
-                                                <input type="file" className="form-control" onChange={(e) => setAddFormData(p => ({ ...p, file: e.target.files[0] }))} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px' }} />
+            {/* Add Student Classwise Homework Modal */}
+            {addModalOpen && (
+                <>
+                    <div className="modal fade in" style={{ display: 'block' }}>
+                        <div className="modal-dialog modal-lg" role="document">
+                            <div className="modal-content modal-media-content">
+                                <div className="modal-header modal-media-header">
+                                    <button type="button" className="close" onClick={closeAddModal}>&times;</button>
+                                    <h4 className="modal-title box-title">Add Student Classwise Homework</h4>
+                                </div>
+                                <form id="formadd" method="post" className="ptt10" encType="multipart/form-data" onSubmit={handleAddSubmit}>
+                                    <div className="modal-body pt0 pb0">
+                                        <div className="row">
+                                            <div className="col-lg-12 col-md-12 col-sm-12">
+                                                <div className="row">
+                                                    <input type="hidden" id="modal_record_id" value="0" name="record_id" />
+                                                    <div className="col-sm-4">
+                                                        <div className="form-group">
+                                                            <label>Class</label><small className="req"> *</small>
+                                                            <select
+                                                                className="form-control modal_class_id"
+                                                                name="class_id"
+                                                                id="modal_class_id"
+                                                                value={addFormData.class_id}
+                                                                onChange={handleAddInputChange}
+                                                            >
+                                                                <option value="">Select</option>
+                                                                {classes.map(cls => (
+                                                                    <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                                ))}
+                                                            </select>
+                                                            {addErrors.class_id && <span id="class_add_error" className="text-danger">{addErrors.class_id}</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-sm-4">
+                                                        <div className="form-group">
+                                                            <label>Section</label><small className="req"> *</small>
+                                                            <select
+                                                                className="form-control modal_section_id"
+                                                                name="section_id"
+                                                                id="modal_section_id"
+                                                                value={addFormData.section_id}
+                                                                onChange={handleAddInputChange}
+                                                            >
+                                                                <option value="">Select</option>
+                                                                {sections.map(sec => (
+                                                                    <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
+                                                                ))}
+                                                            </select>
+                                                            {addErrors.section_id && <span id="section_add_error" className="text-danger">{addErrors.section_id}</span>}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-sm-4">
+                                                        <div className="form-group">
+                                                            <label>Date</label><small className="req"> *</small>
+                                                            <input
+                                                                type="date"
+                                                                name="date"
+                                                                className="form-control"
+                                                                id="date"
+                                                                value={addFormData.date}
+                                                                onChange={handleAddInputChange}
+                                                                max={new Date().toISOString().split('T')[0]}
+                                                            />
+                                                            {addErrors.date && <span id="date_add_error" className="text-danger">{addErrors.date}</span>}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-sm-4">
+                                                        <div className="form-group">
+                                                            <label>Attach Document</label>
+                                                            <input
+                                                                type="file"
+                                                                name="userfile"
+                                                                className="dropify"
+                                                                onChange={handleAddInputChange}
+                                                                data-height="95"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-sm-12">
+                                                        <div className="form-group">
+                                                            <label>Description</label><small className="req"> *</small>
+                                                            <textarea
+                                                                name="description"
+                                                                id="compose-textarea"
+                                                                className="form-control"
+                                                                value={addFormData.description}
+                                                                onChange={handleAddInputChange}
+                                                            >
+                                                            </textarea>
+                                                            {addErrors.description && <span id="description_add_error" className="text-danger">{addErrors.description}</span>}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="modal-footer" style={{ padding: '16px 24px', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
-                                    <button type="button" className="btn btn-default" onClick={() => setShowAddModal(false)} style={{ borderRadius: '8px', fontWeight: '600', padding: '8px 20px' }}>Cancel</button>
-                                    <button type="submit" className="btn btn-primary" style={{ borderRadius: '8px', fontWeight: '600', padding: '8px 24px', background: '#7c4dff', border: 'none' }}>Save Entry</button>
-                                </div>
-                            </form>
+                                    <div className="modal-footer">
+                                        <div className="pull-right">
+                                            <button type="submit" className="btn btn-info pull-right" id="submit">Save</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                    <div className="modal-backdrop fade in" style={{ zIndex: 1040 }}></div>
-                </div>
+                    <div className="modal-backdrop fade in"></div>
+                </>
             )}
 
-            {/* Premium Edit Modal */}
-            {showEditModal && (
-                <div className="modal fade in" style={{ display: 'block', zIndex: 1050 }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content" style={{ borderRadius: '12px', overflow: 'hidden', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-                            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #448aff 0%, #7c4dff 100%)', color: '#fff', padding: '20px 24px' }}>
-                                <button type="button" className="close" onClick={() => setShowEditModal(false)} style={{ color: '#fff', opacity: 1 }}>&times;</button>
-                                <h4 className="modal-title" style={{ fontWeight: '700', fontSize: '18px' }}>Edit Diary Entry</h4>
-                            </div>
-                            <form onSubmit={handleEditSubmit}>
-                                <div className="modal-body" style={{ padding: '24px' }}>
-                                    <div className="row">
-                                        <div className="col-md-4">
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Class <small className="text-danger">*</small></label>
-                                                <select className="form-control" name="class_id" value={editFormData.class_id} onChange={(e) => handleClassChange(e, 'edit')} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '42px' }}>
-                                                    <option value="">Select Class</option>
-                                                    {classList.map(c => <option key={c.id} value={c.id}>{c.class}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Section <small className="text-danger">*</small></label>
-                                                <select className="form-control" name="section_id" value={editFormData.section_id} onChange={(e) => setEditFormData(p => ({ ...p, section_id: e.target.value }))} required disabled={!editFormData.class_id} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '42px' }}>
-                                                    <option value="">Select Section</option>
-                                                    {sectionList.map(s => <option key={s.section_id || s.id} value={s.section_id}>{s.section}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Date <small className="text-danger">*</small></label>
-                                                <input type="date" className="form-control" name="date" value={editFormData.date} onChange={(e) => setEditFormData(p => ({ ...p, date: e.target.value }))} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', height: '42px' }} />
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12" style={{ marginTop: '16px' }}>
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Description <small className="text-danger">*</small></label>
-                                                <textarea className="form-control" name="description" value={editFormData.description} onChange={(e) => setEditFormData(p => ({ ...p, description: e.target.value }))} required style={{ borderRadius: '8px', border: '1px solid #e2e8f0', minHeight: '120px' }}></textarea>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12" style={{ marginTop: '16px' }}>
-                                            <div className="form-group">
-                                                <label style={{ fontWeight: '600', color: '#475569', marginBottom: '8px', display: 'block' }}>Attach New Document (Optional)</label>
-                                                <input type="file" className="form-control" onChange={(e) => setEditFormData(p => ({ ...p, file: e.target.files[0] }))} style={{ borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px' }} />
-                                                {editFormData.existing_file && <small className="text-muted">Current file: {editFormData.existing_file.split('/').pop()}</small>}
+            {/* Edit Student Diary Modal */}
+            {editModalOpen && (
+                <>
+                    <div className="modal fade in" style={{ display: 'block' }}>
+                        <div className="modal-dialog modal-lg" role="document">
+                            <div className="modal-content modal-media-content">
+                                <div className="modal-header modal-media-header">
+                                    <button type="button" className="close" onClick={() => setEditModalOpen(false)}>&times;</button>
+                                    <h4 className="modal-title box-title">Edit Student Classwise Homework</h4>
+                                </div>
+                                <form id="formedit" method="post" className="ptt10" encType="multipart/form-data" onSubmit={handleEditSubmit}>
+                                    <div className="modal-body pt0 pb0">
+                                        <div className="row">
+                                            <div className="col-lg-12 col-md-12 col-sm-12">
+                                                <div className="row">
+                                                    <input type="hidden" name="id" value={editFormData.id} />
+                                                    <div className="col-sm-4">
+                                                        <div className="form-group">
+                                                            <label>Class</label><small className="req"> *</small>
+                                                            <select
+                                                                className="form-control modal_class_id"
+                                                                name="class_id"
+                                                                value={editFormData.class_id}
+                                                                onChange={handleEditInputChange}
+                                                            >
+                                                                <option value="">Select</option>
+                                                                {classes.map(cls => (
+                                                                    <option key={cls.id} value={cls.id}>{cls.class}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-sm-4">
+                                                        <div className="form-group">
+                                                            <label>Section</label><small className="req"> *</small>
+                                                            <select
+                                                                className="form-control modal_section_id"
+                                                                name="section_id"
+                                                                value={editFormData.section_id}
+                                                                onChange={handleEditInputChange}
+                                                            >
+                                                                <option value="">Select</option>
+                                                                {sections.map(sec => (
+                                                                    <option key={sec.section_id || sec.id} value={sec.section_id}>{sec.section}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-sm-4">
+                                                        <div className="form-group">
+                                                            <label>Date</label><small className="req"> *</small>
+                                                            <input
+                                                                type="date"
+                                                                name="date"
+                                                                className="form-control"
+                                                                value={editFormData.date}
+                                                                readOnly
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-sm-4">
+                                                        <div className="form-group">
+                                                            <label>Attach Document</label>
+                                                            <input
+                                                                type="file"
+                                                                name="userfile"
+                                                                className="dropify"
+                                                                onChange={handleEditInputChange}
+                                                                data-height="95"
+                                                                data-default-file={editFormData.existing_file ? `${api.baseHost}/uploads/homework/${editFormData.existing_file}` : ''}
+                                                            />
+                                                            {editFormData.existing_file && (
+                                                                <small className="help-block">
+                                                                    Current: {(() => {
+                                                                        const raw = editFormData.existing_file.split('/').pop();
+                                                                        const parts = raw.split('!');
+                                                                        return parts.length > 1 ? parts.slice(1).join('!') : raw;
+                                                                    })()}
+                                                                </small>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-sm-12">
+                                                        <div className="form-group">
+                                                            <label>Description</label><small className="req"> *</small>
+                                                            <textarea
+                                                                name="description"
+                                                                className="form-control"
+                                                                value={editFormData.description}
+                                                                onChange={handleEditInputChange}
+                                                            >
+                                                            </textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="modal-footer" style={{ padding: '16px 24px', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
-                                    <button type="button" className="btn btn-default" onClick={() => setShowEditModal(false)} style={{ borderRadius: '8px', fontWeight: '600', padding: '8px 20px' }}>Cancel</button>
-                                    <button type="submit" className="btn btn-primary" style={{ borderRadius: '8px', fontWeight: '600', padding: '8px 24px', background: '#448aff', border: 'none' }}>Update Entry</button>
-                                </div>
-                            </form>
+                                    <div className="modal-footer">
+                                        <div className="pull-right">
+                                            <button type="submit" className="btn btn-info pull-right">Save</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                    <div className="modal-backdrop fade in" style={{ zIndex: 1040 }}></div>
-                </div>
+                    <div className="modal-backdrop fade in"></div>
+                </>
             )}
 
-            {/* Premium Evaluate Modal (View Only / Summary) */}
-            {showEvaluateModal && selectedEntry && (
-                <div className="modal fade in" style={{ display: 'block', zIndex: 1050 }}>
-                    <div className="modal-dialog modal-lg">
-                        <div className="modal-content" style={{ borderRadius: '12px', overflow: 'hidden', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-                            <div className="modal-header" style={{ background: '#1e293b', color: '#fff', padding: '20px 24px' }}>
-                                <button type="button" className="close" onClick={() => setShowEvaluateModal(false)} style={{ color: '#fff', opacity: 1 }}>&times;</button>
-                                <h4 className="modal-title" style={{ fontWeight: '700', fontSize: '18px' }}>Diary Details & Evaluation</h4>
-                            </div>
-                            <div className="modal-body" style={{ padding: '0', display: 'flex' }}>
-                                <div style={{ flex: 1, padding: '24px', borderRight: '1px solid #e2e8f0' }}>
-                                    <h5 style={{ fontWeight: '700', marginBottom: '16px', color: '#334155' }}>Description</h5>
-                                    <div style={{ color: '#475569', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: selectedEntry.description || 'No description provided.' }}></div>
+            {/* Evaluation Modal - Full Screen */}
+            {evaluateModalOpen && evaluateData && (
+                <>
+                    <div className="modal fade in" style={{ display: 'block', zIndex: 1050, overflow: 'hidden' }}>
+                        <div className="modal-dialog" style={{ width: '98%', maxWidth: '1400px', margin: '20px auto' }} role="document">
+                            <div className="homework-card" style={{ border: '1px solid #3b82f6', borderRadius: '4px', overflow: 'hidden', height: 'calc(100vh - 40px)', display: 'flex', flexDirection: 'column' }}>
+                                <div className="modal-header" style={{ background: '#6f42c1', color: '#fff', padding: '10px 15px 0px 15px', border: '1px solid #6f42c1', flexShrink: 0, minHeight: 0 }}>
+                                    <button type="button" className="close" onClick={() => { setEvaluateModalOpen(false); setEvaluateData(null); }} style={{ color: '#fff', opacity: 0.9, fontSize: '22px', fontWeight: '500', marginTop: '0px', marginBottom: '-30px', padding: '0 4px', lineHeight: '1' }}>
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
                                 </div>
-                                <div style={{ width: '300px', background: '#f8fafc', padding: '24px' }}>
-                                    <h5 style={{ fontWeight: '700', marginBottom: '20px', color: '#334155' }}>Summary</h5>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                        <div>
-                                            <small style={{ color: '#64748b', textTransform: 'uppercase', fontSize: '11px', fontWeight: '700' }}>Class / Section</small>
-                                            <div style={{ fontWeight: '600', color: '#1e293b' }}>{selectedEntry.class} - {selectedEntry.section}</div>
+                                <div className="modal-body" style={{ padding: 0, display: 'flex', flex: 1, overflow: 'hidden' }}>
+                                    {/* Left Panel - Description */}
+                                    <div style={{ flex: 1, padding: '20px', borderRight: '1px solid #eee', overflowY: 'auto' }}>
+                                        <p style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>Description:</p>
+                                        <div style={{ fontSize: '13px', color: '#333' }} dangerouslySetInnerHTML={{ __html: evaluateData.description || 'No description available' }} />
+                                    </div>
+                                    {/* Right Panel - Summary */}
+                                    <div style={{ width: '320px', minWidth: '280px', padding: '20px', background: '#fafafa', overflowY: 'auto', flexShrink: 0 }}>
+                                        <h4 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: 0, marginBottom: '16px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Summary</h4>
+                                        <div style={{ marginBottom: '12px' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                                <i className="fa fa-calendar"></i>
+                                                <b>Homework Date:</b>{evaluateData.date || '-'}
+                                            </span>
                                         </div>
-                                        <div>
-                                            <small style={{ color: '#64748b', textTransform: 'uppercase', fontSize: '11px', fontWeight: '700' }}>Date</small>
-                                            <div style={{ fontWeight: '600', color: '#1e293b' }}>{selectedEntry.date}</div>
+                                        <div style={{ marginBottom: '8px' }}>
+                                            <b>Created By: </b>{evaluateData.assigned_by || '-'}
                                         </div>
-                                        <div>
-                                            <small style={{ color: '#64748b', textTransform: 'uppercase', fontSize: '11px', fontWeight: '700' }}>Created By</small>
-                                            <div style={{ fontWeight: '600', color: '#1e293b' }}>{selectedEntry.assigned_by}</div>
+                                        <div style={{ marginBottom: '8px' }}>
+                                            <b>Class: </b>{evaluateData.class_name || '-'}
                                         </div>
-                                        {selectedEntry.document && (
-                                            <div>
-                                                <small style={{ color: '#64748b', textTransform: 'uppercase', fontSize: '11px', fontWeight: '700' }}>Attached Document</small>
-                                                <div style={{ marginTop: '8px' }}>
-                                                    <a href={`${api.baseHost}/uploads/homework/${selectedEntry.document}`} target="_blank" rel="noreferrer" className="btn btn-default btn-sm" style={{ width: '100%', borderRadius: '6px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <i className="fa fa-download"></i> Download File
-                                                    </a>
+                                        <div style={{ marginBottom: '8px' }}>
+                                            <b>Section: </b>{evaluateData.section_name || '-'}
+                                        </div>
+                                        {evaluateData.document && (
+                                            <div style={{ marginTop: '12px' }}>
+                                                <b>Documents:</b>
+                                                <div style={{ marginTop: '6px' }}>
+                                                    <span style={{ fontSize: '13px', color: '#555' }}>
+                                                        {(() => {
+                                                            const raw = evaluateData.document.split('/').pop();
+                                                            const parts = raw.split('!');
+                                                            return parts.length > 1 ? parts.slice(1).join('!') : raw;
+                                                        })()}
+                                                    </span>
+                                                    <div style={{ marginTop: '4px' }}>
+                                                        <a
+                                                            href={`https://newlayout.wisibles.com/studentdairy/download/${evaluateData.id}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            title="Download"
+                                                            style={{ color: '#333', fontSize: '16px', cursor: 'pointer' }}
+                                                        >
+                                                            <i className="fa fa-download"></i>
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                            <div className="modal-footer" style={{ padding: '16px 24px', background: '#fff', borderTop: '1px solid #e2e8f0' }}>
-                                <button type="button" className="btn btn-default" onClick={() => setShowEvaluateModal(false)} style={{ borderRadius: '8px', fontWeight: '600', padding: '8px 20px' }}>Close</button>
-                            </div>
                         </div>
                     </div>
                     <div className="modal-backdrop fade in" style={{ zIndex: 1040 }}></div>
-                </div>
+                </>
             )}
-
             <Footer />
         </div>
     );
